@@ -3,7 +3,7 @@ import Script from 'next/script';
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Tarot Divination",
+  title: "Tarot Divinations",
   description: "Ancient wisdom and divine guidance through the sacred art of Tarot",
 };
 
