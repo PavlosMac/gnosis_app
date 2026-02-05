@@ -188,7 +188,7 @@ export default function SignificatorsPage() {
               <SignificatorSection
                 title="Day Number"
                 symbol="☾"
-                description={`Your day number is ${result.dayNumber.number}, representing the energy of the day you were born.`}
+                description={`Your day number is ${result.dayNumber.number}, representing the day you were born.`}
               >
                 <div className="flex justify-center">
                   <div className="flex flex-col items-center">
@@ -226,7 +226,7 @@ export default function SignificatorsPage() {
               <SignificatorSection
                 title="Life Number"
                 symbol="∞"
-                description={`Your life number is ${result.lifeNumber.number}. These cards share the same numerological root and are spiritually connected to you.`}
+                description={`Your life number is ${result.lifeNumber.number}. These cards share the same numerological attributes.`}
               >
                 <div className="flex flex-wrap gap-6 justify-center">
                   {result.lifeNumber.cards.map((card) => (
