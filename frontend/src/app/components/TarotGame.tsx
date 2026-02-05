@@ -48,6 +48,13 @@ interface ReadingResult {
 
 const readings = readingsConfig.readings as ReadingConfig[];
 
+// Animation timing constants (in ms)
+const CARD_FLIP_DURATION = 600; // matches CSS .card-flip-inner transition
+const CARD_FLIP_BUFFER = 200;
+const SHOW_READING_DELAY = CARD_FLIP_DURATION + CARD_FLIP_BUFFER;
+const DECK_SCROLL_DELAY = 300;
+const READING_SCROLL_DELAY = 100;
+
 export default function TarotGame() {
   const [selectedReading, setSelectedReading] = useState<ReadingConfig>(readings[1]); // Default to Past, Present, Future
   const [userQuestion, setUserQuestion] = useState<string>("");
@@ -55,6 +62,7 @@ export default function TarotGame() {
   const [gameStarted, setGameStarted] = useState<boolean>(false);
   const [isShuffling, setIsShuffling] = useState<boolean>(false);
   const [completedReading, setCompletedReading] = useState<ReadingResult | null>(null);
+  const [showReading, setShowReading] = useState<boolean>(false);
   const deckRef = useRef<HTMLDivElement>(null);
   const readingRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
@@ -64,6 +72,7 @@ export default function TarotGame() {
   const startGame = () => {
     setSelectedCards([]);
     setCompletedReading(null);
+    setShowReading(false);
     setIsShuffling(true);
   };
 
@@ -81,6 +90,7 @@ export default function TarotGame() {
     setIsShuffling(false);
     setSelectedCards([]);
     setCompletedReading(null);
+    setShowReading(false);
   };
 
   // Auto-capture reading when all cards are selected
@@ -104,28 +114,42 @@ export default function TarotGame() {
     }
   }, [selectedCards, numCards, completedReading, selectedReading, userQuestion]);
 
-  // Scroll the deck into view when the spread appears
+  // Scroll the deck into view when the spread appears (after shuffle)
   useEffect(() => {
     if (gameStarted && deckRef.current) {
       const timer = setTimeout(() => {
-        deckRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }, 300);
+        if (gameStarted && deckRef.current) {
+          deckRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, DECK_SCROLL_DELAY);
       return () => clearTimeout(timer);
     }
   }, [gameStarted]);
 
-  // Scroll to reading when it's completed
+  // Show reading after card flip animation completes
   useEffect(() => {
-    if (completedReading && readingRef.current) {
+    if (selectedCards.length === numCards && numCards > 0 && !showReading) {
       const timer = setTimeout(() => {
-        readingRef.current?.scrollIntoView({
-          behavior: 'smooth',
-          block: 'start'
-        });
-      }, 400);
+        setShowReading(true);
+      }, SHOW_READING_DELAY);
       return () => clearTimeout(timer);
     }
-  }, [completedReading]);
+  }, [selectedCards.length, numCards, showReading]);
+
+  // Scroll to reading when it becomes visible
+  useEffect(() => {
+    if (showReading && readingRef.current) {
+      const timer = setTimeout(() => {
+        if (showReading && readingRef.current) {
+          readingRef.current.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start'
+          });
+        }
+      }, READING_SCROLL_DELAY);
+      return () => clearTimeout(timer);
+    }
+  }, [showReading]);
 
   return (
     <div className="relative w-full max-w-6xl mx-auto overflow-hidden rounded-xl border-2 border-[#d4af37]/30 shadow-2xl"
@@ -219,8 +243,8 @@ export default function TarotGame() {
 
         {/* Game in progress - deck and card selection */}
         {gameStarted && !isShuffling && (
-          <>
-            <div ref={deckRef} className="mb-1 sm:mb-6 text-center hidden sm:block">
+          <div ref={deckRef}>
+            <div className="mb-1 sm:mb-6 text-center hidden sm:block">
               <span className="font-semibold text-[#e6d5b8] text-lg tracking-wide"
                     style={{ fontFamily: "'Crimson Pro', serif" }}>
                 Select {numCards} card{numCards > 1 ? 's' : ''} from the sacred deck
@@ -244,8 +268,8 @@ export default function TarotGame() {
               )}
             </div>
 
-            {/* Reading component */}
-            {selectedCards.length > 0 && (
+            {/* Reading component - shows after card flip animation completes */}
+            {showReading && (
               <div ref={readingRef} className="mt-10 flex justify-center animate-fadeIn">
                 <Reading
                   selectedCards={selectedCards}
@@ -267,7 +291,7 @@ export default function TarotGame() {
                 ✦ New Reading ✦
               </button>
             )}
-          </>
+          </div>
         )}
       </div>
     </div>

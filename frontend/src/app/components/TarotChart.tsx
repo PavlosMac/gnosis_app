@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import Link from "next/link";
 import TarotCard from "./TarotCard";
 import { TAROT_DECK, TAROT_MAP } from "../utils/cards";
@@ -41,10 +41,11 @@ const AnimatedCardSection: React.FC<AnimatedCardSectionProps> = ({
 }) => {
   const [displayCards, setDisplayCards] = useState<typeof TAROT_DECK>([]);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const transitionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const refreshCards = useCallback(() => {
     setIsTransitioning(true);
-    setTimeout(() => {
+    transitionTimeoutRef.current = setTimeout(() => {
       const selectedCard = getRandomCard(cards);
       if (showRelated) {
         const relatedIndices = getRelatedMajorArcana(selectedCard.idx);
@@ -59,7 +60,12 @@ const AnimatedCardSection: React.FC<AnimatedCardSectionProps> = ({
   useEffect(() => {
     refreshCards();
     const timer = setInterval(refreshCards, interval);
-    return () => clearInterval(timer);
+    return () => {
+      clearInterval(timer);
+      if (transitionTimeoutRef.current) {
+        clearTimeout(transitionTimeoutRef.current);
+      }
+    };
   }, [refreshCards, interval]);
 
   return (

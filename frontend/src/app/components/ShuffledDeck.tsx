@@ -22,12 +22,6 @@ export default function ShuffledDeck({ numCards, selectedCards, onSelectCard }: 
     setShuffledDeck(secureShuffleArray(TAROT_DECK));
   }, [numCards]);
 
-  useEffect(() => {
-    if (shuffledDeck.length > 0 && deckRef.current) {
-      deckRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-  }, [shuffledDeck]);
-
   const handleSelect = (idx: number) => {
     if (selectedCards.length >= numCards) return;
     if (selectedCards.find((c) => c.idx === idx)) return;
