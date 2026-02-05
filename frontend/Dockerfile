@@ -52,7 +52,6 @@ RUN addgroup --system --gid 1001 nodejs && \
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
-COPY --from=builder /app/src/app/blog-json ./src/app/blog-json
 
 # Set correct permissions
 RUN chown -R nextjs:nodejs /app
