@@ -1,0 +1,13 @@
+--recurse=yes
+--exclude=node_modules
+--exclude=.git
+--exclude=dist
+--exclude=build
+--exclude=__pycache__
+--exclude=*.min.js
+--exclude=venv
+--exclude=.next
+
+# Include line numbers
+--fields=+n
+

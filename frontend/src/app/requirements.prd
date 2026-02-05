@@ -1,0 +1,33 @@
+
+Navigation:
+1. the /tarot navigation should contain various pages, such that we can enable the browsers back button. For this we need page.tsx files which contain the components we have now. We will keep the existing 'back to portal'. navigation.
+
+Shuffle css between reading selection and reading display:
+2. Once a reading is selected in @Reading component, the shuffle animation should be triggered and the reading should be displayed in @ReadingDisplay component.
+We should have a nice animation - a clockwise card shuffle effect which last 5 seconds - using the same style of card as exists on the @Reading component.
+
+Optimised display of reading for mobile and ipad:
+3. The @Reading result displays the cards with a horizontal scroll on mobile. It should move the cards on a veritcal allignment. 
+
+Kabbalah reading layout:
+4. The kabalah reading in @reading should display the cards in a tree layout, as the kabalah looks. Again on mobile this will have to be veritcal.
+@readings-config.json
+
+Taro reading guide page:
+5. This page should be a written guide to how to use our Tarot reading service. It must emphasis in bullet form:
+- that the user should have intent when selecting a reading, or having the question in mind before selecting a reading, 
+- That the intent should be clear and focused and be conceptualised along the lines of 'I would like to ask the inner oracle...'
+- Reversed card meanings are great advice cards and welcome in readings, they teach us there is an unbalance and that we should either strengthen the positive attributes of the card or let go of the negative.
+- With multiple card readings, we should interperet the reading as a whole. A card may have a different meaning in the context of other cards.
+
+/significators
+7. This significators page will include a datepicker, and a button to generate the significators. The significators will be displayed in a grid layout, with the cards and their meanings. We need these sections once the calculations are done:
+- Day number - this is the day of the month, logic: reduced to a single digit if above 23
+- Astrological date - find the day and month and use this reference @zodiac.ts, the month number can be used to find the card from @cards.ts
+- Life number - this is the sum of the digits in the year, month and day, reduced to a single digit if above 23 then reduce, also once reduced find the related cards, e.g 23 reduces to 5 which means 14 is also included - then finds the index of the card(s) from @cards.tsand display it.
+- Astroligcal Decanate - find the day and month and use this reference @decanates.ts, the month number can be used to find the card from @cards.ts
+
+Be mindful of the styling already present. The styling should be consistent with the rest of the application.
+
+
+

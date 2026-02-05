@@ -1,0 +1,233 @@
+@keyframes twinkle {
+  0%, 100% { 
+    opacity: 0.2; 
+    transform: scale(1); 
+  }
+  50% { 
+    opacity: 1; 
+    transform: scale(1.2); 
+  }
+}
+
+@keyframes float {
+  0%, 100% { 
+    transform: translateY(0px); 
+  }
+  50% { 
+    transform: translateY(-10px); 
+  }
+}
+
+@keyframes glow {
+  0%, 100% { 
+    box-shadow: 0 0 5px rgba(212,175,55,0.3); 
+  }
+  50% { 
+    box-shadow: 0 0 20px rgba(212,175,55,0.6), 0 0 30px rgba(212,175,55,0.3); 
+  }
+}
+
+@keyframes cardFloat {
+  0%, 100% { 
+    transform: translateY(0px); 
+  }
+  50% { 
+    transform: translateY(-5px); 
+  }
+}
+
+@keyframes cardAppear {
+  from {
+    opacity: 0;
+    transform: scale(0.8) translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes revealCard {
+  from {
+    opacity: 0;
+    transform: rotateY(90deg);
+  }
+  to {
+    opacity: 1;
+    transform: rotateY(0deg);
+  }
+}
+
+@keyframes fadeIn {
+  from { 
+    opacity: 0; 
+    transform: translateY(20px); 
+  }
+  to { 
+    opacity: 1; 
+    transform: translateY(0); 
+  }
+}
+
+.animate-twinkle {
+  animation: twinkle infinite ease-in-out;
+}
+
+.ankh-card-back {
+  animation: cardFloat 3s ease-in-out infinite;
+}
+
+.ankh-card-back.selected {
+  opacity: 0.3;
+  filter: grayscale(100%);
+  pointer-events: none;
+}
+
+.tarot-card-container {
+  animation: cardAppear 0.6s ease-out;
+}
+
+.reading-card-reveal {
+  animation: revealCard 0.8s ease-out backwards;
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.8s ease-out;
+}
+
+/* Landing page animations */
+@keyframes border-flow {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+@keyframes orb-pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.6;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 1;
+  }
+}
+
+@keyframes glow-pulse {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(212,175,55,0.2);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(212,175,55,0.4), 0 0 60px rgba(212,175,55,0.2);
+  }
+}
+
+@keyframes pulse-slow {
+  0%, 100% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.animate-border-flow {
+  background-size: 200% 200%;
+  animation: border-flow 3s ease infinite;
+}
+
+.animate-border-flow-fast {
+  background-size: 200% 200%;
+  animation: border-flow 2s ease infinite;
+}
+
+.animate-orb-pulse {
+  animation: orb-pulse 4s ease-in-out infinite;
+}
+
+.animate-glow-pulse {
+  animation: glow-pulse 3s ease-in-out infinite;
+}
+
+.animate-pulse-slow {
+  animation: pulse-slow 3s ease-in-out infinite;
+}
+
+/* Shuffle Animation */
+@keyframes clockwiseShuffle {
+  0% {
+    transform: rotate(0deg) translateX(80px) rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg) translateX(80px) rotate(-360deg);
+  }
+}
+
+@keyframes shuffleFadeIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.5) rotate(0deg) translateX(80px) rotate(0deg);
+  }
+  20% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg) translateX(80px) rotate(0deg);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(360deg) translateX(80px) rotate(-360deg);
+  }
+}
+
+@keyframes shuffleFadeOut {
+  0% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+}
+
+@keyframes centerPulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.6;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 1;
+  }
+}
+
+.shuffle-card {
+  animation: shuffleFadeIn 5s ease-in-out forwards;
+}
+
+.shuffle-container {
+  animation: shuffleFadeOut 0.5s ease-out 4.5s forwards;
+}
+
+.shuffle-center-symbol {
+  animation: centerPulse 1s ease-in-out infinite;
+}
+
+/* Card flip */
+.card-flip-inner {
+  transform-style: preserve-3d;
+  transition: transform 0.6s ease;
+}
+
+.card-flip-inner.card-flipped {
+  transform: rotateY(180deg);
+}
+
+.card-flip-face {
+  backface-visibility: hidden;
+}
+
+.card-flip-front {
+  transform: rotateY(180deg);
+}

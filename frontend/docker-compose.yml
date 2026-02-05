@@ -1,0 +1,26 @@
+services:
+  tarot-nextjs:
+    image: pavlos888/tarot-nextjs:latest
+    container_name: tarot-nextjs
+    environment:
+      - NODE_ENV=${NODE_ENV:-production}
+    restart: unless-stopped
+    networks:
+      - app-network
+
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: cloudflared-tarot-tunnel
+    restart: unless-stopped
+    command: tunnel --config /etc/cloudflared/config.yml run
+    volumes:
+      - ./cloudflared-config:/etc/cloudflared
+    networks:
+      - app-network
+    depends_on:
+      - tarot-nextjs
+
+networks:
+  app-network:
+    driver: bridge

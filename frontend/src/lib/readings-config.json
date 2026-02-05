@@ -1,0 +1,46 @@
+{
+    "readings": [
+        {
+            "name": "Single Card",
+            "description": "A single card reading for an open question",
+            "cards": 1,
+            "positions": ["Answer"],
+            "showQuestion": true,
+            "meta": {
+                "field": "input",
+                "placeholder": "What question would you like answered?",
+                "button": "submit"
+            }
+        },
+        {
+            "name": "Past, Present, Future",
+            "description": "A three card reading",
+            "cards": 3,
+            "positions": ["Past", "Present", "Future"]
+        },
+        {
+            "name": "Fire, Water, Air, Earth Reading",
+            "description": "A four card reading",
+            "cards": 4,
+            "positions": ["Fire", "Water", "Air", "Earth"]
+        },
+        {
+            "name": "Open Question Reading",
+            "description": "Current situation | How to proceed?",
+            "cards": 2,
+            "positions": ["Current Situation", "How to Proceed"],
+            "showQuestion": true,
+            "meta": {
+                "field": "input",
+                "placeholder": "What is the question?",
+                "button": "submit"
+            }
+        },
+        {
+            "name": "Tree of Life",
+            "description": "An 11 card Kabbalah card reading",
+            "cards": 11,
+            "positions": ["Kether", "Chokmah", "Binah", " Chesed", "Geburah", "Tiphereth", "Netzach", "Hod", "Yesod", "Malkuth", "Daath"]
+        }
+    ]
+}

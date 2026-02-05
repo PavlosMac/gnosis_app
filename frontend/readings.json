@@ -1,0 +1,37 @@
+{
+    "three_cards": {
+        "cards": 3,
+        "description": "Past, Present, Future",
+        "reading": {
+            "Past": [],
+            "Present": [],
+            "Future": []
+        }
+    },
+    "two_cards": {
+        "description": "Present situation, How to Proceed?",
+        "cards": 2,
+        "reading": {
+            "Present": [],
+            "How to Proceed": []
+        }
+    },
+    "single_card": {
+        "description": "Single card reading - open question",
+        "cards": 1,
+        "showQuestion": true,
+        "reading": {
+            "Answer": []
+        }
+    },
+    "four_card_elemental": {
+    "description": "Elemental spread",
+    "cards": 4,
+    "reading": {
+        "Fire": [],
+        "Water": [],
+        "Air": [],
+        "Earth": []
+    }
+ }
+}
