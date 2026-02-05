@@ -1,0 +1,112 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Project Overview
+
+Tarot Divinations is a Next.js 15 application that provides tarot card readings and significator calculations. The app features an interactive tarot oracle, card shuffling animations, and personalized significator analysis based on birth dates using the Taroscopic System.
+
+## Development Commands
+
+```bash
+# Start development server with Turbopack
+npm run dev
+
+# Build for production
+npm run build
+
+# Start production server
+npm start
+
+# Run linting
+npm run lint
+```
+
+## Code style
+
+### General
+- Follow TypeScript strict mode
+- Use functional components with TypeScript interfaces
+- Prefer composition over inheritance
+- Keep components small and focused
+- Use ES6 syntax and features
+- Use ES6 fat arrow functions
+- Use ES6 destructuring
+
+### State Management
+- Client-side card selection and shuffling state
+- Cryptographically secure random number generation for card draws
+- React state for reading flow (shuffle → select → reveal)
+
+### Styling
+- Tailwind CSS 4 with custom configuration
+- Dark mystical theme with Egyptian/esoteric aesthetics
+- Custom fonts: Cinzel (headers), Crimson Pro (body)
+- Golden accent color (#d4af37)
+- Animated starfield backgrounds
+- Custom CSS animations in `tarot.css`
+
+## Key Components
+
+### Pages
+- `/` - Landing page with navigation to all features
+- `/reading` - Interactive tarot reading oracle
+- `/significators` - Birth date-based personal card calculator
+- `/chart` - Tarot chart explanation and rotating card display
+- `/guide` - How to use the oracle guide
+
+### Core Components
+- `TarotGame.tsx` - Main reading interface with card selection
+- `ShuffledDeck.tsx` / `ShuffledDeckMobile.tsx` - Card spread displays
+- `TarotCard.tsx` - Individual card display with meanings
+- `TarotLanding.tsx` - Home page portal design
+- `TarotPageLayout.tsx` - Shared mystical page wrapper
+
+### Utilities
+- `crypto-random.ts` - Secure random for card shuffling
+- `cards.ts` - Full 78-card deck data (Major + Minor Arcana)
+- `significators.ts` - Significator calculation logic
+- `zodiac.ts` / `decanates.ts` - Astrological mappings
+
+## Docker Deployment
+
+**Image:** `pavlos888/tarot-nextjs:latest`
+
+```bash
+# Build and push to Docker Hub
+./deploy-to-pi.sh
+
+# On Pi, run with docker-compose
+docker-compose up -d
+```
+
+## Next.js
+Follow Next.js standards for using server or client components. Most tarot components are client-side due to interactivity and animations.
+
+## Next.js Data Fetching
+
+Follow Next.js 15+ data fetching patterns:
+
+### Client Components
+```typescript
+// Most tarot components use client-side state
+'use client'
+import { useState, useCallback } from 'react'
+
+function TarotReading() {
+  const [selectedCards, setSelectedCards] = useState([])
+  // Card selection and animation logic
+}
+```
+
+### Patterns
+```typescript
+// Memoization for expensive calculations
+import { useMemo } from 'react'
+
+const stars = useMemo(() =>
+  [...Array(100)].map((_, i) => ({
+    left: `${(i * 7.3 + 13) % 100}%`,
+    top: `${(i * 11.7 + 23) % 100}%`,
+  })), [])
+```
