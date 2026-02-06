@@ -267,7 +267,7 @@ export default function SignificatorsPage() {
                 style={{ fontFamily: "'Crimson Pro', serif" }}
               >
                 When these cards appear in your readings, pay special
-                attention—they often carry messages directly relevant to your
+                attention - they often carry messages directly relevant to your
                 life path and current circumstances.
               </p>
             </div>

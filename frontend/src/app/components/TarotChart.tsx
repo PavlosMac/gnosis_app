@@ -140,7 +140,7 @@ const TarotChart: React.FC = () => {
           <p className="text-lg sm:text-xl">
             The Taroscopic System is an esoteric framework that unites Astrology, Tarot, Kabbalah,
             and Numerology into a single, coherent method of divination. At its core lie the
-            Decanates and Personal Significators—concepts rarely discussed in conventional Tarot
+            Decanates and Personal Significators - concepts rarely discussed in conventional Tarot
             literature, yet essential for accurate and meaningful readings.
           </p>
           <p className="text-lg sm:text-xl">
@@ -163,7 +163,7 @@ const TarotChart: React.FC = () => {
           <p className="text-lg sm:text-xl">
             The importance of Significators became evident through long-term observation. When
             reviewing past Tarot readings, it was discovered that Personal Significator cards
-            frequently appeared in spreads—often in prominent positions—without being recognized
+            frequently appeared in spreads, often in prominent positions, without being recognized
             as such by readers. As a result, much vital information was overlooked.
           </p>
           <p className="text-lg sm:text-xl">
@@ -185,7 +185,7 @@ const TarotChart: React.FC = () => {
             the session.
           </p>
           <p className="text-lg sm:text-xl">
-            The Life Number reveals cards that share your numerological root—numbers that reduce
+            The Life Number reveals cards that share your numerological root, numbers that reduce
             to the same single digit are spiritually connected, forming a chain of meaning
             through the Major Arcana.
           </p>
@@ -234,7 +234,7 @@ const TarotChart: React.FC = () => {
         <div className="space-y-6 text-[#e6d5b8]/90 leading-relaxed" style={{ fontFamily: "'Crimson Pro', serif" }}>
           <p className="text-lg sm:text-xl">
             Together, these cards form a symbolic profile unique to each individual. Crucially,
-            the interpretation of Significators rests on number, element, and decanate—not on
+            the interpretation of Significators rests on number, element, and decanate - not on
             the literal imagery or names of the cards.
           </p>
           <p className="text-lg sm:text-xl">

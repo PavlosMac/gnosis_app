@@ -205,7 +205,7 @@ const KabbalahLayout: React.FC<KabbalahLayoutProps> = ({
           style={{ fontFamily: "'Crimson Pro', serif" }}
         >
           The Tree of Life reveals the divine emanations of your situation. The
-          three pillars represent Severity, Equilibrium, and Mercy—contemplate
+          three pillars represent Severity, Equilibrium, and Mercy - contemplate
           how these forces interact in your reading.
         </p>
       </div>

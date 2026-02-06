@@ -131,7 +131,7 @@ export default function GuidePage() {
                 precision.
               </p>
               <p className="text-lg sm:text-xl italic text-[#e6d5b8]/70">
-                Think of the reading as a conversation with your deeper self—the
+                Think of the reading as a conversation with your unconscious, the
                 part of you that already knows the answers you seek.
               </p>
             </div>
@@ -158,7 +158,7 @@ export default function GuidePage() {
               <p className="text-lg sm:text-xl">
                 This invocation acknowledges that the wisdom comes from within
                 you, reflected through the symbolic mirror of the cards. The
-                Tarot doesn&apos;t predict a fixed future—it reveals the
+                Tarot doesn&apos;t predict a fixed future - it reveals the
                 energies and patterns currently at play, offering guidance on
                 how to navigate them.
               </p>
@@ -185,7 +185,7 @@ export default function GuidePage() {
               <p className="text-lg sm:text-xl">
                 When a card appears reversed (upside-down), it carries a special
                 significance. Reversed cards are{" "}
-                <span className="text-[#d4af37]">advice cards</span>—they
+                <span className="text-[#d4af37]">advice cards</span> - they
                 indicate areas of imbalance that require your attention.
               </p>
               <p className="text-lg sm:text-xl">
@@ -220,7 +220,7 @@ export default function GuidePage() {
                 Significators are cards that{" "}
                 <span className="text-[#d4af37]">represent you personally</span>{" "}
                 based on your birth date. When these cards appear in a reading,
-                they carry special significance—the message is speaking directly
+                they carry special significance - the message is speaking directly
                 to your core self, your life path, or your current cycles.
               </p>
               <p className="text-lg sm:text-xl">
@@ -270,7 +270,7 @@ export default function GuidePage() {
               <p className="text-lg sm:text-xl">
                 While each card carries its own meaning, the true art of Tarot
                 lies in reading the cards as a unified narrative. The cards
-                influence and illuminate each other—their meanings shift and
+                influence and illuminate each other - their meanings shift and
                 deepen based on their relationships within the spread.
               </p>
               <p className="text-lg sm:text-xl">
@@ -280,8 +280,8 @@ export default function GuidePage() {
               </p>
               <p className="text-lg sm:text-xl">
                 Pay attention to the story that emerges. The positions in your
-                spread create a framework—past, present, future; situation,
-                challenge, advice—but the cards themselves weave together into
+                spread create a framework - past, present, future; situation,
+                challenge, advice - but the cards themselves weave together into
                 something greater than the sum of their parts.
               </p>
               <p className="text-lg sm:text-xl text-[#d4af37]/90">
@@ -302,7 +302,7 @@ export default function GuidePage() {
             >
               &ldquo;The Tarot is a mirror, reflecting back to us the wisdom we
               already carry within. The cards do not tell us what will
-              happen—they show us who we are and who we might become.&rdquo;
+              happen - they show us who we are and who we might become.&rdquo;
             </p>
           </div>
 
