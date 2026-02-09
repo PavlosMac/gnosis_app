@@ -37,7 +37,7 @@ const securityHeaders = [
       "default-src 'self'",
       "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com",
       "style-src 'self' 'unsafe-inline'",
-      "img-src 'self' data: blob: https://steve-p.org https://www.google-analytics.com",
+      "img-src 'self' data: blob: https://steve-p.org https://www.google-analytics.com https://www.googletagmanager.com",
       "font-src 'self'",
       "connect-src 'self' https://www.googletagmanager.com https://www.google-analytics.com https://region1.google-analytics.com",
       "frame-ancestors 'self'",
