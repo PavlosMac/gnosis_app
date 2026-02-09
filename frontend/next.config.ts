@@ -39,7 +39,7 @@ const securityHeaders = [
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: blob: https://steve-p.org https://www.google-analytics.com",
       "font-src 'self'",
-      "connect-src 'self' https://www.google-analytics.com https://region1.google-analytics.com",
+      "connect-src 'self' https://www.googletagmanager.com https://www.google-analytics.com https://region1.google-analytics.com",
       "frame-ancestors 'self'",
       "base-uri 'self'",
       "form-action 'self'",
