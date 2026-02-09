@@ -14,7 +14,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <head>
+      <body className="antialiased">
+        {children}
+
         {/* Google tag (gtag.js) */}
         <Script
           async
@@ -29,9 +31,6 @@ export default function RootLayout({
             gtag('config', 'G-PNCJVPB14N');
           `}
         </Script>
-      </head>
-      <body className="antialiased">
-        {children}
       </body>
     </html>
   );
