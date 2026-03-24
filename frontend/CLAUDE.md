@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Tarot Divinations is a Next.js 15 application that provides tarot card readings and significator calculations. The app features an interactive tarot oracle, card shuffling animations, and personalized significator analysis based on birth dates using the Taroscopic System.
+Tarot Divinations is a Next.js 16.1 application that provides tarot card readings and significator calculations. The app features an interactive tarot oracle, card shuffling animations, and personalized significator analysis based on birth dates using the Taroscopic System.
 
 ## Development Commands
 
@@ -33,10 +33,6 @@ npm run lint
 - Use ES6 fat arrow functions
 - Use ES6 destructuring
 
-### State Management
-- Client-side card selection and shuffling state
-- Cryptographically secure random number generation for card draws
-- React state for reading flow (shuffle → select → reveal)
 
 ### Styling
 - Tailwind CSS 4 with custom configuration
@@ -45,28 +41,8 @@ npm run lint
 - Golden accent color (#d4af37)
 - Animated starfield backgrounds
 - Custom CSS animations in `tarot.css`
+- **All new code must be responsive** — use Tailwind breakpoint utilities (`sm:`, `md:`, `lg:`) for mobile and tablet layouts
 
-## Key Components
-
-### Pages
-- `/` - Landing page with navigation to all features
-- `/reading` - Interactive tarot reading oracle
-- `/significators` - Birth date-based personal card calculator
-- `/chart` - Tarot chart explanation and rotating card display
-- `/guide` - How to use the oracle guide
-
-### Core Components
-- `TarotGame.tsx` - Main reading interface with card selection
-- `ShuffledDeck.tsx` / `ShuffledDeckMobile.tsx` - Card spread displays
-- `TarotCard.tsx` - Individual card display with meanings
-- `TarotLanding.tsx` - Home page portal design
-- `TarotPageLayout.tsx` - Shared mystical page wrapper
-
-### Utilities
-- `crypto-random.ts` - Secure random for card shuffling
-- `cards.ts` - Full 78-card deck data (Major + Minor Arcana)
-- `significators.ts` - Significator calculation logic
-- `zodiac.ts` / `decanates.ts` - Astrological mappings
 
 ## Docker Deployment
 
@@ -85,7 +61,8 @@ Follow Next.js standards for using server or client components. Most tarot compo
 
 ## Next.js Data Fetching
 
-Follow Next.js 15+ data fetching patterns:
+Follow Next.js 15+ data fetching patterns
+Use nextjs server actions for http calls
 
 ### Client Components
 ```typescript
@@ -109,6 +86,33 @@ const stars = useMemo(() =>
     left: `${(i * 7.3 + 13) % 100}%`,
     top: `${(i * 11.7 + 23) % 100}%`,
   })), [])
+```
+
+## Authentication Architecture
+
+### Overview
+JWT auth via external FastAPI backend (`FASTAPI_URL` env var). Tokens stored in httpOnly cookies, never exposed to client JS.
+
+### Key Files
+- `src/lib/api-client.ts` — `authenticatedFetch()` (silent 401 refresh) + `publicFetch()` for all FastAPI calls
+- `src/proxy.ts` — Route guard for `/user/*` (except login/register)
+- `src/app/providers/auth-provider.tsx` — `AuthProvider` + `useAuth()` hook
+- `src/app/user/layout.tsx` — Server layout that fetches user and passes to AuthProvider
+- `src/types/auth.ts` — User, token, and form state interfaces
+- `src/lib/validation/auth-schemas.ts` — Zod schemas for login/register
+
+### Patterns
+- All FastAPI calls go through `authenticatedFetch()` or `publicFetch()` — never raw `fetch`
+- Auth pages use `useActionState` with colocated `actions.ts` server actions
+- `AuthProvider` receives `initialUser` prop from server layout (no client-side fetch)
+- Zod validation in server actions before any API call
+
+### Adding Authenticated API Calls
+```typescript
+// In a server action or server component:
+import { authenticatedFetch } from '@/lib/api-client';
+const result = await authenticatedFetch<MyType>('/api/v1/endpoint', { method: 'POST', body: JSON.stringify(data) });
+if (!result.ok) { /* handle error */ }
 ```
 
 ## Project Memory System
@@ -145,3 +149,5 @@ This project maintains institutional knowledge in `docs/project_notes/` for cons
 **When user requests memory updates:**
 - Update the appropriate memory file (bugs, decisions, key_facts, or issues)
 - Follow the established format and style (bullet lists, dates, concise entries)
+
+

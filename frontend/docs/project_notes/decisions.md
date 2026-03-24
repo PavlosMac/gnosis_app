@@ -52,5 +52,19 @@ Each decision should include:
 - Slightly more complex implementation
 - Users can trust the randomness of readings
 
+### ADR-003: Responsive Design with Tailwind Breakpoints (2026-03-22)
+
+**Context:**
+- App must work well on mobile, tablet, and desktop
+- Tailwind CSS 4 is the established styling framework
+
+**Decision:**
+- All new code must be responsive using Tailwind breakpoint utility classes (`sm:`, `md:`, `lg:`)
+- Mobile-first approach: base styles target mobile, breakpoints add tablet/desktop overrides
+
+**Consequences:**
+- Consistent responsive behavior across all new pages and components
+- No separate CSS media queries needed — Tailwind handles it
+
 <!-- Add new decisions below this line -->
 
