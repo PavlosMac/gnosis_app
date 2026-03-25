@@ -1,14 +1,23 @@
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Query, Request
 
 from src.auth.commands.register_user import RegisterUserCommand
+from src.auth.queries.list_users import ListUsersQuery
 from src.auth.schemas import (
+    AdminUserResponse,
     LoginRequest,
     RefreshTokenRequest,
     RegisterRequest,
     TokenResponse,
     UserResponse,
 )
-from src.core.dependencies import AuthServiceDep, CurrentUser, CurrentUserId, MediatorDep
+from src.core.dependencies import (
+    AuthServiceDep,
+    CurrentUser,
+    CurrentUserId,
+    IsSuperAdmin,
+    MediatorDep,
+)
+from src.core.pagination import PaginatedResponse
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -50,3 +59,19 @@ async def logout(
 @router.get("/me", response_model=UserResponse)
 async def get_me(current_user: CurrentUser) -> UserResponse:
     return UserResponse.model_validate(current_user.model_dump(by_alias=True))
+
+
+@router.get("/users", response_model=PaginatedResponse[AdminUserResponse])
+async def list_users(
+    _admin: IsSuperAdmin,
+    mediator: MediatorDep,
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=20, ge=1, le=100),
+) -> PaginatedResponse[AdminUserResponse]:
+    result = await mediator.query(ListUsersQuery(page=page, page_size=page_size))
+    return PaginatedResponse[AdminUserResponse](
+        items=[AdminUserResponse.model_validate(u.model_dump(by_alias=True)) for u in result.items],
+        total=result.total,
+        page=result.page,
+        page_size=result.page_size,
+    )

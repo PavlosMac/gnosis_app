@@ -80,14 +80,15 @@ class AuthService:
 
     @staticmethod
     def _create_tokens(user_id: str) -> TokenResponse:
+        access_token, access_expires = create_access_token(user_id)
+        refresh_token, refresh_expires = create_refresh_token(user_id)
         return TokenResponse(
-            access_token=create_access_token(user_id),
-            refresh_token=create_refresh_token(user_id),
+            access_token=access_token,
+            refresh_token=refresh_token,
+            access_token_expires_at=int(access_expires.timestamp()),
+            refresh_token_expires_at=int(refresh_expires.timestamp()),
         )
 
     @staticmethod
     def create_tokens_for_user(user_id: str) -> TokenResponse:
-        return TokenResponse(
-            access_token=create_access_token(user_id),
-            refresh_token=create_refresh_token(user_id),
-        )
+        return AuthService._create_tokens(user_id)

@@ -21,6 +21,4 @@ class TokenBlacklistRepository:
 
     async def ensure_indexes(self) -> None:
         await self._collection.create_index("jti", unique=True)
-        await self._collection.create_index(
-            [("expires_at", ASCENDING)], expireAfterSeconds=0
-        )
+        await self._collection.create_index([("expires_at", ASCENDING)], expireAfterSeconds=0)

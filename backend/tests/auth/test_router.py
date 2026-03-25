@@ -167,3 +167,58 @@ async def test_logout(client):
 async def test_logout_unauthenticated(client):
     response = await client.post("/api/v1/auth/logout")
     assert response.status_code == 401
+
+
+# --- GET /api/v1/auth/users (superadmin) ---
+
+
+async def test_list_users_unauthenticated(client):
+    response = await client.get("/api/v1/auth/users")
+    assert response.status_code == 401
+
+
+async def test_list_users_forbidden_for_regular_user(client):
+    reg = await client.post(
+        "/api/v1/auth/register",
+        json={"email": "regular@example.com", "password": "securepassword123"},
+    )
+    token = reg.json()["access_token"]
+    response = await client.get(
+        "/api/v1/auth/users",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert response.status_code == 403
+
+
+async def test_list_users_as_superadmin(client, superadmin_token):
+    response = await client.get(
+        "/api/v1/auth/users",
+        headers={"Authorization": f"Bearer {superadmin_token}"},
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert "items" in data
+    assert "total" in data
+    assert "page" in data
+    assert "page_size" in data
+    assert data["total"] >= 1
+    assert data["page"] == 1
+
+
+async def test_list_users_pagination_params(client, superadmin_token):
+    # Register additional users
+    for i in range(3):
+        await client.post(
+            "/api/v1/auth/register",
+            json={"email": f"pag{i}@example.com", "password": "securepassword123"},
+        )
+
+    response = await client.get(
+        "/api/v1/auth/users?page=1&page_size=2",
+        headers={"Authorization": f"Bearer {superadmin_token}"},
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data["items"]) == 2
+    assert data["page_size"] == 2
+    assert data["total"] == 4  # 3 + superadmin

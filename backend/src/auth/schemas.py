@@ -20,6 +20,8 @@ class LoginRequest(AppSchema):
 class TokenResponse(AppSchema):
     access_token: str
     refresh_token: str
+    access_token_expires_at: int
+    refresh_token_expires_at: int
     token_type: str = "bearer"
 
 
@@ -32,5 +34,15 @@ class UserResponse(AppSchema):
     email: str
     display_name: str | None = None
     credits: int = 0
+    created_at: datetime
+    updated_at: datetime
+
+
+class AdminUserResponse(AppSchema):
+    id: PyObjectId = Field(alias="_id")
+    email: str
+    display_name: str | None = None
+    credits: int = 0
+    is_superadmin: bool = False
     created_at: datetime
     updated_at: datetime

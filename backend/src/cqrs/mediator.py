@@ -14,14 +14,10 @@ class Mediator:
         self._command_handlers: dict[type[BaseCommand], CommandHandler] = {}
         self._query_handlers: dict[type[BaseQuery], QueryHandler] = {}
 
-    def register_command(
-        self, command_type: type[BaseCommand], handler: CommandHandler
-    ) -> None:
+    def register_command(self, command_type: type[BaseCommand], handler: CommandHandler) -> None:
         self._command_handlers[command_type] = handler
 
-    def register_query(
-        self, query_type: type[BaseQuery], handler: QueryHandler
-    ) -> None:
+    def register_query(self, query_type: type[BaseQuery], handler: QueryHandler) -> None:
         self._query_handlers[query_type] = handler
 
     async def send(self, command: BaseCommand) -> Any:

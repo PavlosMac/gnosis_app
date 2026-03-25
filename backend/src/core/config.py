@@ -17,8 +17,8 @@ class Settings(BaseSettings):
 
     # JWT
     jwt_secret_key: str = "change-me-to-a-random-secret"
-    jwt_access_token_expire_minutes: int = 30
-    jwt_refresh_token_expire_days: int = 7
+    jwt_access_token_expire_seconds: int = 3600
+    jwt_refresh_token_expire_days: int = 30
     jwt_algorithm: str = "HS256"
 
     # Logging

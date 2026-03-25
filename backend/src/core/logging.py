@@ -18,7 +18,7 @@ def configure_logging() -> None:
     if settings.log_json:
         renderer: structlog.types.Processor = structlog.processors.JSONRenderer()
     else:
-        renderer = structlog.dev.ConsoleRenderer()
+        renderer = structlog.dev.ConsoleRenderer(pad_level=False)
 
     structlog.configure(
         processors=[
@@ -54,3 +54,7 @@ def configure_logging() -> None:
     access_logger = logging.getLogger("uvicorn.access")
     access_logger.handlers.clear()
     access_logger.propagate = False
+
+    # Silence all pymongo/motor logs.
+    logging.getLogger("pymongo").setLevel(logging.CRITICAL)
+    logging.getLogger("motor").setLevel(logging.CRITICAL)

@@ -11,6 +11,7 @@ class User:
         password_hash: str,
         display_name: str | None = None,
         credits: int = 0,
+        is_superadmin: bool = False,
         stripe_customer_id: str | None = None,
         id: str | None = None,
         created_at: datetime | None = None,
@@ -21,6 +22,7 @@ class User:
         self.password_hash = password_hash
         self.display_name = display_name
         self.credits = credits
+        self.is_superadmin = is_superadmin
         self.stripe_customer_id = stripe_customer_id
         self.created_at = created_at or datetime.now(UTC)
         self.updated_at = updated_at or datetime.now(UTC)
@@ -30,6 +32,7 @@ class User:
             "email": self.email,
             "password_hash": self.password_hash,
             "credits": self.credits,
+            "is_superadmin": self.is_superadmin,
             "created_at": self.created_at,
             "updated_at": self.updated_at,
         }
@@ -49,6 +52,7 @@ class User:
             password_hash=doc["password_hash"],
             display_name=doc.get("display_name"),
             credits=doc.get("credits", 0),
+            is_superadmin=doc.get("is_superadmin", False),
             stripe_customer_id=doc.get("stripe_customer_id"),
             created_at=doc.get("created_at"),
             updated_at=doc.get("updated_at"),

@@ -9,7 +9,7 @@ from src.auth.repository import UserReadRepository
 from src.auth.service import AuthService
 from src.auth.token_blacklist_repository import TokenBlacklistRepository
 from src.core.config import settings
-from src.core.exceptions import UnauthorizedError
+from src.core.exceptions import ForbiddenError, UnauthorizedError
 from src.cqrs.mediator import Mediator
 from src.database.mongodb import get_database
 
@@ -32,9 +32,7 @@ async def get_current_user_id(request: Request) -> str:
         raise UnauthorizedError()
     token = auth_header.removeprefix("Bearer ")
     try:
-        payload = jwt.decode(
-            token, settings.jwt_secret_key, algorithms=[settings.jwt_algorithm]
-        )
+        payload = jwt.decode(token, settings.jwt_secret_key, algorithms=[settings.jwt_algorithm])
         if payload.get("type") != "access":
             raise UnauthorizedError("Invalid token type")
         user_id: str | None = payload.get("sub")
@@ -52,9 +50,7 @@ async def get_current_user_id(request: Request) -> str:
         raise UnauthorizedError()
 
 
-def get_auth_service(
-    db: "DB", blacklist_repo: "TokenBlacklistRepoDep"
-) -> AuthService:
+def get_auth_service(db: "DB", blacklist_repo: "TokenBlacklistRepoDep") -> AuthService:
     return AuthService(UserReadRepository(db), blacklist_repo)
 
 
@@ -65,11 +61,16 @@ async def get_current_user(
     return await mediator.query(GetUserByIdQuery(user_id=user_id))
 
 
+async def get_current_superadmin(current_user: "CurrentUser") -> UserReadModel:
+    if not current_user.is_superadmin:
+        raise ForbiddenError("Superadmin access required")
+    return current_user
+
+
 CurrentUserId = Annotated[str, Depends(get_current_user_id)]
 DB = Annotated[object, Depends(get_db)]
 MediatorDep = Annotated[Mediator, Depends(get_mediator)]
-TokenBlacklistRepoDep = Annotated[
-    TokenBlacklistRepository, Depends(get_token_blacklist_repo)
-]
+TokenBlacklistRepoDep = Annotated[TokenBlacklistRepository, Depends(get_token_blacklist_repo)]
 AuthServiceDep = Annotated[AuthService, Depends(get_auth_service)]
 CurrentUser = Annotated[UserReadModel, Depends(get_current_user)]
+IsSuperAdmin = Annotated[UserReadModel, Depends(get_current_superadmin)]

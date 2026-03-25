@@ -6,6 +6,7 @@ from fastapi import FastAPI
 from src.auth.commands.register_user import RegisterUserCommand, RegisterUserHandler
 from src.auth.queries.get_user_by_email import GetUserByEmailHandler, GetUserByEmailQuery
 from src.auth.queries.get_user_by_id import GetUserByIdHandler, GetUserByIdQuery
+from src.auth.queries.list_users import ListUsersHandler, ListUsersQuery
 from src.auth.repository import UserReadRepository, UserWriteRepository
 from src.auth.router import router as auth_router
 from src.auth.token_blacklist_repository import TokenBlacklistRepository
@@ -33,6 +34,7 @@ def _wire_mediator(mediator: Mediator) -> None:
     )
     mediator.register_query(GetUserByIdQuery, GetUserByIdHandler(user_read_repo))
     mediator.register_query(GetUserByEmailQuery, GetUserByEmailHandler(user_read_repo))
+    mediator.register_query(ListUsersQuery, ListUsersHandler(user_read_repo))
 
 
 async def _ensure_indexes() -> None:

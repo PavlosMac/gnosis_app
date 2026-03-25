@@ -11,9 +11,8 @@ class UserWriteRepository(BaseWriteRepository):
 
     async def ensure_indexes(self) -> None:
         await self._collection.create_index("email", unique=True)
-        await self._collection.create_index(
-            "stripe_customer_id", unique=True, sparse=True
-        )
+        await self._collection.create_index("stripe_customer_id", unique=True, sparse=True)
+        await self._collection.create_index([("created_at", -1)])
 
 
 class UserReadRepository(BaseReadRepository):

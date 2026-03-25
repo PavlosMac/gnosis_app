@@ -18,9 +18,7 @@ class BaseWriteRepository(ABC):
         return str(result.inserted_id)
 
     async def update(self, id: str, update: dict[str, Any]) -> bool:
-        result = await self._collection.update_one(
-            {"_id": ObjectId(id)}, {"$set": update}
-        )
+        result = await self._collection.update_one({"_id": ObjectId(id)}, {"$set": update})
         return result.modified_count > 0
 
     async def delete(self, id: str) -> bool:

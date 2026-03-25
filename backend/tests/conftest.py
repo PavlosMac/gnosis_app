@@ -22,6 +22,7 @@ async def app(mock_db):
     from src.auth.commands.register_user import RegisterUserCommand, RegisterUserHandler
     from src.auth.queries.get_user_by_email import GetUserByEmailHandler, GetUserByEmailQuery
     from src.auth.queries.get_user_by_id import GetUserByIdHandler, GetUserByIdQuery
+    from src.auth.queries.list_users import ListUsersHandler, ListUsersQuery
     from src.auth.repository import UserReadRepository, UserWriteRepository
     from src.auth.token_blacklist_repository import TokenBlacklistRepository
     from src.cqrs.mediator import Mediator
@@ -36,10 +37,29 @@ async def app(mock_db):
     )
     mediator.register_query(GetUserByIdQuery, GetUserByIdHandler(user_read_repo))
     mediator.register_query(GetUserByEmailQuery, GetUserByEmailHandler(user_read_repo))
+    mediator.register_query(ListUsersQuery, ListUsersHandler(user_read_repo))
 
     app.state.mediator = mediator
     app.state.token_blacklist_repo = TokenBlacklistRepository(mock_db)
     return app
+
+
+@pytest.fixture
+async def superadmin_token(client, mock_db):
+    reg = await client.post(
+        "/api/v1/auth/register",
+        json={"email": "admin@example.com", "password": "securepassword123"},
+    )
+    assert reg.status_code == 201, f"Registration failed: {reg.text}"
+    await mock_db["users"].update_one(
+        {"email": "admin@example.com"}, {"$set": {"is_superadmin": True}}
+    )
+    login = await client.post(
+        "/api/v1/auth/login",
+        json={"email": "admin@example.com", "password": "securepassword123"},
+    )
+    assert login.status_code == 200, f"Login failed: {login.text}"
+    return login.json()["access_token"]
 
 
 @pytest.fixture
