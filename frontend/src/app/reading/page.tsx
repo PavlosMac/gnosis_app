@@ -1,9 +1,9 @@
 "use client";
-import TarotGame from "@/app/components/TarotGame";
 import Link from "next/link";
 import { Cinzel, Crimson_Pro } from "next/font/google";
 import { useMemo } from "react";
 import "../tarot.css";
+import TarotGame from "@/components/TarotGame";
 
 const cinzel = Cinzel({
   subsets: ["latin"],

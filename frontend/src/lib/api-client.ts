@@ -1,9 +1,6 @@
 import { cookies } from "next/headers";
 import type { ApiResult } from "@/types/api";
-
-const ACCESS_TOKEN_MAX_AGE = 60 * 15; // 15 minutes
-const REFRESH_TOKEN_MAX_AGE = 60 * 60 * 24 * 7; // 7 days
-const PROACTIVE_REFRESH_THRESHOLD = 60 * 2; // refresh when < 2 minutes remain
+import type { TokenResponse } from "@/types/auth";
 
 const FASTAPI_URL = () => {
   const url = process.env.FASTAPI_URL;
@@ -11,36 +8,37 @@ const FASTAPI_URL = () => {
   return url;
 };
 
-const setAuthCookies = async (accessToken: string, refreshToken: string) => {
+const setAuthCookies = async (tokens: TokenResponse) => {
   const cookieStore = await cookies();
   const isProduction = process.env.NODE_ENV === "production";
-  const expiresAt = Math.floor(Date.now() / 1000) + ACCESS_TOKEN_MAX_AGE;
+  const nowSeconds = Math.floor(Date.now() / 1000);
+  const accessMaxAge = Math.max(tokens.access_token_expires_at - nowSeconds, 0);
+  const refreshMaxAge = Math.max(tokens.refresh_token_expires_at - nowSeconds, 0);
 
-  console.log("[AUTH:COOKIES] Setting auth cookies", { isProduction });
+  console.log("[AUTH:COOKIES] Setting auth cookies", { isProduction, accessMaxAge, refreshMaxAge });
 
-  cookieStore.set("access_token", accessToken, {
+  cookieStore.set("access_token", tokens.access_token, {
     httpOnly: true,
     secure: isProduction,
     sameSite: "lax",
     path: "/",
-    maxAge: ACCESS_TOKEN_MAX_AGE,
+    maxAge: accessMaxAge,
   });
 
-  cookieStore.set("refresh_token", refreshToken, {
+  cookieStore.set("refresh_token", tokens.refresh_token, {
     httpOnly: true,
     secure: isProduction,
     sameSite: "lax",
     path: "/",
-    maxAge: REFRESH_TOKEN_MAX_AGE,
+    maxAge: refreshMaxAge,
   });
 
-  // Non-sensitive timestamp for proactive refresh checks
-  cookieStore.set("token_expires_at", String(expiresAt), {
+  cookieStore.set("token_expires_at", String(tokens.access_token_expires_at), {
     httpOnly: true,
     secure: isProduction,
     sameSite: "lax",
     path: "/",
-    maxAge: ACCESS_TOKEN_MAX_AGE,
+    maxAge: accessMaxAge,
   });
 
   console.log("[AUTH:COOKIES] Auth cookies set successfully");
@@ -55,74 +53,11 @@ const clearAuthCookies = async () => {
   console.log("[AUTH:COOKIES] Auth cookies cleared");
 };
 
-const isTokenExpiringSoon = async (): Promise<boolean> => {
-  const cookieStore = await cookies();
-  const expiresAt = cookieStore.get("token_expires_at")?.value;
-  if (!expiresAt) return true;
-
-  const nowSeconds = Math.floor(Date.now() / 1000);
-  return nowSeconds >= Number(expiresAt) - PROACTIVE_REFRESH_THRESHOLD;
-};
-
-const tryRefresh = async (): Promise<boolean> => {
-  console.log("[AUTH:REFRESH] Attempting token refresh");
-  const cookieStore = await cookies();
-  const refreshToken = cookieStore.get("refresh_token")?.value;
-
-  if (!refreshToken) {
-    console.log("[AUTH:REFRESH] No refresh token found — aborting");
-    return false;
-  }
-
-  const res = await fetch(`${FASTAPI_URL()}/api/v1/auth/refresh`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ refresh_token: refreshToken }),
-  });
-
-  if (!res.ok) {
-    console.log("[AUTH:REFRESH] Refresh failed", { status: res.status });
-    return false;
-  }
-
-  const data = await res.json();
-
-  if (!data?.access_token || !data?.refresh_token) {
-    console.log("[AUTH:REFRESH] Malformed refresh response — missing tokens");
-    return false;
-  }
-
-  await setAuthCookies(data.access_token, data.refresh_token);
-  console.log("[AUTH:REFRESH] Token refresh successful");
-  return true;
-};
-
+// Token refresh is handled exclusively by the proxy (writable context).
+// This function only reads whatever token is currently in cookies.
 const getValidAccessToken = async (): Promise<string | null> => {
   const cookieStore = await cookies();
-  let accessToken: string | undefined = cookieStore.get("access_token")?.value;
-
-  // Proactive refresh: token exists but is about to expire
-  if (accessToken && (await isTokenExpiringSoon())) {
-    console.log("[AUTH:FETCH] Token expiring soon — proactive refresh");
-    const refreshed = await tryRefresh();
-    if (refreshed) {
-      const newCookieStore = await cookies();
-      accessToken = newCookieStore.get("access_token")?.value;
-    }
-    // If proactive refresh fails, continue with current token — it may still be valid
-  }
-
-  // No access token at all — attempt refresh (browser may have expired the cookie)
-  if (!accessToken) {
-    console.log("[AUTH:FETCH] No access token — attempting refresh");
-    const refreshed = await tryRefresh();
-    if (!refreshed) return null;
-
-    const newCookieStore = await cookies();
-    accessToken = newCookieStore.get("access_token")?.value;
-  }
-
-  return accessToken ?? null;
+  return cookieStore.get("access_token")?.value ?? null;
 };
 
 export const authenticatedFetch = async <T>(
@@ -135,7 +70,6 @@ export const authenticatedFetch = async <T>(
 
   if (!accessToken) {
     console.log("[AUTH:FETCH] No valid access token — returning 401");
-    await clearAuthCookies();
     return { ok: false, status: 401, message: "Not authenticated" };
   }
 
@@ -149,25 +83,13 @@ export const authenticatedFetch = async <T>(
       },
     });
 
-  let res = await makeRequest(accessToken);
+  const res = await makeRequest(accessToken);
 
-  // Silent refresh on 401 (token may have been revoked server-side)
+  // 401 means token is invalid — don't try to refresh here (render context can't write cookies).
+  // The proxy will handle refresh/cleanup on the next navigation.
   if (res.status === 401) {
-    console.log("[AUTH:FETCH] Got 401 — attempting silent refresh for", endpoint);
-    const refreshed = await tryRefresh();
-    if (!refreshed) {
-      console.log("[AUTH:FETCH] Silent refresh failed — clearing cookies");
-      await clearAuthCookies();
-      return { ok: false, status: 401, message: "Session expired. Please log in again." };
-    }
-
-    const newCookieStore = await cookies();
-    const newToken = newCookieStore.get("access_token")?.value;
-    if (!newToken) {
-      return { ok: false, status: 401, message: "Session expired. Please log in again." };
-    }
-
-    res = await makeRequest(newToken);
+    console.log("[AUTH:FETCH] Got 401 for", endpoint);
+    return { ok: false, status: 401, message: "Session expired. Please log in again." };
   }
 
   if (!res.ok) {

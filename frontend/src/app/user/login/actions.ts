@@ -36,7 +36,7 @@ export const login = async (
   }
 
   console.log("[AUTH:LOGIN] Login successful — setting cookies");
-  await setAuthCookies(result.data.access_token, result.data.refresh_token);
+  await setAuthCookies(result.data);
 
   redirect("/user/profile");
 };

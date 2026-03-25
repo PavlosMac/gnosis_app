@@ -1,17 +1,17 @@
-import { TarotCardData } from "../models";
-import { zodiacSigns } from "./zodiac";
-import { decanatesByMonth } from "./decanates";
+import { TarotCardData } from "@/types/models";
+import { zodiacSigns } from "@/lib/zodiac";
+import { decanatesByMonth } from "@/lib/decanates";
 import {
   MAJOR_ARCANA_THRESHOLD,
   SINGLE_DIGIT_MAX,
   FOOL_INDEX,
   FOOL_ROOT,
-} from "../constants";
+} from "@/constants";
 import {
   getCardByIndex,
   findCardByName,
   getMajorArcana,
-} from "../services/cardLookup";
+} from "@/services/cardLookup";
 
 /**
  * Reduce a number to Major Arcana range (22 or less)

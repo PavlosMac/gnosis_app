@@ -7,7 +7,11 @@
 --exclude=*.min.js
 --exclude=venv
 --exclude=.next
+--exclude=.claude
 
 # Include line numbers
 --fields=+n
+
+# Only index project-relevant languages
+--languages=TypeScript,JavaScript
 

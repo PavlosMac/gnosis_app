@@ -43,7 +43,7 @@ export const register = async (
   }
 
   console.log("[AUTH:REGISTER] Registration successful — setting cookies");
-  await setAuthCookies(result.data.access_token, result.data.refresh_token);
+  await setAuthCookies(result.data);
 
   redirect("/user/profile");
 };

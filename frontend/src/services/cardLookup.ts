@@ -1,6 +1,6 @@
-import { TAROT_DECK } from "../utils/cards";
-import { TarotCardData } from "../models";
-import { MAJOR_ARCANA_MAX_INDEX } from "../constants";
+import { TAROT_DECK } from "@/lib/cards";
+import { TarotCardData } from "@/types/models";
+import { MAJOR_ARCANA_MAX_INDEX } from "@/constants";
 
 // Custom error for card lookup failures
 export class CardNotFoundError extends Error {

@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import Link from "next/link";
 import TarotCard from "./TarotCard";
-import { TAROT_DECK, TAROT_MAP } from "../utils/cards";
+import { TAROT_DECK, TAROT_MAP } from "@/lib/cards";
 
 const REFRESH_INTERVAL = 30000; // 30 seconds
 

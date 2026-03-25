@@ -1,12 +1,12 @@
 
 "use client";
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import Reading from "@/app/components/Reading";
-import ShuffledDeck from "@/app/components/ShuffledDeck";
-import ShuffledDeckMobile from "@/app/components/ShuffledDeckMobile";
-import ShuffleAnimation from "@/app/components/ShuffleAnimation";
-import { TarotCardData } from "../models";
+import Reading from "@/components/Reading";
+import ShuffledDeck from "@/components/ShuffledDeck";
+import ShuffledDeckMobile from "@/components/ShuffledDeckMobile";
+import ShuffleAnimation from "@/components/ShuffleAnimation";
 import readingsConfig from "@/lib/readings-config.json";
+import { TarotCardData } from "@/types/models";
 
 // Hook to detect mobile screen
 const useIsMobile = () => {

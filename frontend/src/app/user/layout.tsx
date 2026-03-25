@@ -1,4 +1,4 @@
-import { getCurrentUser } from "@/app/user/profile/actions";
+import { getCurrentUser } from "@/lib/session";
 import { AuthProvider } from "@/app/providers/auth-provider";
 
 interface UserLayoutProps {

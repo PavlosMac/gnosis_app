@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
-import TarotPageLayout from "@/app/components/TarotPageLayout";
-import { getCurrentUser } from "./actions";
-import LogoutButton from "./logout-button";
+import TarotPageLayout from "@/components/TarotPageLayout";
+import { getCurrentUser } from "@/lib/session";
+import LogoutButton from "@/components/LogoutButton";
 
 const ProfileRow = ({
   label,

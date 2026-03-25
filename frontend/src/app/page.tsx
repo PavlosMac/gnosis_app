@@ -1,5 +1,5 @@
 "use client";
-import TarotLanding from "@/app/components/TarotLanding";
+import TarotLanding from "@/components/TarotLanding";
 import { Cinzel, Crimson_Pro } from "next/font/google";
 import { useMemo } from "react";
 import "./tarot.css";

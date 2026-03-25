@@ -1,6 +1,6 @@
 import React from "react";
 import TarotCard from "./TarotCard";
-import { TarotCardData } from "../models";
+import { TarotCardData } from "@/types/models";
 
 interface SelectedCard extends TarotCardData {
   idx: number;

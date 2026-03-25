@@ -1,4 +1,4 @@
-import { TarotCardData } from "../models";
+import { TarotCardData } from "@/types/models";
 
 export const TAROT_DECK: TarotCardData[] = [
   // Major Arcana

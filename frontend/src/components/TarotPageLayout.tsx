@@ -2,7 +2,7 @@
 import React, { useMemo } from "react";
 import Link from "next/link";
 import { Cinzel, Crimson_Pro } from "next/font/google";
-import "../tarot.css";
+import "@/app/tarot.css";
 
 // Shared font instances - prevents re-instantiation across pages
 const cinzel = Cinzel({

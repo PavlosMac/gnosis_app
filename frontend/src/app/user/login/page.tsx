@@ -2,8 +2,8 @@
 
 import { useActionState } from "react";
 import Link from "next/link";
-import TarotPageLayout from "@/app/components/TarotPageLayout";
-import AuthField from "@/app/components/AuthField";
+import TarotPageLayout from "@/components/TarotPageLayout";
+import AuthField from "@/components/AuthField";
 import { login } from "./actions";
 import type { LoginFormState } from "@/types/auth";
 

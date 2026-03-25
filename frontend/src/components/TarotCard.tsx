@@ -1,4 +1,4 @@
-// import { TarotCardData } from "@/app/models";
+// import { TarotCardData } from "@/types/models";
 // import Image from "next/image";
 // import React from "react";
 
@@ -31,7 +31,7 @@
 //   );
 // }
 
-import { TarotCardData } from "@/app/models";
+import { TarotCardData } from "@/types/models";
 import Image from "next/image";
 import React from "react";
 

@@ -1,11 +1,11 @@
 "use client";
 import { useState } from "react";
-import TarotCard from "@/app/components/TarotCard";
-import TarotPageLayout from "@/app/components/TarotPageLayout";
-import SignificatorSection from "@/app/components/SignificatorSection";
-import { calculateSignificators, SignificatorResult } from "@/app/utils/significators";
-import { parseAndValidateDate } from "@/app/utils/dateValidation";
-
+import TarotCard from "@/components/TarotCard";
+import TarotPageLayout from "@/components/TarotPageLayout";
+import SignificatorSection from "@/components/SignificatorSection";
+import { calculateSignificators, SignificatorResult } from "@/lib/significators";
+import { parseAndValidateDate } from "@/lib/dateValidation";
+  
 export default function SignificatorsPage() {
   const [day, setDay] = useState<string>("");
   const [month, setMonth] = useState<string>("");

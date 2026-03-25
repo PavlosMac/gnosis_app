@@ -13,7 +13,7 @@ export const registerSchema = z
       .min(8, "Password must be at least 8 characters")
       .max(128, "Password must be at most 128 characters"),
     confirmPassword: z.string(),
-    displayName: z.string().max(100, "Display name must be at most 100 characters").optional(),
+    displayName: z.string().trim().min(1, "Display name cannot be blank").max(100, "Display name must be at most 100 characters").optional(),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords do not match",

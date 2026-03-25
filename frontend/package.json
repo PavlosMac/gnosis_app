@@ -6,7 +6,8 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "code-index": "./scripts/generate-code-index.sh"
   },
   "dependencies": {
     "framer-motion": "^12.6.2",

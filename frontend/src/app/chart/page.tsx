@@ -1,5 +1,5 @@
 "use client";
-import TarotChart from "@/app/components/TarotChart";
+import TarotChart from "@/components/TarotChart";
 import Link from "next/link";
 import { Cinzel, Crimson_Pro } from "next/font/google";
 import { useMemo } from "react";
