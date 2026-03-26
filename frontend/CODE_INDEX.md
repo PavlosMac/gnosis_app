@@ -104,6 +104,7 @@
 
 ### src/app/superadmin/page.tsx
 - `SuperadminPage` — component *default*
+- `PAGE_SIZE` — constant
 
 ### src/app/user/layout.tsx
 - `UserLayout` — component *default*
@@ -224,7 +225,10 @@
 - `LoginFormState` — interface
 - `RegisterFormState` — interface
 - `AuthContextValue` — interface
+- `UserResponse` — interface
+- `PaginatedResponse` — interface
 - `mapMeResponseToUser` — function
+- `mapUserResponseToUser` — function
 
 ### src/types/models.ts
 - `TarotCardData` — interface

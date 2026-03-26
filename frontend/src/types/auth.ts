@@ -3,6 +3,7 @@ export interface User {
   email: string;
   displayName: string | null;
   credits: number;
+  isSuperadmin: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -20,6 +21,7 @@ export interface MeResponse {
   email: string;
   display_name: string | null;
   credits: number;
+  is_superadmin: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -38,11 +40,39 @@ export interface AuthContextValue {
   clearUser: () => void;
 }
 
+export interface UserResponse {
+  id: string;
+  email: string;
+  display_name: string | null;
+  credits: number;
+  is_superadmin: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PaginatedResponse<T> {
+  items: T[];
+  total: number;
+  page: number;
+  page_size: number;
+}
+
 export const mapMeResponseToUser = (me: MeResponse): User => ({
   id: me._id,
   email: me.email,
   displayName: me.display_name,
   credits: me.credits,
+  isSuperadmin: me.is_superadmin,
   createdAt: me.created_at,
   updatedAt: me.updated_at,
+});
+
+export const mapUserResponseToUser = (u: UserResponse): User => ({
+  id: u.id,
+  email: u.email,
+  displayName: u.display_name,
+  credits: u.credits,
+  isSuperadmin: u.is_superadmin,
+  createdAt: u.created_at,
+  updatedAt: u.updated_at,
 });

@@ -105,6 +105,7 @@ JWT auth via external FastAPI backend (`FASTAPI_URL` env var). Tokens stored in 
 - Auth pages use `useActionState` with colocated `actions.ts` server actions
 - `AuthProvider` receives `initialUser` prop from server layout (no client-side fetch)
 - Zod validation in server actions before any API call
+- **Server actions are not protected by layouts** — layouts only run for full page renders, not direct action calls. Any server action that requires a role (e.g. `isSuperadmin`) MUST call `getCurrentUser()` and check the role itself before touching the API.
 
 ### Adding Authenticated API Calls
 ```typescript
