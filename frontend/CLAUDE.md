@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Tarot Divinations is a Next.js 16.1 application that provides tarot card readings and significator calculations. The app features an interactive tarot oracle, card shuffling animations, and personalized significator analysis based on birth dates using the Taroscopic System.
+Tarot Divinations is a Next.js 16.1 application that provides tarot card readings and significator calculations. The app features an interactive tarot oracle, card shuffling animations, and personalized significator analysis based on birth dates using the Taroscopic System. Also features user sign up and login with JWT authentication via an external FastAPI backend.
 
 ## Development Commands
 
@@ -14,9 +14,6 @@ npm run dev
 
 # Build for production
 npm run build
-
-# Start production server
-npm start
 
 # Run linting
 npm run lint
@@ -29,6 +26,8 @@ npm run lint
 - Use functional components with TypeScript interfaces
 - Prefer composition over inheritance
 - Keep components small and focused
+- Use pure functions where possible
+- Make code deterministic when possible
 - Use ES6 syntax and features
 - Use ES6 fat arrow functions
 - Use ES6 destructuring
@@ -61,7 +60,7 @@ Follow Next.js standards for using server or client components. Most tarot compo
 
 ## Next.js Data Fetching
 
-Follow Next.js 15+ data fetching patterns
+Follow Next.js 16+ data fetching patterns
 Use nextjs server actions for http calls
 
 ### Client Components
