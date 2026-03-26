@@ -122,16 +122,6 @@ const nextConfig: NextConfig = {
           },
         ],
       },
-      {
-        // Cache HTML pages for 1 hour, revalidate in background
-        source: '/:path*',
-        headers: [
-          {
-            key: 'Cache-Control',
-            value: 'public, max-age=3600, stale-while-revalidate=86400',
-          },
-        ],
-      },
     ];
   },
 };

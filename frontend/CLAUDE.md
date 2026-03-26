@@ -94,7 +94,7 @@ JWT auth via external FastAPI backend (`FASTAPI_URL` env var). Tokens stored in 
 
 ### Key Files
 - `src/lib/api-client.ts` — `authenticatedFetch()` (silent 401 refresh) + `publicFetch()` for all FastAPI calls
-- `src/proxy.ts` — Route guard for `/user/*` (except login/register)
+- `src/proxy.ts` — Route guard (Next.js 16 renamed middleware → proxy; `src/proxy.ts` is the correct filename)
 - `src/app/providers/auth-provider.tsx` — `AuthProvider` + `useAuth()` hook
 - `src/app/user/layout.tsx` — Server layout that fetches user and passes to AuthProvider
 - `src/types/auth.ts` — User, token, and form state interfaces
