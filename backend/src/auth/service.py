@@ -2,14 +2,23 @@ from datetime import UTC, datetime
 
 import jwt
 
-from src.auth.exceptions import InvalidCredentialsError
 from src.auth.models import User
 from src.auth.repository import UserReadRepository
 from src.auth.schemas import TokenResponse
 from src.auth.token_blacklist_repository import TokenBlacklistRepository
 from src.core.config import settings
-from src.core.exceptions import UnauthorizedError
+from src.core.exceptions import ConflictError, UnauthorizedError
 from src.core.security import create_access_token, create_refresh_token, verify_password
+
+
+class EmailAlreadyExistsError(ConflictError):
+    def __init__(self) -> None:
+        super().__init__(detail="A user with this email already exists")
+
+
+class InvalidCredentialsError(UnauthorizedError):
+    def __init__(self) -> None:
+        super().__init__(detail="Invalid email or password")
 
 
 class AuthService:

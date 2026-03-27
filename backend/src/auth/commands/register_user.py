@@ -1,6 +1,6 @@
-from src.auth.exceptions import EmailAlreadyExistsError
 from src.auth.models import User
 from src.auth.repository import UserReadRepository, UserWriteRepository
+from src.auth.service import EmailAlreadyExistsError
 from src.core.security import hash_password
 from src.cqrs.commands import BaseCommand, CommandHandler
 

@@ -34,6 +34,7 @@ class UserResponse(AppSchema):
     email: str
     display_name: str | None = None
     credits: int = 0
+    is_superadmin: bool = False
     created_at: datetime
     updated_at: datetime
 
@@ -44,5 +45,16 @@ class AdminUserResponse(AppSchema):
     display_name: str | None = None
     credits: int = 0
     is_superadmin: bool = False
+    created_at: datetime
+    updated_at: datetime
+
+
+class UserReadModel(AppSchema):
+    id: PyObjectId = Field(alias="_id")
+    email: str
+    display_name: str | None = None
+    credits: int = 0
+    is_superadmin: bool = False
+    stripe_customer_id: str | None = None
     created_at: datetime
     updated_at: datetime

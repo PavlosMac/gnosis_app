@@ -1,8 +1,8 @@
 import pytest
 
 from src.auth.commands.register_user import RegisterUserCommand, RegisterUserHandler
-from src.auth.exceptions import EmailAlreadyExistsError
 from src.auth.repository import UserReadRepository, UserWriteRepository
+from src.auth.service import EmailAlreadyExistsError
 
 
 @pytest.mark.asyncio

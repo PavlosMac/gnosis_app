@@ -70,6 +70,15 @@ async def test_get_me(client):
     assert "_id" in data
 
 
+async def test_get_me_superadmin_returns_flag(client, superadmin_token):
+    response = await client.get(
+        "/api/v1/auth/me",
+        headers={"Authorization": f"Bearer {superadmin_token}"},
+    )
+    assert response.status_code == 200
+    assert response.json()["is_superadmin"] is True
+
+
 @pytest.mark.asyncio
 async def test_get_me_unauthenticated(client):
     response = await client.get("/api/v1/auth/me")
@@ -169,11 +178,11 @@ async def test_logout_unauthenticated(client):
     assert response.status_code == 401
 
 
-# --- GET /api/v1/auth/users (superadmin) ---
+# --- GET /api/v1/users (superadmin) ---
 
 
 async def test_list_users_unauthenticated(client):
-    response = await client.get("/api/v1/auth/users")
+    response = await client.get("/api/v1/users")
     assert response.status_code == 401
 
 
@@ -184,7 +193,7 @@ async def test_list_users_forbidden_for_regular_user(client):
     )
     token = reg.json()["access_token"]
     response = await client.get(
-        "/api/v1/auth/users",
+        "/api/v1/users",
         headers={"Authorization": f"Bearer {token}"},
     )
     assert response.status_code == 403
@@ -192,7 +201,7 @@ async def test_list_users_forbidden_for_regular_user(client):
 
 async def test_list_users_as_superadmin(client, superadmin_token):
     response = await client.get(
-        "/api/v1/auth/users",
+        "/api/v1/users",
         headers={"Authorization": f"Bearer {superadmin_token}"},
     )
     assert response.status_code == 200
@@ -214,7 +223,7 @@ async def test_list_users_pagination_params(client, superadmin_token):
         )
 
     response = await client.get(
-        "/api/v1/auth/users?page=1&page_size=2",
+        "/api/v1/users?page=1&page_size=2",
         headers={"Authorization": f"Bearer {superadmin_token}"},
     )
     assert response.status_code == 200

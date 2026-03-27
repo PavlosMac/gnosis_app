@@ -1,6 +1,6 @@
 from src.auth.commands.register_user import RegisterUserCommand, RegisterUserHandler
-from src.auth.queries.list_users import ListUsersHandler, ListUsersQuery
 from src.auth.repository import UserReadRepository, UserWriteRepository
+from src.users.queries.list_users import ListUsersHandler, ListUsersQuery
 
 
 async def test_list_users_empty(mock_db):
@@ -19,12 +19,8 @@ async def test_list_users_returns_all(mock_db):
     read_repo = UserReadRepository(mock_db)
     reg_handler = RegisterUserHandler(write_repo, read_repo)
 
-    await reg_handler.handle(
-        RegisterUserCommand(email="a@example.com", password="testpassword123")
-    )
-    await reg_handler.handle(
-        RegisterUserCommand(email="b@example.com", password="testpassword123")
-    )
+    await reg_handler.handle(RegisterUserCommand(email="a@example.com", password="testpassword123"))
+    await reg_handler.handle(RegisterUserCommand(email="b@example.com", password="testpassword123"))
 
     handler = ListUsersHandler(read_repo)
     result = await handler.handle(ListUsersQuery())

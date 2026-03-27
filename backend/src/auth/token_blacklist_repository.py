@@ -3,7 +3,7 @@ from datetime import datetime
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from pymongo import ASCENDING
 
-from src.auth.constants import TOKEN_BLACKLIST_COLLECTION
+from src.database.collections.constants import TOKEN_BLACKLIST_COLLECTION
 
 
 class TokenBlacklistRepository:

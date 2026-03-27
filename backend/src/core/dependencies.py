@@ -4,8 +4,8 @@ import jwt
 from fastapi import Depends, Request
 
 from src.auth.queries.get_user_by_id import GetUserByIdQuery
-from src.auth.read_models import UserReadModel
 from src.auth.repository import UserReadRepository
+from src.auth.schemas import UserReadModel
 from src.auth.service import AuthService
 from src.auth.token_blacklist_repository import TokenBlacklistRepository
 from src.core.config import settings

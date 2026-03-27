@@ -1,4 +1,4 @@
-.PHONY: dev test lint format install docker-up docker-down
+.PHONY: dev test lint format typecheck install docker-up docker-down
 
 install:
 	uv sync
@@ -11,6 +11,9 @@ test:
 
 lint:
 	uv run ruff check src/ tests/
+
+typecheck:
+	uv run pyright src/
 
 format:
 	uv run ruff format src/ tests/

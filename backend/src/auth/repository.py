@@ -1,7 +1,7 @@
 from typing import Any
 
-from src.auth.constants import USERS_COLLECTION
 from src.database.base_repository import BaseReadRepository, BaseWriteRepository
+from src.database.collections.constants import USERS_COLLECTION
 
 
 class UserWriteRepository(BaseWriteRepository):

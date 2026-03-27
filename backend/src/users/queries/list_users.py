@@ -1,7 +1,7 @@
 from pydantic import Field
 
-from src.auth.read_models import UserReadModel
 from src.auth.repository import UserReadRepository
+from src.auth.schemas import UserReadModel
 from src.core.pagination import PaginatedResponse
 from src.cqrs.queries import BaseQuery, QueryHandler
 
