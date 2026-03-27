@@ -1,0 +1,256 @@
+{
+  "_meta": {
+    "source": "Path of the Fool - Michael Tsarion (2013, Unslaved Media)",
+    "notes": "All 16 Court Royals sourced directly from text. Queen of Swords: OCR placed upright positive qualities inside the NEGATIVE block; restored to upright. Queen of Disks: OCR printed two NEGATIVE headers; second block is the REVERSED section."
+  },
+  "suits": {
+    "wands": [
+      {
+        "name": "Knight of Wands",
+        "meta": {
+          "kabbalah": "Chokmah in Atziluth",
+          "elemental": "Fire of Fire",
+          "psyche": "Will Directing Will",
+          "rules": "8 and 9 of Wands",
+          "throned": "Throned on 9 of Wands",
+          "age_sex": "Men aged thirty six and older"
+        },
+        "upright": "Masculinity. Authority. Leadership. Self-confidence. Self-reliance. Conviction. Drive. Irresistible force. Vision. Focus. Concentration. Breaking boundaries. Going for broke. Practicality. Resilience. Prolific. Creative. Pioneering. Sports. Competition. Mastery. Victory. Success. A project or adventure begins. The first steps. New avenues explored. Leaving the old behind. Higher calling. Meaningful existence.",
+        "negative": "Opinionated. Excessive zeal. Remorseless pursuit of goals. Perfectionism. Ruthlessness. Over-estimated ability. Egomania. Inflation. Grandiosity. Over-achievement. Hatred of failure. Inability to take time out and rest.",
+        "reversed": "Weakness. Doubt. Hesitation. Prevarication. Premature capitulation. Apathy. Loss of ambition. Shattered intentions. Weak vision. Poor insight. Cowardice. Dishonor. Being bested. Falsity. The mask falls. Lack of self-reliance. Dependency. Low self-esteem. Easily swayed and led. Losses. Poor health. Conflict with a male.",
+        "reversed_positive": null
+      },
+      {
+        "name": "Queen of Wands",
+        "meta": {
+          "kabbalah": "Binah in Atziluth",
+          "elemental": "Water of Fire",
+          "psyche": "Emotion Directing Will",
+          "rules": "2 and 3 of Wands",
+          "throned": "Throned on 3 of Wands",
+          "age_sex": "Women aged thirty six and older"
+        },
+        "upright": "Experienced. Masculine. Energetic. Determined. Confident. Competitive. Driven. Self-directed. Hard-working. Professional. Goal-oriented. Socially adept. Capable. Dependable. Idealistic. Passionate. Generous. Loyal. Resolute. Indefatigable. Positive growth. Good signs. Stability. Thoroughness. Security. Unwavering conviction. The present.",
+        "negative": "Hardness. Selfishness. Narcissism. Rigidity. Headstrong. Defensiveness. Unforgiving. Dogmatic. Resistant. Possessive. Compulsive. Narrow vision. Chronic competitiveness. Tyranny. Alienating allies. Narrow, superficial understanding. Shallow. Materialism.",
+        "reversed": "Weakness. Impracticality. Giving in too soon. Wavering concentration. Half-hearted conviction. Abandoned projects. Lack of stamina. Immaturity. Instability. Low self-esteem. Upsets. Antagonism. Conflict with a woman. An untrustworthy and incompetent person. Living in the past. Poor health. Maternity maladies.",
+        "reversed_positive": null
+      },
+      {
+        "name": "Prince (King) of Wands",
+        "meta": {
+          "kabbalah": "Tiphareth in Atziluth",
+          "elemental": "Air of Fire",
+          "psyche": "Intellect Directing Will",
+          "rules": "5 and 6 of Wands",
+          "throned": "Throned on 6 of Wands",
+          "age_sex": "Males aged thirty six and younger"
+        },
+        "upright": "Extroversion. Enthusiasm. Brightness. Swiftness. Compelling spirit. Ambitious. Self-motivated. Cooperative. Charming. Social. Friendly. Confident. Optimistic. Inspiring. Assisting. Future-oriented.",
+        "negative": "Inexperience. Haste. Impulsiveness. Shallowness. Superficiality. Impracticality. Narcissism. Vanity.",
+        "reversed": "Lack of enthusiasm. Low energy. Pessimism. Fatalism. Self-doubt. Low self-esteem. Identity crisis. Shyness. Introversion. Fear of failure. Hesitation. Waiting for others to take the lead. Lack of initiative. Opportunities wasted. Blockages. Intentions deflected. Sabotage. Assistance rejected. Selfishness. Advice unheeded. Refusal to advise and assist others.",
+        "reversed_positive": null
+      },
+      {
+        "name": "Princess (Page) of Wands",
+        "meta": {
+          "kabbalah": "Malkuth in Atziluth",
+          "elemental": "Earth of Fire",
+          "psyche": "Senses Directing Will",
+          "rules": null,
+          "throned": "Throned on 10 of Wands",
+          "age_sex": "Women aged thirty six and younger"
+        },
+        "upright": "Lively. Wild. Zealous. Passionate. Direct. Curious. Restless. Sensual. Uninhibited. Relentless. Unconventional. Sensational. Spontaneous. Fun loving. Innocent. Free. Forgiving. Graceful. Re-examination. Reappraisal. Novel approaches. Development of new abilities. Pursuit of new interests. Innovation. Interest in the new. Seeking new frontiers. Distaste for the past. Application of innate talent and skill. Early stages of a project or adventure. Breaking with tradition. Considering alternative approaches. Living in the moment. Going with the flow. Openness. Spontaneity. Clear communication. Honesty. Forthrightness. Speaking one's mind. Self-expression. Living on the edge. Welcoming challenges. Adventure. Iconoclasm. Danger. Excitement. Theatre. Drama. Performance. Dance. Photography. Music. Sports. Martial Arts.",
+        "negative": "Exhibitionism. Heedlessness. Excessiveness. Recklessness. Inconsistency. Wavering concentration. Spasmodic bursts of energy. Fleeting achievements. Immorality. Hedonism. Vampirism. Egomania. Dementia. Deficiency. Learning disorder. Poor concentration. Desultoriness. Delinquency. Perversity. Self-destruction. Evil.",
+        "reversed": "End of freedom. Heavy responsibilities. Personal expression curtailed. Inhibition. Resistance. Obstinacy. Dashed hopes. Objectives thwarted. Poor communication. Problems with a young female. Death.",
+        "reversed_positive": "Less wildness. Restraint. Taking life easily. Being less conspicuous, open and trusting."
+      }
+    ],
+    "cups": [
+      {
+        "name": "Knight of Cups",
+        "meta": {
+          "kabbalah": "Chokmah in Briah",
+          "elemental": "Fire of Water",
+          "psyche": "Will Directing Emotion",
+          "rules": "8 and 9 of Cups",
+          "throned": "Throned on 9 of Cups",
+          "age_sex": "Men aged thirty six and older"
+        },
+        "upright": "Emotional intelligence. Introversion. Circumspection. Sensitivity. Refinement. Grace. Passion. Charm. Romance. Understanding. Patience. Solitude. Peacefulness. Creative genius. Depth of character. Subtlety. High ideals. Humanity. Religion. Healing. Faith. Conviction. Spirituality. Visionary ability. Clairvoyance. Intuition. Imagination. Inspiration. Dreaminess. Natural intelligence. Good news. Rest. Healing. Forthcoming romance. Marriage. Childbirth. Love. Sacrifice. Sound friendship. Reward. Luck. Success. Poetry. Art. Music. Drama. Performance. Animals. Nature. Travel. Adventure.",
+        "negative": "Weak boundaries. Low self-esteem. Easily controlled. Lack of stamina. Lack of self-reliance. Hyper-sensitivity. Irrational ideals. Excessive generosity. Altruism. Unachievable goals. Unrealistic expectations. Excessive introversion. Deception. Deceit. Chicanery. Manipulation. Debauchery. Immorality. Vacuity. Triviality. Stupidity. Lack of insight. Confusion. Waste. Excessive spending. Inflation. Paranoia. Fear. Anxiety. Irrationality. Pessimism. Apathy. Worry. Suspicion. Sickness. Addiction. Mental breakdown. Insanity. Obsession. Possession. Debauchery. Self-destruction.",
+        "reversed": "Emotional blockage. Immaturity. Narcissism. Lack of grace. No couth. Roughness. Unsophisticated behavior. Ignorance. Arrogance. Lack of appreciation. Poverty consciousness. Lack of subtlety. Lack of awareness. Ugliness. Dashed hopes. Decimated ideals. Lost love. Broken friendships. Rejection. Lost opportunity. Waste. Sabotage. Holding onto the past. Refusal to change or let go. Refusal to heal. No human warmth. Lack of care or concern. Hardness. Coldness. Indifference. Lack of empathy. Parsimony. Cruelty. Atheism. Materialism. Lack of forgiveness. Indecency. Hatred. Spiritual and intellectual darkness. Corruption. Evil. Death.",
+        "reversed_positive": null
+      },
+      {
+        "name": "Queen of Cups",
+        "meta": {
+          "kabbalah": "Binah in Briah",
+          "elemental": "Water of Water",
+          "psyche": "Emotion Directing Emotion",
+          "rules": "2 and 3 of Cups",
+          "throned": "Throned on 3 of Cups",
+          "age_sex": "Women aged thirty six and older"
+        },
+        "upright": "Motherliness. Warmth. Affection. Friendliness. Support. Sensitivity. Generosity. Humanity. Charm. Artistry. Good taste. Passion. Beauty. Laughter. Lightness. Idealism. Romance. Home. Hearth. Domesticity. Childbearing. Pregnancy. Marriage. True love and care. Nurses. Doctors. Caregivers. Counselors. Philanthropists. Mediums. Visionaries. Clairvoyants. Healers.",
+        "negative": "Extreme introversion. Weakness. Timidity. Fear. Pettiness. Hesitation. Vacillation. Vacuity. Heedlessness. Superficiality. Apathy. Laziness. Hypersensitivity. Gullibility. Impressionability. Hypochondria. Irrationality. Intellectual retardation. Manipulation. Domination. Emotional blackmail. Smothering attention. Hypochondria. Neurasthenia. Neurosis. Paranoia. Control. Vampirism. Evil.",
+        "reversed": "Shallowness. Coldness. Indifference. Parsimony. Pessimism. Fatalism. Loss of optimism. Lost care. Loss. Broken hopes. Relationship terminated or ruined. Suspicion. Recrimination. Anti-social feelings. Withdrawal. Ostracization. Rejection. Betrayal. Indecency. Abandonment. Poverty. Ruin. Poor health. Misdiagnosis. Miscarriage. Abortion. Pain. Death. Being denied a strong ally or friendship. Feeling unsupported. Fears of motherhood and domestic responsibilities. Warning against marriage and having children. May indicate the inability to physically bear children.",
+        "reversed_positive": null
+      },
+      {
+        "name": "Prince (King) of Cups",
+        "meta": {
+          "kabbalah": "Tiphareth in Briah",
+          "elemental": "Air of Water",
+          "psyche": "Intellect Directing Emotion",
+          "rules": "5 and 6 of Cups",
+          "throned": "Throned on 6 of Cups",
+          "age_sex": "Men aged thirty six and younger"
+        },
+        "upright": "Introverted. Imaginative. Sensitive. Withdrawn. Naive. Animistic. Poetic. Idealistic. Restless. Mysterious. Deep. Spiritual. Religious. Generous. Sacrificing. Tolerant. Understanding. Feminine. Idealistic. Friendly. Assisting. Loyal. Charming. Passionate. Loving. Artists. Designers. Musicians. Writers. Playwrights. Actors. Directors. Travelers. Seekers. Mystics. Visionaries. Revolutionaries. Rebels. Outcasts. Renunciates. Moralists. Ascetics. Advisors. Counselors. Psychologists. Healers. Doctors. Philanthropists. Public servants. Self-study. Introspection. Analysis. Awareness. Rites of passage. Open avowals of love and intent. Clear communications of an emotional nature. Deep understanding. Spiritual revelation.",
+        "negative": "Extreme idealism. Foolishness. Naivete. Hyper-sensitivity. Zealousness. Artificiality. Affected virtue and humanity. Hyperbole. Grandiosity. Dabbling. Evasiveness. Secretiveness. Narcissism. Self-absorbed. Moodiness. Immorality. Low standards. Hedonism. Addiction. Obsession. Debauchery. Perversion. Evil.",
+        "reversed": "Insensitivity. Coldness. Indifference. Lack of passion. Lack of curiosity. Superficiality. Mediocrity. Blandness. Conventionality. Prejudice. Rigidity. Materialism. Lack of understanding. Lack of psychological insight. Limited self-knowledge. Poor social skills. Refusal to assist others. Blocked emotion. Failed romance. False friends. Change of heart. Bad news. Delayed travel. Overturned expectations. Abuse. Death.",
+        "reversed_positive": "The reversed position can indicate that we are not as gullible or naive as we were in the past. It denotes widening experience."
+      },
+      {
+        "name": "Princess (Page) of Cups",
+        "meta": {
+          "kabbalah": "Malkuth in Briah",
+          "elemental": "Earth of Water",
+          "psyche": "Senses Directing Emotion",
+          "rules": null,
+          "throned": "Throned on 10 of Cups",
+          "age_sex": "Women aged thirty six and younger"
+        },
+        "upright": "Dreamy. Sensitive. Delicate. Gentle. Charming. Graceful. Beautiful. Gifted. Introverted. Poetic. Dramatic. Changeable. Wild. Idealistic. Adventurous. Enthusiastic. Passionate. Romantic. Nature-loving. Freedom-loving. Forgiving. Compassionate. Empathic. Mystical. Clairvoyant. High-minded.",
+        "negative": "Inexperienced. Shy. Vacillating. Inconsistent. Gullible. Impressionable. Altruistic. Weak. Irrational. Over-emotional. Sentimental. Impractical. Shallow. Superficial. Sensational. Fantasy prone. False. Affected. Showy. Self-absorbed. Immoral. Two-faced. Coquettish.",
+        "reversed": "Coarseness. Insensitivity. Unforgiving. Rigid. Conservative. Materialistic. Critical. Bad news. Ill fortune. Upset hopes and plans. Heavy responsibilities. End of happiness. Curtailed freedom. Oppression. End of naivety. End of innocence. Uncongenial environment. Misunderstanding. Undoing. Sabotage. A false person. Illness. Maternal upsets. Divorce. Death.",
+        "reversed_positive": null
+      }
+    ],
+    "swords": [
+      {
+        "name": "Knight of Swords",
+        "meta": {
+          "kabbalah": "Chokmah in Yetzirah",
+          "elemental": "Fire of Air",
+          "psyche": "Will Directing Intellect",
+          "rules": "8 and 9 of Swords",
+          "throned": "Throned on 9 of Swords",
+          "age_sex": "Men aged thirty six and older"
+        },
+        "upright": "A high-minded individual. Brilliant. Clever. Logical. Concentrated. Complex. Objective. Discriminating. Educated. Methodical. Scientific. Technical. Proficient. Original. Inventive. Ingenious. Quick. Deft. Precise. Perfectionist. Multi-talented. Curious. Philosophical. Wise. Indefatigable. Self-motivated. Creative. Brilliant. Vocal. Clear. Honest. Inspiring. Electric. Sporty.",
+        "negative": "Cold. Calculating. Manipulative. Arrogant. Opinionated. Critical. Judgmental. Overly cerebral. Abstract. Cynical. Emotionless. Unforgiving. Ungrateful. Shallow. Highly strung. Nervous. Demanding. Competitive. Busy. Preoccupied. Untrustworthy. Conniving. Interfering. Secretive. Vane. Inhuman. Cruel.",
+        "reversed": "Dull. Uninspired. Forgetful. Careless. Disorganized. Scattered. Mediocrity. Uninspired. Stagnancy. Confusion. Impaired judgment. Mental incompetence. Dyslexia. Lack of concentration. Failure. Procrastination. Abandonment. Weakness. Servility. Loss. Illness. Ruin. Deception. Bad news. Dashed expectations. Obstacles. Misguided plans. Incorrect data. Misdiagnosis. Faulty evidence. Incompetent allies. Untrustworthy friends. Mistaken witnesses. Waste. Death.",
+        "reversed_positive": null
+      },
+      {
+        "name": "Queen of Swords",
+        "meta": {
+          "kabbalah": "Binah in Yetzirah",
+          "elemental": "Water of Air",
+          "psyche": "Emotion Directing Intellect",
+          "rules": "2 and 3 of Swords",
+          "throned": "Throned on 3 of Swords",
+          "age_sex": "Women aged thirty six and older"
+        },
+        "upright": "Mature. Masculine. Intelligent. Observant. Concentrated. Determined. Precise. Biting humor. Detached. Unemotional. Counselors. Advisors. Teachers. Instructors. Coaches. Judges. Lawyers. Architects. Mathematicians. Inventors. Publishers. Critics. Editors. Designers. Skilled actors and performers. Order. Precision. Skill. Accuracy. Insight. Knowledge. Penetration. Objectivity. Learning. Fairness. Good judgment. Powerful natural intelligence. Etiquette. Propriety. Honor. Virtue. Consistency. Self-reliance. Holding to our truth against the odds. Forthright expression. Self-analysis. Abandonment of infantile behavior patterns. Seeing the bigger picture. No fakery.",
+        "negative": "Detached. Insensitive. Fussy. Analytical. Negating. Rude. Inhuman. Cruel. Game-playing. Manipulation. Hypocrisy.",
+        "reversed": "Loss of composure or insight. Bad planning. Non-productivity. Incompetence. Poor judgment. Stupidity. Impractical ideas. Inconsistency. Vacillation. Dishonesty. Lies. Lack of spontaneity. Stasis. Conventionality. Retardation. Contempt toward learning and knowledge. Impositions. Suppression. Resistance from others. Loss of authority. Demotion. Bad allies and friends. Corruption.",
+        "reversed_positive": "Occasionally the reversed position denotes the need for self-reliance and forbearance. We resist succumbing to external influence."
+      },
+      {
+        "name": "Prince (King) of Swords",
+        "meta": {
+          "kabbalah": "Tiphareth in Yetzirah",
+          "elemental": "Air of Air",
+          "psyche": "Intellect Directing Intellect",
+          "rules": "5 and 6 of Swords",
+          "throned": "Throned on 6 of Swords",
+          "age_sex": "Men 36 years or younger"
+        },
+        "upright": "Intelligent. Genius. Inquisitive. Skillful. Precise. Technical. Mechanical. Modern. Progressive. Formal. Tireless. Talkative. Social. Sporty. Breakthrough. Discovery. Research. Translation. Innovation. Novel ideas and approaches. New techniques. Clear communication. Quick decisions. Writing. Publishing. Editing. Problem-solving. Unconventional thought. Asking important questions. Getting to the truth. Simplification. Getting or giving advice. Focus on the future. In-between stages. Sharing with and helping friends. Giving and receiving good advice.",
+        "negative": "Complexification. Abstraction. Self-absorption. Narcissism. Insensitive. Showing off. Haughty. Acting superior. Judgmental. Rationalizing. Meddling. Dominating others. Over-questioning. Fixation on detail. Scattered. Extrovert. Superficial. Nervous. Hyperactive. Complication. Cunning. Vengeful. Callousness.",
+        "reversed": "Poorly conceived plans. Failure in tests. Failure to accept needed assistance. Avoidance of the truth. Denial. Holding on to bad habits. Fixation on the past. Blocked self-expression. Low self-esteem. Feelings of incompetence and incongruity. Poor motor skills. Procrastination. Loss of friendship. Refusal to assist others. Death of a male.",
+        "reversed_positive": "Occasionally the reversed position advises us to take things easy. We calm down, cool our heels, and cease attempting to outdo others. We look inward and become more serious about life."
+      },
+      {
+        "name": "Princess (Page) of Swords",
+        "meta": {
+          "kabbalah": "Malkuth in Yetzirah",
+          "elemental": "Earth of Air",
+          "psyche": "Senses Directing Intellect",
+          "rules": null,
+          "throned": "Throned upon 10 of Swords",
+          "age_sex": "Women of 36 or younger"
+        },
+        "upright": "Flexibility. Adaptability. Curiosity. Friendly. Unusual. Bright. Gifted. Skilled. Idiosyncratic attitudes. Risk. Daring. Spontaneity. Clear communication. Honesty. Information. Messages. Conversation. Friends. Revision. Re-examination of ideas, opinions, attitudes, philosophies. Exploring the realm of ideas. Incoming news. A major event looms. A series of changes. A busy and exciting time. Invention. Innovation. Discovery. Breaking new ground.",
+        "negative": "Childishness. Scattered. Heedless. Stupidity. Sensationalism. Superficiality. Confusion. Casualty. Poor planning. Bad decisions. Crazy schedules. Pleasure principle. Unwilling to face reality. Disregarding assistance. Scattered. Distraction. Controversy for its own sake. Sensationalism. Argumentation. Coldness. Disregard for rights of others. Manipulation. Ruthless. Deceit. Hypocrisy. Narcissism. Neurosis. Insanity. Evil.",
+        "reversed": "Stagnancy. Imprisonment. Lack of originality. Stymied plans and sudden obstacles. Lack of discernment. Aimlessness. No self-development. Inner turmoil. Resistance. Blocked expression. Lack of stimulation. Goals impeded. Excessive secrecy. Unclear speech and thought. Need for greater clarity. Constant disagreement and argument. Failure to adapt. Denial. Fruitless speculation. Complication. Learning deficiency. Failure in tests. Bad news. Loss of friendship. Death of young child or female.",
+        "reversed_positive": "Occasionally the reversed position advises us to drop immature ideas. We realize that we are not always in the right."
+      }
+    ],
+    "disks": [
+      {
+        "name": "Knight of Disks",
+        "meta": {
+          "kabbalah": "Chokmah in Assiah",
+          "elemental": "Fire of Earth",
+          "psyche": "Will Directing Senses",
+          "rules": "8 and 9 of Disks",
+          "throned": "Throned on 9 of Disks",
+          "age_sex": "Men aged 36 or older"
+        },
+        "upright": "Credible. Caring. Certain. Secure. Making money. Practical wisdom. Tenacity. Sensuality. Natural wisdom. Power. Mastery. Hard work. Attainment. Competence. Material skill and wealth. Natural aptitude. Talent. Taking charge. Craftsmanship. Mending. Improving. Perfecting. Creating a business. Reaping rewards. Builders, sculptors, farmers, gardeners, financiers, accountants, lawyers, policemen, collectors, antique dealers, connoisseurs, teachers, veterinarians, doctors.",
+        "negative": "Greed. Materialism. Arrogance. Fanaticism. Utilitarian. Hard. Toxicity. Lack of finesse.",
+        "reversed": "Weakness. Incompetence. Wrong decisions. Bad judgment. Lack of direction. Moving forward prematurely. Haste. Over-estimation of competence. Inexperience. Impractical strategies. Setbacks. Dwindling resources. Working with less. Loss of allies. Relinquished goals and plans. Hesitation.",
+        "reversed_positive": "Occasionally the reversed position advises us to be less success-oriented and materialistic. It can also indicate severe health issues. Retirement and rest are recommended."
+      },
+      {
+        "name": "Queen of Disks",
+        "meta": {
+          "kabbalah": "Binah in Assiah",
+          "elemental": "Water of Earth",
+          "psyche": "Emotions Directing Senses",
+          "rules": "2 and 3 of Disks",
+          "throned": "Throned on 3 of Disks",
+          "age_sex": "Women aged 36 or older"
+        },
+        "upright": "Strength. Maturity. Wisdom. Warmth. Earthiness. Patience. Endurance. Motherliness. Practicality. Insight. Resourceful. Self-reliance. Professional. Competent. Competitive. Indefatigable. Adventurous. Traditional. Conservative. Honorable. Loyal. Order. Intelligence. Hard effort. Success in business. Reliable allies. Diligence. Allegiance. Expertise. Craftsmanship. Foresight. Security. Property. Sound investment. Luxury. Beauty. Art.",
+        "negative": "Shallowness. Roughness. Hardness. Cynicism. Egomania. Workaholic. Materialism. Suspicion. Control. Suppression. Rule-fixation. Timebound. Banality. Boring. Cruel.",
+        "reversed": "Ending of a business agreement or enterprise. Bad decisions or investments. Waste and impracticality. Non-productivity. Absence of common sense and practical intelligence. Disconnection with reality. Insecurity or neurosis. Lack of talent. Lack of inspiration. Creative block. Lack of control over finances and material welfare. Mistakes. Losses. Setbacks. Ruin.",
+        "reversed_positive": "Occasionally the reversed position advises us to cease being resistant and stubborn. We need not be so fearful, poverty-conscious and fixated on work and material achievement."
+      },
+      {
+        "name": "Prince (King) of Disks",
+        "meta": {
+          "kabbalah": "Tiphareth in Assiah",
+          "elemental": "Air of Earth",
+          "psyche": "Intellect Directing Senses",
+          "rules": "5 and 6 of Disks",
+          "throned": "Throned on 6 of Disks",
+          "age_sex": "Men aged 36 or younger"
+        },
+        "upright": "Hard work. Practicality. Genius. Excellence. Creativity. Directness. Unshakeable tenacity and conviction. Self-sufficiency. Strength of body and mind. Robustness. Loyalty. Deep belief. Experience. Completing what was started. Pride in work. Discovering natural skills and aptitudes. Doing what we love. Early stages of creativity and professionalism. Learning as we go. Setting material goals. Assuming personal control. New employment. Competition. Tests. Proving mettle. Responsibility. Reliability. Discipline. Patience. Tenacity. Sound investment. Ownership. Manifestation. Reliable allies. Helping friends. Warriors. Sportsmen. Adventurers. Creators. Artists. Builders. Sculptors. Inventors. Entrepreneurs. Financiers. Magnates. Tycoons. Experts. Teachers. Motivators. Politicians. Priests. Gurus. Hierarchy.",
+        "negative": "Crudity. Hardness. Banality. Lack of sophistication. Dogmaticism. Vanity. Contempt for sensitivity. Contempt for inwardness and spirituality. Refusal to offer assistance or advice.",
+        "reversed": "Warning. Poor investment. Negative outcomes. Failure. Bad attitude. Waste. Incompetence. Indecision. Short-cuts and prevarication. Avoidance of hard work. Leaving things to others. Relinquishing control. Avoiding responsibility. Laziness. Taking the easy road. Failure to learn from past mistakes. Reluctance to develop natural talents and aptitudes. Breakdown. Capitulation. Illness.",
+        "reversed_positive": "Occasionally the reversed position advises us to become more easy-going and spontaneous. We need not take setbacks personally. We may need to be less obsessed by physical accomplishment and worldly recognition. We can be easier on ourselves."
+      },
+      {
+        "name": "Princess (Page) of Disks",
+        "meta": {
+          "kabbalah": "Malkuth in Assiah",
+          "elemental": "Earth of Earth",
+          "psyche": "Senses Directing Senses",
+          "rules": null,
+          "throned": "Throned on 10 of Disks",
+          "age_sex": "Women aged 36 and under"
+        },
+        "upright": "Unconventional. Different. Eccentric. Attractive. Charming. Robust. Dedicated. Loyal. Simple. Direct. Unaffected. Nature-loving. Animal-loving. Generous. Self-reliant. Independent wealth. New professional ventures. Original business ideas. Risk-taking. Daring. Breaking boundaries. Going it alone. Open statements and avowals. Honesty. Discussion. Early stages of planning and investment. Developing skill and expertise. Moving quickly to secure results. Subtlety. Foresight. Planning for contingencies. Creating back-up plans. Outwitting rivals. Attention to details. Heeding or conceiving alternative methods. Changes on the way. Incoming information. New ideas. Reinventing image and procedures. Adopting new perspectives. Reshuffling and reconfiguring staff and schedules. Reversals. Greater clarity. Demanding clarification. Seeing without distortion. Moving quickly. Beating the clock.",
+        "negative": "Haste. Mistakes. Incompetence. Foolishness. Lack of discipline and experience. Irrationality. Inverted values. Crassness. Infantilism. Mundanity. Conventionality. Vacillation. Narcissism. Opportunism. Consummate materialism.",
+        "reversed": "Lack of skill. Stupidity. Avoidance of reality. Inept professionalism. Irresponsibility. Waste. Gambling. Deception. Missed opportunities. Blockage. Stagnation. Allies steal ideas. Losses. Lack of recognition.",
+        "reversed_positive": "Occasionally the reversed position advises us to break the rules, upset routines, and go our own way. We become aware of our true needs and experience a profound moral change. Occasionally the reversal denotes the disability or death of a female person."
+      }
+    ]
+  }
+}
