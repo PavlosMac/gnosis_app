@@ -1,4 +1,9 @@
+from datetime import UTC, datetime, timedelta
+
+import jwt as pyjwt
 import pytest
+
+from src.core.config import settings
 
 
 @pytest.mark.asyncio
@@ -126,24 +131,55 @@ async def test_refresh_with_access_token_fails(client):
 
 
 @pytest.mark.asyncio
-async def test_refresh_with_blacklisted_token_fails(client):
+async def test_refresh_reuse_revokes_family(client):
     reg = await client.post(
         "/api/v1/auth/register",
-        json={"email": "blacklist@example.com", "password": "securepassword123"},
+        json={"email": "rotation@example.com", "password": "securepassword123"},
     )
-    refresh_token = reg.json()["refresh_token"]
+    old_refresh = reg.json()["refresh_token"]
 
-    # First refresh succeeds and blacklists the old refresh token
+    # First refresh succeeds and rotates the token
     response = await client.post(
         "/api/v1/auth/refresh",
-        json={"refresh_token": refresh_token},
+        json={"refresh_token": old_refresh},
     )
     assert response.status_code == 200
 
-    # Second refresh with same token fails (blacklisted)
+    # Reuse of old refresh token fails (replay detection)
     response = await client.post(
         "/api/v1/auth/refresh",
-        json={"refresh_token": refresh_token},
+        json={"refresh_token": old_refresh},
+    )
+    assert response.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_refresh_replay_revokes_entire_family(client):
+    reg = await client.post(
+        "/api/v1/auth/register",
+        json={"email": "replay@example.com", "password": "securepassword123"},
+    )
+    old_refresh = reg.json()["refresh_token"]
+
+    # First refresh: rotates token, get new tokens
+    first = await client.post(
+        "/api/v1/auth/refresh",
+        json={"refresh_token": old_refresh},
+    )
+    assert first.status_code == 200
+    new_refresh = first.json()["refresh_token"]
+
+    # Replay old token: triggers family revocation
+    replay = await client.post(
+        "/api/v1/auth/refresh",
+        json={"refresh_token": old_refresh},
+    )
+    assert replay.status_code == 401
+
+    # Even the new refresh token is now revoked (entire family wiped)
+    response = await client.post(
+        "/api/v1/auth/refresh",
+        json={"refresh_token": new_refresh},
     )
     assert response.status_code == 401
 
@@ -154,7 +190,9 @@ async def test_logout(client):
         "/api/v1/auth/register",
         json={"email": "logout@example.com", "password": "securepassword123"},
     )
-    access_token = reg.json()["access_token"]
+    tokens = reg.json()
+    access_token = tokens["access_token"]
+    refresh_token = tokens["refresh_token"]
 
     # Logout
     response = await client.post(
@@ -164,12 +202,19 @@ async def test_logout(client):
     assert response.status_code == 200
     assert response.json()["detail"] == "Logged out"
 
-    # Old access token should be rejected
+    # Access token still works (no blacklist check, valid until expiry)
     me_response = await client.get(
         "/api/v1/auth/me",
         headers={"Authorization": f"Bearer {access_token}"},
     )
-    assert me_response.status_code == 401
+    assert me_response.status_code == 200
+
+    # But refresh token family is revoked — can't get new tokens
+    refresh_response = await client.post(
+        "/api/v1/auth/refresh",
+        json={"refresh_token": refresh_token},
+    )
+    assert refresh_response.status_code == 401
 
 
 @pytest.mark.asyncio
@@ -231,3 +276,84 @@ async def test_list_users_pagination_params(client, superadmin_token):
     assert len(data["items"]) == 2
     assert data["page_size"] == 2
     assert data["total"] == 4  # 3 + superadmin
+
+
+# --- Token expiry tests ---
+
+
+def _make_expired_token(payload_overrides: dict) -> str:
+    payload = {
+        "exp": datetime.now(UTC) - timedelta(seconds=10),
+        **payload_overrides,
+    }
+    return pyjwt.encode(payload, settings.jwt_secret_key, algorithm=settings.jwt_algorithm)
+
+
+@pytest.mark.asyncio
+async def test_expired_access_token_returns_401(client):
+    expired = _make_expired_token(
+        {"sub": "any-id", "type": "access", "family_id": "any-family"}
+    )
+    response = await client.get(
+        "/api/v1/auth/me",
+        headers={"Authorization": f"Bearer {expired}"},
+    )
+    assert response.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_expired_refresh_token_returns_401(client):
+    expired = _make_expired_token(
+        {"sub": "any-id", "type": "refresh", "jti": "any-jti", "family_id": "any-family"}
+    )
+    response = await client.post(
+        "/api/v1/auth/refresh",
+        json={"refresh_token": expired},
+    )
+    assert response.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_expired_access_then_refresh_rotation_flow(client):
+    """Expired access → 401 → refresh → new tokens → retry succeeds."""
+    reg = await client.post(
+        "/api/v1/auth/register",
+        json={"email": "rotation_flow@example.com", "password": "securepassword123"},
+    )
+    tokens = reg.json()
+    refresh_token = tokens["refresh_token"]
+
+    # Extract user_id + family_id from the valid access token
+    payload = pyjwt.decode(
+        tokens["access_token"], settings.jwt_secret_key, algorithms=[settings.jwt_algorithm]
+    )
+
+    # Craft an expired access token for the same user
+    expired_access = _make_expired_token(
+        {"sub": payload["sub"], "type": "access", "family_id": payload["family_id"]}
+    )
+
+    # Step 1: expired access token → 401
+    assert (
+        await client.get(
+            "/api/v1/auth/me", headers={"Authorization": f"Bearer {expired_access}"}
+        )
+    ).status_code == 401
+
+    # Step 2: refresh → new tokens
+    refresh_resp = await client.post(
+        "/api/v1/auth/refresh",
+        json={"refresh_token": refresh_token},
+    )
+    assert refresh_resp.status_code == 200
+    new_tokens = refresh_resp.json()
+    assert "access_token" in new_tokens
+    assert "refresh_token" in new_tokens
+
+    # Step 3: retry with new access token → 200
+    me_resp = await client.get(
+        "/api/v1/auth/me",
+        headers={"Authorization": f"Bearer {new_tokens['access_token']}"},
+    )
+    assert me_resp.status_code == 200
+    assert me_resp.json()["email"] == "rotation_flow@example.com"
