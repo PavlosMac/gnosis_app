@@ -53,11 +53,48 @@ const clearAuthCookies = async () => {
   console.log("[AUTH:COOKIES] Auth cookies cleared");
 };
 
-// Token refresh is handled exclusively by the proxy (writable context).
-// This function only reads whatever token is currently in cookies.
 const getValidAccessToken = async (): Promise<string | null> => {
   const cookieStore = await cookies();
   return cookieStore.get("access_token")?.value ?? null;
+};
+
+const refreshAccessToken = async (): Promise<string | null> => {
+  const cookieStore = await cookies();
+  const refreshToken = cookieStore.get("refresh_token")?.value;
+
+  if (!refreshToken) return null;
+
+  console.log("[AUTH:FETCH] Attempting token refresh");
+
+  try {
+    const res = await fetch(`${FASTAPI_URL()}/api/v1/auth/refresh`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ refresh_token: refreshToken }),
+    });
+
+    if (!res.ok) {
+      console.log("[AUTH:FETCH] Refresh failed", { status: res.status });
+      return null;
+    }
+
+    const data: TokenResponse = await res.json();
+    if (!data?.access_token || !data?.refresh_token) return null;
+
+    console.log("[AUTH:FETCH] Refresh succeeded");
+
+    // Persist new cookies — works in server actions; fails in render context (read-only)
+    try {
+      await setAuthCookies(data);
+    } catch {
+      console.log("[AUTH:FETCH] Could not persist cookies (render context)");
+    }
+
+    return data.access_token;
+  } catch (e) {
+    console.log("[AUTH:FETCH] Refresh threw", e);
+    return null;
+  }
 };
 
 export const authenticatedFetch = async <T>(
@@ -66,11 +103,16 @@ export const authenticatedFetch = async <T>(
 ): Promise<ApiResult<T>> => {
   console.log("[AUTH:FETCH] authenticatedFetch →", endpoint);
 
-  const accessToken = await getValidAccessToken();
+  let accessToken = await getValidAccessToken();
 
+  // No access token — try refresh before giving up
   if (!accessToken) {
-    console.log("[AUTH:FETCH] No valid access token — returning 401");
-    return { ok: false, status: 401, message: "Not authenticated" };
+    console.log("[AUTH:FETCH] No access token — attempting refresh");
+    accessToken = await refreshAccessToken();
+    if (!accessToken) {
+      console.log("[AUTH:FETCH] No valid token after refresh — returning 401");
+      return { ok: false, status: 401, message: "Not authenticated" };
+    }
   }
 
   const makeRequest = async (token: string) =>
@@ -85,10 +127,20 @@ export const authenticatedFetch = async <T>(
 
   const res = await makeRequest(accessToken);
 
-  // 401 means token is invalid — don't try to refresh here (render context can't write cookies).
-  // The proxy will handle refresh/cleanup on the next navigation.
+  // 401 — token expired but cookie not yet deleted; try refresh once
   if (res.status === 401) {
-    console.log("[AUTH:FETCH] Got 401 for", endpoint);
+    console.log("[AUTH:FETCH] Got 401 — attempting refresh");
+    const newToken = await refreshAccessToken();
+    if (newToken) {
+      const retryRes = await makeRequest(newToken);
+      if (retryRes.ok) {
+        console.log("[AUTH:FETCH] Retry after refresh succeeded", { endpoint });
+        const data: T = await retryRes.json();
+        return { ok: true, data };
+      }
+      const body = await retryRes.json().catch(() => ({}));
+      return { ok: false, status: retryRes.status, message: body?.detail ?? "Session expired. Please log in again." };
+    }
     return { ok: false, status: 401, message: "Session expired. Please log in again." };
   }
 
