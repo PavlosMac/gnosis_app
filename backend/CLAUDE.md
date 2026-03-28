@@ -1,7 +1,7 @@
 # Gnosis Esoterica Backend
 
 ## Overview
-Tarot reading API backend with credit-based access, Stripe payments, and AI-powered interpretations. Built with FastAPI, async MongoDB (Motor), and a CQRS/Mediator architecture.
+Tarot reading API backend with credit-based access, Stripe payments, user signup and AI-powered interpretations. Built with FastAPI, async MongoDB (Motor), and a CQRS/Mediator architecture.
 
 ## Tech Stack
 - **Language**: Python 3.12 (uv package manager)
@@ -45,6 +45,20 @@ src/<domain>/
 ```
 Domain-specific dependencies go in `src/core/dependencies.py`. Domain-specific exceptions are co-located in `service.py`. Collection name constants go in `repository.py`.
 
+Example with CQRS directories expanded (auth is the reference domain):
+```
+src/auth/commands/register_user.py   # RegisterUserCommand + RegisterUserHandler in ONE file
+src/auth/queries/get_user_by_id.py   # GetUserByIdQuery + GetUserByIdHandler in ONE file
+```
+
+### Structural Rules
+- ❌ Business logic in `router.py` — routers are thin, delegate to mediator or service
+- ❌ Split command and handler into separate files — always co-locate
+- ❌ Create a handler without registering it in mediator wiring (`main.py`)
+- ❌ Import repository directly in a router
+- ❌ Use `HTTPException` — use `AppError` hierarchy
+- ❌ Create new dep factories outside `src/core/dependencies.py`
+
 ### Cross-Cutting (`src/core/`)
 - `config.py` — Settings via pydantic-settings
 - `dependencies.py` — All `Annotated` FastAPI deps (core + domain)
@@ -60,6 +74,8 @@ Domain-specific dependencies go in `src/core/dependencies.py`. Domain-specific e
 - **Queries**: `BaseQuery` (frozen Pydantic) → `QueryHandler` — return read models
 - **Mediator**: `mediator.send(command)` / `mediator.query(query)` — wired in `main.py`
 - Command + handler co-located in one file (e.g. `commands/register_user.py`)
+- Mediator wiring in `main.py`: `mediator.register_command(RegisterUserCommand, RegisterUserHandler(deps))` — add both command and query registrations when creating new handlers
+
 
 ### Repository Pattern
 - Split `BaseWriteRepository` / `BaseReadRepository` ABCs in `src/database/base_repository.py`
