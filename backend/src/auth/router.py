@@ -28,7 +28,7 @@ async def register(
         display_name=body.display_name,
     )
     user_id = await mediator.send(command)
-    return service.create_tokens_for_user(user_id)
+    return await service.create_tokens_for_user(user_id)
 
 
 @router.post("/login", response_model=TokenResponse)

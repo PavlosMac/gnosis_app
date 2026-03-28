@@ -1,4 +1,4 @@
-from src.auth.repository import UserReadRepository
+from src.auth.repository import AuthReadRepository
 from src.auth.schemas import UserReadModel
 from src.core.exceptions import NotFoundError
 from src.cqrs.queries import BaseQuery, QueryHandler
@@ -9,7 +9,7 @@ class GetUserByIdQuery(BaseQuery):
 
 
 class GetUserByIdHandler(QueryHandler[GetUserByIdQuery, UserReadModel]):
-    def __init__(self, read_repo: UserReadRepository) -> None:
+    def __init__(self, read_repo: AuthReadRepository) -> None:
         self._read_repo = read_repo
 
     async def handle(self, query: GetUserByIdQuery) -> UserReadModel:

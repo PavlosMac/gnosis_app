@@ -1,5 +1,5 @@
 from src.auth.models import User
-from src.auth.repository import UserReadRepository, UserWriteRepository
+from src.auth.repository import AuthReadRepository, AuthWriteRepository
 from src.auth.service import EmailAlreadyExistsError
 from src.core.security import hash_password
 from src.cqrs.commands import BaseCommand, CommandHandler
@@ -14,8 +14,8 @@ class RegisterUserCommand(BaseCommand):
 class RegisterUserHandler(CommandHandler[RegisterUserCommand, str]):
     def __init__(
         self,
-        write_repo: UserWriteRepository,
-        read_repo: UserReadRepository,
+        write_repo: AuthWriteRepository,
+        read_repo: AuthReadRepository,
     ) -> None:
         self._write_repo = write_repo
         self._read_repo = read_repo

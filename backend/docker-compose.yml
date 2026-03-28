@@ -1,16 +1,16 @@
 services:
   mongodb:
     image: mongo:7
-    command: ["mongod", "--setParameter", "logComponentVerbosity={network: {verbosity: -1}, accessControl: {verbosity: -1}}"]
+    command: ["mongod", "--quiet", "--setParameter", "logComponentVerbosity={verbosity: -1, network: {verbosity: -1}, storage: {verbosity: -1}}"]
     ports:
       - "27019:27017"
     volumes:
       - mongo_data:/data/db
     healthcheck:
-      test: ["CMD", "bash", "-c", "mongosh --eval \"db.runCommand('ping').ok\" --quiet > /dev/null 2>&1"]
-      interval: 10s
+      test: ["CMD", "bash", "-c", "</dev/tcp/127.0.0.1/27017"]
+      interval: 20s
       timeout: 5s
-      retries: 5
+      retries: 3
 
   api:
     build: .

@@ -22,15 +22,18 @@ async def app(mock_db):
     from src.auth.commands.register_user import RegisterUserCommand, RegisterUserHandler
     from src.auth.queries.get_user_by_email import GetUserByEmailHandler, GetUserByEmailQuery
     from src.auth.queries.get_user_by_id import GetUserByIdHandler, GetUserByIdQuery
-    from src.auth.repository import UserReadRepository, UserWriteRepository
-    from src.auth.token_blacklist_repository import TokenBlacklistRepository
+    from src.auth.repository import (
+        AuthReadRepository,
+        AuthWriteRepository,
+        RefreshTokenRepository,
+    )
     from src.cqrs.mediator import Mediator
     from src.main import app
     from src.users.queries.list_users import ListUsersHandler, ListUsersQuery
 
     mediator = Mediator()
-    user_write_repo = UserWriteRepository(mock_db)
-    user_read_repo = UserReadRepository(mock_db)
+    user_write_repo = AuthWriteRepository(mock_db)
+    user_read_repo = AuthReadRepository(mock_db)
 
     mediator.register_command(
         RegisterUserCommand, RegisterUserHandler(user_write_repo, user_read_repo)
@@ -40,7 +43,7 @@ async def app(mock_db):
     mediator.register_query(ListUsersQuery, ListUsersHandler(user_read_repo))
 
     app.state.mediator = mediator
-    app.state.token_blacklist_repo = TokenBlacklistRepository(mock_db)
+    app.state.refresh_token_repo = RefreshTokenRepository(mock_db)
     return app
 
 

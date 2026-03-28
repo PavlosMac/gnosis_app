@@ -1,14 +1,17 @@
-from datetime import UTC, datetime
+import uuid
 
 import jwt
 
 from src.auth.models import User
-from src.auth.repository import UserReadRepository
+from src.auth.repository import AuthReadRepository, RefreshTokenRepository
 from src.auth.schemas import TokenResponse
-from src.auth.token_blacklist_repository import TokenBlacklistRepository
-from src.core.config import settings
 from src.core.exceptions import ConflictError, UnauthorizedError
-from src.core.security import create_access_token, create_refresh_token, verify_password
+from src.core.security import (
+    create_access_token,
+    create_refresh_token,
+    decode_token,
+    verify_password,
+)
 
 
 class EmailAlreadyExistsError(ConflictError):
@@ -24,11 +27,11 @@ class InvalidCredentialsError(UnauthorizedError):
 class AuthService:
     def __init__(
         self,
-        read_repo: UserReadRepository,
-        blacklist_repo: TokenBlacklistRepository,
+        read_repo: AuthReadRepository,
+        refresh_repo: RefreshTokenRepository,
     ) -> None:
         self._read_repo = read_repo
-        self._blacklist_repo = blacklist_repo
+        self._refresh_repo = refresh_repo
 
     async def authenticate(self, email: str, password: str) -> TokenResponse:
         doc = await self._read_repo.find_by_email(email)
@@ -39,15 +42,11 @@ class AuthService:
         if not verify_password(password, user.password_hash):
             raise InvalidCredentialsError()
 
-        return self._create_tokens(user.id)
+        return await self._create_and_store_tokens(user.id, family_id=str(uuid.uuid4()))
 
     async def refresh_tokens(self, refresh_token: str) -> TokenResponse:
         try:
-            payload = jwt.decode(
-                refresh_token,
-                settings.jwt_secret_key,
-                algorithms=[settings.jwt_algorithm],
-            )
+            payload = decode_token(refresh_token)
         except jwt.PyJWTError:
             raise UnauthorizedError("Invalid refresh token")
 
@@ -55,49 +54,48 @@ class AuthService:
             raise UnauthorizedError("Invalid token type")
 
         jti: str | None = payload.get("jti")
-        if jti and await self._blacklist_repo.is_blacklisted(jti):
+        family_id: str | None = payload.get("family_id")
+        if jti is None or family_id is None:
+            raise UnauthorizedError("Invalid refresh token")
+
+        doc = await self._refresh_repo.consume(jti)
+        if doc is None:
+            await self._refresh_repo.revoke_family(family_id)
             raise UnauthorizedError("Token has been revoked")
 
         user_id: str | None = payload.get("sub")
         if user_id is None:
             raise UnauthorizedError("Invalid refresh token")
 
-        doc = await self._read_repo.find_by_id(user_id)
-        if doc is None:
+        user_doc = await self._read_repo.find_by_id(user_id)
+        if user_doc is None:
             raise UnauthorizedError("User not found")
 
-        if jti:
-            expires_at = datetime.fromtimestamp(payload["exp"], tz=UTC)
-            await self._blacklist_repo.add(jti, user_id, expires_at)
-
-        return self._create_tokens(user_id)
+        return await self._create_and_store_tokens(user_id, family_id)
 
     async def revoke_token(self, token: str, user_id: str) -> None:
         try:
-            payload = jwt.decode(
-                token,
-                settings.jwt_secret_key,
-                algorithms=[settings.jwt_algorithm],
-            )
+            payload = decode_token(token)
         except jwt.PyJWTError:
             return
 
-        jti: str | None = payload.get("jti")
-        if jti:
-            expires_at = datetime.fromtimestamp(payload["exp"], tz=UTC)
-            await self._blacklist_repo.add(jti, user_id, expires_at)
+        family_id: str | None = payload.get("family_id")
+        if family_id:
+            await self._refresh_repo.revoke_family(family_id)
 
-    @staticmethod
-    def _create_tokens(user_id: str) -> TokenResponse:
-        access_token, access_expires = create_access_token(user_id)
-        refresh_token, refresh_expires = create_refresh_token(user_id)
+    async def create_tokens_for_user(self, user_id: str) -> TokenResponse:
+        return await self._create_and_store_tokens(user_id, family_id=str(uuid.uuid4()))
+
+    async def _create_and_store_tokens(
+        self, user_id: str, family_id: str
+    ) -> TokenResponse:
+        jti = str(uuid.uuid4())
+        access_token, access_expires = create_access_token(user_id, family_id)
+        refresh_token, refresh_expires = create_refresh_token(user_id, jti, family_id)
+        await self._refresh_repo.store(jti, family_id, user_id, refresh_expires)
         return TokenResponse(
             access_token=access_token,
             refresh_token=refresh_token,
             access_token_expires_at=int(access_expires.timestamp()),
             refresh_token_expires_at=int(refresh_expires.timestamp()),
         )
-
-    @staticmethod
-    def create_tokens_for_user(user_id: str) -> TokenResponse:
-        return AuthService._create_tokens(user_id)

@@ -1,14 +1,14 @@
 import pytest
 
 from src.auth.commands.register_user import RegisterUserCommand, RegisterUserHandler
-from src.auth.repository import UserReadRepository, UserWriteRepository
+from src.auth.repository import AuthReadRepository, AuthWriteRepository
 from src.auth.service import EmailAlreadyExistsError
 
 
 @pytest.mark.asyncio
 async def test_register_user_command(mock_db):
-    write_repo = UserWriteRepository(mock_db)
-    read_repo = UserReadRepository(mock_db)
+    write_repo = AuthWriteRepository(mock_db)
+    read_repo = AuthReadRepository(mock_db)
     handler = RegisterUserHandler(write_repo, read_repo)
 
     command = RegisterUserCommand(
@@ -27,8 +27,8 @@ async def test_register_user_command(mock_db):
 
 @pytest.mark.asyncio
 async def test_register_user_duplicate_email(mock_db):
-    write_repo = UserWriteRepository(mock_db)
-    read_repo = UserReadRepository(mock_db)
+    write_repo = AuthWriteRepository(mock_db)
+    read_repo = AuthReadRepository(mock_db)
     handler = RegisterUserHandler(write_repo, read_repo)
 
     command = RegisterUserCommand(email="dup@example.com", password="testpassword123")

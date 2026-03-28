@@ -1,10 +1,10 @@
 from src.auth.commands.register_user import RegisterUserCommand, RegisterUserHandler
-from src.auth.repository import UserReadRepository, UserWriteRepository
+from src.auth.repository import AuthReadRepository, AuthWriteRepository
 from src.users.queries.list_users import ListUsersHandler, ListUsersQuery
 
 
 async def test_list_users_empty(mock_db):
-    read_repo = UserReadRepository(mock_db)
+    read_repo = AuthReadRepository(mock_db)
     handler = ListUsersHandler(read_repo)
 
     result = await handler.handle(ListUsersQuery())
@@ -15,8 +15,8 @@ async def test_list_users_empty(mock_db):
 
 
 async def test_list_users_returns_all(mock_db):
-    write_repo = UserWriteRepository(mock_db)
-    read_repo = UserReadRepository(mock_db)
+    write_repo = AuthWriteRepository(mock_db)
+    read_repo = AuthReadRepository(mock_db)
     reg_handler = RegisterUserHandler(write_repo, read_repo)
 
     await reg_handler.handle(RegisterUserCommand(email="a@example.com", password="testpassword123"))
@@ -29,8 +29,8 @@ async def test_list_users_returns_all(mock_db):
 
 
 async def test_list_users_pagination(mock_db):
-    write_repo = UserWriteRepository(mock_db)
-    read_repo = UserReadRepository(mock_db)
+    write_repo = AuthWriteRepository(mock_db)
+    read_repo = AuthReadRepository(mock_db)
     reg_handler = RegisterUserHandler(write_repo, read_repo)
 
     for i in range(3):

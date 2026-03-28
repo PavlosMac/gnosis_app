@@ -1,2 +1,2 @@
 USERS_COLLECTION = "users"
-TOKEN_BLACKLIST_COLLECTION = "token_blacklist"
+REFRESH_TOKENS_COLLECTION = "refresh_tokens"

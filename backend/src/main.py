@@ -1,3 +1,4 @@
+import asyncio
 from contextlib import asynccontextmanager
 
 import structlog
@@ -6,9 +7,8 @@ from fastapi import FastAPI
 from src.auth.commands.register_user import RegisterUserCommand, RegisterUserHandler
 from src.auth.queries.get_user_by_email import GetUserByEmailHandler, GetUserByEmailQuery
 from src.auth.queries.get_user_by_id import GetUserByIdHandler, GetUserByIdQuery
-from src.auth.repository import UserReadRepository, UserWriteRepository
+from src.auth.repository import AuthReadRepository, AuthWriteRepository, RefreshTokenRepository
 from src.auth.router import router as auth_router
-from src.auth.token_blacklist_repository import TokenBlacklistRepository
 from src.core.config import settings
 from src.core.exceptions import AppError, app_exception_handler, unhandled_exception_handler
 from src.core.logging import configure_logging
@@ -27,8 +27,8 @@ logger = structlog.stdlib.get_logger(__name__)
 def _wire_mediator(mediator: Mediator) -> None:
     db = get_database()
 
-    user_write_repo = UserWriteRepository(db)
-    user_read_repo = UserReadRepository(db)
+    user_write_repo = AuthWriteRepository(db)
+    user_read_repo = AuthReadRepository(db)
 
     mediator.register_command(
         RegisterUserCommand, RegisterUserHandler(user_write_repo, user_read_repo)
@@ -40,8 +40,10 @@ def _wire_mediator(mediator: Mediator) -> None:
 
 async def _ensure_indexes() -> None:
     db = get_database()
-    await UserWriteRepository(db).ensure_indexes()
-    await TokenBlacklistRepository(db).ensure_indexes()
+    await asyncio.gather(
+        AuthWriteRepository(db).ensure_indexes(),
+        RefreshTokenRepository(db).ensure_indexes(),
+    )
 
 
 @asynccontextmanager
@@ -52,7 +54,7 @@ async def lifespan(app: FastAPI):
     mediator = Mediator()
     _wire_mediator(mediator)
     app.state.mediator = mediator
-    app.state.token_blacklist_repo = TokenBlacklistRepository(get_database())
+    app.state.refresh_token_repo = RefreshTokenRepository(get_database())
 
     await _ensure_indexes()
     logger.info("startup complete")

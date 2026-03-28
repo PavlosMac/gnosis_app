@@ -1,4 +1,4 @@
-from src.auth.repository import UserReadRepository
+from src.auth.repository import AuthReadRepository
 from src.auth.schemas import UserReadModel
 from src.cqrs.queries import BaseQuery, QueryHandler
 
@@ -8,7 +8,7 @@ class GetUserByEmailQuery(BaseQuery):
 
 
 class GetUserByEmailHandler(QueryHandler[GetUserByEmailQuery, UserReadModel | None]):
-    def __init__(self, read_repo: UserReadRepository) -> None:
+    def __init__(self, read_repo: AuthReadRepository) -> None:
         self._read_repo = read_repo
 
     async def handle(self, query: GetUserByEmailQuery) -> UserReadModel | None:
