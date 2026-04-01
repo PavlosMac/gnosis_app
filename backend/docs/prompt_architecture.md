@@ -57,14 +57,22 @@ All extend `BaseModel` (not `AppSchema`) since they're infrastructure DTOs, foll
 - `is_court_card(name)` helper to distinguish court cards when formatting (they have richer `meta` than pip cards)
 - Exposes: `get_card_meaning(name)`, `get_suit_info(name)`, `is_major_arcana(name)`, `is_court_card(name)`, `get_all_card_names()`
 
+**Normalised JSON field types** (all meaning fields are `list[str]`):
+- Major arcana: `upright.positive` (list), `upright.negative` (list), `reversed.positive` (list), `reversed.negative` (list); `meta.archetype` (str), `meta.keywords` (list)
+- Minor arcana & court royals: `upright` (list), `negative` (list | null), `reversed` (list), `reversed_positive` (list | null); court royals also carry `meta` (kabbalah, elemental, psyche)
+
 ### Prompt Builder (`prompt_builder.py`)
 - Pure functions, no I/O — trivially testable
 - `build_system_prompt()` → system message string
 - `build_user_prompt(request)` → user message with question, spread layout, and card meanings
-- Separate formatting functions because JSON structures differ:
-  - `_format_major_arcana()` — `upright.positive` (str), `upright.negative` (list), plus archetype/keywords from meta
-  - `_format_minor_arcana()` — `upright` (str), `negative` (str/null), `reversed` (str); used for both pip cards and court royals
-  - `_format_court_meta()` — optional enrichment for court royals: kabbalah path, elemental combo (e.g. "Fire of Water"), psyche mapping
+- Orientation determines which fields are included — **never mix upright and reversed meanings for the same card**:
+  - Upright card → show upright fields only
+  - Reversed card → show reversed fields only (both positive and negative aspects); LLM deduces how to weight them
+- Separate formatting functions reflect the two JSON structures:
+  - `_format_major_arcana(card, orientation)` — upright: `upright.positive` (list) + `upright.negative` (list) + archetype/keywords from meta; reversed: `reversed.positive` (list) + `reversed.negative` (list)
+  - `_format_minor_arcana(card, orientation)` — upright: `upright` (list) + `negative` (list, if present); reversed: `reversed` (list) + `reversed_positive` (list, if present); used for both pip cards and court royals
+  - `_format_court_meta(card)` — optional enrichment for court royals appended regardless of orientation: kabbalah path, elemental combo (e.g. "Fire of Water"), psyche mapping
+- All list fields joined as comma-separated values in the prompt text
 
 ### OpenAI Adapter (`openai_adapter.py`)
 - Receives `AsyncOpenAI` client, model, max_tokens via constructor (does NOT create its own client)

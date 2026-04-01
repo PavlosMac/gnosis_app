@@ -21,6 +21,11 @@ class Settings(BaseSettings):
     jwt_refresh_token_expire_days: int = 30
     jwt_algorithm: str = "HS256"
 
+    # OpenAI
+    openai_api_key: str = ""
+    openai_model: str = "gpt-4o"
+    openai_max_tokens: int = 1024
+
     # Logging
     log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = "INFO"
     log_json: bool = False

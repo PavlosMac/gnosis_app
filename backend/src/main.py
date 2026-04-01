@@ -3,6 +3,7 @@ from contextlib import asynccontextmanager
 
 import structlog
 from fastapi import FastAPI
+from openai import AsyncOpenAI
 
 from src.auth.commands.register_user import RegisterUserCommand, RegisterUserHandler
 from src.auth.queries.get_user_by_email import GetUserByEmailHandler, GetUserByEmailQuery
@@ -16,6 +17,7 @@ from src.core.middleware import AccessLogMiddleware, RequestIDMiddleware
 from src.cqrs.mediator import Mediator
 from src.database.mongodb import close_mongo_connection, connect_to_mongo, get_database
 from src.health.router import router as health_router
+from src.llm.openai_adapter import OpenAIAdapter
 from src.users.queries.list_users import ListUsersHandler, ListUsersQuery
 from src.users.router import router as users_router
 
@@ -56,12 +58,22 @@ async def lifespan(app: FastAPI):
     app.state.mediator = mediator
     app.state.refresh_token_repo = RefreshTokenRepository(get_database())
 
+    openai_client = AsyncOpenAI(api_key=settings.openai_api_key)
+    llm_adapter = OpenAIAdapter(
+        client=openai_client,
+        model=settings.openai_model,
+        max_tokens=settings.openai_max_tokens,
+    )
+    app.state.llm = llm_adapter
+    logger.info("llm adapter initialised", model=settings.openai_model)
+
     await _ensure_indexes()
     logger.info("startup complete")
 
     yield
 
     logger.info("shutting down")
+    await llm_adapter.close()
     await close_mongo_connection()
 
 

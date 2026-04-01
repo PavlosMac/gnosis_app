@@ -1,7 +1,11 @@
-from typing import Annotated
+from typing import TYPE_CHECKING, Annotated
 
 import jwt
 from fastapi import Depends, Request
+from motor.motor_asyncio import AsyncIOMotorDatabase
+
+if TYPE_CHECKING:
+    from src.llm.port import LLMPort
 
 from src.auth.queries.get_user_by_id import GetUserByIdQuery
 from src.auth.repository import AuthReadRepository, RefreshTokenRepository
@@ -13,16 +17,25 @@ from src.cqrs.mediator import Mediator
 from src.database.mongodb import get_database
 
 
-async def get_db(request: Request):
+async def get_db(request: Request) -> AsyncIOMotorDatabase:
     return get_database()
+
+
+DB = Annotated[AsyncIOMotorDatabase, Depends(get_db)]
 
 
 async def get_mediator(request: Request) -> Mediator:
     return request.app.state.mediator
 
 
+MediatorDep = Annotated[Mediator, Depends(get_mediator)]
+
+
 def get_refresh_token_repo(request: Request) -> RefreshTokenRepository:
     return request.app.state.refresh_token_repo
+
+
+RefreshTokenRepoDep = Annotated[RefreshTokenRepository, Depends(get_refresh_token_repo)]
 
 
 async def get_current_user_id(request: Request) -> str:
@@ -42,27 +55,37 @@ async def get_current_user_id(request: Request) -> str:
         raise UnauthorizedError()
 
 
-def get_auth_service(db: "DB", refresh_repo: "RefreshTokenRepoDep") -> AuthService:
+CurrentUserId = Annotated[str, Depends(get_current_user_id)]
+
+
+def get_auth_service(db: DB, refresh_repo: RefreshTokenRepoDep) -> AuthService:
     return AuthService(AuthReadRepository(db), refresh_repo)
 
 
+AuthServiceDep = Annotated[AuthService, Depends(get_auth_service)]
+
+
 async def get_current_user(
-    user_id: "CurrentUserId",
-    mediator: "MediatorDep",
+    user_id: CurrentUserId,
+    mediator: MediatorDep,
 ) -> UserReadModel:
     return await mediator.query(GetUserByIdQuery(user_id=user_id))
 
 
-async def get_current_superadmin(current_user: "CurrentUser") -> UserReadModel:
+CurrentUser = Annotated[UserReadModel, Depends(get_current_user)]
+
+
+async def get_current_superadmin(current_user: CurrentUser) -> UserReadModel:
     if not current_user.is_superadmin:
         raise ForbiddenError("Superadmin access required")
     return current_user
 
 
-CurrentUserId = Annotated[str, Depends(get_current_user_id)]
-DB = Annotated[object, Depends(get_db)]
-MediatorDep = Annotated[Mediator, Depends(get_mediator)]
-RefreshTokenRepoDep = Annotated[RefreshTokenRepository, Depends(get_refresh_token_repo)]
-AuthServiceDep = Annotated[AuthService, Depends(get_auth_service)]
-CurrentUser = Annotated[UserReadModel, Depends(get_current_user)]
 IsSuperAdmin = Annotated[UserReadModel, Depends(get_current_superadmin)]
+
+
+def get_llm(request: Request) -> "LLMPort":
+    return request.app.state.llm
+
+
+LLMDep = Annotated["LLMPort", Depends(get_llm)]
