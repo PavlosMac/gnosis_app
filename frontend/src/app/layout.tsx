@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Script from 'next/script';
 import "./globals.css";
+import ProfileNav from '@/components/ProfileNav';
 
 export const metadata: Metadata = {
   title: "Tarot Divinations",
@@ -13,8 +14,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className="antialiased">
+    <html lang="en" suppressHydrationWarning>
+      <body className="antialiased" suppressHydrationWarning>
+        <ProfileNav />
         {children}
 
         {/* Google tag (gtag.js) */}

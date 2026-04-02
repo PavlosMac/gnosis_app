@@ -17,6 +17,9 @@
 ### src/components/LogoutButton.tsx
 - `LogoutButton` — component *default*
 
+### src/components/ProfileNav.tsx `(client)`
+- `ProfileNav` — function *default*
+
 ### src/components/Reading.tsx
 - `Reading` — component *default*
 - `ReadingProps` — interface
