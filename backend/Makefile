@@ -20,7 +20,7 @@ format:
 	uv run ruff check --fix src/ tests/
 
 docker-up:
-	docker compose up -d
+	docker compose up
 
 docker-down:
 	docker compose down

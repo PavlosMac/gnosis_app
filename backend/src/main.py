@@ -18,6 +18,7 @@ from src.cqrs.mediator import Mediator
 from src.database.mongodb import close_mongo_connection, connect_to_mongo, get_database
 from src.health.router import router as health_router
 from src.llm.openai_adapter import OpenAIAdapter
+from src.llm.router import router as llm_router
 from src.users.queries.list_users import ListUsersHandler, ListUsersQuery
 from src.users.router import router as users_router
 
@@ -91,3 +92,4 @@ app.add_exception_handler(Exception, unhandled_exception_handler)
 app.include_router(health_router, prefix="/api/v1")
 app.include_router(auth_router, prefix="/api/v1")
 app.include_router(users_router, prefix="/api/v1")
+app.include_router(llm_router, prefix="/api/v1")

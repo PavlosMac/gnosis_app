@@ -12,7 +12,11 @@ from src.llm.errors import (
 )
 from src.llm.port import LLMPort
 from src.llm.prompt_builder import build_system_prompt, build_user_prompt
-from src.llm.schemas import InterpretationRequest, InterpretationResponse
+from src.llm.schemas import (
+    InterpretationRequest,
+    InterpretationResponse,
+    LLMInterpretationResult,
+)
 
 logger = structlog.stdlib.get_logger(__name__)
 
@@ -43,7 +47,7 @@ class OpenAIAdapter(LLMPort):
         )
 
         try:
-            response = await self._client.chat.completions.create(
+            response = await self._client.beta.chat.completions.parse(
                 model=self._model,
                 max_tokens=self._max_tokens,
                 temperature=0.7,
@@ -51,6 +55,7 @@ class OpenAIAdapter(LLMPort):
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_prompt},
                 ],
+                response_format=LLMInterpretationResult,
             )
         except RateLimitError as exc:
             raise LLMRateLimitError() from exc
@@ -59,14 +64,15 @@ class OpenAIAdapter(LLMPort):
         except APIStatusError as exc:
             raise LLMResponseError(f"OpenAI API error: {exc.status_code}") from exc
 
-        content = response.choices[0].message.content if response.choices else None
-        if not content:
-            raise LLMResponseError("Empty response from LLM")
+        parsed = response.choices[0].message.parsed if response.choices else None
+        if not parsed:
+            raise LLMResponseError("Empty or unparseable response from LLM")
 
         tokens_used = response.usage.total_tokens if response.usage else 0
 
         return InterpretationResponse(
-            interpretation=content,
+            card_interpretations=parsed.card_interpretations,
+            synthesis=parsed.synthesis,
             model=response.model,
             tokens_used=tokens_used,
         )
