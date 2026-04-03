@@ -27,14 +27,8 @@ RUN npm ci
 # Copy source code
 COPY . .
 
-# Build Next.js app (skip in dev mode)
+# Build Next.js app
 RUN npm run build
-
-# For development: expose port and set dev command
-EXPOSE 3000
-ENV PORT=3000
-ENV HOSTNAME="0.0.0.0"
-CMD ["npm", "run", "dev"]
 
 # Stage 3: Runner (Production)
 FROM node:20-alpine AS runner
