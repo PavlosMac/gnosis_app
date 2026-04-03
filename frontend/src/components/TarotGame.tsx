@@ -1,12 +1,15 @@
-
 "use client";
 import React, { useState, useEffect, useRef, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import Reading from "@/components/Reading";
 import ShuffledDeck from "@/components/ShuffledDeck";
 import ShuffledDeckMobile from "@/components/ShuffledDeckMobile";
 import ShuffleAnimation from "@/components/ShuffleAnimation";
+import InterpretationModal from "@/components/InterpretationModal";
 import readingsConfig from "@/lib/readings-config.json";
-import { TarotCardData } from "@/types/models";
+import type { User } from "@/types/auth";
+import type { SelectedCard, ReadingResult } from "@/types/reading";
+import type { InterpretResult } from "@/types/interpret";
 
 // Hook to detect mobile screen
 const useIsMobile = () => {
@@ -35,15 +38,8 @@ interface ReadingConfig {
   };
 }
 
-interface SelectedCard extends TarotCardData {
-  idx: number;
-  reversed: boolean;
-}
-
-interface ReadingResult {
-  readingType: string;
-  positions: Record<string, SelectedCard>;
-  question?: string;
+interface TarotGameProps {
+  user?: User | null;
 }
 
 const readings = readingsConfig.readings as ReadingConfig[];
@@ -55,7 +51,8 @@ const SHOW_READING_DELAY = CARD_FLIP_DURATION + CARD_FLIP_BUFFER;
 const DECK_SCROLL_DELAY = 300;
 const READING_SCROLL_DELAY = 100;
 
-export default function TarotGame() {
+export default function TarotGame({ user }: TarotGameProps) {
+  const router = useRouter();
   const [selectedReading, setSelectedReading] = useState<ReadingConfig>(readings[1]); // Default to Past, Present, Future
   const [userQuestion, setUserQuestion] = useState<string>("");
   const [selectedCards, setSelectedCards] = useState<SelectedCard[]>([]);
@@ -63,6 +60,9 @@ export default function TarotGame() {
   const [isShuffling, setIsShuffling] = useState<boolean>(false);
   const [completedReading, setCompletedReading] = useState<ReadingResult | null>(null);
   const [showReading, setShowReading] = useState<boolean>(false);
+  const [showInterpretModal, setShowInterpretModal] = useState(false);
+  const [interpretResult, setInterpretResult] = useState<InterpretResult | null>(null);
+  const [remainingCredits, setRemainingCredits] = useState(user?.credits ?? 0);
   const deckRef = useRef<HTMLDivElement>(null);
   const readingRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
@@ -91,7 +91,19 @@ export default function TarotGame() {
     setSelectedCards([]);
     setCompletedReading(null);
     setShowReading(false);
+    setShowInterpretModal(false);
+    setInterpretResult(null);
   };
+
+  const handleCloseModal = useCallback(() => setShowInterpretModal(false), []);
+
+  const handleResultReceived = useCallback((r: InterpretResult) => {
+    setInterpretResult(r);
+    if (r.ok) {
+      setRemainingCredits((prev) => Math.max(0, prev - 1));
+      router.refresh();
+    }
+  }, [router]);
 
   // Auto-capture reading when all cards are selected
   useEffect(() => {
@@ -110,7 +122,6 @@ export default function TarotGame() {
         ...(userQuestion && { question: userQuestion }),
       };
       setCompletedReading(result);
-      console.log("Reading captured:", result);
     }
   }, [selectedCards, numCards, completedReading, selectedReading, userQuestion]);
 
@@ -155,8 +166,9 @@ export default function TarotGame() {
     <div className="relative w-full max-w-6xl mx-auto overflow-hidden rounded-xl border-2 border-[#d4af37]/30 shadow-2xl"
          style={{
            background: 'linear-gradient(135deg, rgba(26,0,51,0.95) 0%, rgba(45,27,78,0.95) 100%)',
-           backdropFilter: 'blur(10px)',
          }}>
+      {/* Backdrop blur isolated to inner layer so it doesn't create a compositing layer on the outer div */}
+      <div className="absolute inset-0 pointer-events-none" style={{ backdropFilter: 'blur(10px)' }} />
 
       {/* Ornate corner decorations */}
       <div className="absolute top-0 left-0 w-24 h-24 border-t-2 border-l-2 border-[#d4af37]/50 rounded-tl-xl" />
@@ -281,19 +293,42 @@ export default function TarotGame() {
             )}
 
             {selectedCards.length === numCards && (
-              <button
-                className="mt-10 px-10 py-4 bg-gradient-to-br from-[#d4af37] to-[#b8942f] text-[#1a0033] rounded-lg
-                           shadow-lg hover:shadow-[#d4af37]/50 transition-all duration-300 font-bold text-lg
-                           hover:scale-105 active:scale-95 mx-auto block border border-[#d4af37]/50"
-                style={{ fontFamily: "'Cinzel', serif", letterSpacing: '0.1em' }}
-                onClick={handleNewReading}
-              >
-                ✦ New Reading ✦
-              </button>
+              <div className="flex flex-col items-center gap-4 mt-10">
+                <button
+                  className="px-10 py-4 bg-gradient-to-br from-[#d4af37] to-[#b8942f] text-[#1a0033] rounded-lg
+                             shadow-lg hover:shadow-[#d4af37]/50 transition-all duration-300 font-bold text-lg
+                             hover:scale-105 active:scale-95 border border-[#d4af37]/50"
+                  style={{ fontFamily: "'Cinzel', serif", letterSpacing: '0.1em' }}
+                  onClick={handleNewReading}
+                >
+                  ✦ New Reading ✦
+                </button>
+
+                {user && remainingCredits > 0 && (
+                  <button
+                    className="px-10 py-4 bg-gradient-to-br from-[#8a2be2]/80 to-[#5a1a9e]/80 text-[#e6d5b8] rounded-lg
+                               shadow-lg hover:shadow-[#8a2be2]/40 transition-all duration-300 font-bold text-lg
+                               hover:scale-105 active:scale-95 border border-[#8a2be2]/40"
+                    style={{ fontFamily: "'Cinzel', serif", letterSpacing: '0.1em' }}
+                    onClick={() => setShowInterpretModal(true)}
+                  >
+                    ✦ Oracle Interpretation ✦
+                  </button>
+                )}
+              </div>
             )}
           </div>
         )}
       </div>
+
+      {showInterpretModal && completedReading && (
+        <InterpretationModal
+          reading={completedReading}
+          onClose={handleCloseModal}
+          initialResult={interpretResult}
+          onResultReceived={handleResultReceived}
+        />
+      )}
     </div>
   );
 }

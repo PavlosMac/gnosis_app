@@ -66,7 +66,7 @@ const ProfilePage = async () => {
                 className="text-[#e6d5b8]/60 text-sm tracking-wider uppercase"
                 style={{ fontFamily: "'Cinzel', serif" }}
               >
-                Oracle Credits
+                Readings
               </span>
               <span
                 className="text-2xl text-[#d4af37]"

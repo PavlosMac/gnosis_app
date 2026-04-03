@@ -61,7 +61,7 @@ export default function TarotCard({ card, showMeaning = true, small = false }: T
           <div className="absolute inset-0 rounded-lg border-2 border-[#d4af37] shadow-2xl overflow-hidden"
                style={{
                  background: 'linear-gradient(135deg, rgba(26,0,51,0.3), rgba(45,27,78,0.3))',
-                 backdropFilter: 'blur(5px)'
+                 ...(small ? {} : { backdropFilter: 'blur(5px)' })
                }}>
             
             {/* Inner decorative border */}
@@ -85,8 +85,8 @@ export default function TarotCard({ card, showMeaning = true, small = false }: T
             style={{ fontFamily: "'Cinzel', serif", textShadow: '0 0 10px rgba(212,175,55,0.3)' }}>
           {card.name}
         </h3>
-        {card.reversed && (
-          <p className={`text-center text-[#d4af37]/80 ${small ? 'text-[10px]' : 'text-xs'}`}
+        {!small && card.reversed && (
+          <p className="text-center text-[#d4af37]/80 text-xs"
              style={{ fontFamily: "'Cinzel', serif" }}>
             (Reversed)
           </p>

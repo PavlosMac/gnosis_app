@@ -90,7 +90,7 @@ const stars = useMemo(() =>
 ## Authentication Architecture
 
 ### Overview
-JWT auth via external FastAPI backend (`FASTAPI_URL` env var). Tokens stored in httpOnly cookies, never exposed to client JS.
+JWT auth via external FastAPI backend (`GNOSIS_API_BASE_URL` env var). Tokens stored in httpOnly cookies, never exposed to client JS.
 
 ### Key Files
 - `src/lib/api-client.ts` — `authenticatedFetch()` (silent 401 refresh) + `publicFetch()` for all FastAPI calls

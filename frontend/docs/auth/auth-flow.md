@@ -213,12 +213,12 @@ JWT authentication via an external FastAPI backend. Tokens are stored in httpOnl
 
 ### process.env in Middleware
 
-`process.env.FASTAPI_URL` must be read lazily (via a getter function) in middleware context. Evaluating it at module load can yield `undefined` because middleware runs in a different runtime than server actions. Both `proxy.ts` and `api-client.ts` use the same pattern:
+`process.env.GNOSIS_API_BASE_URL` must be read lazily (via a getter function) in middleware context. Evaluating it at module load can yield `undefined` because middleware runs in a different runtime than server actions. Both `proxy.ts` and `api-client.ts` use the same pattern:
 
 ```typescript
-const FASTAPI_URL = () => {
-  const url = process.env.FASTAPI_URL;
-  if (!url) throw new Error("FASTAPI_URL environment variable is not set");
+const GNOSIS_API_BASE_URL = () => {
+  const url = process.env.GNOSIS_API_BASE_URL;
+  if (!url) throw new Error("GNOSIS_API_BASE_URL environment variable is not set");
   return url;
 };
 ```

@@ -1,9 +1,8 @@
-"use client";
 import Link from "next/link";
 import { Cinzel, Crimson_Pro } from "next/font/google";
-import { useMemo } from "react";
 import "../tarot.css";
 import TarotGame from "@/components/TarotGame";
+import { getCurrentUser } from "@/lib/session";
 
 const cinzel = Cinzel({
   subsets: ["latin"],
@@ -17,17 +16,15 @@ const crimsonPro = Crimson_Pro({
   variable: "--font-crimson-pro",
 });
 
-export default function ReadingPage() {
-  const stars = useMemo(
-    () =>
-      [...Array(100)].map((_, i) => ({
-        left: `${(i * 7.3 + 13) % 100}%`,
-        top: `${(i * 11.7 + 23) % 100}%`,
-        animationDelay: `${(i * 0.37) % 3}s`,
-        animationDuration: `${2 + (i * 0.29) % 2}s`,
-      })),
-    []
-  );
+const stars = [...Array(100)].map((_, i) => ({
+  left: `${(i * 7.3 + 13) % 100}%`,
+  top: `${(i * 11.7 + 23) % 100}%`,
+  animationDelay: `${(i * 0.37) % 3}s`,
+  animationDuration: `${2 + (i * 0.29) % 2}s`,
+}));
+
+export default async function ReadingPage() {
+  const user = await getCurrentUser();
 
   return (
     <main
@@ -62,7 +59,7 @@ export default function ReadingPage() {
           <span className="text-sm tracking-wider">Portal</span>
         </Link>
 
-        <TarotGame />
+        <TarotGame user={user} />
       </div>
     </main>
   );

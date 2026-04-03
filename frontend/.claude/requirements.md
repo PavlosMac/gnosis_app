@@ -69,5 +69,5 @@ updated: 2026-03-22
 
 - **Security**: All API calls via server actions (never expose tokens to client), input validation with Zod
 - **Error handling**: Backend unavailability must not break card selection/significators — only AI and persistence features degrade
-- **Environment config**: `FASTAPI_URL`, `OPENAI_API_KEY`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` in `.env`
+- **Environment config**: `GNOSIS_API_BASE_URL`, `OPENAI_API_KEY`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` in `.env`
 - **Testing**: Server action integration tests for auth flow, unit tests for token refresh logic

@@ -7,6 +7,11 @@
 - `AuthField` — component *default*
 - `AuthFieldProps` — interface
 
+### src/components/InterpretationModal.tsx `(client)`
+- `InterpretationModal` — function *default*
+- `InterpretationModalProps` — interface
+- `ModalState` — alias
+
 ### src/components/KabbalahLayout.tsx
 - `KabbalahLayout` — component *default*
 - `CardSlot` — component
@@ -64,9 +69,8 @@
 - `DECK_SCROLL_DELAY` — constant
 - `READING_SCROLL_DELAY` — constant
 - `ReadingConfig` — interface
-- `ReadingResult` — interface
 - `SHOW_READING_DELAY` — constant
-- `SelectedCard` — interface
+- `TarotGameProps` — interface
 
 ### src/components/TarotLanding.tsx `(client)`
 - `TarotLanding` — component *default*
@@ -95,7 +99,7 @@
 ### src/app/page.tsx `(client)`
 - `TarotPage` — function *default*
 
-### src/app/reading/page.tsx `(client)`
+### src/app/reading/page.tsx
 - `ReadingPage` — function *default*
 
 ### src/app/significators/page.tsx `(client)`
@@ -136,6 +140,9 @@
 ### src/app/superadmin/actions.ts `(server)`
 - `getUsers` — function
 
+### src/app/user/interpret/actions.ts `(server)`
+- `getInterpretation` — function
+
 ### src/app/user/login/actions.ts `(server)`
 - `login` — function
 
@@ -150,7 +157,7 @@
 ### src/lib/api-client.ts
 - `authenticatedFetch` — function
 - `publicFetch` — function
-- `FASTAPI_URL` — constant
+- `GNOSIS_API_BASE_URL` — constant
 
 ### src/lib/cards.ts
 - `TAROT_DECK` — constant
@@ -196,6 +203,10 @@
 - `LoginInput` — type
 - `RegisterInput` — type
 
+### src/lib/validation/interpret-schemas.ts
+- `interpretCardSchema` — function
+- `interpretRequestSchema` — function
+
 ### src/lib/zodiac.ts
 - `zodiacSigns` — function
 - `ZodiacSign` — interface
@@ -233,8 +244,20 @@
 - `mapMeResponseToUser` — function
 - `mapUserResponseToUser` — function
 
+### src/types/interpret.ts
+- `CardOrientation` — type
+- `InterpretCardRequest` — interface
+- `InterpretRequest` — interface
+- `CardInterpretation` — interface
+- `InterpretResponse` — interface
+- `InterpretResult` — type
+
 ### src/types/models.ts
 - `TarotCardData` — interface
+
+### src/types/reading.ts
+- `SelectedCard` — interface
+- `ReadingResult` — interface
 
 ## Constants
 
@@ -255,7 +278,7 @@
 ### src/proxy.ts
 - `proxy` — function
 - `config` — function
-- `FASTAPI_URL` — constant
+- `GNOSIS_API_BASE_URL` — constant
 - `PROACTIVE_REFRESH_THRESHOLD` — constant
 - `PUBLIC_AUTH_ROUTES` — constant
 

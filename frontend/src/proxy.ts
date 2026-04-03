@@ -2,9 +2,9 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 const PUBLIC_AUTH_ROUTES = ["/user/login", "/user/register"];
-const FASTAPI_URL = () => {
-  const url = process.env.FASTAPI_URL;
-  if (!url) throw new Error("FASTAPI_URL environment variable is not set");
+const GNOSIS_API_BASE_URL = () => {
+  const url = process.env.GNOSIS_API_BASE_URL;
+  if (!url) throw new Error("GNOSIS_API_BASE_URL environment variable is not set");
   return url;
 };
 const PROACTIVE_REFRESH_THRESHOLD = 10; // refresh when < 10 seconds remain
@@ -58,7 +58,7 @@ export const proxy = async (request: NextRequest) => {
   if (!accessToken && refreshToken && !isPublicAuthRoute) {
     console.log("[AUTH:PROXY] Access token gone, refresh token present — attempting refresh", { at: new Date().toISOString() });
     try {
-      const res = await fetch(`${FASTAPI_URL()}/api/v1/auth/refresh`, {
+      const res = await fetch(`${GNOSIS_API_BASE_URL()}/api/v1/auth/refresh`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ refresh_token: refreshToken }),
@@ -99,7 +99,7 @@ export const proxy = async (request: NextRequest) => {
       if (secondsRemaining > 0 && secondsRemaining <= PROACTIVE_REFRESH_THRESHOLD) {
         console.log("[AUTH:PROXY] Token expiring soon — proactive refresh", { secondsRemaining, at: new Date().toISOString() });
         try {
-          const res = await fetch(`${FASTAPI_URL()}/api/v1/auth/refresh`, {
+          const res = await fetch(`${GNOSIS_API_BASE_URL()}/api/v1/auth/refresh`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ refresh_token: refreshToken }),

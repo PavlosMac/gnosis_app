@@ -2,9 +2,9 @@ import { cookies } from "next/headers";
 import type { ApiResult } from "@/types/api";
 import type { TokenResponse } from "@/types/auth";
 
-const FASTAPI_URL = () => {
-  const url = process.env.FASTAPI_URL;
-  if (!url) throw new Error("FASTAPI_URL environment variable is not set");
+const GNOSIS_API_BASE_URL = () => {
+  const url = process.env.GNOSIS_API_BASE_URL;
+  if (!url) throw new Error("GNOSIS_API_BASE_URL environment variable is not set");
   return url;
 };
 
@@ -67,7 +67,7 @@ const refreshAccessToken = async (): Promise<string | null> => {
   console.log("[AUTH:FETCH] Attempting token refresh");
 
   try {
-    const res = await fetch(`${FASTAPI_URL()}/api/v1/auth/refresh`, {
+    const res = await fetch(`${GNOSIS_API_BASE_URL()}/api/v1/auth/refresh`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ refresh_token: refreshToken }),
@@ -116,7 +116,7 @@ export const authenticatedFetch = async <T>(
   }
 
   const makeRequest = async (token: string) =>
-    fetch(`${FASTAPI_URL()}${endpoint}`, {
+    fetch(`${GNOSIS_API_BASE_URL()}${endpoint}`, {
       ...options,
       headers: {
         "Content-Type": "application/json",
@@ -160,7 +160,7 @@ export const publicFetch = async <T>(
   options: RequestInit = {}
 ): Promise<ApiResult<T>> => {
   console.log("[AUTH:PUBLIC_FETCH] publicFetch →", endpoint);
-  const res = await fetch(`${FASTAPI_URL()}${endpoint}`, {
+  const res = await fetch(`${GNOSIS_API_BASE_URL()}${endpoint}`, {
     ...options,
     headers: {
       "Content-Type": "application/json",
