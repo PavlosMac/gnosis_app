@@ -44,3 +44,5 @@ next-env.d.ts
 tags
 .ctags.d/config.tags
 CODE_INDEX.md
+
+.claude/skills/project-memory

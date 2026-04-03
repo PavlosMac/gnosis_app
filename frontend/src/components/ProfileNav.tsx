@@ -2,18 +2,13 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import type { User } from '@/types/auth';
 import { logout } from '@/app/user/logout/actions';
-import { getCurrentUser } from '@/lib/session';
+import { useAuth } from '@/app/providers/auth-provider';
 
 export default function ProfileNav() {
-  const [user, setUser] = useState<User | null>(null);
+  const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    getCurrentUser().then(u => setUser(u)).catch(() => setUser(null));
-  }, []);
 
   useEffect(() => {
     if (!open) return;

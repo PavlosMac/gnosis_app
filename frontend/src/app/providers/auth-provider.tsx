@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useState, useCallback } from "react";
+import { createContext, useContext, useState, useCallback, useEffect } from "react";
 import type { User, AuthContextValue } from "@/types/auth";
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -12,6 +12,10 @@ interface AuthProviderProps {
 
 export const AuthProvider = ({ initialUser, children }: AuthProviderProps) => {
   const [user, setUser] = useState<User | null>(initialUser);
+
+  useEffect(() => {
+    setUser(initialUser);
+  }, [initialUser]);
 
   const clearUser = useCallback(() => setUser(null), []);
 
