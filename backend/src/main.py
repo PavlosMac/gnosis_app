@@ -59,14 +59,20 @@ async def lifespan(app: FastAPI):
     app.state.mediator = mediator
     app.state.refresh_token_repo = RefreshTokenRepository(get_database())
 
-    openai_client = AsyncOpenAI(api_key=settings.openai_api_key)
-    llm_adapter = OpenAIAdapter(
-        client=openai_client,
-        model=settings.openai_model,
-        max_tokens=settings.openai_max_tokens,
-    )
+    if settings.openai_api_key:
+        openai_client = AsyncOpenAI(api_key=settings.openai_api_key)
+        llm_adapter = OpenAIAdapter(
+            client=openai_client,
+            model=settings.openai_model,
+            max_tokens=settings.openai_max_tokens,
+        )
+        logger.info("llm adapter initialised", adapter="openai", model=settings.openai_model)
+    else:
+        from src.llm.mock_adapter import MockLLMAdapter
+
+        llm_adapter = MockLLMAdapter()
+        logger.info("llm adapter initialised", adapter="mock")
     app.state.llm = llm_adapter
-    logger.info("llm adapter initialised", model=settings.openai_model)
 
     await _ensure_indexes()
     logger.info("startup complete")
