@@ -167,7 +167,7 @@
         "reversed_positive": null
       },
       {
-        "name": "Prince (King) of Wands",
+        "name": "King of Wands",
         "meta": {
           "kabbalah": "Tiphareth in Atziluth",
           "elemental": "Air of Fire",
@@ -607,7 +607,7 @@
         "reversed_positive": null
       },
       {
-        "name": "Prince (King) of Cups",
+        "name": "King of Cups",
         "meta": {
           "kabbalah": "Tiphareth in Briah",
           "elemental": "Air of Water",
@@ -1047,7 +1047,7 @@
         ]
       },
       {
-        "name": "Prince (King) of Swords",
+        "name": "King of Swords",
         "meta": {
           "kabbalah": "Tiphareth in Yetzirah",
           "elemental": "Air of Air",
@@ -1408,7 +1408,7 @@
         ]
       },
       {
-        "name": "Prince (King) of Disks",
+        "name": "King of Disks",
         "meta": {
           "kabbalah": "Tiphareth in Assiah",
           "elemental": "Air of Earth",

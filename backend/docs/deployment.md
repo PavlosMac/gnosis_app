@@ -230,5 +230,7 @@ docker exec timegnosis-next-app wget -qO- http://gnosis-api:8000/api/v1/health
 - [ ] Create `docker-compose.prod.yml` in repo root
 - [ ] Consider adding `--proxy-headers` to uvicorn if a reverse proxy is added later
 - [ ] Set up log aggregation (stdout logs → Pi-level collection)
+- [ ] Seed prod with 1 user + 1 superadmin
+- [ ] Toggle register route on/off with .env - deploy first with register disabled
 
 For MongoDB auth, backups, remote access, and migrations see [configure_db.md](./configure_db.md).

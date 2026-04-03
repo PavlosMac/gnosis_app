@@ -2815,7 +2815,7 @@
       ]
     },
     {
-      "name": "Art / Temperance",
+      "name": "Temperance",
       "number": 14,
       "meta": {
         "core": {
@@ -4093,7 +4093,7 @@
       "bioenergetic": []
     },
     {
-      "name": "Aeon / Judgment",
+      "name": "Judgment",
       "number": 20,
       "meta": {
         "core": {
@@ -4276,7 +4276,7 @@
       ]
     },
     {
-      "name": "The World / Universe",
+      "name": "Universe",
       "number": 21,
       "meta": {
         "core": {
