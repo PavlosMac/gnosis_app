@@ -53,11 +53,48 @@ def _load_cards() -> tuple[
 _major, _minor_and_court, _court_names, _suits, _card_suit_map = _load_cards()
 
 
+def _build_aliases() -> dict[str, str]:
+    """Build RWS alternate name → canonical Thoth name mapping."""
+    aliases: dict[str, str] = {
+        "Judgement": "Judgment",
+        "The World": "Universe",
+    }
+
+    # Pip cards: Disks → Pentacles (skip court cards — handled below)
+    for canonical in _minor_and_court:
+        if canonical in _court_names:
+            continue
+        if "of Disks" in canonical:
+            aliases[canonical.replace("of Disks", "of Pentacles")] = canonical
+
+    # Court cards: Princess (Page) → Page (all suits) + Disks → Pentacles
+    for canonical in _court_names:
+        if "of Disks" in canonical:
+            aliases[canonical.replace("of Disks", "of Pentacles")] = canonical
+        if canonical.startswith("Princess (Page) of "):
+            suit = canonical.removeprefix("Princess (Page) of ").strip()
+            aliases[f"Page of {suit}"] = canonical
+            if suit == "Disks":
+                aliases["Page of Pentacles"] = canonical
+
+    return aliases
+
+
+_aliases = _build_aliases()
+
+
+def resolve_name(name: str) -> str:
+    """Return the canonical catalog name, resolving aliases if needed."""
+    return _aliases.get(name, name)
+
+
 def get_card_meaning(name: str) -> dict[str, Any] | None:
+    name = resolve_name(name)
     return _major.get(name) or _minor_and_court.get(name)
 
 
 def get_suit_info(name: str) -> dict[str, Any] | None:
+    name = resolve_name(name)
     suit_name = _card_suit_map.get(name)
     if suit_name is None:
         return None
@@ -65,11 +102,11 @@ def get_suit_info(name: str) -> dict[str, Any] | None:
 
 
 def is_major_arcana(name: str) -> bool:
-    return name in _major
+    return resolve_name(name) in _major
 
 
 def is_court_card(name: str) -> bool:
-    return name in _court_names
+    return resolve_name(name) in _court_names
 
 
 def get_all_card_names() -> list[str]:
