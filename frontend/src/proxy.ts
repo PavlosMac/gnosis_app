@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { isRegistrationEnabled } from "@/lib/feature-flags";
 
 const PUBLIC_AUTH_ROUTES = ["/user/login", "/user/register"];
 const GNOSIS_API_BASE_URL = () => {
@@ -35,6 +36,12 @@ const setCookiesFromTokenResponse = (
 
 export const proxy = async (request: NextRequest) => {
   const { pathname } = request.nextUrl;
+
+  // Registration gate — redirect to login when registration is disabled
+  if (pathname.startsWith("/user/register") && !isRegistrationEnabled()) {
+    return NextResponse.redirect(new URL("/user/login", request.url));
+  }
+
   const accessToken = request.cookies.get("access_token")?.value;
   const refreshToken = request.cookies.get("refresh_token")?.value;
   const isPublicAuthRoute = PUBLIC_AUTH_ROUTES.some((route) => pathname.startsWith(route));

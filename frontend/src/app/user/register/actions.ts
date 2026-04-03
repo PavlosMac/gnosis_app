@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { publicFetch, setAuthCookies } from "@/lib/api-client";
+import { isRegistrationEnabled } from "@/lib/feature-flags";
 import { registerSchema } from "@/lib/validation/auth-schemas";
 import type { RegisterFormState, TokenResponse } from "@/types/auth";
 
@@ -9,6 +10,10 @@ export const register = async (
   _prevState: RegisterFormState,
   formData: FormData
 ): Promise<RegisterFormState> => {
+  if (!isRegistrationEnabled()) {
+    return { success: false, error: "Registration is currently closed." };
+  }
+
   console.log("[AUTH:REGISTER] Register attempt", { email: formData.get("email") });
 
   const raw = {

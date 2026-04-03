@@ -14,15 +14,15 @@ export const getInterpretation = async (
       ok: false,
       error: "You must be logged in to request an interpretation.",
     };
-  if (user.credits < 1)
-    return { ok: false, error: "Insufficient reading credits." };
+  if (!user.isSuperadmin)
+    return { ok: false, error: "You do not have access to Oracle Interpretation." };
 
   const parsed = interpretRequestSchema.safeParse(payload);
   if (!parsed.success)
     return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid request." };
 
   const result = await authenticatedFetch<InterpretResponse>(
-    `${process.env.GNOSIS_API_BASE_URL}/llm/interpret`,
+    `/api/v1/llm/interpret`,
     {
       method: "POST",
       body: JSON.stringify(parsed.data),

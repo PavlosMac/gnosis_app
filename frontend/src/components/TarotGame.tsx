@@ -1,6 +1,5 @@
 "use client";
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { useRouter } from "next/navigation";
 import Reading from "@/components/Reading";
 import ShuffledDeck from "@/components/ShuffledDeck";
 import ShuffledDeckMobile from "@/components/ShuffledDeckMobile";
@@ -52,7 +51,6 @@ const DECK_SCROLL_DELAY = 300;
 const READING_SCROLL_DELAY = 100;
 
 export default function TarotGame({ user }: TarotGameProps) {
-  const router = useRouter();
   const [selectedReading, setSelectedReading] = useState<ReadingConfig>(readings[1]); // Default to Past, Present, Future
   const [userQuestion, setUserQuestion] = useState<string>("");
   const [selectedCards, setSelectedCards] = useState<SelectedCard[]>([]);
@@ -62,7 +60,6 @@ export default function TarotGame({ user }: TarotGameProps) {
   const [showReading, setShowReading] = useState<boolean>(false);
   const [showInterpretModal, setShowInterpretModal] = useState(false);
   const [interpretResult, setInterpretResult] = useState<InterpretResult | null>(null);
-  const [remainingCredits, setRemainingCredits] = useState(user?.credits ?? 0);
   const deckRef = useRef<HTMLDivElement>(null);
   const readingRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
@@ -99,11 +96,7 @@ export default function TarotGame({ user }: TarotGameProps) {
 
   const handleResultReceived = useCallback((r: InterpretResult) => {
     setInterpretResult(r);
-    if (r.ok) {
-      setRemainingCredits((prev) => Math.max(0, prev - 1));
-      router.refresh();
-    }
-  }, [router]);
+  }, []);
 
   // Auto-capture reading when all cards are selected
   useEffect(() => {
@@ -304,7 +297,7 @@ export default function TarotGame({ user }: TarotGameProps) {
                   ✦ New Reading ✦
                 </button>
 
-                {user && remainingCredits > 0 && (
+                {user && user.isSuperadmin && (
                   <button
                     className="px-10 py-4 bg-gradient-to-br from-[#8a2be2]/80 to-[#5a1a9e]/80 text-[#e6d5b8] rounded-lg
                                shadow-lg hover:shadow-[#8a2be2]/40 transition-all duration-300 font-bold text-lg

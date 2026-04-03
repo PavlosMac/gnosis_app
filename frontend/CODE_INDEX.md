@@ -117,7 +117,7 @@
 - `UserLayout` — component *default*
 - `UserLayoutProps` — interface
 
-### src/app/user/login/page.tsx `(client)`
+### src/app/user/login/page.tsx
 - `LoginPage` — component *default*
 
 ### src/app/user/profile/page.tsx
@@ -182,6 +182,9 @@
 ### src/lib/decanates.ts
 - `DecanateEntry` — interface
 - `decanatesByMonth` — function
+
+### src/lib/feature-flags.ts
+- `isRegistrationEnabled` — function
 
 ### src/lib/session.ts `(server)`
 - `getCurrentUser` — function
@@ -274,6 +277,10 @@
 - `WORD_TO_NUMBER` — constant
 
 ## Infrastructure
+
+### src/app/user/login/login-form.tsx `(client)`
+- `LoginForm` — component *default*
+- `LoginFormProps` — interface
 
 ### src/proxy.ts
 - `proxy` — function
