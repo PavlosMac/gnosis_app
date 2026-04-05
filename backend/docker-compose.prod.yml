@@ -1,0 +1,40 @@
+services:
+  mongodb:
+    image: mongo:7
+    container_name: gnosis-mongodb
+    command: ["mongod", "--auth", "--quiet"]
+    # NO ports: — not accessible from host
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: gnosis_admin
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD}
+      GNOSIS_APP_PASSWORD: ${GNOSIS_APP_PASSWORD}
+    volumes:
+      - mongo_data:/data/db
+      - ./mongo/init-user.js:/docker-entrypoint-initdb.d/init-user.js:ro
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "bash", "-c", "</dev/tcp/127.0.0.1/27017"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+
+  api:
+    image: pavlos888/gnosis-esoterica-api:latest
+    container_name: gnosis-api
+    # NO ports: — only reachable within app-network
+    env_file: .env.prod
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - app-network
+    restart: unless-stopped
+
+volumes:
+  mongo_data:
+
+networks:
+  app-network:
+    external: true

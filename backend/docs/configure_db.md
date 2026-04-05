@@ -92,8 +92,8 @@ docker exec gnosis-mongodb mongodump --archive --gzip \
 
 ### TODO
 
-- [ ] Create `mongo/init-user.js` in repo
-- [ ] Add auth env vars to `docker-compose.prod.yml`
+- [x] Create `mongo/init-user.js` in repo
+- [x] Add auth env vars to `docker-compose.prod.yml`
 - [ ] Generate and store passwords in `.env.prod` on Pi before first deploy
 
 ---
@@ -180,89 +180,7 @@ docker exec -i gnosis-mongodb mongorestore --archive --gzip \
 
 ## 4. Migrations
 
-Lightweight idempotent migration runner. Each migration runs once and is tracked in a `_migrations` collection.
-
-### Structure
-
-```
-src/migrations/
-├── __init__.py
-├── runner.py          # Discovers and runs pending migrations
-└── versions/
-    ├── __init__.py
-    ├── 001_initial_indexes.py
-    ├── 002_add_readings_collection.py
-    └── ...
-```
-
-### Migration file format
-
-Each file exports `version`, `description`, and an `async up(db)` function:
-
-```python
-# src/migrations/versions/001_initial_indexes.py
-from motor.motor_asyncio import AsyncIOMotorDatabase
-
-version = "001"
-description = "Create initial indexes for users and refresh tokens"
-
-async def up(db: AsyncIOMotorDatabase) -> None:
-    await db.users.create_index("email", unique=True)
-    await db.users.create_index("stripe_customer_id", unique=True, sparse=True)
-    await db.users.create_index([("created_at", -1)])
-    await db.refresh_tokens.create_index("jti", unique=True)
-    await db.refresh_tokens.create_index("family_id")
-    await db.refresh_tokens.create_index([("expires_at", 1)], expireAfterSeconds=0)
-```
-
-### Runner logic
-
-```python
-# src/migrations/runner.py (pseudocode)
-async def run_migrations(db):
-    migrations_col = db["_migrations"]
-    applied = {doc["version"] async for doc in migrations_col.find()}
-
-    for migration in discover_migrations():  # sorted by version
-        if migration.version not in applied:
-            await migration.up(db)
-            await migrations_col.insert_one({
-                "version": migration.version,
-                "description": migration.description,
-                "applied_at": datetime.utcnow(),
-            })
-```
-
-### How to run
-
-**Development** — called at app startup (in `lifespan`), after `connect_to_mongo()`:
-```python
-await run_migrations(get_database())
-await _ensure_indexes()  # can eventually move all index creation into migrations
-```
-
-**Production** — via `docker exec` before or after deploying a new image:
-```bash
-docker exec gnosis-api .venv/bin/python -m src.migrations.runner
-```
-
-Or integrated into the lifespan (same as dev) — safe because each migration is idempotent and only runs once.
-
-### Relationship to `ensure_indexes()`
-
-The existing `ensure_indexes()` pattern (called at startup in `main.py`) already handles index creation idempotently — `create_index` is a no-op if the index exists. Two options going forward:
-
-1. **Keep both** — `ensure_indexes()` for indexes, migrations for data changes. Simple, no refactor needed.
-2. **Consolidate** — move index creation into migration files. Cleaner long-term, but not urgent.
-
-Recommend option 1 for now.
-
-### TODO
-
-- [ ] Create `src/migrations/` package with runner
-- [ ] Write first migration (can mirror current `ensure_indexes` or start with next schema change)
-- [ ] Add `run_migrations()` call to `lifespan` in `main.py`
-- [ ] Add `make migrate` command to Makefile
+See [db_migrations.md](./db_migrations.md) for migration conventions, runner details, and examples.
 
 ---
 
@@ -270,10 +188,10 @@ Recommend option 1 for now.
 
 | Concern | Status | Notes |
 |---|---|---|
-| MongoDB auth | Planned | Root + scoped `gnosis_app` user via init script |
+| MongoDB auth | Done | Root + scoped `gnosis_app` user via init script |
 | Remote access | Planned | SSH tunnel + management override |
 | Backups | Not configured | `mongodump` cron on Pi |
-| Migrations | Not built | Lightweight runner, tracked in `_migrations` |
-| Index management | Done | `ensure_indexes()` at startup |
+| Migrations | Done | Lightweight runner, tracked in `_migrations` |
+| Index management | Done | Managed via migrations |
 | TTL indexes | Done | `refresh_tokens.expires_at` |
 | Volume persistence | Done | `mongo_data` named volume |

@@ -80,12 +80,25 @@ src/auth/queries/get_user_by_id.py   # GetUserByIdQuery + GetUserByIdHandler in 
 ### Repository Pattern
 - Split `BaseWriteRepository` / `BaseReadRepository` ABCs in `src/database/base_repository.py`
 - Repos return raw `dict[str, Any]` — handlers convert via `model_validate()`
-- Index management via `ensure_indexes()` called at startup
+- Index management via migrations (not repositories)
 
 ### Domain Models
 - Plain Python classes (not Pydantic) with `to_document()` / `from_document()`
 - Optional fields omitted from documents (not stored as null)
 - Separate Pydantic read models in `schemas.py` for query responses
+
+### Migrations
+- Single owner of all schema changes (indexes, collection setup, data transforms)
+- Files in `src/migrations/versions/` — naming: `NNN_snake_case.py` (zero-padded 3-digit prefix)
+- Each file exports: `version: str`, `description: str`, `async def up(db: AsyncIOMotorDatabase) -> None`
+- `version` attribute must match the filename prefix (e.g. file `002_foo.py` → `version = "002"`)
+- Forward-only — no `down()` migrations
+- `up()` must be idempotent (safe to re-run even if runner skips applied versions)
+- Reference collections via constants from `src/database/collections/constants.py`
+- No application imports (models, services, schemas) — migrations must be self-contained
+- One logical concern per migration file
+- Runner auto-discovers and sorts by filename; tracked in `_migrations` collection
+- See [`docs/db_migrations.md`](docs/db_migrations.md) for examples and runner details
 
 ## Conventions
 

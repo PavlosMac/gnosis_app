@@ -227,7 +227,7 @@ docker exec timegnosis-next-app wget -qO- http://gnosis-api:8000/api/v1/health
 ## TODO
 
 - [ ] Create `deploy-to-pi.sh` script in repo root
-- [ ] Create `docker-compose.prod.yml` in repo root
+- [x] Create `docker-compose.prod.yml` in repo root
 - [ ] Consider adding `--proxy-headers` to uvicorn if a reverse proxy is added later
 - [ ] Set up log aggregation (stdout logs → Pi-level collection)
 - [ ] Seed prod with 1 user + 1 superadmin

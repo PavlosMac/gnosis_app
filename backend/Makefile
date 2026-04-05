@@ -1,4 +1,4 @@
-.PHONY: dev test lint format typecheck install docker-up docker-down
+.PHONY: dev test lint format typecheck install docker-up docker-down migrate docker-prod-up docker-prod-down
 
 install:
 	uv sync
@@ -24,3 +24,12 @@ docker-up:
 
 docker-down:
 	docker compose down
+
+migrate:
+	uv run python -m src.migrations.runner
+
+docker-prod-up:
+	docker compose -f docker-compose.prod.yml up -d
+
+docker-prod-down:
+	docker compose -f docker-compose.prod.yml down

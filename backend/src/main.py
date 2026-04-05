@@ -1,4 +1,3 @@
-import asyncio
 from contextlib import asynccontextmanager
 
 import structlog
@@ -41,14 +40,6 @@ def _wire_mediator(mediator: Mediator) -> None:
     mediator.register_query(ListUsersQuery, ListUsersHandler(user_read_repo))
 
 
-async def _ensure_indexes() -> None:
-    db = get_database()
-    await asyncio.gather(
-        AuthWriteRepository(db).ensure_indexes(),
-        RefreshTokenRepository(db).ensure_indexes(),
-    )
-
-
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info("starting up", app=settings.app_name, env=settings.app_env)
@@ -74,7 +65,6 @@ async def lifespan(app: FastAPI):
         logger.info("llm adapter initialised", adapter="mock")
     app.state.llm = llm_adapter
 
-    await _ensure_indexes()
     logger.info("startup complete")
 
     yield

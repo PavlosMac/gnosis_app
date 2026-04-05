@@ -1,8 +1,6 @@
 from datetime import datetime
 from typing import Any
 
-from pymongo import ASCENDING
-
 from src.database.base_repository import BaseReadRepository, BaseWriteRepository
 from src.database.collections.constants import REFRESH_TOKENS_COLLECTION, USERS_COLLECTION
 
@@ -11,11 +9,6 @@ class AuthWriteRepository(BaseWriteRepository):
     @property
     def collection_name(self) -> str:
         return USERS_COLLECTION
-
-    async def ensure_indexes(self) -> None:
-        await self._collection.create_index("email", unique=True)
-        await self._collection.create_index("stripe_customer_id", unique=True, sparse=True)
-        await self._collection.create_index([("created_at", -1)])
 
 
 class AuthReadRepository(BaseReadRepository):
@@ -52,7 +45,3 @@ class RefreshTokenRepository:
     async def revoke_family(self, family_id: str) -> None:
         await self._collection.delete_many({"family_id": family_id})
 
-    async def ensure_indexes(self) -> None:
-        await self._collection.create_index("jti", unique=True)
-        await self._collection.create_index("family_id")
-        await self._collection.create_index([("expires_at", ASCENDING)], expireAfterSeconds=0)
