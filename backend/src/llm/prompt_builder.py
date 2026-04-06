@@ -17,9 +17,11 @@ _SYSTEM_PROMPT = (
     "You are an expert tarot reader with deep knowledge of esoteric symbolism, "
     "Kabbalah, and Jungian archetypes. You provide insightful, nuanced tarot "
     "interpretations that weave together the cards' individual meanings into a "
-    "coherent narrative addressing the querent's question. "
+    "coherent narrative. When the querent provides a question, address it directly. "
+    "When no question is given, let the cards and their positions speak — offer a "
+    "general reading shaped by the spread name, layout and the energies present. "
     "Be thoughtful, specific, and grounded in the symbolism provided. "
-    "Avoid generic statements — speak directly to the question and the spread.\n\n"
+    "Avoid generic statements — speak directly to the spread.\n\n"
     "ORIENTATION GUIDANCE:\n"
     "- Upright cards carry both strengths and challenges — acknowledge the shadow side "
     "where relevant rather than presenting a purely positive picture.\n"
@@ -27,14 +29,22 @@ _SYSTEM_PROMPT = (
     "and an opportunity for growth or inner work. Let the balance between these aspects "
     "be informed by the querent's question and how neighbouring cards in the spread "
     "shape the meaning.\n\n"
+    "POSITION GUIDANCE:\n"
+    "- Each card's position carries interpretive weight. When a position meaning is provided, "
+    "let it shape how you read the card — the same card means something different in a "
+    "'Fire' position (will, drive) than in a 'Water' position (emotions, intuition).\n\n"
     "FORMAT INSTRUCTIONS:\n"
-    "- For each card, write 120–180 words tied to the querent's question. "
+    "- For each card, provide a focused interpretation tied to the querent's question. "
     "Explain how this card in this position speaks to what the querent is asking — "
-    "not a generic textbook definition.\n"
-    "- The synthesis is the heart of the reading: 200–300 words weaving all cards into "
-    "one cohesive narrative that directly addresses the question. "
-    "The synthesis is more important than the individual card breakdowns — "
-    "it should feel like the single most valuable thing the querent reads."
+    "not a generic textbook definition. Be thorough enough to honour the symbolism "
+    "but concise enough that every sentence earns its place.\n"
+    "- For multi-card spreads, the synthesis is the heart of the reading: weave all cards "
+    "into one cohesive narrative that directly addresses the question. The synthesis should "
+    "be the most substantial part of the response — not a recap of individual cards, but an "
+    "integrated insight.\n"
+    "- For single-card readings, do not restate the card interpretation in the synthesis. "
+    "Instead, offer a practical takeaway — actionable guidance, a reflective question for "
+    "the querent to sit with, or a concrete step they can take based on the card's message."
 )
 
 
@@ -46,15 +56,23 @@ def build_user_prompt(
     request: InterpretationRequest,
     meanings: dict[str, dict[str, Any]] | None = None,
 ) -> str:
-    lines: list[str] = [
-        f"Question: {request.question}",
-        "",
-        f"Spread ({len(request.cards)} card{'s' if len(request.cards) > 1 else ''}):",
-    ]
+    lines: list[str] = []
+    if request.question:
+        lines.append(f"Question: {request.question}")
+    else:
+        lines.append("No specific question — provide a general reading.")
+    lines.append("")
+    card_count = len(request.cards)
+    lines.append(
+        f"Spread: {request.spread_name} ({card_count} card{'s' if card_count > 1 else ''}):"
+    )
 
     for i, card in enumerate(request.cards, start=1):
         meaning = (meanings or {}).get(card.name) or card_catalog.get_card_meaning(card.name)
-        lines.append(f"\n{i}. {card.name} ({card.orientation.value}) — Position: {card.position}")
+        position_line = f"\n{i}. {card.name} ({card.orientation.value}) — Position: {card.position}"
+        if card.position_description:
+            position_line += f"\n  Position meaning: {card.position_description}"
+        lines.append(position_line)
         if meaning is not None:
             lines.append(_format_card(card, meaning))
 
@@ -64,7 +82,8 @@ def build_user_prompt(
 def _format_card(card: CardInSpread, meaning: dict[str, Any]) -> str:
     if card_catalog.is_major_arcana(card.name):
         return _format_major_arcana(meaning, card.orientation)
-    block = _format_minor_arcana(meaning, card.orientation)
+    block = _format_suit_context(card.name)
+    block += _format_minor_arcana(meaning, card.orientation)
     if card_catalog.is_court_card(card.name):
         block += "\n" + _format_court_meta(meaning)
     return block
@@ -95,7 +114,55 @@ def _format_major_arcana(card: dict[str, Any], orientation: Orientation) -> str:
     if keywords:
         parts.append(f"  Keywords: {_SEP.join(keywords)}")
 
+    esoteric = _format_esoteric_meta(meta)
+    if esoteric:
+        parts.append(esoteric)
+
     return "\n".join(parts)
+
+
+def _format_esoteric_meta(meta: dict[str, Any]) -> str:
+    parts: list[str] = []
+
+    core = meta.get("core", {})
+    core_items: list[str] = []
+    if element := core.get("element"):
+        core_items.append(f"Element: {element}")
+    if modality := core.get("modality"):
+        core_items.append(f"Modality: {modality}")
+    if core_items:
+        parts.append("  " + " | ".join(core_items))
+
+    astro = meta.get("astrology", {})
+    if sign := astro.get("sign"):
+        planets = astro.get("planet", [])
+        astro_str = f"  Astrology: {sign}"
+        if planets:
+            astro_str += f" ({_SEP.join(planets)})"
+        parts.append(astro_str)
+
+    esoteric = meta.get("esoteric", {})
+    if kabbalah := esoteric.get("kabbalah"):
+        parts.append(f"  Kabbalah: {kabbalah}")
+    if alchemy := esoteric.get("alchemy"):
+        parts.append(f"  Alchemy: {_SEP.join(alchemy)}")
+
+    numerology = meta.get("numerology", {})
+    if num_meaning := numerology.get("meaning"):
+        num = numerology.get("number", "")
+        reduction = numerology.get("reduction", "")
+        parts.append(f"  Numerology: {num} → {reduction} — {num_meaning}")
+
+    return "\n".join(parts)
+
+
+def _format_suit_context(card_name: str) -> str:
+    suit = card_catalog.get_suit_info(card_name)
+    if suit is None:
+        return ""
+    element = suit.get("element", "")
+    temporal = suit.get("temporal", "")
+    return f"  Suit: {suit.get('name', '')} ({element}) — temporal scope: {temporal}\n"
 
 
 def _format_minor_arcana(card: dict[str, Any], orientation: Orientation) -> str:

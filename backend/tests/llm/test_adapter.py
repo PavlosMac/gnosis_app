@@ -65,7 +65,11 @@ def _make_client(
 
 
 def _make_request(*cards: CardInSpread) -> InterpretationRequest:
-    return InterpretationRequest(question="What does this spread reveal?", cards=list(cards))
+    return InterpretationRequest(
+        spread_name="Test Spread",
+        question="What does this spread reveal?",
+        cards=list(cards),
+    )
 
 
 @pytest.fixture

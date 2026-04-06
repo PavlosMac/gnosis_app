@@ -3,9 +3,11 @@ from src.llm.schemas import CardInSpread, InterpretationRequest, Orientation
 
 
 def _make_request(
-    cards: list[CardInSpread], question: str = "What lies ahead?"
+    cards: list[CardInSpread],
+    question: str = "What lies ahead?",
+    spread_name: str = "Past-Present-Future",
 ) -> InterpretationRequest:
-    return InterpretationRequest(question=question, cards=cards)
+    return InterpretationRequest(spread_name=spread_name, question=question, cards=cards)
 
 
 def test_system_prompt_is_non_empty():
