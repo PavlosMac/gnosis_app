@@ -17,10 +17,13 @@
 - `CardSlot` — component
 - `CardSlotProps` — interface
 - `KabbalahLayoutProps` — interface
-- `SelectedCard` — interface
 
 ### src/components/LogoutButton.tsx
 - `LogoutButton` — component *default*
+
+### src/components/OrnateFrame.tsx
+- `OrnateFrame` — function *default*
+- `OrnateFrameProps` — interface
 
 ### src/components/ProfileNav.tsx `(client)`
 - `ProfileNav` — function *default*
@@ -28,7 +31,6 @@
 ### src/components/Reading.tsx
 - `Reading` — component *default*
 - `ReadingProps` — interface
-- `SelectedCard` — interface
 
 ### src/components/ShuffleAnimation.tsx `(client)`
 - `ShuffleAnimation` — component *default*
@@ -38,13 +40,7 @@
 
 ### src/components/ShuffledDeck.tsx
 - `ShuffledDeck` — function *default*
-- `SelectedCard` — interface
 - `ShuffledDeckProps` — interface
-
-### src/components/ShuffledDeckMobile.tsx
-- `ShuffledDeckMobile` — function *default*
-- `SelectedCard` — interface
-- `ShuffledDeckMobileProps` — interface
 
 ### src/components/SignificatorSection.tsx
 - `SignificatorSectionProps` — interface
@@ -67,6 +63,7 @@
 - `CARD_FLIP_BUFFER` — constant
 - `CARD_FLIP_DURATION` — constant
 - `DECK_SCROLL_DELAY` — constant
+- `PositionConfig` — interface
 - `READING_SCROLL_DELAY` — constant
 - `ReadingConfig` — interface
 - `SHOW_READING_DELAY` — constant
@@ -158,6 +155,7 @@
 - `authenticatedFetch` — function
 - `publicFetch` — function
 - `GNOSIS_API_BASE_URL` — constant
+- `SAFE_MESSAGES` — constant
 
 ### src/lib/cards.ts
 - `TAROT_DECK` — constant
@@ -281,6 +279,13 @@
 ### src/app/user/login/login-form.tsx `(client)`
 - `LoginForm` — component *default*
 - `LoginFormProps` — interface
+
+### src/hooks/useGameReducer.ts
+- `GamePhase` — type
+- `GameAction` — type
+- `useGameReducer` — function
+- `getSelectedCards` — function
+- `getReading` — function
 
 ### src/proxy.ts
 - `proxy` — function

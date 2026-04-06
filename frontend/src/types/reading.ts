@@ -9,4 +9,5 @@ export interface ReadingResult {
   readingType: string;
   positions: Record<string, SelectedCard>;
   question?: string;
+  positionDescriptions?: Record<string, string>;
 }

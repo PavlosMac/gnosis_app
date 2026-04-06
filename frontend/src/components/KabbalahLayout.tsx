@@ -1,11 +1,6 @@
 import React from "react";
 import TarotCard from "./TarotCard";
-import { TarotCardData } from "@/types/models";
-
-interface SelectedCard extends TarotCardData {
-  idx: number;
-  reversed: boolean;
-}
+import type { SelectedCard } from "@/types/reading";
 
 interface KabbalahLayoutProps {
   selectedCards: SelectedCard[];

@@ -214,6 +214,19 @@
   animation: centerPulse 1s ease-in-out infinite;
 }
 
+/* Card sizing — mobile-first, desktop override */
+.card-flip-container {
+  width: clamp(32px, 9vw, 64px);
+  height: clamp(40px, 10.5dvh, 112px);
+}
+@media (min-width: 640px) {
+  .card-flip-container {
+    width: clamp(40px, 5vw, 60px);
+    height: auto;
+    aspect-ratio: 5 / 8;
+  }
+}
+
 /* Card flip */
 .card-flip-inner {
   transform-style: preserve-3d;

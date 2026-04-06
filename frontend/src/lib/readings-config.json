@@ -4,7 +4,9 @@
             "name": "Single Card",
             "description": "A single card reading for an open question",
             "cards": 1,
-            "positions": ["Answer"],
+            "positions": [
+                { "name": "Answer", "description": "The single card drawn to directly answer the querent's question" }
+            ],
             "showQuestion": true,
             "meta": {
                 "field": "input",
@@ -16,19 +18,31 @@
             "name": "Past, Present, Future",
             "description": "A three card reading",
             "cards": 3,
-            "positions": ["Past", "Present", "Future"]
+            "positions": [
+                { "name": "Past", "description": "Influences from the past that have shaped the current situation" },
+                { "name": "Present", "description": "The current energies and circumstances at play" },
+                { "name": "Future", "description": "The likely outcome if the current path continues" }
+            ]
         },
         {
             "name": "Fire, Water, Air, Earth Reading",
             "description": "A four card reading",
             "cards": 4,
-            "positions": ["Fire", "Water", "Air", "Earth"]
+            "positions": [
+                { "name": "Fire", "description": "Passion, drive, and the energy fuelling the situation" },
+                { "name": "Water", "description": "Emotions, intuition, and the undercurrents beneath the surface" },
+                { "name": "Air", "description": "Thoughts, communication, and the mental landscape surrounding the situation" },
+                { "name": "Earth", "description": "Material concerns, practical matters, and the tangible reality at hand" }
+            ]
         },
         {
             "name": "Open Question Reading",
             "description": "Current situation | How to proceed?",
             "cards": 2,
-            "positions": ["Current Situation", "How to Proceed"],
+            "positions": [
+                { "name": "Current Situation", "description": "The present circumstances surrounding the querent's question" },
+                { "name": "How to Proceed", "description": "Guidance on the best course of action moving forward" }
+            ],
             "showQuestion": true,
             "meta": {
                 "field": "input",
@@ -40,7 +54,19 @@
             "name": "Tree of Life",
             "description": "An 11 card Kabbalah card reading",
             "cards": 11,
-            "positions": ["Kether", "Chokmah", "Binah", " Chesed", "Geburah", "Tiphereth", "Netzach", "Hod", "Yesod", "Malkuth", "Daath"]
+            "positions": [
+                { "name": "Kether", "description": "The Crown — divine will and highest spiritual aspiration" },
+                { "name": "Chokmah", "description": "Wisdom — raw creative force and initial spark" },
+                { "name": "Binah", "description": "Understanding — form, structure, and receptive intelligence" },
+                { "name": "Chesed", "description": "Mercy — expansion, abundance, and loving-kindness" },
+                { "name": "Geburah", "description": "Severity — discipline, strength, and necessary limitation" },
+                { "name": "Tiphereth", "description": "Beauty — harmony, balance, and the integrated self" },
+                { "name": "Netzach", "description": "Victory — emotions, desire, and creative expression" },
+                { "name": "Hod", "description": "Splendor — intellect, communication, and analytical thought" },
+                { "name": "Yesod", "description": "Foundation — the subconscious, dreams, and intuition" },
+                { "name": "Malkuth", "description": "Kingdom — the physical world, manifestation, and grounding" },
+                { "name": "Daath", "description": "Knowledge — the hidden sephira, the abyss, and transformative insight" }
+            ]
         }
     ]
 }

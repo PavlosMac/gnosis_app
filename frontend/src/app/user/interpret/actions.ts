@@ -17,9 +17,16 @@ export const getInterpretation = async (
   if (!user.isSuperadmin)
     return { ok: false, error: "You do not have access to Oracle Interpretation." };
 
+  console.log("[INTERPRET] Payload received:", JSON.stringify(payload, null, 2));
+
   const parsed = interpretRequestSchema.safeParse(payload);
-  if (!parsed.success)
-    return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid request." };
+  if (!parsed.success) {
+    const issue = parsed.error.issues[0];
+    const path = issue?.path?.join('.') ?? '';
+    const detail = path ? `${path}: ${issue?.message}` : (issue?.message ?? "Invalid request.");
+    console.error("[INTERPRET] Zod validation failed:", JSON.stringify(parsed.error.issues, null, 2));
+    return { ok: false, error: detail };
+  }
 
   const result = await authenticatedFetch<InterpretResponse>(
     `/api/v1/llm/interpret`,

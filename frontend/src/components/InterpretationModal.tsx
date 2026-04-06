@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { createPortal } from "react-dom";
 import TarotCard from "@/components/TarotCard";
+import OrnateFrame from "@/components/OrnateFrame";
 import { getInterpretation } from "@/app/user/interpret/actions";
 import type { ReadingResult } from "@/types/reading";
 import type { InterpretResult, InterpretResponse } from "@/types/interpret";
@@ -61,15 +62,21 @@ export default function InterpretationModal({
         name: card.name,
         position,
         orientation: card.reversed ? ("reversed" as const) : ("upright" as const),
+        ...(reading.positionDescriptions?.[position] && {
+          position_description: reading.positionDescriptions[position],
+        }),
       }));
 
-      const interpretResult = await getInterpretation({
-        question:
-          reading.question && reading.question.trim().length >= 5
-            ? reading.question
-            : "General reading",
+      const payload = {
+        spread_name: reading.readingType,
+        ...(reading.question && reading.question.trim().length >= 5 && {
+          question: reading.question,
+        }),
         cards,
-      });
+      };
+
+      console.log("[INTERPRET:CLIENT] Payload:", JSON.stringify(payload, null, 2));
+      const interpretResult = await getInterpretation(payload);
 
       onResultReceived(interpretResult);
 
@@ -120,8 +127,7 @@ export default function InterpretationModal({
         onClick={(e) => e.stopPropagation()}
       >
         {/* Ornate corner decorations */}
-        <div className="absolute top-0 left-0 w-16 h-16 border-t-2 border-l-2 border-[#d4af37]/50 rounded-tl-xl pointer-events-none" />
-        <div className="absolute top-0 right-0 w-16 h-16 border-t-2 border-r-2 border-[#d4af37]/50 rounded-tr-xl pointer-events-none" />
+        <OrnateFrame size="sm" corners="top" />
 
         {/* Sticky header */}
         <div
@@ -188,6 +194,27 @@ export default function InterpretationModal({
           {/* RESULT STATE */}
           {modalState === "result" && result && (
             <div className="flex flex-col gap-8">
+              {/* Original question */}
+              {reading.question && reading.question.trim().length > 0 && (
+                <div
+                  className="text-center px-4 py-3 rounded-lg border border-[#d4af37]/15"
+                  style={{ background: "rgba(212,175,55,0.04)" }}
+                >
+                  <p
+                    className="text-[#e6d5b8]/50 text-xs uppercase tracking-widest mb-1"
+                    style={{ fontFamily: "'Cinzel', serif" }}
+                  >
+                    Your Question
+                  </p>
+                  <p
+                    className="text-[#e6d5b8]/80 text-sm sm:text-base italic"
+                    style={{ fontFamily: "'Crimson Pro', serif" }}
+                  >
+                    &ldquo;{reading.question.trim()}&rdquo;
+                  </p>
+                </div>
+              )}
+
               {/* Card interpretations */}
               {result.card_interpretations.map((interp, i) => {
                 const positionCard = reading.positions[interp.position];

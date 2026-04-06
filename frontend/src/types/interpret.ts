@@ -4,10 +4,12 @@ export interface InterpretCardRequest {
   name: string;
   position: string;
   orientation: CardOrientation;
+  position_description?: string;
 }
 
 export interface InterpretRequest {
-  question: string; // minLength 5, maxLength 500
+  spread_name: string;
+  question?: string;
   cards: InterpretCardRequest[];
 }
 

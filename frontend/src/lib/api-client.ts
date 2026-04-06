@@ -2,6 +2,19 @@ import { cookies } from "next/headers";
 import type { ApiResult } from "@/types/api";
 import type { TokenResponse } from "@/types/auth";
 
+/** Map HTTP status codes to safe, user-facing messages. */
+const SAFE_MESSAGES: Record<number, string> = {
+  400: "The request was invalid.",
+  401: "Session expired. Please log in again.",
+  403: "You do not have permission for this action.",
+  404: "The requested resource was not found.",
+  422: "The request contained invalid data.",
+  429: "Too many requests. Please wait and try again.",
+};
+
+const safeErrorMessage = (status: number, fallback: string): string =>
+  SAFE_MESSAGES[status] ?? fallback;
+
 const GNOSIS_API_BASE_URL = () => {
   const url = process.env.GNOSIS_API_BASE_URL;
   if (!url) throw new Error("GNOSIS_API_BASE_URL environment variable is not set");
@@ -138,16 +151,14 @@ export const authenticatedFetch = async <T>(
         const data: T = await retryRes.json();
         return { ok: true, data };
       }
-      const body = await retryRes.json().catch(() => ({}));
-      return { ok: false, status: retryRes.status, message: body?.detail ?? "Session expired. Please log in again." };
+      return { ok: false, status: retryRes.status, message: safeErrorMessage(retryRes.status, "Session expired. Please log in again.") };
     }
     return { ok: false, status: 401, message: "Session expired. Please log in again." };
   }
 
   if (!res.ok) {
-    const body = await res.json().catch(() => ({}));
     console.log("[AUTH:FETCH] Request failed", { endpoint, status: res.status });
-    return { ok: false, status: res.status, message: body?.detail ?? "An unexpected error occurred." };
+    return { ok: false, status: res.status, message: safeErrorMessage(res.status, "An unexpected error occurred.") };
   }
 
   console.log("[AUTH:FETCH] Request succeeded", { endpoint });
@@ -169,9 +180,8 @@ export const publicFetch = async <T>(
   });
 
   if (!res.ok) {
-    const body = await res.json().catch(() => ({}));
     console.log("[AUTH:PUBLIC_FETCH] Request failed", { endpoint, status: res.status });
-    return { ok: false, status: res.status, message: body?.detail ?? "An unexpected error occurred." };
+    return { ok: false, status: res.status, message: safeErrorMessage(res.status, "An unexpected error occurred.") };
   }
 
   console.log("[AUTH:PUBLIC_FETCH] Request succeeded", { endpoint });

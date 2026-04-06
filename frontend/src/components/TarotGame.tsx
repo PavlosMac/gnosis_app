@@ -2,33 +2,26 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import Reading from "@/components/Reading";
 import ShuffledDeck from "@/components/ShuffledDeck";
-import ShuffledDeckMobile from "@/components/ShuffledDeckMobile";
 import ShuffleAnimation from "@/components/ShuffleAnimation";
 import InterpretationModal from "@/components/InterpretationModal";
+import OrnateFrame from "@/components/OrnateFrame";
 import readingsConfig from "@/lib/readings-config.json";
+
+import { useGameReducer, getSelectedCards, getReading } from "@/hooks/useGameReducer";
 import type { User } from "@/types/auth";
-import type { SelectedCard, ReadingResult } from "@/types/reading";
+import type { SelectedCard } from "@/types/reading";
 import type { InterpretResult } from "@/types/interpret";
 
-// Hook to detect mobile screen
-const useIsMobile = () => {
-  const [isMobile, setIsMobile] = useState(false);
-
-  useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 640);
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
-
-  return isMobile;
-};
+interface PositionConfig {
+  name: string;
+  description: string;
+}
 
 interface ReadingConfig {
   name: string;
   description: string;
   cards: number;
-  positions: string[];
+  positions: PositionConfig[];
   showQuestion?: boolean;
   meta?: {
     field: string;
@@ -51,43 +44,44 @@ const DECK_SCROLL_DELAY = 300;
 const READING_SCROLL_DELAY = 100;
 
 export default function TarotGame({ user }: TarotGameProps) {
-  const [selectedReading, setSelectedReading] = useState<ReadingConfig>(readings[1]); // Default to Past, Present, Future
+  const [selectedReading, setSelectedReading] = useState<ReadingConfig>(readings[1]);
   const [userQuestion, setUserQuestion] = useState<string>("");
-  const [selectedCards, setSelectedCards] = useState<SelectedCard[]>([]);
-  const [gameStarted, setGameStarted] = useState<boolean>(false);
-  const [isShuffling, setIsShuffling] = useState<boolean>(false);
-  const [completedReading, setCompletedReading] = useState<ReadingResult | null>(null);
-  const [showReading, setShowReading] = useState<boolean>(false);
   const [showInterpretModal, setShowInterpretModal] = useState(false);
   const [interpretResult, setInterpretResult] = useState<InterpretResult | null>(null);
+  const [game, dispatch] = useGameReducer();
   const deckRef = useRef<HTMLDivElement>(null);
   const readingRef = useRef<HTMLDivElement>(null);
-  const isMobile = useIsMobile();
 
   const numCards = selectedReading.cards;
+  const selectedCards = getSelectedCards(game);
+  const completedReading = getReading(game);
+  const isSelecting = game.phase !== 'setup' && game.phase !== 'shuffling';
 
-  const startGame = () => {
-    setSelectedCards([]);
-    setCompletedReading(null);
-    setShowReading(false);
-    setIsShuffling(true);
-  };
+  const positionNames = selectedReading.positions.map(p => p.name);
+  const positionDescriptions = Object.fromEntries(
+    selectedReading.positions.map(p => [p.name, p.description])
+  );
+
+  const startGame = () => dispatch({ type: 'START_SHUFFLE' });
 
   const handleShuffleComplete = useCallback(() => {
-    setIsShuffling(false);
-    setGameStarted(true);
+    dispatch({ type: 'SHUFFLE_COMPLETE' });
   }, []);
 
   const handleSelectCard = (card: SelectedCard) => {
-    setSelectedCards((prev) => [...prev, card]);
+    dispatch({
+      type: 'SELECT_CARD',
+      card,
+      numCards,
+      positions: positionNames,
+      readingName: selectedReading.name,
+      question: selectedReading.showQuestion ? (userQuestion || undefined) : undefined,
+      positionDescriptions,
+    });
   };
 
   const handleNewReading = () => {
-    setGameStarted(false);
-    setIsShuffling(false);
-    setSelectedCards([]);
-    setCompletedReading(null);
-    setShowReading(false);
+    dispatch({ type: 'RESET' });
     setShowInterpretModal(false);
     setInterpretResult(null);
   };
@@ -98,62 +92,38 @@ export default function TarotGame({ user }: TarotGameProps) {
     setInterpretResult(r);
   }, []);
 
-  // Auto-capture reading when all cards are selected
-  useEffect(() => {
-    if (selectedCards.length === numCards && numCards > 0 && !completedReading) {
-      // Map each card to its position label
-      const positions = selectedReading.positions.reduce((acc, position, idx) => {
-        if (selectedCards[idx]) {
-          acc[position] = selectedCards[idx];
-        }
-        return acc;
-      }, {} as Record<string, SelectedCard>);
-
-      const result: ReadingResult = {
-        readingType: selectedReading.name,
-        positions,
-        ...(userQuestion && { question: userQuestion }),
-      };
-      setCompletedReading(result);
-    }
-  }, [selectedCards, numCards, completedReading, selectedReading, userQuestion]);
-
   // Scroll the deck into view when the spread appears (after shuffle)
   useEffect(() => {
-    if (gameStarted && deckRef.current) {
+    if (game.phase === 'selecting' && deckRef.current) {
       const timer = setTimeout(() => {
-        if (gameStarted && deckRef.current) {
-          deckRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
+        deckRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }, DECK_SCROLL_DELAY);
       return () => clearTimeout(timer);
     }
-  }, [gameStarted]);
+  }, [game.phase]);
 
   // Show reading after card flip animation completes
   useEffect(() => {
-    if (selectedCards.length === numCards && numCards > 0 && !showReading) {
+    if (game.phase === 'flipping') {
       const timer = setTimeout(() => {
-        setShowReading(true);
+        dispatch({ type: 'FLIP_COMPLETE' });
       }, SHOW_READING_DELAY);
       return () => clearTimeout(timer);
     }
-  }, [selectedCards.length, numCards, showReading]);
+  }, [game.phase]);
 
   // Scroll to reading when it becomes visible
   useEffect(() => {
-    if (showReading && readingRef.current) {
+    if (game.phase === 'reading' && readingRef.current) {
       const timer = setTimeout(() => {
-        if (showReading && readingRef.current) {
-          readingRef.current.scrollIntoView({
-            behavior: 'smooth',
-            block: 'start'
-          });
-        }
+        readingRef.current?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start'
+        });
       }, READING_SCROLL_DELAY);
       return () => clearTimeout(timer);
     }
-  }, [showReading]);
+  }, [game.phase]);
 
   return (
     <div className="relative w-full max-w-6xl mx-auto overflow-hidden rounded-xl border-2 border-[#d4af37]/30 shadow-2xl"
@@ -164,10 +134,7 @@ export default function TarotGame({ user }: TarotGameProps) {
       <div className="absolute inset-0 pointer-events-none" style={{ backdropFilter: 'blur(10px)' }} />
 
       {/* Ornate corner decorations */}
-      <div className="absolute top-0 left-0 w-24 h-24 border-t-2 border-l-2 border-[#d4af37]/50 rounded-tl-xl" />
-      <div className="absolute top-0 right-0 w-24 h-24 border-t-2 border-r-2 border-[#d4af37]/50 rounded-tr-xl" />
-      <div className="absolute bottom-0 left-0 w-24 h-24 border-b-2 border-l-2 border-[#d4af37]/50 rounded-bl-xl" />
-      <div className="absolute bottom-0 right-0 w-24 h-24 border-b-2 border-r-2 border-[#d4af37]/50 rounded-br-xl" />
+      <OrnateFrame />
 
       {/* Mystical glow effect */}
       <div className="absolute inset-0 opacity-30 pointer-events-none"
@@ -176,19 +143,19 @@ export default function TarotGame({ user }: TarotGameProps) {
            }} />
 
       {/* Content */}
-      <div className={`relative z-10 ${gameStarted && !isShuffling ? 'p-1 sm:p-12' : 'p-6 sm:p-12'}`}>
-        <h1 className={`text-4xl sm:text-6xl font-bold mb-2 text-center text-[#d4af37] tracking-wider ${gameStarted && !isShuffling ? 'hidden sm:block' : ''}`}
+      <div className={`relative z-10 ${isSelecting ? 'p-1 sm:p-12' : 'p-6 sm:p-12'}`}>
+        <h1 className={`text-4xl sm:text-6xl font-bold mb-2 text-center text-[#d4af37] tracking-wider ${isSelecting ? 'hidden sm:block' : ''}`}
             style={{ fontFamily: "'Cinzel', serif", textShadow: '0 0 20px rgba(212,175,55,0.5)' }}>
           Reading Oracle
         </h1>
 
-        <p className={`text-center text-[#d4af37]/70 mb-8 text-sm sm:text-base tracking-wide ${gameStarted && !isShuffling ? 'hidden sm:block' : ''}`}
+        <p className={`text-center text-[#d4af37]/70 mb-8 text-sm sm:text-base tracking-wide ${isSelecting ? 'hidden sm:block' : ''}`}
            style={{ fontFamily: "'Crimson Pro', serif" }}>
           ✦ Unveil the Mysteries of Your Path ✦
         </p>
 
         {/* Pre-game selection screen */}
-        {!gameStarted && !isShuffling && (
+        {game.phase === 'setup' && (
           <div className="flex flex-col items-center gap-6 mt-8 py-8">
             <label className="text-xl text-[#e6d5b8] tracking-wide"
                    style={{ fontFamily: "'Crimson Pro', serif" }}>
@@ -202,7 +169,10 @@ export default function TarotGame({ user }: TarotGameProps) {
               value={selectedReading.name}
               onChange={(e) => {
                 const reading = readings.find(r => r.name === e.target.value);
-                if (reading) setSelectedReading(reading);
+                if (reading) {
+                  setSelectedReading(reading);
+                  setUserQuestion("");
+                }
               }}
             >
               {readings.map((reading) => (
@@ -242,12 +212,12 @@ export default function TarotGame({ user }: TarotGameProps) {
         )}
 
         {/* Shuffle Animation */}
-        {isShuffling && (
+        {game.phase === 'shuffling' && (
           <ShuffleAnimation onComplete={handleShuffleComplete} />
         )}
 
         {/* Game in progress - deck and card selection */}
-        {gameStarted && !isShuffling && (
+        {isSelecting && (
           <div ref={deckRef}>
             <div className="mb-1 sm:mb-6 text-center hidden sm:block">
               <span className="font-semibold text-[#e6d5b8] text-lg tracking-wide"
@@ -256,29 +226,21 @@ export default function TarotGame({ user }: TarotGameProps) {
               </span>
             </div>
 
-            {/* Shuffled Deck - conditionally render mobile or desktop version */}
+            {/* Shuffled Deck — single responsive component */}
             <div className="flex justify-center mb-2 sm:mb-8 animate-fadeIn">
-              {isMobile ? (
-                <ShuffledDeckMobile
-                  numCards={numCards}
-                  selectedCards={selectedCards}
-                  onSelectCard={handleSelectCard}
-                />
-              ) : (
-                <ShuffledDeck
-                  numCards={numCards}
-                  selectedCards={selectedCards}
-                  onSelectCard={handleSelectCard}
-                />
-              )}
+              <ShuffledDeck
+                numCards={numCards}
+                selectedCards={selectedCards}
+                onSelectCard={handleSelectCard}
+              />
             </div>
 
             {/* Reading component - shows after card flip animation completes */}
-            {showReading && (
+            {game.phase === 'reading' && (
               <div ref={readingRef} className="mt-10 flex justify-center animate-fadeIn">
                 <Reading
                   selectedCards={selectedCards}
-                  positions={selectedReading.positions}
+                  positions={positionNames}
                   question={selectedReading.showQuestion ? userQuestion : undefined}
                   isComplete={selectedCards.length === numCards}
                 />
