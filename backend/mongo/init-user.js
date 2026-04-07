@@ -4,6 +4,6 @@ db = db.getSiblingDB("gnosis_esoterica");
 
 db.createUser({
   user: "gnosis_app",
-  pwd: _getEnv("GNOSIS_APP_PASSWORD"),
+  pwd: process.env.GNOSIS_APP_PASSWORD,
   roles: [{ role: "readWrite", db: "gnosis_esoterica" }],
 });

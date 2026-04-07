@@ -2,7 +2,7 @@ services:
   mongodb:
     image: mongo:7
     container_name: gnosis-mongodb
-    command: ["mongod", "--auth", "--quiet"]
+    command: ["mongod", "--auth", "--quiet", "--wiredTigerCacheSizeGB", "0.25"]
     # NO ports: — not accessible from host
     environment:
       MONGO_INITDB_ROOT_USERNAME: gnosis_admin
@@ -18,18 +18,35 @@ services:
       interval: 30s
       timeout: 5s
       retries: 3
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
     restart: unless-stopped
 
   api:
     image: pavlos888/gnosis-esoterica-api:latest
     container_name: gnosis-api
     # NO ports: — only reachable within app-network
-    env_file: .env.prod
+    env_file: .env.gnosis.prod
     depends_on:
       mongodb:
         condition: service_healthy
     networks:
       - app-network
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/v1/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    stop_grace_period: 10s
     restart: unless-stopped
 
 volumes:

@@ -119,7 +119,7 @@ services:
     image: pavlos888/gnosis-esoterica-api:latest
     container_name: gnosis-api
     # NO ports: — only reachable within app-network
-    env_file: .env.prod
+    env_file: .env.gnosis.prod
     depends_on:
       mongodb:
         condition: service_healthy
@@ -150,47 +150,51 @@ networks:
 
 ## Environment on the Pi
 
-File: `.env.prod` (on the Pi, not in repo)
+File: `.env.gnosis.prod` (on the Pi, not in repo)
 
-```env
-APP_NAME=gnosis_esoterica
-APP_ENV=production
-DEBUG=false
+See `.env.gnosis.prod.example` in the repo root for the full template. Copy and fill in real values:
 
-MONGODB_DATABASE=gnosis_esoterica
-
-JWT_SECRET_KEY=<generate-with-openssl-rand-hex-32>
-JWT_ACCESS_TOKEN_EXPIRE_SECONDS=3600
-JWT_REFRESH_TOKEN_EXPIRE_DAYS=30
-
-OPENAI_API_KEY=<your-key>
-OPENAI_MODEL=gpt-4o
-
-LOG_LEVEL=INFO
-LOG_JSON=true
+```bash
+cp .env.gnosis.prod.example .env.gnosis.prod
 ```
 
-Generate the JWT secret:
+Generate secrets:
 ```bash
-openssl rand -hex 32
+openssl rand -hex 16  # MONGO_ROOT_PASSWORD, GNOSIS_APP_PASSWORD
+openssl rand -hex 32  # JWT_SECRET_KEY
 ```
 
 ## Deployment Steps
 
+### On your dev machine
+
+```bash
+chmod +x deploy-to-pi.sh
+./deploy-to-pi.sh
+```
+
 ### First-time setup on the Pi
 
 ```bash
-# 1. Create the shared network (if not already done by timegnosis)
-docker network create app-network
-
-# 2. Create a directory for the project
+# 1. Create project directory
 mkdir -p ~/gnosis-esoterica && cd ~/gnosis-esoterica
 
-# 3. Copy docker-compose.prod.yml and .env.prod to this directory
+# 2. SCP files from dev machine (or clone repo)
+scp docker-compose.prod.yml mongo/init-user.js scripts/pi-pull-and-start.sh scripts/seed_superadmin.sh scripts/seed_superadmin.py pi@<ip>:~/gnosis-esoterica/
+# (preserve mongo/ and scripts/ directory structure)
 
-# 4. Pull and start
-docker compose -f docker-compose.prod.yml pull
-docker compose -f docker-compose.prod.yml up -d
+# 3. Create .env.gnosis.prod with generated secrets
+cp .env.gnosis.prod.example .env.gnosis.prod
+# Fill in: MONGO_ROOT_PASSWORD, GNOSIS_APP_PASSWORD, JWT_SECRET_KEY, OPENAI_API_KEY
+# MONGODB_URI must embed the actual GNOSIS_APP_PASSWORD value
+
+# 4. Pull and start (creates app-network, pulls image, runs migrations)
+chmod +x scripts/pi-pull-and-start.sh
+./scripts/pi-pull-and-start.sh
+
+# 5. Seed superadmin users
+chmod +x scripts/seed_superadmin.sh
+./scripts/seed_superadmin.sh admin@example.com "SecurePassword123"
 ```
 
 ### Updating after code changes
@@ -203,8 +207,7 @@ On your dev machine:
 On the Pi:
 ```bash
 cd ~/gnosis-esoterica
-docker compose -f docker-compose.prod.yml pull
-docker compose -f docker-compose.prod.yml up -d
+./scripts/pi-pull-and-start.sh
 ```
 
 ### Connecting the frontend
@@ -226,11 +229,12 @@ docker exec timegnosis-next-app wget -qO- http://gnosis-api:8000/api/v1/health
 
 ## TODO
 
-- [ ] Create `deploy-to-pi.sh` script in repo root
+- [x] Create `deploy-to-pi.sh` script in repo root
 - [x] Create `docker-compose.prod.yml` in repo root
+- [x] Create `scripts/pi-pull-and-start.sh` (pull + start + migrate)
+- [x] Create `scripts/seed_superadmin.sh` + `scripts/seed_superadmin.py`
 - [ ] Consider adding `--proxy-headers` to uvicorn if a reverse proxy is added later
 - [ ] Set up log aggregation (stdout logs → Pi-level collection)
-- [ ] Seed prod with 1 user + 1 superadmin
 - [ ] Toggle register route on/off with .env - deploy first with register disabled
 
 For MongoDB auth, backups, remote access, and migrations see [configure_db.md](./configure_db.md).

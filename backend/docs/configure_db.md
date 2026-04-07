@@ -49,7 +49,7 @@ services:
 
 ### API connection string
 
-In `.env.prod`, the API connects as the scoped user (not root):
+In `.env.gnosis.prod`, the API connects as the scoped user (not root):
 
 ```env
 MONGODB_URI=mongodb://gnosis_app:<gnosis-app-password>@gnosis-mongodb:27017/gnosis_esoterica?authSource=gnosis_esoterica
@@ -69,7 +69,7 @@ No auth in `docker-compose.yml` locally. The default `MONGODB_URI=mongodb://mong
   openssl rand -hex 16  # MONGO_ROOT_PASSWORD
   openssl rand -hex 16  # GNOSIS_APP_PASSWORD
   ```
-- Both passwords live in `.env.prod` on the Pi only — never committed to the repo.
+- Both passwords live in `.env.gnosis.prod` on the Pi only — never committed to the repo.
 
 ### Remote access with auth
 
@@ -94,7 +94,7 @@ docker exec gnosis-mongodb mongodump --archive --gzip \
 
 - [x] Create `mongo/init-user.js` in repo
 - [x] Add auth env vars to `docker-compose.prod.yml`
-- [ ] Generate and store passwords in `.env.prod` on Pi before first deploy
+- [ ] Generate and store passwords in `.env.gnosis.prod` on Pi before first deploy
 
 ---
 
