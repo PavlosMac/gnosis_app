@@ -8,9 +8,10 @@ interface ShuffledDeckProps {
   numCards: number;
   selectedCards: SelectedCard[];
   onSelectCard: (card: SelectedCard) => void;
+  allowReversals: boolean;
 }
 
-export default function ShuffledDeck({ numCards, selectedCards, onSelectCard }: ShuffledDeckProps) {
+export default function ShuffledDeck({ numCards, selectedCards, onSelectCard, allowReversals }: ShuffledDeckProps) {
   const [shuffledDeck, setShuffledDeck] = useState<TarotCardData[]>([]);
   const deckRef = useRef<HTMLDivElement>(null);
 
@@ -21,7 +22,7 @@ export default function ShuffledDeck({ numCards, selectedCards, onSelectCard }: 
   const handleSelect = (idx: number) => {
     if (selectedCards.length >= numCards) return;
     if (selectedCards.find((c) => c.idx === idx)) return;
-    const reversed = getSecureRandomBoolean();
+    const reversed = allowReversals ? getSecureRandomBoolean() : false;
     onSelectCard({ ...shuffledDeck[idx], idx, reversed });
   };
 
