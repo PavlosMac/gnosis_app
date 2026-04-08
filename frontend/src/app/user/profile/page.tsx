@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import TarotPageLayout from "@/components/TarotPageLayout";
 import { getCurrentUser } from "@/lib/session";
 import LogoutButton from "@/components/LogoutButton";
@@ -78,6 +79,24 @@ const ProfilePage = async () => {
                 {user.credits}
               </span>
             </div>
+          </div>
+
+          {/* Past Readings */}
+          <div className="pt-4 border-t border-[#d4af37]/10">
+            <Link
+              href="/user/readings"
+              className="flex items-center justify-between group"
+            >
+              <span
+                className="text-[#e6d5b8]/60 text-sm tracking-wider uppercase group-hover:text-[#d4af37] transition-colors"
+                style={{ fontFamily: "'Cinzel', serif" }}
+              >
+                Past Readings
+              </span>
+              <span className="text-[#d4af37]/40 group-hover:text-[#d4af37] transition-colors">
+                &#8594;
+              </span>
+            </Link>
           </div>
 
           {/* Logout */}

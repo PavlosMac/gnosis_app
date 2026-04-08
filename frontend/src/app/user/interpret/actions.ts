@@ -4,6 +4,7 @@ import { authenticatedFetch } from "@/lib/api-client";
 import { getCurrentUser } from "@/lib/session";
 import { interpretRequestSchema } from "@/lib/validation/interpret-schemas";
 import type { InterpretRequest, InterpretResponse, InterpretResult } from "@/types/interpret";
+import type { ReadingDetail } from "@/types/reading";
 
 export const getInterpretation = async (
   payload: InterpretRequest
@@ -14,22 +15,17 @@ export const getInterpretation = async (
       ok: false,
       error: "You must be logged in to request an interpretation.",
     };
-  if (!user.isSuperadmin)
-    return { ok: false, error: "You do not have access to Oracle Interpretation." };
-
-  console.log("[INTERPRET] Payload received:", JSON.stringify(payload, null, 2));
 
   const parsed = interpretRequestSchema.safeParse(payload);
   if (!parsed.success) {
     const issue = parsed.error.issues[0];
     const path = issue?.path?.join('.') ?? '';
     const detail = path ? `${path}: ${issue?.message}` : (issue?.message ?? "Invalid request.");
-    console.error("[INTERPRET] Zod validation failed:", JSON.stringify(parsed.error.issues, null, 2));
     return { ok: false, error: detail };
   }
 
-  const result = await authenticatedFetch<InterpretResponse>(
-    `/api/v1/llm/interpret`,
+  const result = await authenticatedFetch<ReadingDetail>(
+    `/api/v1/readings`,
     {
       method: "POST",
       body: JSON.stringify(parsed.data),
@@ -41,5 +37,14 @@ export const getInterpretation = async (
       ok: false,
       error: result.message ?? "The oracle could not be reached.",
     };
-  return { ok: true, data: result.data };
+
+  // Extract the InterpretResponse shape the modal expects
+  const data: InterpretResponse = {
+    card_interpretations: result.data.card_interpretations,
+    synthesis: result.data.synthesis,
+    model: result.data.model,
+    tokens_used: result.data.tokens_used,
+  };
+
+  return { ok: true, data };
 };

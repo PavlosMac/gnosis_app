@@ -44,6 +44,13 @@ export default function ProfileNav() {
               >
                 Profile
               </Link>
+              <Link
+                href="/user/readings"
+                onClick={() => setOpen(false)}
+                className="block px-4 py-2 text-sm text-[#d4af37]/80 hover:text-[#d4af37] hover:bg-[#d4af37]/5 transition-colors"
+              >
+                Readings
+              </Link>
               <form action={logout}>
                 <button
                   type="submit"

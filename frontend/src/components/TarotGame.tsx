@@ -323,7 +323,7 @@ export default function TarotGame({ user }: TarotGameProps) {
                   ✦ New Reading ✦
                 </button>
 
-                {user && user.isSuperadmin && (
+                {user && (
                   <button
                     className="px-10 py-4 bg-gradient-to-br from-[#8a2be2]/80 to-[#5a1a9e]/80 text-[#e6d5b8] rounded-lg
                                shadow-lg hover:shadow-[#8a2be2]/40 transition-all duration-300 font-bold text-lg
