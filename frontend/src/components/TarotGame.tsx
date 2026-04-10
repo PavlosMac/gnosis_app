@@ -148,7 +148,7 @@ export default function TarotGame({ user }: TarotGameProps) {
 
   return (
     <>
-    <div className="relative w-full max-w-6xl mx-auto overflow-hidden rounded-xl border-2 border-[#d4af37]/30 shadow-2xl"
+    <div className="relative w-full max-w-6xl mx-auto mt-16 overflow-hidden rounded-xl border-2 border-[#d4af37]/30 shadow-2xl"
          style={{
            background: 'linear-gradient(135deg, rgba(26,0,51,0.95) 0%, rgba(45,27,78,0.95) 100%)',
          }}>
