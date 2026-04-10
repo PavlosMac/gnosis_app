@@ -43,8 +43,8 @@ interface TarotCardProps {
 
 const TarotCard: React.FC<TarotCardProps> = React.memo(({ card, showMeaning = true, small = false }) => {
   return (
-    <div className={`tarot-card-container ${small ? 'scale-90' : ''}`}>
-      <div className="relative group">
+    <div className={`tarot-card-container ${small ? 'scale-90' : ''} flex flex-col items-center`}>
+      <div className="relative group flex flex-col items-center">
         {/* Card glow effect on hover */}
         <div className="absolute -inset-1 bg-gradient-to-r from-[#d4af37] to-[#8a2be2] rounded-lg opacity-0 
                         group-hover:opacity-50 blur transition-opacity duration-500" />
@@ -93,7 +93,7 @@ const TarotCard: React.FC<TarotCardProps> = React.memo(({ card, showMeaning = tr
         
         {/* Meaning */}
         {!small && showMeaning && (
-          <p className="text-center text-xs sm:text-sm mt-2 text-[#e6d5b8]/80 max-w-[200px] mx-auto italic"
+          <p className="text-center text-xs sm:text-sm mt-2 text-[#e6d5b8]/80 w-40 italic"
              style={{ fontFamily: "'Crimson Pro', serif" }}>
             {card.reversed && card.reversedMeaning ? card.reversedMeaning : card.meaning}
           </p>
