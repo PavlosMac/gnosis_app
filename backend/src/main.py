@@ -17,7 +17,13 @@ from src.cqrs.mediator import Mediator
 from src.database.mongodb import close_mongo_connection, connect_to_mongo, get_database
 from src.health.router import router as health_router
 from src.llm.openai_adapter import OpenAIAdapter
+from src.llm.port import LLMPort
 from src.llm.router import router as llm_router
+from src.readings.commands.create_reading import CreateReadingCommand, CreateReadingHandler
+from src.readings.queries.get_reading_by_id import GetReadingByIdHandler, GetReadingByIdQuery
+from src.readings.queries.list_user_readings import ListUserReadingsHandler, ListUserReadingsQuery
+from src.readings.repository import ReadingReadRepository, ReadingWriteRepository
+from src.readings.router import router as readings_router
 from src.users.queries.list_users import ListUsersHandler, ListUsersQuery
 from src.users.router import router as users_router
 
@@ -26,7 +32,7 @@ configure_logging()
 logger = structlog.stdlib.get_logger(__name__)
 
 
-def _wire_mediator(mediator: Mediator) -> None:
+def _wire_mediator(mediator: Mediator, llm: LLMPort) -> None:
     db = get_database()
 
     user_write_repo = AuthWriteRepository(db)
@@ -39,15 +45,23 @@ def _wire_mediator(mediator: Mediator) -> None:
     mediator.register_query(GetUserByEmailQuery, GetUserByEmailHandler(user_read_repo))
     mediator.register_query(ListUsersQuery, ListUsersHandler(user_read_repo))
 
+    reading_write_repo = ReadingWriteRepository(db)
+    reading_read_repo = ReadingReadRepository(db)
+
+    mediator.register_command(
+        CreateReadingCommand, CreateReadingHandler(reading_write_repo, llm)
+    )
+    mediator.register_query(GetReadingByIdQuery, GetReadingByIdHandler(reading_read_repo))
+    mediator.register_query(
+        ListUserReadingsQuery, ListUserReadingsHandler(reading_read_repo)
+    )
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info("starting up", app=settings.app_name, env=settings.app_env)
     await connect_to_mongo()
 
-    mediator = Mediator()
-    _wire_mediator(mediator)
-    app.state.mediator = mediator
     app.state.refresh_token_repo = RefreshTokenRepository(get_database())
 
     if settings.openai_api_key:
@@ -64,6 +78,10 @@ async def lifespan(app: FastAPI):
         llm_adapter = MockLLMAdapter()
         logger.info("llm adapter initialised", adapter="mock")
     app.state.llm = llm_adapter
+
+    mediator = Mediator()
+    _wire_mediator(mediator, llm_adapter)
+    app.state.mediator = mediator
 
     logger.info("startup complete")
 
@@ -89,3 +107,4 @@ app.include_router(health_router, prefix="/api/v1")
 app.include_router(auth_router, prefix="/api/v1")
 app.include_router(users_router, prefix="/api/v1")
 app.include_router(llm_router, prefix="/api/v1")
+app.include_router(readings_router, prefix="/api/v1")

@@ -28,7 +28,18 @@ async def app(mock_db):
         RefreshTokenRepository,
     )
     from src.cqrs.mediator import Mediator
+    from src.llm.mock_adapter import MockLLMAdapter
     from src.main import app
+    from src.readings.commands.create_reading import CreateReadingCommand, CreateReadingHandler
+    from src.readings.queries.get_reading_by_id import (
+        GetReadingByIdHandler,
+        GetReadingByIdQuery,
+    )
+    from src.readings.queries.list_user_readings import (
+        ListUserReadingsHandler,
+        ListUserReadingsQuery,
+    )
+    from src.readings.repository import ReadingReadRepository, ReadingWriteRepository
     from src.users.queries.list_users import ListUsersHandler, ListUsersQuery
 
     mediator = Mediator()
@@ -42,8 +53,21 @@ async def app(mock_db):
     mediator.register_query(GetUserByEmailQuery, GetUserByEmailHandler(user_read_repo))
     mediator.register_query(ListUsersQuery, ListUsersHandler(user_read_repo))
 
+    mock_llm = MockLLMAdapter()
+    reading_write_repo = ReadingWriteRepository(mock_db)
+    reading_read_repo = ReadingReadRepository(mock_db)
+
+    mediator.register_command(
+        CreateReadingCommand, CreateReadingHandler(reading_write_repo, mock_llm)
+    )
+    mediator.register_query(GetReadingByIdQuery, GetReadingByIdHandler(reading_read_repo))
+    mediator.register_query(
+        ListUserReadingsQuery, ListUserReadingsHandler(reading_read_repo)
+    )
+
     app.state.mediator = mediator
     app.state.refresh_token_repo = RefreshTokenRepository(mock_db)
+    app.state.llm = mock_llm
     return app
 
 
@@ -63,6 +87,16 @@ async def superadmin_token(client, mock_db):
     )
     assert login.status_code == 200, f"Login failed: {login.text}"
     return login.json()["access_token"]
+
+
+@pytest.fixture
+async def auth_token(client):
+    reg = await client.post(
+        "/api/v1/auth/register",
+        json={"email": "user@example.com", "password": "securepassword123"},
+    )
+    assert reg.status_code == 201, f"Registration failed: {reg.text}"
+    return reg.json()["access_token"]
 
 
 @pytest.fixture

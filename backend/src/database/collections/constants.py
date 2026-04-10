@@ -1,2 +1,3 @@
 USERS_COLLECTION = "users"
 REFRESH_TOKENS_COLLECTION = "refresh_tokens"
+READINGS_COLLECTION = "readings"

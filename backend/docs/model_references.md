@@ -17,17 +17,18 @@
 | updated_at         | datetime          |                  |
 
 ### readings
-| Field          | Type                              | Notes   |
-|----------------|-----------------------------------|---------|
-| _id            | ObjectId                          | PK      |
-| user_id        | ObjectId                          | FK→users|
-| spread_type    | str                               |         |
-| cards          | [{position, name, reversed}]      | array   |
-| question       | str \| null                       |         |
-| interpretation | str                               |         |
-| tokens_used    | int                               |         |
-| model          | str                               |         |
-| created_at     | datetime                          |         |
+| Field                | Type                                                 | Notes    |
+|----------------------|------------------------------------------------------|----------|
+| _id                  | ObjectId                                             | PK       |
+| user_id              | ObjectId                                             | FK→users |
+| spread_type          | str                                                  |          |
+| question             | str \| null                                          |          |
+| cards                | [{name, position, orientation}]                      | array    |
+| card_interpretations | [{card_name, position, orientation, interpretation}] | array    |
+| synthesis            | str                                                  |          |
+| tokens_used          | int                                                  |          |
+| model                | str                                                  |          |
+| created_at           | datetime                                             |          |
 
 ### transactions
 | Field                 | Type           | Notes            |

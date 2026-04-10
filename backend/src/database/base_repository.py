@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from typing import Any
 
 from bson import ObjectId
+from bson.errors import InvalidId
 from motor.motor_asyncio import AsyncIOMotorDatabase
 
 
@@ -35,7 +36,10 @@ class BaseReadRepository(ABC):
     def collection_name(self) -> str: ...
 
     async def find_by_id(self, id: str) -> dict[str, Any] | None:
-        return await self._collection.find_one({"_id": ObjectId(id)})
+        try:
+            return await self._collection.find_one({"_id": ObjectId(id)})
+        except InvalidId:
+            return None
 
     async def find_one(self, filter: dict[str, Any]) -> dict[str, Any] | None:
         return await self._collection.find_one(filter)
