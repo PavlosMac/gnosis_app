@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { TarotCardData } from "@/types/models";
 import { TAROT_DECK } from "@/lib/cards";
 import { secureShuffleArray, getSecureRandomBoolean } from "@/lib/crypto-random";
@@ -11,7 +11,7 @@ interface ShuffledDeckProps {
   allowReversals: boolean;
 }
 
-export default function ShuffledDeck({ numCards, selectedCards, onSelectCard, allowReversals }: ShuffledDeckProps) {
+const ShuffledDeck: React.FC<ShuffledDeckProps> = React.memo(({ numCards, selectedCards, onSelectCard, allowReversals }) => {
   const [shuffledDeck, setShuffledDeck] = useState<TarotCardData[]>([]);
   const deckRef = useRef<HTMLDivElement>(null);
 
@@ -28,7 +28,7 @@ export default function ShuffledDeck({ numCards, selectedCards, onSelectCard, al
 
   return (
     <div ref={deckRef} className="w-full px-1 sm:px-1 flex items-start">
-      <div className="flex flex-wrap justify-center gap-x-[2px] gap-y-[2px] sm:gap-y-[1px] mx-auto w-full max-w-[400px] sm:max-w-[856px]">
+      <div className="flex flex-wrap justify-center gap-x-[2px] gap-y-[2px] sm:gap-y-[1px] mx-auto w-full max-w-[400px] sm:max-w-[856px]" style={{ perspective: '600px' }}>
         {shuffledDeck.slice(0, 78).map((card, idx) => {
           const selected = selectedCards.find((c) => c.idx === idx);
           return (
@@ -38,12 +38,11 @@ export default function ShuffledDeck({ numCards, selectedCards, onSelectCard, al
               onClick={() => handleSelect(idx)}
               disabled={!!selected || selectedCards.length >= numCards}
               aria-label={`Pick card ${idx + 1}`}
-              style={{ perspective: '600px' }}
             >
               {/* Card glow on hover/active */}
               {!selected && (
                 <div className="absolute -inset-0.5 sm:-inset-1 bg-gradient-to-r from-[#d4af37] via-[#8a2be2] to-[#d4af37]
-                                rounded-lg opacity-0 sm:group-hover:opacity-70 group-active:opacity-90 blur transition-all duration-300 pointer-events-none" />
+                                rounded-lg opacity-0 sm:group-hover:opacity-70 group-active:opacity-90 transition-all duration-300 pointer-events-none" />
               )}
 
               {/* Flip container — CSS class handles mobile/desktop sizing */}
@@ -52,7 +51,7 @@ export default function ShuffledDeck({ numCards, selectedCards, onSelectCard, al
                 <div className="card-flip-face card-flip-back absolute inset-0 bg-gradient-to-br from-[#1a0033] to-[#2d1b4e]
                                 rounded-sm border border-[#d4af37]/60 shadow-lg sm:shadow-xl overflow-hidden
                                 transition-all duration-300 sm:group-hover:border-[#d4af37]
-                                group-active:border-[#ffd700] group-active:shadow-[0_0_20px_rgba(212,175,55,0.6)]">
+                                group-active:border-[#ffd700]">
 
                   <div className="absolute inset-0 flex items-center justify-center opacity-60 sm:group-hover:opacity-80 group-active:opacity-100 transition-opacity">
                     <svg className="w-[60%] h-[70%]" viewBox="0 0 40 64" fill="none">
@@ -90,4 +89,8 @@ export default function ShuffledDeck({ numCards, selectedCards, onSelectCard, al
       </div>
     </div>
   );
-}
+});
+
+ShuffledDeck.displayName = 'ShuffledDeck';
+
+export default ShuffledDeck;

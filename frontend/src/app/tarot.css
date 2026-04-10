@@ -19,11 +19,11 @@
 }
 
 @keyframes glow {
-  0%, 100% { 
-    box-shadow: 0 0 5px rgba(212,175,55,0.3); 
+  0%, 100% {
+    opacity: 0.6;
   }
-  50% { 
-    box-shadow: 0 0 20px rgba(212,175,55,0.6), 0 0 30px rgba(212,175,55,0.3); 
+  50% {
+    opacity: 1;
   }
 }
 
@@ -118,10 +118,10 @@
 
 @keyframes glow-pulse {
   0%, 100% {
-    box-shadow: 0 0 20px rgba(212,175,55,0.2);
+    opacity: 0.6;
   }
   50% {
-    box-shadow: 0 0 40px rgba(212,175,55,0.4), 0 0 60px rgba(212,175,55,0.2);
+    opacity: 1;
   }
 }
 
@@ -169,15 +169,15 @@
 @keyframes shuffleFadeIn {
   0% {
     opacity: 0;
-    transform: scale(0.5) rotate(0deg) translateX(80px) rotate(0deg);
+    transform: scale(0.5) rotate(0deg) translateX(80px);
   }
   20% {
     opacity: 1;
-    transform: scale(1) rotate(0deg) translateX(80px) rotate(0deg);
+    transform: scale(1) rotate(0deg) translateX(80px);
   }
   100% {
     opacity: 1;
-    transform: scale(1) rotate(360deg) translateX(80px) rotate(-360deg);
+    transform: scale(1) rotate(360deg) translateX(80px);
   }
 }
 
@@ -231,6 +231,7 @@
 .card-flip-inner {
   transform-style: preserve-3d;
   transition: transform 0.6s ease;
+  will-change: transform;
 }
 
 .card-flip-inner.card-flipped {
@@ -243,4 +244,52 @@
 
 .card-flip-front {
   transform: rotateY(180deg);
+}
+
+/* Scrollbar styling for mystical aesthetic */
+/* Hide scrollbar on desktop for immersive experience, keep mobile scrolling */
+@media (min-width: 1024px) {
+  /* Webkit browsers (Chrome, Safari, Edge) */
+  ::-webkit-scrollbar {
+    width: 0px;
+    height: 0px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: transparent;
+  }
+
+  /* Firefox */
+  * {
+    scrollbar-width: none;
+  }
+
+  /* IE and Edge Legacy */
+  * {
+    -ms-overflow-style: none;
+  }
+}
+
+/* On mobile, show elegant custom scrollbar */
+@media (max-width: 1023px) {
+  ::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: rgba(26, 0, 51, 0.3);
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: rgba(212, 175, 55, 0.3);
+    border-radius: 3px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(212, 175, 55, 0.5);
+  }
 }

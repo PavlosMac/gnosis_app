@@ -12,7 +12,7 @@
 - `InterpretationDisplayProps` — interface
 
 ### src/components/InterpretationModal.tsx `(client)`
-- `InterpretationModal` — function *default*
+- `InterpretationModal` — component *default*
 - `InterpretationModalProps` — interface
 - `ModalState` — alias
 
@@ -43,7 +43,7 @@
 - `ShuffleAnimationProps` — interface
 
 ### src/components/ShuffledDeck.tsx
-- `ShuffledDeck` — function *default*
+- `ShuffledDeck` — component *default*
 - `ShuffledDeckProps` — interface
 
 ### src/components/SignificatorSection.tsx
@@ -51,7 +51,7 @@
 - `SignificatorSection` — component *default*
 
 ### src/components/TarotCard.tsx
-- `TarotCard` — function *default*
+- `TarotCard` — component *default*
 - `TarotCardProps` — interface
 
 ### src/components/TarotChart.tsx `(client)`
@@ -102,6 +102,7 @@
 
 ### src/app/reading/page.tsx
 - `ReadingPage` — function *default*
+- `STARS` — constant
 
 ### src/app/significators/page.tsx `(client)`
 - `SignificatorsPage` — function *default*

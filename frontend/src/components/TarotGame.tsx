@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import Reading from "@/components/Reading";
 import ShuffledDeck from "@/components/ShuffledDeck";
 import ShuffleAnimation from "@/components/ShuffleAnimation";
@@ -59,9 +59,14 @@ export default function TarotGame({ user }: TarotGameProps) {
   const completedReading = getReading(game);
   const isSelecting = game.phase !== 'setup' && game.phase !== 'shuffling';
 
-  const positionNames = selectedReading.positions.map(p => p.name);
-  const positionDescriptions = Object.fromEntries(
-    selectedReading.positions.map(p => [p.name, p.description])
+  // Memoize derived state to prevent recalculation and stabilize references
+  const positionNames = useMemo(
+    () => selectedReading.positions.map(p => p.name),
+    [selectedReading]
+  );
+  const positionDescriptions = useMemo(
+    () => Object.fromEntries(selectedReading.positions.map(p => [p.name, p.description])),
+    [selectedReading]
   );
 
   const startGame = () => dispatch({ type: 'START_SHUFFLE' });
@@ -70,7 +75,7 @@ export default function TarotGame({ user }: TarotGameProps) {
     dispatch({ type: 'SHUFFLE_COMPLETE' });
   }, []);
 
-  const handleSelectCard = (card: SelectedCard) => {
+  const handleSelectCard = useCallback((card: SelectedCard) => {
     dispatch({
       type: 'SELECT_CARD',
       card,
@@ -80,13 +85,13 @@ export default function TarotGame({ user }: TarotGameProps) {
       question: selectedReading.showQuestion ? (userQuestion || undefined) : undefined,
       positionDescriptions,
     });
-  };
+  }, [numCards, positionNames, selectedReading.name, selectedReading.showQuestion, userQuestion, positionDescriptions]);
 
-  const handleNewReading = () => {
+  const handleNewReading = useCallback(() => {
     dispatch({ type: 'RESET' });
     setShowInterpretModal(false);
     setInterpretResult(null);
-  };
+  }, []);
 
   const handleCloseModal = useCallback(() => setShowInterpretModal(false), []);
 
@@ -147,9 +152,6 @@ export default function TarotGame({ user }: TarotGameProps) {
          style={{
            background: 'linear-gradient(135deg, rgba(26,0,51,0.95) 0%, rgba(45,27,78,0.95) 100%)',
          }}>
-      {/* Backdrop blur isolated to inner layer so it doesn't create a compositing layer on the outer div */}
-      <div className="absolute inset-0 pointer-events-none" style={{ backdropFilter: 'blur(10px)' }} />
-
       {/* Ornate corner decorations */}
       <OrnateFrame />
 
@@ -282,22 +284,27 @@ export default function TarotGame({ user }: TarotGameProps) {
         {/* Game in progress - deck and card selection */}
         {isSelecting && (
           <div ref={deckRef}>
-            <div className="mb-1 sm:mb-6 text-center hidden sm:block">
-              <span className="font-semibold text-[#e6d5b8] text-lg tracking-wide"
-                    style={{ fontFamily: "'Crimson Pro', serif" }}>
-                Select {numCards} card{numCards > 1 ? 's' : ''} from the sacred deck
-              </span>
-            </div>
+            {/* Only show deck selection UI when not yet in reading phase */}
+            {game.phase !== 'reading' && (
+              <>
+                <div className="mb-1 sm:mb-6 text-center hidden sm:block">
+                  <span className="font-semibold text-[#e6d5b8] text-lg tracking-wide"
+                        style={{ fontFamily: "'Crimson Pro', serif" }}>
+                    Select {numCards} card{numCards > 1 ? 's' : ''} from the sacred deck
+                  </span>
+                </div>
 
-            {/* Shuffled Deck — single responsive component */}
-            <div className="flex justify-center mb-2 sm:mb-8 animate-fadeIn">
-              <ShuffledDeck
-                numCards={numCards}
-                selectedCards={selectedCards}
-                onSelectCard={handleSelectCard}
-                allowReversals={allowReversals}
-              />
-            </div>
+                {/* Shuffled Deck — single responsive component */}
+                <div className="flex justify-center mb-2 sm:mb-8 animate-fadeIn">
+                  <ShuffledDeck
+                    numCards={numCards}
+                    selectedCards={selectedCards}
+                    onSelectCard={handleSelectCard}
+                    allowReversals={allowReversals}
+                  />
+                </div>
+              </>
+            )}
 
             {/* Reading component - shows after card flip animation completes */}
             {game.phase === 'reading' && (

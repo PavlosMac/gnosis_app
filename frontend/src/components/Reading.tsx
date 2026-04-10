@@ -30,7 +30,7 @@ const isTreeOfLife = (positions: string[]): boolean => {
   return treePositions.every((pos) => normalizedPositions.includes(pos));
 };
 
-const Reading: React.FC<ReadingProps> = ({
+const Reading: React.FC<ReadingProps> = React.memo(({
   selectedCards,
   positions,
   question,
@@ -107,6 +107,8 @@ const Reading: React.FC<ReadingProps> = ({
       )}
     </div>
   );
-};
+});
+
+Reading.displayName = 'Reading';
 
 export default Reading;

@@ -17,12 +17,12 @@ interface InterpretationModalProps {
   onResultReceived: (r: InterpretResult) => void;
 }
 
-export default function InterpretationModal({
+const InterpretationModal: React.FC<InterpretationModalProps> = React.memo(({
   reading,
   onClose,
   initialResult,
   onResultReceived,
-}: InterpretationModalProps) {
+}) => {
   const getInitialState = (): ModalState => {
     if (!initialResult) return "loading";
     return initialResult.ok ? "result" : "error";
@@ -114,7 +114,7 @@ export default function InterpretationModal({
     >
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+        className="absolute inset-0 bg-black/80"
         onClick={onClose}
       />
 
@@ -222,4 +222,8 @@ export default function InterpretationModal({
     </div>,
     document.body
   );
-}
+});
+
+InterpretationModal.displayName = 'InterpretationModal';
+
+export default InterpretationModal;

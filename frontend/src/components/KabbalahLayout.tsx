@@ -53,138 +53,57 @@ const KabbalahLayout: React.FC<KabbalahLayoutProps> = ({
   const getCard = (posName: string) =>
     getCardByPosition(selectedCards, positions, posName);
 
-  // Desktop Tree Layout
-  const DesktopLayout = () => (
-    <div className="hidden md:flex flex-col items-center gap-4">
-      {/* Row 1: Kether (Crown) */}
-      <div className="flex justify-center">
-        <CardSlot card={getCard("Kether")} position="Kether" pillar="middle" />
-      </div>
-
-      {/* Row 2: Binah - Chokmah */}
-      <div className="flex justify-center gap-24">
-        <CardSlot card={getCard("Binah")} position="Binah" pillar="left" />
-        <CardSlot card={getCard("Chokmah")} position="Chokmah" pillar="right" />
-      </div>
-
-      {/* Row 3: Daath (Hidden/Knowledge) */}
-      <div className="flex justify-center opacity-80">
-        <CardSlot card={getCard("Daath")} position="Daath" pillar="middle" />
-      </div>
-
-      {/* Row 4: Geburah - Chesed */}
-      <div className="flex justify-center gap-24">
-        <CardSlot card={getCard("Geburah")} position="Geburah" pillar="left" />
-        <CardSlot card={getCard("Chesed")} position="Chesed" pillar="right" />
-      </div>
-
-      {/* Row 5: Tiphereth (Beauty) */}
-      <div className="flex justify-center">
-        <CardSlot
-          card={getCard("Tiphereth")}
-          position="Tiphereth"
-          pillar="middle"
-        />
-      </div>
-
-      {/* Row 6: Hod - Netzach */}
-      <div className="flex justify-center gap-24">
-        <CardSlot card={getCard("Hod")} position="Hod" pillar="left" />
-        <CardSlot card={getCard("Netzach")} position="Netzach" pillar="right" />
-      </div>
-
-      {/* Row 7: Yesod (Foundation) */}
-      <div className="flex justify-center">
-        <CardSlot card={getCard("Yesod")} position="Yesod" pillar="middle" />
-      </div>
-
-      {/* Row 8: Malkuth (Kingdom) */}
-      <div className="flex justify-center">
-        <CardSlot card={getCard("Malkuth")} position="Malkuth" pillar="middle" />
-      </div>
-    </div>
-  );
-
-  // Mobile Layout - Vertical stack with pillar labels
-  const MobileLayout = () => (
-    <div className="md:hidden flex flex-col gap-8">
-      {/* Middle Pillar */}
-      <div className="border border-[#d4af37]/20 rounded-lg p-4 bg-[#1a0033]/30">
-        <div className="text-center mb-4">
-          <span
-            className="text-sm text-[#d4af37]/60 tracking-widest uppercase"
-            style={{ fontFamily: "'Cinzel', serif" }}
-          >
-            Middle Pillar
-          </span>
-          <p
-            className="text-xs text-[#e6d5b8]/50 mt-1"
-            style={{ fontFamily: "'Crimson Pro', serif" }}
-          >
-            Pillar of Equilibrium
-          </p>
-        </div>
-        <div className="flex flex-col items-center gap-4">
-          <CardSlot card={getCard("Kether")} position="Kether" />
-          <CardSlot card={getCard("Daath")} position="Daath" />
-          <CardSlot card={getCard("Tiphereth")} position="Tiphereth" />
-          <CardSlot card={getCard("Yesod")} position="Yesod" />
-          <CardSlot card={getCard("Malkuth")} position="Malkuth" />
-        </div>
-      </div>
-
-      {/* Left Pillar */}
-      <div className="border border-[#d4af37]/20 rounded-lg p-4 bg-[#1a0033]/30">
-        <div className="text-center mb-4">
-          <span
-            className="text-sm text-[#d4af37]/60 tracking-widest uppercase"
-            style={{ fontFamily: "'Cinzel', serif" }}
-          >
-            Left Pillar
-          </span>
-          <p
-            className="text-xs text-[#e6d5b8]/50 mt-1"
-            style={{ fontFamily: "'Crimson Pro', serif" }}
-          >
-            Pillar of Severity
-          </p>
-        </div>
-        <div className="flex flex-col items-center gap-4">
-          <CardSlot card={getCard("Binah")} position="Binah" />
-          <CardSlot card={getCard("Geburah")} position="Geburah" />
-          <CardSlot card={getCard("Hod")} position="Hod" />
-        </div>
-      </div>
-
-      {/* Right Pillar */}
-      <div className="border border-[#d4af37]/20 rounded-lg p-4 bg-[#1a0033]/30">
-        <div className="text-center mb-4">
-          <span
-            className="text-sm text-[#d4af37]/60 tracking-widest uppercase"
-            style={{ fontFamily: "'Cinzel', serif" }}
-          >
-            Right Pillar
-          </span>
-          <p
-            className="text-xs text-[#e6d5b8]/50 mt-1"
-            style={{ fontFamily: "'Crimson Pro', serif" }}
-          >
-            Pillar of Mercy
-          </p>
-        </div>
-        <div className="flex flex-col items-center gap-4">
-          <CardSlot card={getCard("Chokmah")} position="Chokmah" />
-          <CardSlot card={getCard("Chesed")} position="Chesed" />
-          <CardSlot card={getCard("Netzach")} position="Netzach" />
-        </div>
-      </div>
-    </div>
-  );
-
   return (
     <div className="w-full">
-      <DesktopLayout />
-      <MobileLayout />
+      {/* Single responsive Tree of Life layout */}
+      <div className="flex flex-col items-center gap-2 md:gap-4">
+        {/* Row 1: Kether (Crown) */}
+        <div className="flex justify-center">
+          <CardSlot card={getCard("Kether")} position="Kether" pillar="middle" />
+        </div>
+
+        {/* Row 2: Binah - Chokmah */}
+        <div className="flex justify-center gap-8 md:gap-24">
+          <CardSlot card={getCard("Binah")} position="Binah" pillar="left" />
+          <CardSlot card={getCard("Chokmah")} position="Chokmah" pillar="right" />
+        </div>
+
+        {/* Row 3: Daath (Hidden/Knowledge) */}
+        <div className="flex justify-center opacity-80">
+          <CardSlot card={getCard("Daath")} position="Daath" pillar="middle" />
+        </div>
+
+        {/* Row 4: Geburah - Chesed */}
+        <div className="flex justify-center gap-8 md:gap-24">
+          <CardSlot card={getCard("Geburah")} position="Geburah" pillar="left" />
+          <CardSlot card={getCard("Chesed")} position="Chesed" pillar="right" />
+        </div>
+
+        {/* Row 5: Tiphereth (Beauty) */}
+        <div className="flex justify-center">
+          <CardSlot
+            card={getCard("Tiphereth")}
+            position="Tiphereth"
+            pillar="middle"
+          />
+        </div>
+
+        {/* Row 6: Hod - Netzach */}
+        <div className="flex justify-center gap-8 md:gap-24">
+          <CardSlot card={getCard("Hod")} position="Hod" pillar="left" />
+          <CardSlot card={getCard("Netzach")} position="Netzach" pillar="right" />
+        </div>
+
+        {/* Row 7: Yesod (Foundation) */}
+        <div className="flex justify-center">
+          <CardSlot card={getCard("Yesod")} position="Yesod" pillar="middle" />
+        </div>
+
+        {/* Row 8: Malkuth (Kingdom) */}
+        <div className="flex justify-center">
+          <CardSlot card={getCard("Malkuth")} position="Malkuth" pillar="middle" />
+        </div>
+      </div>
 
       {/* Mystical divider */}
       <div className="flex items-center justify-center gap-4 my-8">

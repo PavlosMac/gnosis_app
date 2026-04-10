@@ -41,7 +41,7 @@ interface TarotCardProps {
   small?: boolean;
 }
 
-export default function TarotCard({ card, showMeaning = true, small = false }: TarotCardProps) {
+const TarotCard: React.FC<TarotCardProps> = React.memo(({ card, showMeaning = true, small = false }) => {
   return (
     <div className={`tarot-card-container ${small ? 'scale-90' : ''}`}>
       <div className="relative group">
@@ -60,8 +60,7 @@ export default function TarotCard({ card, showMeaning = true, small = false }: T
           {/* Ornate border frame */}
           <div className="absolute inset-0 rounded-lg border-2 border-[#d4af37] shadow-2xl overflow-hidden"
                style={{
-                 background: 'linear-gradient(135deg, rgba(26,0,51,0.3), rgba(45,27,78,0.3))',
-                 ...(small ? {} : { backdropFilter: 'blur(5px)' })
+                 background: 'linear-gradient(135deg, rgba(26,0,51,0.3), rgba(45,27,78,0.3))'
                }}>
             
             {/* Inner decorative border */}
@@ -102,4 +101,8 @@ export default function TarotCard({ card, showMeaning = true, small = false }: T
       </div>
     </div>
   );
-}
+});
+
+TarotCard.displayName = 'TarotCard';
+
+export default TarotCard;

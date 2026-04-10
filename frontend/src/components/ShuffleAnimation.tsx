@@ -8,7 +8,7 @@ interface ShuffleAnimationProps {
 const CARD_COUNT = 10;
 const ANIMATION_DURATION = 5000; // 5 seconds
 
-const ShuffleAnimation: React.FC<ShuffleAnimationProps> = ({ onComplete }) => {
+const ShuffleAnimation: React.FC<ShuffleAnimationProps> = React.memo(({ onComplete }) => {
   useEffect(() => {
     const timer = setTimeout(() => {
       onComplete();
@@ -77,6 +77,8 @@ const ShuffleAnimation: React.FC<ShuffleAnimationProps> = ({ onComplete }) => {
       </div>
     </div>
   );
-};
+});
+
+ShuffleAnimation.displayName = 'ShuffleAnimation';
 
 export default ShuffleAnimation;

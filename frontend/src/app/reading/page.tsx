@@ -16,7 +16,8 @@ const crimsonPro = Crimson_Pro({
   variable: "--font-crimson-pro",
 });
 
-const stars = [...Array(100)].map((_, i) => ({
+// Pre-computed stars array to avoid recalculation on every server request
+const STARS = [...Array(100)].map((_, i) => ({
   left: `${(i * 7.3 + 13) % 100}%`,
   top: `${(i * 11.7 + 23) % 100}%`,
   animationDelay: `${(i * 0.37) % 3}s`,
@@ -28,12 +29,12 @@ export default async function ReadingPage() {
 
   return (
     <main
-      className={`min-h-screen relative overflow-hidden ${cinzel.variable} ${crimsonPro.variable}`}
+      className={`min-h-screen relative overflow-y-auto ${cinzel.variable} ${crimsonPro.variable}`}
     >
       {/* Mystical starfield background */}
-      <div className="fixed inset-0 bg-gradient-to-b from-[#0a0015] via-[#1a0033] to-[#2d1b4e]">
+      <div className="fixed inset-0 bg-gradient-to-b from-[#0a0015] via-[#1a0033] to-[#2d1b4e] pointer-events-none">
         <div className="absolute inset-0 opacity-60">
-          {stars.map((star, i) => (
+          {STARS.map((star, i) => (
             <div
               key={i}
               className="absolute w-1 h-1 bg-white rounded-full animate-twinkle"
@@ -47,7 +48,7 @@ export default async function ReadingPage() {
       </div>
 
       {/* Content */}
-      <div className="relative z-10 flex flex-col items-center justify-start pt-12 sm:pt-10 px-1 sm:px-4 pb-4 sm:pb-10">
+      <div className="relative z-10 flex flex-col items-center justify-start pt-12 sm:pt-10 px-1 sm:px-4 pb-4 sm:pb-10 min-h-screen">
         {/* Back button */}
         <Link
           href="/"
