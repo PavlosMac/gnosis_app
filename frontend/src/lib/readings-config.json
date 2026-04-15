@@ -67,6 +67,28 @@
                 { "name": "Malkuth", "description": "Kingdom — the physical world, manifestation, and grounding" },
                 { "name": "Daath", "description": "Knowledge — the hidden sephira, the abyss, and transformative insight" }
             ]
-        }
-    ]
+        },
+        {
+            "name": "Significators",
+            "description": "A reading based on the querant's personal significators. A personal Tarot Chart.",
+            "cards": 0,
+            "positions": [{
+                "name": "star sign",
+                "description": "The querant's astrological card, based on birth month. This is essentially the astrological sun sign."
+            },
+            {
+                "name": "life number",
+                "description": "The querant's life number and is at the heart of the science of numerology. Birthdate is added together and reduced to a single digit. Relate the Life Number to the card in the Major Arcana bearing the same number. Should convert and evaluate both the double and single digit numbers to Major Arcana for additional insights."
+            },
+            {
+                "name": "day number",
+                "description": "The querant's birth day. Everyone is born on a numbered day. Perhaps this has important information about life and destiny. Convert it to a Major Arcana card and find out."
+            },
+            {
+                "name": "decanate",
+                "description": "The Decanate divides each zodiac sign into three ten-degree segments, each ruled by a different planetary influence and connected to specific Minor Arcana cards. Represents more granular information about the querant."
+            }
+        ]
+    }
+]
 }

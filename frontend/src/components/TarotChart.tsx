@@ -150,6 +150,37 @@ const TarotChart: React.FC = () => {
             &ldquo;personal mandalas,&rdquo; encoding both positive and challenging aspects of personality,
             as well as broader patterns of fate.
           </p>
+                    <p className="text-lg sm:text-xl">
+            The importance of Significators became evident through long-term observation. When
+            reviewing past Tarot readings, it was discovered that Personal Significator cards
+            frequently appeared in spreads, often in prominent positions, without being recognized
+            as such by readers. As a result, much vital information was overlooked.
+          </p>
+                    <p className="text-lg sm:text-xl">
+            This insight led to the understanding that only a fraction of a reading&apos;s potential
+            meaning is accessed when Significators are ignored. In professional practice, a
+            Taroscopic Chart is created for each client prior to a reading. This process
+            identifies their Personal Significators, which are then expected to emerge during
+            the session.
+          </p>
+                    <p className="text-lg sm:text-xl">
+            When Significators appear in readings, they offer direct and highly specific insight.
+            In fact, readings can be performed using Significators alone, without traditional
+            spreads, making them especially valuable for beginners and advanced practitioners alike.
+          </p>
+          <p className="text-lg sm:text-xl">
+            There are three primary reasons Significators are indispensable: First, they reveal
+            essential information about character and destiny. Second, they consistently appear
+            in key positions within spreads, acting as markers that demand attention. Third,
+            they function as navigational tools within readings, greatly enhancing accuracy
+            and coherence.
+          </p>
+          <p className="text-lg sm:text-xl">
+            Personal Significators are derived by converting key astrological and numerological
+            data into Tarot archetypes. These include the Star Sign (linked to the Major Arcana),
+            the Astrological Decanate (linked to the Minor Arcana), the Life Number, Day Number,
+            Destiny Number, and relevant Court Cards.
+          </p>
           <p className="text-lg sm:text-xl italic text-[#e6d5b8]/70">
             The Tarot, in this sense, becomes a true &ldquo;Book of Life,&rdquo; with each person reflected
             directly within the deck rather than merely interpreted through abstract spreads.
@@ -160,15 +191,9 @@ const TarotChart: React.FC = () => {
       {/* Astrological Sign */}
       <Section title="Astrological Sign" symbol="☉">
         <div className="space-y-6 text-[#e6d5b8]/90 leading-relaxed mb-8" style={{ fontFamily: "'Crimson Pro', serif" }}>
+
           <p className="text-lg sm:text-xl">
-            The importance of Significators became evident through long-term observation. When
-            reviewing past Tarot readings, it was discovered that Personal Significator cards
-            frequently appeared in spreads, often in prominent positions, without being recognized
-            as such by readers. As a result, much vital information was overlooked.
-          </p>
-          <p className="text-lg sm:text-xl">
-            Your Star Sign is linked to the Major Arcana, connecting your zodiacal essence to
-            one of the 22 great mysteries of the Tarot.
+            Your Star Sign is linked to the Major Arcana and represents your birth month sign. This card would be most familiar to those who practice astrology.
           </p>
         </div>
         <AnimatedCardSection cards={majorArcana} interval={REFRESH_INTERVAL} />
@@ -177,13 +202,7 @@ const TarotChart: React.FC = () => {
       {/* Life Number */}
       <Section title="Life Number" symbol="∞">
         <div className="space-y-6 text-[#e6d5b8]/90 leading-relaxed mb-8" style={{ fontFamily: "'Crimson Pro', serif" }}>
-          <p className="text-lg sm:text-xl">
-            This insight led to the understanding that only a fraction of a reading&apos;s potential
-            meaning is accessed when Significators are ignored. In professional practice, a
-            Taroscopic Chart is created for each client prior to a reading. This process
-            identifies their Personal Significators, which are then expected to emerge during
-            the session.
-          </p>
+
           <p className="text-lg sm:text-xl">
             The Life Number reveals cards that share your numerological root, numbers that reduce
             to the same single digit are spiritually connected, forming a chain of meaning
@@ -197,17 +216,10 @@ const TarotChart: React.FC = () => {
       <Section title="Day Number" symbol="☾">
         <div className="space-y-6 text-[#e6d5b8]/90 leading-relaxed mb-8" style={{ fontFamily: "'Crimson Pro', serif" }}>
           <p className="text-lg sm:text-xl">
-            When Significators appear in readings, they offer direct and highly specific insight.
-            In fact, readings can be performed using Significators alone, without traditional
-            spreads, making them especially valuable for beginners and advanced practitioners alike.
+          THe Day Number is the card from the Major Arcana that corresponds to the day of your birth. If you are born on the 21st, your Day Number is the World card.
+          If you are born on the 23rd you can reduce the double to its single digit (2+3=5), making your Day Number the Hierophant..
           </p>
-          <p className="text-lg sm:text-xl">
-            There are three primary reasons Significators are indispensable: First, they reveal
-            essential information about character and destiny. Second, they consistently appear
-            in key positions within spreads, acting as markers that demand attention. Third,
-            they function as navigational tools within readings, greatly enhancing accuracy
-            and coherence.
-          </p>
+
         </div>
         <AnimatedCardSection cards={majorArcana} interval={REFRESH_INTERVAL} />
       </Section>
@@ -216,21 +228,16 @@ const TarotChart: React.FC = () => {
       <Section title="Decanate" symbol="⚶">
         <div className="space-y-6 text-[#e6d5b8]/90 leading-relaxed mb-8" style={{ fontFamily: "'Crimson Pro', serif" }}>
           <p className="text-lg sm:text-xl">
-            Personal Significators are derived by converting key astrological and numerological
-            data into Tarot archetypes. These include the Star Sign (linked to the Major Arcana),
-            the Astrological Decanate (linked to the Minor Arcana), the Life Number, Day Number,
-            Destiny Number, and relevant Court Cards.
-          </p>
-          <p className="text-lg sm:text-xl">
             The Decanate divides each zodiac sign into three ten-degree segments, each ruled by
-            a different planetary influence and connected to specific Minor Arcana cards.
+            a different planetary influence and connected to specific Minor Arcana cards. This card is very important as it represents a granular breakdown of your zodiac sign
+           - pertaining to week of birth.
           </p>
         </div>
         <AnimatedCardSection cards={minorArcana} interval={REFRESH_INTERVAL} />
       </Section>
 
       {/* Conclusion */}
-      <Section title="Interpretation" symbol="✧">
+      <Section title="Your Chart" symbol="✧">
         <div className="space-y-6 text-[#e6d5b8]/90 leading-relaxed" style={{ fontFamily: "'Crimson Pro', serif" }}>
           <p className="text-lg sm:text-xl">
             Together, these cards form a symbolic profile unique to each individual. Crucially,
