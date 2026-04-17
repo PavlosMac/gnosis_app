@@ -20,9 +20,7 @@ class ListUserReadingsHandler(
     def __init__(self, read_repo: ReadingReadRepository) -> None:
         self._read_repo = read_repo
 
-    async def handle(
-        self, query: ListUserReadingsQuery
-    ) -> PaginatedResponse[ReadingListItem]:
+    async def handle(self, query: ListUserReadingsQuery) -> PaginatedResponse[ReadingListItem]:
         skip = (query.page - 1) * query.page_size
         docs, total = await asyncio.gather(
             self._read_repo.find_by_user_id(query.user_id, skip=skip, limit=query.page_size),

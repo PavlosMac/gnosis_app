@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime
 
 from pydantic import Field
 
@@ -10,6 +10,7 @@ from src.llm.schemas import CardInSpread, Orientation
 class CreateReadingRequest(AppSchema):
     spread_name: str = Field(..., min_length=1, max_length=100)
     question: str | None = Field(default=None, min_length=5, max_length=500)
+    birth_date: date | None = Field(default=None)
     cards: list[CardInSpread] = Field(..., min_length=1, max_length=10)
 
 
@@ -31,6 +32,7 @@ class ReadingReadModel(AppSchema):
     user_id: PyObjectId
     spread_type: str
     question: str | None = None
+    birth_date: date | None = None
     cards: list[CardReadModel]
     card_interpretations: list[CardInterpretationReadModel]
     synthesis: str
@@ -44,5 +46,6 @@ class ReadingListItem(AppSchema):
     user_id: PyObjectId
     spread_type: str
     question: str | None = None
+    birth_date: date | None = None
     cards: list[CardReadModel]
     created_at: datetime

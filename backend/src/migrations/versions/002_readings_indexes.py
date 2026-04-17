@@ -8,6 +8,4 @@ description = "Create indexes for readings collection"
 
 
 async def up(db: AsyncIOMotorDatabase) -> None:
-    await db[READINGS_COLLECTION].create_index(
-        [("user_id", ASCENDING), ("created_at", DESCENDING)]
-    )
+    await db[READINGS_COLLECTION].create_index([("user_id", ASCENDING), ("created_at", DESCENDING)])

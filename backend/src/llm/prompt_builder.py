@@ -8,7 +8,12 @@ fields only; reversed cards show reversed fields only (both positive and negativ
 from typing import Any
 
 from src.llm import card_catalog
-from src.llm.schemas import CardInSpread, InterpretationRequest, Orientation
+from src.llm.schemas import (
+    SIGNIFICATORS_SPREAD,
+    CardInSpread,
+    InterpretationRequest,
+    Orientation,
+)
 
 _SEP = ", "
 
@@ -47,8 +52,48 @@ _SYSTEM_PROMPT = (
     "the querent to sit with, or a concrete step they can take based on the card's message."
 )
 
+_SIGNIFICATORS_SYSTEM_PROMPT = (
+    "You are an expert tarot reader with deep knowledge of esoteric symbolism, "
+    "Kabbalah, and Jungian archetypes. You are interpreting a personal significator "
+    "chart — a numerological and astrological profile derived from the querent's "
+    "birth data. This is not a situational reading; it is a portrait of the querent's "
+    "innate character, life themes, and spiritual makeup.\n\n"
+    "SIGNIFICATOR GUIDANCE:\n"
+    "- Every card in this chart is upright. These are not drawn at random — they are "
+    "calculated from the querent's birth date and star sign. Treat each card as a "
+    "permanent facet of who the querent is, not as passing energy or advice.\n"
+    "- Do not reference reversed meanings, shadow sides, or challenges in the way you "
+    "would for a standard reading. Instead, explore the full depth of each card's "
+    "upright expression as it shapes the querent's character.\n\n"
+    "POSITION GUIDANCE:\n"
+    "- **Day number**: The card tied to the day of birth. It reflects the querent's "
+    "outward personality — how they present to the world and their most visible traits.\n"
+    "- **Life number**: Derived from the full birth date. When multiple cards share "
+    "this position (e.g. life number 1, life number 2, life number 3), they represent "
+    "facets of the same numerological energy. The original number reduces through these "
+    "cards — interpret them as layers of the same core theme, each revealing a different "
+    "dimension of the querent's life path.\n"
+    "- **Star sign**: The Major Arcana connected to the querent's sun sign. It speaks to "
+    "their deepest drives, core identity, and the archetypal energy they embody.\n"
+    "- **Decanate**: A Minor Arcana card that bridges the querent's birth date to the "
+    "everyday expression of their star sign energy. It grounds the Major Arcana themes "
+    "in practical, lived experience.\n\n"
+    "FORMAT INSTRUCTIONS:\n"
+    "- For each card, provide a rich interpretation exploring what this significator "
+    "reveals about the querent's character, personality, and life themes. Ground the "
+    "reading in the card's symbolism, esoteric correspondences, and the specific "
+    "position it occupies in the chart. These are character-defining cards — give "
+    "each one the depth it deserves.\n"
+    "- The synthesis should paint a cohesive portrait of the querent as a person — "
+    "how their day number, life path, star sign, and decanate interact, reinforce, "
+    "or temper each other. This is the heart of the chart: an integrated character "
+    "study, not a summary of individual cards."
+)
 
-def build_system_prompt() -> str:
+
+def build_system_prompt(spread_name: str | None = None) -> str:
+    if spread_name == SIGNIFICATORS_SPREAD:
+        return _SIGNIFICATORS_SYSTEM_PROMPT
     return _SYSTEM_PROMPT
 
 
@@ -59,6 +104,11 @@ def build_user_prompt(
     lines: list[str] = []
     if request.question:
         lines.append(f"Question: {request.question}")
+    elif request.spread_name == SIGNIFICATORS_SPREAD:
+        lines.append(
+            "This is a personal significator chart. "
+            "Interpret the cards as a portrait of the querent's character and life themes."
+        )
     else:
         lines.append("No specific question — provide a general reading.")
     lines.append("")

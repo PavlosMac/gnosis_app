@@ -54,27 +54,21 @@ def _make_command(user_id: str, spread: str = "Celtic Cross") -> CreateReadingCo
 
 async def test_get_reading_by_id(create_handler, get_handler, user_id):
     created = await create_handler.handle(_make_command(user_id))
-    result = await get_handler.handle(
-        GetReadingByIdQuery(reading_id=created.id, user_id=user_id)
-    )
+    result = await get_handler.handle(GetReadingByIdQuery(reading_id=created.id, user_id=user_id))
     assert result.id == created.id
     assert result.spread_type == "Celtic Cross"
 
 
 async def test_get_reading_not_found(get_handler, user_id):
     with pytest.raises(ReadingNotFoundError):
-        await get_handler.handle(
-            GetReadingByIdQuery(reading_id=str(ObjectId()), user_id=user_id)
-        )
+        await get_handler.handle(GetReadingByIdQuery(reading_id=str(ObjectId()), user_id=user_id))
 
 
 async def test_get_reading_wrong_user(create_handler, get_handler, user_id):
     created = await create_handler.handle(_make_command(user_id))
     other_user = str(ObjectId())
     with pytest.raises(ReadingNotFoundError):
-        await get_handler.handle(
-            GetReadingByIdQuery(reading_id=created.id, user_id=other_user)
-        )
+        await get_handler.handle(GetReadingByIdQuery(reading_id=created.id, user_id=other_user))
 
 
 async def test_list_user_readings_empty(list_handler, user_id):
@@ -91,9 +85,7 @@ async def test_list_user_readings_returns_own(create_handler, list_handler, user
     assert result.total == 2
 
 
-async def test_list_user_readings_excludes_other_users(
-    create_handler, list_handler, user_id
-):
+async def test_list_user_readings_excludes_other_users(create_handler, list_handler, user_id):
     await create_handler.handle(_make_command(user_id))
     other_user = str(ObjectId())
     await create_handler.handle(_make_command(other_user))
@@ -105,13 +97,9 @@ async def test_list_user_readings_excludes_other_users(
 async def test_list_user_readings_pagination(create_handler, list_handler, user_id):
     for _ in range(3):
         await create_handler.handle(_make_command(user_id))
-    page1 = await list_handler.handle(
-        ListUserReadingsQuery(user_id=user_id, page=1, page_size=2)
-    )
+    page1 = await list_handler.handle(ListUserReadingsQuery(user_id=user_id, page=1, page_size=2))
     assert len(page1.items) == 2
     assert page1.total == 3
-    page2 = await list_handler.handle(
-        ListUserReadingsQuery(user_id=user_id, page=2, page_size=2)
-    )
+    page2 = await list_handler.handle(ListUserReadingsQuery(user_id=user_id, page=2, page_size=2))
     assert len(page2.items) == 1
     assert page2.total == 3

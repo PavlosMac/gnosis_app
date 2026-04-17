@@ -20,6 +20,7 @@ async def create_reading(
         user_id=user_id,
         spread_name=body.spread_name,
         question=body.question,
+        birth_date=body.birth_date,
         cards=body.cards,
     )
     return await mediator.send(command)
@@ -43,6 +44,4 @@ async def get_reading(
     user_id: CurrentUserId,
     mediator: MediatorDep,
 ) -> ReadingReadModel:
-    return await mediator.query(
-        GetReadingByIdQuery(reading_id=reading_id, user_id=user_id)
-    )
+    return await mediator.query(GetReadingByIdQuery(reading_id=reading_id, user_id=user_id))

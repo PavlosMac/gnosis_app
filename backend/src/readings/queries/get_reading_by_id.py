@@ -21,9 +21,7 @@ class GetReadingByIdHandler(QueryHandler[GetReadingByIdQuery, ReadingReadModel])
             oid = ObjectId(query.reading_id)
         except InvalidId:
             raise ReadingNotFoundError()
-        doc = await self._read_repo.find_one(
-            {"_id": oid, "user_id": ObjectId(query.user_id)}
-        )
+        doc = await self._read_repo.find_one({"_id": oid, "user_id": ObjectId(query.user_id)})
         if doc is None:
             raise ReadingNotFoundError()
         return ReadingReadModel.model_validate(doc)

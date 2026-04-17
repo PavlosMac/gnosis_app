@@ -61,9 +61,7 @@ async def app(mock_db):
         CreateReadingCommand, CreateReadingHandler(reading_write_repo, mock_llm)
     )
     mediator.register_query(GetReadingByIdQuery, GetReadingByIdHandler(reading_read_repo))
-    mediator.register_query(
-        ListUserReadingsQuery, ListUserReadingsHandler(reading_read_repo)
-    )
+    mediator.register_query(ListUserReadingsQuery, ListUserReadingsHandler(reading_read_repo))
 
     app.state.mediator = mediator
     app.state.refresh_token_repo = RefreshTokenRepository(mock_db)

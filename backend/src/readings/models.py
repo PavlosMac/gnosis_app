@@ -1,4 +1,4 @@
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from typing import Any
 
 from bson import ObjectId
@@ -15,6 +15,7 @@ class Reading:
         tokens_used: int,
         model: str,
         question: str | None = None,
+        birth_date: date | None = None,
         id: str | None = None,
         created_at: datetime | None = None,
     ) -> None:
@@ -22,6 +23,7 @@ class Reading:
         self.user_id = user_id
         self.spread_type = spread_type
         self.question = question
+        self.birth_date = birth_date
         self.cards = cards
         self.card_interpretations = card_interpretations
         self.synthesis = synthesis
@@ -44,6 +46,8 @@ class Reading:
             doc["_id"] = ObjectId(self.id)
         if self.question is not None:
             doc["question"] = self.question
+        if self.birth_date is not None:
+            doc["birth_date"] = self.birth_date.isoformat()
         return doc
 
     @classmethod
@@ -53,6 +57,7 @@ class Reading:
             user_id=str(doc["user_id"]),
             spread_type=doc["spread_type"],
             question=doc.get("question"),
+            birth_date=date.fromisoformat(doc["birth_date"]) if doc.get("birth_date") else None,
             cards=doc["cards"],
             card_interpretations=doc["card_interpretations"],
             synthesis=doc["synthesis"],

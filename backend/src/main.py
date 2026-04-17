@@ -48,13 +48,9 @@ def _wire_mediator(mediator: Mediator, llm: LLMPort) -> None:
     reading_write_repo = ReadingWriteRepository(db)
     reading_read_repo = ReadingReadRepository(db)
 
-    mediator.register_command(
-        CreateReadingCommand, CreateReadingHandler(reading_write_repo, llm)
-    )
+    mediator.register_command(CreateReadingCommand, CreateReadingHandler(reading_write_repo, llm))
     mediator.register_query(GetReadingByIdQuery, GetReadingByIdHandler(reading_read_repo))
-    mediator.register_query(
-        ListUserReadingsQuery, ListUserReadingsHandler(reading_read_repo)
-    )
+    mediator.register_query(ListUserReadingsQuery, ListUserReadingsHandler(reading_read_repo))
 
 
 @asynccontextmanager

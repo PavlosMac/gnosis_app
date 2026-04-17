@@ -86,9 +86,7 @@ class AuthService:
     async def create_tokens_for_user(self, user_id: str) -> TokenResponse:
         return await self._create_and_store_tokens(user_id, family_id=str(uuid.uuid4()))
 
-    async def _create_and_store_tokens(
-        self, user_id: str, family_id: str
-    ) -> TokenResponse:
+    async def _create_and_store_tokens(self, user_id: str, family_id: str) -> TokenResponse:
         jti = str(uuid.uuid4())
         access_token, access_expires = create_access_token(user_id, family_id)
         refresh_token, refresh_expires = create_refresh_token(user_id, jti, family_id)

@@ -100,3 +100,72 @@ def test_three_card_spread():
     assert "Past" in prompt
     assert "Present" in prompt
     assert "Future" in prompt
+
+
+# --- Significators spread ---
+
+
+def _make_significators_request() -> InterpretationRequest:
+    return _make_request(
+        cards=[
+            CardInSpread(
+                name="The Hierophant",
+                position="day number",
+                orientation=Orientation.upright,
+                position_description="Your day number is 5, representing the day you were born.",
+            ),
+            CardInSpread(
+                name="The Empress",
+                position="life number 1",
+                orientation=Orientation.upright,
+                position_description="Your life number is 12. These cards share the same "
+                "numerological attributes.",
+            ),
+            CardInSpread(
+                name="Strength",
+                position="star sign",
+                orientation=Orientation.upright,
+                position_description="Your sun sign is Leo, connected to this Major Arcana.",
+            ),
+        ],
+        question=None,
+        spread_name="Significators",
+    )
+
+
+def test_system_prompt_significators_returns_chart_prompt():
+    prompt = build_system_prompt("Significators")
+    default = build_system_prompt()
+    assert prompt != default
+    assert "significator chart" in prompt.lower()
+
+
+def test_system_prompt_significators_no_reversed_guidance():
+    prompt = build_system_prompt("Significators")
+    assert "Reversed cards" not in prompt
+    assert "shadow energy" not in prompt
+
+
+def test_system_prompt_significators_character_focus():
+    prompt = build_system_prompt("Significators")
+    assert "character" in prompt.lower()
+    assert "personality" in prompt.lower()
+    assert "life themes" in prompt.lower()
+
+
+def test_system_prompt_significators_life_number_guidance():
+    prompt = build_system_prompt("Significators")
+    assert "life number" in prompt.lower() or "Life number" in prompt
+
+
+def test_user_prompt_significators_no_question():
+    req = _make_significators_request()
+    prompt = build_user_prompt(req)
+    assert "general reading" not in prompt.lower()
+    assert "significator chart" in prompt.lower()
+
+
+def test_system_prompt_unknown_spread_returns_default():
+    default = build_system_prompt()
+    assert build_system_prompt("Unknown Spread") == default
+    assert build_system_prompt("Celtic Cross") == default

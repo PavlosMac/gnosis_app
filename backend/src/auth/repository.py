@@ -44,4 +44,3 @@ class RefreshTokenRepository:
 
     async def revoke_family(self, family_id: str) -> None:
         await self._collection.delete_many({"family_id": family_id})
-

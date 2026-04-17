@@ -1,3 +1,5 @@
+from datetime import date
+
 from src.cqrs.commands import BaseCommand, CommandHandler
 from src.llm.port import LLMPort
 from src.llm.schemas import CardInSpread, InterpretationRequest
@@ -10,6 +12,7 @@ class CreateReadingCommand(BaseCommand):
     user_id: str
     spread_name: str
     question: str | None = None
+    birth_date: date | None = None
     cards: list[CardInSpread]
 
 
@@ -26,6 +29,7 @@ class CreateReadingHandler(CommandHandler[CreateReadingCommand, ReadingReadModel
         llm_request = InterpretationRequest(
             spread_name=command.spread_name,
             question=command.question,
+            birth_date=command.birth_date,
             cards=command.cards,
         )
         llm_response = await self._llm.generate_interpretation(llm_request)
@@ -34,6 +38,7 @@ class CreateReadingHandler(CommandHandler[CreateReadingCommand, ReadingReadModel
             user_id=command.user_id,
             spread_type=command.spread_name,
             question=command.question,
+            birth_date=command.birth_date,
             cards=[
                 {
                     "name": card.name,
@@ -64,6 +69,7 @@ class CreateReadingHandler(CommandHandler[CreateReadingCommand, ReadingReadModel
                 "user_id": command.user_id,
                 "spread_type": reading.spread_type,
                 "question": reading.question,
+                "birth_date": reading.birth_date,
                 "cards": reading.cards,
                 "card_interpretations": reading.card_interpretations,
                 "synthesis": reading.synthesis,

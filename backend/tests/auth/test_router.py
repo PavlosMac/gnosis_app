@@ -291,9 +291,7 @@ def _make_expired_token(payload_overrides: dict) -> str:
 
 @pytest.mark.asyncio
 async def test_expired_access_token_returns_401(client):
-    expired = _make_expired_token(
-        {"sub": "any-id", "type": "access", "family_id": "any-family"}
-    )
+    expired = _make_expired_token({"sub": "any-id", "type": "access", "family_id": "any-family"})
     response = await client.get(
         "/api/v1/auth/me",
         headers={"Authorization": f"Bearer {expired}"},
@@ -335,9 +333,7 @@ async def test_expired_access_then_refresh_rotation_flow(client):
 
     # Step 1: expired access token → 401
     assert (
-        await client.get(
-            "/api/v1/auth/me", headers={"Authorization": f"Bearer {expired_access}"}
-        )
+        await client.get("/api/v1/auth/me", headers={"Authorization": f"Bearer {expired_access}"})
     ).status_code == 401
 
     # Step 2: refresh → new tokens

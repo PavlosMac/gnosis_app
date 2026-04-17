@@ -37,12 +37,13 @@ class OpenAIAdapter(LLMPort):
                 raise CardNotFoundError(card.name)
             meanings[card.name] = meaning
 
-        system_prompt = build_system_prompt()
+        system_prompt = build_system_prompt(request.spread_name)
         user_prompt = build_user_prompt(request, meanings)
 
         logger.debug(
             "calling openai",
             model=self._model,
+            spread_name=request.spread_name,
             cards=[c.name for c in request.cards],
         )
 
