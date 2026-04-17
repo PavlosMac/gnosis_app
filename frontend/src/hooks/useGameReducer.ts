@@ -1,9 +1,12 @@
 import { useReducer } from "react";
 import type { SelectedCard, ReadingResult } from "@/types/reading";
+import { calculateSignificators } from "@/lib/significators";
+import { convertSignificatorsToReadingResult } from "@/lib/significator-conversion";
 
 // ── Game phases (discriminated union) ──────────────────────────────────
 export type GamePhase =
   | { phase: 'setup' }
+  | { phase: 'birthdate-input'; readingName: string }
   | { phase: 'shuffling' }
   | { phase: 'selecting'; selectedCards: SelectedCard[] }
   | { phase: 'flipping'; selectedCards: SelectedCard[]; reading: ReadingResult }
@@ -12,6 +15,8 @@ export type GamePhase =
 // ── Actions ────────────────────────────────────────────────────────────
 export type GameAction =
   | { type: 'START_SHUFFLE' }
+  | { type: 'START_BIRTHDATE_INPUT'; readingName: string }
+  | { type: 'BIRTHDATE_SUBMIT'; day: number; month: number; year: number; configDescriptions?: Record<string, string> }
   | { type: 'SHUFFLE_COMPLETE' }
   | { type: 'SELECT_CARD'; card: SelectedCard; numCards: number; positions: string[]; readingName: string; question?: string; positionDescriptions?: Record<string, string> }
   | { type: 'FLIP_COMPLETE' }
@@ -22,6 +27,17 @@ const gameReducer = (state: GamePhase, action: GameAction): GamePhase => {
   switch (action.type) {
     case 'START_SHUFFLE':
       return { phase: 'shuffling' };
+
+    case 'START_BIRTHDATE_INPUT':
+      return { phase: 'birthdate-input', readingName: action.readingName };
+
+    case 'BIRTHDATE_SUBMIT': {
+      const significators = calculateSignificators(action.year, action.month, action.day);
+      const birth_date = `${action.year}-${String(action.month).padStart(2, '0')}-${String(action.day).padStart(2, '0')}`;
+      const reading = convertSignificatorsToReadingResult(significators, birth_date, action.configDescriptions);
+      const selectedCards = Object.values(reading.positions);
+      return { phase: 'reading', selectedCards, reading };
+    }
 
     case 'SHUFFLE_COMPLETE':
       return { phase: 'selecting', selectedCards: [] };

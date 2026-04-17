@@ -72,6 +72,9 @@ const InterpretationModal: React.FC<InterpretationModalProps> = React.memo(({
         ...(reading.question && reading.question.trim().length >= 5 && {
           question: reading.question,
         }),
+        ...(reading.birth_date && {
+          birth_date: reading.birth_date,
+        }),
         cards,
       };
 
@@ -108,13 +111,13 @@ const InterpretationModal: React.FC<InterpretationModalProps> = React.memo(({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[10000] flex items-start justify-center"
+      className="fixed inset-0 z-[10000] flex items-start justify-center isolate"
       role="dialog"
       aria-modal="true"
     >
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black/80"
+        className="absolute inset-0 bg-black/80 backdrop-blur-sm z-0"
         onClick={onClose}
       />
 
@@ -145,7 +148,7 @@ const InterpretationModal: React.FC<InterpretationModalProps> = React.memo(({
               textShadow: "0 0 15px rgba(212,175,55,0.4)",
             }}
           >
-            ✦ Oracle Interpretation ✦
+            ✦ Interpretation ✦
           </h2>
           <button
             onClick={onClose}

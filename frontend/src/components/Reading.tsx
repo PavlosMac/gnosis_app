@@ -2,32 +2,44 @@
 import React from "react";
 import TarotCard from "./TarotCard";
 import KabbalahLayout from "./KabbalahLayout";
+import SignificatorsLayout from "./SignificatorsLayout";
 import type { SelectedCard } from "@/types/reading";
+import type { SignificatorResult } from "@/lib/significators";
 
 interface ReadingProps {
   selectedCards: SelectedCard[];
   positions: string[];
   question?: string;
   isComplete?: boolean;
+  significatorResult?: SignificatorResult;
 }
 
-// Detect if this is a Tree of Life reading based on positions
-const isTreeOfLife = (positions: string[]): boolean => {
-  const treePositions = [
-    "kether",
-    "chokmah",
-    "binah",
-    "chesed",
-    "geburah",
-    "tiphereth",
-    "netzach",
-    "hod",
-    "yesod",
-    "malkuth",
-    "daath",
-  ];
-  const normalizedPositions = positions.map((p) => p.trim().toLowerCase());
-  return treePositions.every((pos) => normalizedPositions.includes(pos));
+const TREE_OF_LIFE_POSITIONS = [
+  "kether",
+  "chokmah",
+  "binah",
+  "chesed",
+  "geburah",
+  "tiphereth",
+  "netzach",
+  "hod",
+  "yesod",
+  "malkuth",
+  "daath",
+];
+
+const SIGNIFICATOR_POSITIONS = ["day number", "life number", "star sign", "decanate"];
+
+const normalize = (positions: string[]) => positions.map((p) => p.trim().toLowerCase());
+
+const isTreeOfLife = (positions: string[]) =>
+  TREE_OF_LIFE_POSITIONS.every((pos) => normalize(positions).includes(pos));
+
+const isSignificators = (positions: string[]) => {
+  const normalized = normalize(positions);
+  return SIGNIFICATOR_POSITIONS.some((pos) =>
+    normalized.some((np) => np === pos || np.startsWith(`${pos} `))
+  );
 };
 
 const Reading: React.FC<ReadingProps> = React.memo(({
@@ -35,8 +47,10 @@ const Reading: React.FC<ReadingProps> = React.memo(({
   positions,
   question,
   isComplete = false,
+  significatorResult,
 }) => {
   const useKabbalahLayout = isTreeOfLife(positions);
+  const useSignificatorsLayout = isSignificators(positions);
 
   return (
     <div className="w-full">
@@ -59,7 +73,9 @@ const Reading: React.FC<ReadingProps> = React.memo(({
         </div>
       )}
 
-      {useKabbalahLayout ? (
+      {useSignificatorsLayout ? (
+        <SignificatorsLayout significatorResult={significatorResult} />
+      ) : useKabbalahLayout ? (
         <KabbalahLayout selectedCards={selectedCards} positions={positions} />
       ) : (
         <>

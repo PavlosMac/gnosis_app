@@ -12,7 +12,7 @@ This file stores project constants, configuration, and frequently-needed **non-s
 
 **Repository:**
 - Name: Tarot Divinations
-- Framework: Next.js 15
+- Framework: Next.js 16.1
 - Language: TypeScript
 
 **Docker Image:**

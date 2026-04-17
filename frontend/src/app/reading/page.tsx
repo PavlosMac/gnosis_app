@@ -52,7 +52,7 @@ export default async function ReadingPage() {
         {/* Back button */}
         <Link
           href="/"
-          className="absolute top-4 left-4 z-20 flex items-center gap-2 px-4 py-2
+          className="absolute top-4 left-4 z-50 flex items-center gap-2 px-4 py-2
                      text-[#d4af37]/70 hover:text-[#d4af37] transition-colors"
           style={{ fontFamily: "'Cinzel', serif" }}
         >

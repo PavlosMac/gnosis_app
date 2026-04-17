@@ -130,6 +130,16 @@ const ReadingsPage = async ({
                     </p>
                   )}
 
+                  {/* Birth Date (for Significators) */}
+                  {reading.birth_date && (
+                    <p
+                      className="text-[#e6d5b8]/50 text-sm mb-3"
+                      style={{ fontFamily: "'Crimson Pro', serif" }}
+                    >
+                      Birth Date: {formatDate(reading.birth_date)}
+                    </p>
+                  )}
+
                   {/* Card count + View Reading footer */}
                   <div className="flex items-center justify-between mt-3">
                     <span

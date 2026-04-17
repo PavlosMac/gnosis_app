@@ -24,5 +24,9 @@ export const getReading = async (
   if (!result.ok)
     return { ok: false, error: result.message ?? "Failed to fetch reading." };
 
+  if (result.data.user_id !== user.id) {
+    return { ok: false, error: "You do not have permission to view this reading." };
+  }
+
   return { ok: true, data: result.data };
 };

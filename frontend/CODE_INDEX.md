@@ -35,6 +35,8 @@
 ### src/components/Reading.tsx
 - `Reading` — component *default*
 - `ReadingProps` — interface
+- `SIGNIFICATOR_POSITIONS` — constant
+- `TREE_OF_LIFE_POSITIONS` — constant
 
 ### src/components/ShuffleAnimation.tsx `(client)`
 - `ShuffleAnimation` — component *default*
@@ -49,6 +51,10 @@
 ### src/components/SignificatorSection.tsx
 - `SignificatorSectionProps` — interface
 - `SignificatorSection` — component *default*
+
+### src/components/SignificatorsLayout.tsx
+- `SignificatorsLayout` — component *default*
+- `SignificatorsLayoutProps` — interface
 
 ### src/components/TarotCard.tsx
 - `TarotCard` — component *default*
@@ -204,6 +210,10 @@
 
 ### src/lib/session.ts `(server)`
 - `getCurrentUser` — function
+
+### src/lib/significator-conversion.ts
+- `convertSignificatorsToReadingResult` — function
+- `LIFE_NUMBER_INDEX_RE` — constant
 
 ### src/lib/significators.ts
 - `reduceToMajorArcana` — function

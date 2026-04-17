@@ -1,5 +1,6 @@
 import { TarotCardData } from "@/types/models";
 import type { CardOrientation, CardInterpretation } from "@/types/interpret";
+import type { SignificatorResult } from "@/lib/significators";
 
 export interface SelectedCard extends TarotCardData {
   idx: number;
@@ -11,6 +12,8 @@ export interface ReadingResult {
   positions: Record<string, SelectedCard>;
   question?: string;
   positionDescriptions?: Record<string, string>;
+  birth_date?: string;
+  significatorResult?: SignificatorResult;
 }
 
 export interface SavedCard {
@@ -27,6 +30,7 @@ export interface ReadingListItem {
   question: string | null;
   cards: SavedCard[];
   created_at: string;
+  birth_date?: string;
 }
 
 export interface ReadingDetail extends ReadingListItem {

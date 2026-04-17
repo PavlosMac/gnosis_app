@@ -6,6 +6,7 @@ import ShuffleAnimation from "@/components/ShuffleAnimation";
 import InterpretationModal from "@/components/InterpretationModal";
 import OrnateFrame from "@/components/OrnateFrame";
 import readingsConfig from "@/lib/readings-config.json";
+import { parseAndValidateDate } from "@/lib/dateValidation";
 
 import { useGameReducer, getSelectedCards, getReading } from "@/hooks/useGameReducer";
 import type { User } from "@/types/auth";
@@ -54,10 +55,16 @@ export default function TarotGame({ user }: TarotGameProps) {
   const deckRef = useRef<HTMLDivElement>(null);
   const readingRef = useRef<HTMLDivElement>(null);
 
+  const [day, setDay] = useState<string>("");
+  const [month, setMonth] = useState<string>("");
+  const [year, setYear] = useState<string>("");
+  const [birthdateError, setBirthdateError] = useState<string | null>(null);
+
   const numCards = selectedReading.cards;
   const selectedCards = getSelectedCards(game);
   const completedReading = getReading(game);
-  const isSelecting = game.phase !== 'setup' && game.phase !== 'shuffling';
+  const isSelecting = game.phase !== 'setup' && game.phase !== 'shuffling' && game.phase !== 'birthdate-input';
+  const isReadingComplete = numCards > 0 ? selectedCards.length === numCards : selectedCards.length > 0;
 
   // Memoize derived state to prevent recalculation and stabilize references
   const positionNames = useMemo(
@@ -69,7 +76,13 @@ export default function TarotGame({ user }: TarotGameProps) {
     [selectedReading]
   );
 
-  const startGame = () => dispatch({ type: 'START_SHUFFLE' });
+  const startGame = () => {
+    if (selectedReading.cards === 0) {
+      dispatch({ type: 'START_BIRTHDATE_INPUT', readingName: selectedReading.name });
+    } else {
+      dispatch({ type: 'START_SHUFFLE' });
+    }
+  };
 
   const handleShuffleComplete = useCallback(() => {
     dispatch({ type: 'SHUFFLE_COMPLETE' });
@@ -98,6 +111,24 @@ export default function TarotGame({ user }: TarotGameProps) {
   const handleResultReceived = useCallback((r: InterpretResult) => {
     setInterpretResult(r);
   }, []);
+
+  const handleBirthdateSubmit = useCallback(() => {
+    const { dateParts, validation } = parseAndValidateDate(day, month, year);
+
+    if (!validation.isValid || !dateParts) {
+      setBirthdateError(validation.error || "Invalid date");
+      return;
+    }
+
+    setBirthdateError(null);
+    dispatch({
+      type: 'BIRTHDATE_SUBMIT',
+      day: dateParts.day,
+      month: dateParts.month,
+      year: dateParts.year,
+      configDescriptions: positionDescriptions,
+    });
+  }, [day, month, year, positionDescriptions]);
 
   // Scroll the deck into view when the spread appears (after shuffle)
   useEffect(() => {
@@ -276,6 +307,78 @@ export default function TarotGame({ user }: TarotGameProps) {
           </div>
         )}
 
+        {/* Birthdate Input (for Significators) */}
+        {game.phase === 'birthdate-input' && (
+          <div className="flex flex-col items-center gap-8 mt-8 py-8 animate-fadeIn">
+            <h2
+              className="text-2xl sm:text-3xl font-bold text-[#d4af37] tracking-wider"
+              style={{ fontFamily: "'Cinzel', serif", textShadow: '0 0 20px rgba(212,175,55,0.4)' }}
+            >
+              Enter Your Birth Date
+            </h2>
+            <p
+              className="text-[#e6d5b8]/70 text-base sm:text-lg max-w-md text-center"
+              style={{ fontFamily: "'Crimson Pro', serif" }}
+            >
+              Your personal significators are calculated from your birth date, revealing cards that hold special meaning for your life path.
+            </p>
+
+            <div className="flex items-center gap-2 sm:gap-3">
+              {([
+                { label: "Day", placeholder: "DD", maxLength: 2, width: "w-16", value: day, setValue: setDay },
+                { label: "Month", placeholder: "MM", maxLength: 2, width: "w-16", value: month, setValue: setMonth },
+                { label: "Year", placeholder: "YYYY", maxLength: 4, width: "w-24", value: year, setValue: setYear },
+              ] as const).map((field, i) => (
+                <React.Fragment key={field.label}>
+                  {i > 0 && <span className="text-[#d4af37]/60 text-2xl">/</span>}
+                  <div className="flex flex-col items-center">
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      maxLength={field.maxLength}
+                      placeholder={field.placeholder}
+                      value={field.value}
+                      onChange={(e) => {
+                        field.setValue(e.target.value.replace(/\D/g, "").slice(0, field.maxLength));
+                        setBirthdateError(null);
+                      }}
+                      className={`border-2 border-[#d4af37]/50 rounded-lg px-3 py-3 bg-[#1a0033]/80 text-[#e6d5b8] text-lg text-center backdrop-blur-sm
+                                 focus:outline-none focus:border-[#d4af37] focus:ring-2 focus:ring-[#d4af37]/30 transition-all ${field.width}`}
+                      style={{ fontFamily: "'Crimson Pro', serif" }}
+                    />
+                    <span className="text-xs text-[#d4af37]/50 mt-1" style={{ fontFamily: "'Cinzel', serif" }}>{field.label}</span>
+                  </div>
+                </React.Fragment>
+              ))}
+            </div>
+
+            {birthdateError && (
+              <p className="text-red-400 text-sm" style={{ fontFamily: "'Crimson Pro', serif" }}>
+                {birthdateError}
+              </p>
+            )}
+
+            <button
+              onClick={handleBirthdateSubmit}
+              className="px-10 py-4 bg-gradient-to-br from-[#d4af37] to-[#b8942f] text-[#1a0033] rounded-lg
+                         shadow-lg hover:shadow-[#d4af37]/50 transition-all duration-300 font-bold text-lg
+                         hover:scale-105 active:scale-95 border border-[#d4af37]/50"
+              style={{ fontFamily: "'Cinzel', serif", letterSpacing: '0.1em' }}
+            >
+              ✦ Generate Significators ✦
+            </button>
+
+            <button
+              onClick={() => dispatch({ type: 'RESET' })}
+              className="text-[#d4af37]/50 hover:text-[#d4af37]/80 transition-colors text-sm tracking-widest"
+              style={{ fontFamily: "'Cinzel', serif" }}
+            >
+              &#9671; Go Back &#9671;
+            </button>
+          </div>
+        )}
+
         {/* Shuffle Animation */}
         {game.phase === 'shuffling' && (
           <ShuffleAnimation onComplete={handleShuffleComplete} />
@@ -313,12 +416,13 @@ export default function TarotGame({ user }: TarotGameProps) {
                   selectedCards={selectedCards}
                   positions={positionNames}
                   question={selectedReading.showQuestion ? userQuestion : undefined}
-                  isComplete={selectedCards.length === numCards}
+                  isComplete={isReadingComplete}
+                  significatorResult={completedReading?.significatorResult}
                 />
               </div>
             )}
 
-            {selectedCards.length === numCards && (
+            {game.phase === 'reading' && isReadingComplete && (
               <div className="flex flex-col items-center gap-4 mt-10">
                 <button
                   className="px-10 py-4 bg-gradient-to-br from-[#d4af37] to-[#b8942f] text-[#1a0033] rounded-lg
@@ -350,7 +454,7 @@ export default function TarotGame({ user }: TarotGameProps) {
     </div>
 
     {showOracleInfo && (
-      <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
+      <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4"
            role="dialog"
            aria-modal="true"
            aria-labelledby="oracle-info-title">
