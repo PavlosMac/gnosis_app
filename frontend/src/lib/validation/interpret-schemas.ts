@@ -4,7 +4,7 @@ export const interpretCardSchema = z.object({
   name: z.string().trim().min(1).max(100),
   position: z.string().trim().min(1).max(100),
   orientation: z.enum(["upright", "reversed"]),
-  position_description: z.string().trim().max(2000).optional(),
+  position_description: z.string().trim().max(500).optional(),
 });
 
 export const interpretRequestSchema = z.object({
