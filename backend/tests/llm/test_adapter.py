@@ -74,7 +74,9 @@ def _make_request(*cards: CardInSpread) -> InterpretationRequest:
 
 @pytest.fixture
 def adapter():
-    return OpenAIAdapter(client=_make_client(), model="gpt-4o", max_tokens=1024)
+    return OpenAIAdapter(
+        client=_make_client(), model="gpt-4o", max_tokens=1024, reasoning_effort="none"
+    )
 
 
 async def test_success_returns_interpretation(adapter):
@@ -91,7 +93,7 @@ async def test_success_returns_interpretation(adapter):
 
 async def test_unknown_card_raises_card_not_found():
     client = _make_client()
-    adapter = OpenAIAdapter(client=client, model="gpt-4o", max_tokens=1024)
+    adapter = OpenAIAdapter(client=client, model="gpt-4o", max_tokens=1024, reasoning_effort="none")
     req = _make_request(
         CardInSpread(name="Card of Doom", position="Present", orientation=Orientation.upright)
     )
@@ -103,7 +105,7 @@ async def test_empty_response_raises_llm_response_error():
     client = _make_client()
     # Simulate parsed=None (unparseable response)
     client.beta.chat.completions.parse.return_value.choices[0].message.parsed = None
-    adapter = OpenAIAdapter(client=client, model="gpt-4o", max_tokens=1024)
+    adapter = OpenAIAdapter(client=client, model="gpt-4o", max_tokens=1024, reasoning_effort="none")
     req = _make_request(
         CardInSpread(name="The Fool", position="Past", orientation=Orientation.upright)
     )
@@ -118,7 +120,7 @@ async def test_rate_limit_error_mapped():
             message="rate limit", response=MagicMock(status_code=429), body={}
         )
     )
-    adapter = OpenAIAdapter(client=client, model="gpt-4o", max_tokens=1024)
+    adapter = OpenAIAdapter(client=client, model="gpt-4o", max_tokens=1024, reasoning_effort="none")
     req = _make_request(
         CardInSpread(name="The Fool", position="Past", orientation=Orientation.upright)
     )
@@ -131,7 +133,7 @@ async def test_connection_error_mapped():
     client.beta.chat.completions.parse = AsyncMock(
         side_effect=APIConnectionError(request=MagicMock())
     )
-    adapter = OpenAIAdapter(client=client, model="gpt-4o", max_tokens=1024)
+    adapter = OpenAIAdapter(client=client, model="gpt-4o", max_tokens=1024, reasoning_effort="none")
     req = _make_request(
         CardInSpread(name="The Fool", position="Past", orientation=Orientation.upright)
     )
@@ -148,7 +150,7 @@ async def test_api_status_error_mapped():
             body={},
         )
     )
-    adapter = OpenAIAdapter(client=client, model="gpt-4o", max_tokens=1024)
+    adapter = OpenAIAdapter(client=client, model="gpt-4o", max_tokens=1024, reasoning_effort="none")
     req = _make_request(
         CardInSpread(name="The Fool", position="Past", orientation=Orientation.upright)
     )
@@ -158,6 +160,6 @@ async def test_api_status_error_mapped():
 
 async def test_close_calls_client_close():
     client = _make_client()
-    adapter = OpenAIAdapter(client=client, model="gpt-4o", max_tokens=1024)
+    adapter = OpenAIAdapter(client=client, model="gpt-4o", max_tokens=1024, reasoning_effort="none")
     await adapter.close()
     client.close.assert_awaited_once()

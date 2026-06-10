@@ -1,11 +1,15 @@
 from datetime import date
 
+import structlog
+
 from src.cqrs.commands import BaseCommand, CommandHandler
 from src.llm.port import LLMPort
 from src.llm.schemas import CardInSpread, InterpretationRequest
 from src.readings.models import Reading
 from src.readings.repository import ReadingWriteRepository
 from src.readings.schemas import ReadingReadModel
+
+logger = structlog.stdlib.get_logger(__name__)
 
 
 class CreateReadingCommand(BaseCommand):
@@ -61,7 +65,9 @@ class CreateReadingHandler(CommandHandler[CreateReadingCommand, ReadingReadModel
             model=llm_response.model,
         )
 
-        reading_id = await self._write_repo.insert(reading.to_document())
+        document = reading.to_document()
+        logger.debug("saving reading", document=document)
+        reading_id = await self._write_repo.insert(document)
 
         return ReadingReadModel.model_validate(
             {

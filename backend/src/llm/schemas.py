@@ -19,7 +19,7 @@ class CardInSpread(BaseModel):
     orientation: Orientation
     position_description: str | None = Field(
         default=None,
-        max_length=200,
+        max_length=500,
         description="What this position represents in the spread (e.g. 'Will, drive, and what "
         "energises the situation'). Sent by the frontend to give the LLM interpretive context.",
     )
@@ -75,7 +75,7 @@ class LLMInterpretationResult(BaseModel):
             "For multi-card spreads: a cohesive narrative weaving all cards together to "
             "directly address the querent's question. Not a summary of individual cards, "
             "but an integrated insight that reveals something the individual interpretations "
-            "alone do not. "
+            "alone do not. Match its length to the target word count given in the spread details. "
             "For single-card readings: do not restate the card interpretation. Instead, "
             "offer a practical takeaway — actionable guidance, a reflective question, or a "
             "concrete step the querent can take based on the card's message."

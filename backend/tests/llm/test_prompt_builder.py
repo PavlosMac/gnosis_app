@@ -1,4 +1,9 @@
-from src.llm.prompt_builder import build_system_prompt, build_user_prompt
+from src.llm.prompt_builder import (
+    _distinct_card_count,
+    _synthesis_target_words,
+    build_system_prompt,
+    build_user_prompt,
+)
 from src.llm.schemas import CardInSpread, InterpretationRequest, Orientation
 
 
@@ -169,3 +174,45 @@ def test_system_prompt_unknown_spread_returns_default():
     default = build_system_prompt()
     assert build_system_prompt("Unknown Spread") == default
     assert build_system_prompt("Celtic Cross") == default
+
+
+# --- Synthesis length scaling ---
+
+
+def test_synthesis_target_is_flat_through_three_distinct_cards():
+    assert _synthesis_target_words(1) == 170
+    assert _synthesis_target_words(2) == 170
+    assert _synthesis_target_words(3) == 170
+
+
+def test_synthesis_target_grows_sixty_words_per_card_after_three():
+    assert _synthesis_target_words(4) == 230
+    assert _synthesis_target_words(5) == 290
+    assert _synthesis_target_words(10) == 590
+
+
+def _repeated_card_request(spread_name: str) -> InterpretationRequest:
+    cards = [
+        CardInSpread(name="The Moon", position="day number", orientation=Orientation.upright),
+        CardInSpread(name="The Moon", position="star sign", orientation=Orientation.upright),
+        CardInSpread(name="Justice", position="life number 1", orientation=Orientation.upright),
+    ]
+    return InterpretationRequest(spread_name=spread_name, question=None, cards=cards)
+
+
+def test_distinct_count_dedupes_repeated_cards_for_significators():
+    req = _repeated_card_request("Significators")
+    assert _distinct_card_count(req) == 2
+
+
+def test_distinct_count_does_not_dedupe_for_other_spreads():
+    req = _repeated_card_request("Celtic Cross")
+    assert _distinct_card_count(req) == 3
+
+
+def test_user_prompt_includes_synthesis_length_line():
+    req = _make_request(
+        [CardInSpread(name="The Fool", position="Past", orientation=Orientation.upright)]
+    )
+    prompt = build_user_prompt(req)
+    assert "Synthesis length: aim for roughly 170 words." in prompt

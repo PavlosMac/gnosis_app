@@ -2,6 +2,7 @@ from contextlib import asynccontextmanager
 
 import structlog
 from fastapi import FastAPI
+from fastapi.exceptions import RequestValidationError
 from openai import AsyncOpenAI
 
 from src.auth.commands.register_user import RegisterUserCommand, RegisterUserHandler
@@ -10,7 +11,12 @@ from src.auth.queries.get_user_by_id import GetUserByIdHandler, GetUserByIdQuery
 from src.auth.repository import AuthReadRepository, AuthWriteRepository, RefreshTokenRepository
 from src.auth.router import router as auth_router
 from src.core.config import settings
-from src.core.exceptions import AppError, app_exception_handler, unhandled_exception_handler
+from src.core.exceptions import (
+    AppError,
+    app_exception_handler,
+    unhandled_exception_handler,
+    validation_exception_handler,
+)
 from src.core.logging import configure_logging
 from src.core.middleware import AccessLogMiddleware, RequestIDMiddleware
 from src.cqrs.mediator import Mediator
@@ -66,6 +72,7 @@ async def lifespan(app: FastAPI):
             client=openai_client,
             model=settings.openai_model,
             max_tokens=settings.openai_max_tokens,
+            reasoning_effort=settings.openai_reasoning_effort,
         )
         logger.info("llm adapter initialised", adapter="openai", model=settings.openai_model)
     else:
@@ -96,6 +103,7 @@ app = FastAPI(
 
 app.add_middleware(AccessLogMiddleware)
 app.add_middleware(RequestIDMiddleware)
+app.add_exception_handler(RequestValidationError, validation_exception_handler)
 app.add_exception_handler(AppError, app_exception_handler)
 app.add_exception_handler(Exception, unhandled_exception_handler)
 

@@ -22,10 +22,13 @@ logger = structlog.stdlib.get_logger(__name__)
 
 
 class OpenAIAdapter(LLMPort):
-    def __init__(self, client: AsyncOpenAI, model: str, max_tokens: int) -> None:
+    def __init__(
+        self, client: AsyncOpenAI, model: str, max_tokens: int, reasoning_effort: str
+    ) -> None:
         self._client = client
         self._model = model
         self._max_tokens = max_tokens
+        self._reasoning_effort = reasoning_effort
 
     async def generate_interpretation(
         self, request: InterpretationRequest
@@ -45,13 +48,15 @@ class OpenAIAdapter(LLMPort):
             model=self._model,
             spread_name=request.spread_name,
             cards=[c.name for c in request.cards],
+            system_prompt=system_prompt,
+            user_prompt=user_prompt,
         )
 
         try:
             response = await self._client.beta.chat.completions.parse(
                 model=self._model,
-                max_tokens=self._max_tokens,
-                temperature=0.7,
+                max_completion_tokens=self._max_tokens,
+                reasoning_effort=self._reasoning_effort,
                 messages=[
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_prompt},
@@ -69,7 +74,18 @@ class OpenAIAdapter(LLMPort):
         if not parsed:
             raise LLMResponseError("Empty or unparseable response from LLM")
 
-        tokens_used = response.usage.total_tokens if response.usage else 0
+        usage = response.usage
+        tokens_used = usage.total_tokens if usage else 0
+        if usage:
+            details = usage.completion_tokens_details
+            logger.info(
+                "openai usage",
+                model=response.model,
+                prompt_tokens=usage.prompt_tokens,
+                completion_tokens=usage.completion_tokens,
+                reasoning_tokens=details.reasoning_tokens if details else None,
+                total_tokens=usage.total_tokens,
+            )
 
         return InterpretationResponse(
             card_interpretations=parsed.card_interpretations,

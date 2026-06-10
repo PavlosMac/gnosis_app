@@ -23,8 +23,9 @@ class Settings(BaseSettings):
 
     # OpenAI
     openai_api_key: str = ""
-    openai_model: str = "gpt-4o"
-    openai_max_tokens: int = 2500
+    openai_model: str = "gpt-5.4-mini"
+    openai_max_tokens: int = 4000
+    openai_reasoning_effort: Literal["none", "low", "medium", "high", "xhigh"] = "none"
 
     # Logging
     log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = "INFO"

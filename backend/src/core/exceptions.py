@@ -1,5 +1,6 @@
 import structlog
 from fastapi import Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
 logger = structlog.stdlib.get_logger(__name__)
@@ -39,6 +40,16 @@ async def app_exception_handler(_request: Request, exc: AppError) -> JSONRespons
     return JSONResponse(
         status_code=exc.status_code,
         content={"detail": exc.detail},
+    )
+
+
+async def validation_exception_handler(
+    _request: Request, exc: RequestValidationError
+) -> JSONResponse:
+    logger.warning("request validation error", errors=exc.errors())
+    return JSONResponse(
+        status_code=422,
+        content={"detail": exc.errors()},
     )
 
 

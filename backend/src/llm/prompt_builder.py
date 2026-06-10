@@ -17,6 +17,10 @@ from src.llm.schemas import (
 
 _SEP = ", "
 
+_SYNTHESIS_BASE_WORDS = 170
+_SYNTHESIS_FLAT_CARD_LIMIT = 3
+_SYNTHESIS_WORDS_PER_EXTRA_CARD = 60
+
 
 _SYSTEM_PROMPT = (
     "You are an expert tarot reader with deep knowledge of esoteric symbolism, "
@@ -46,7 +50,7 @@ _SYSTEM_PROMPT = (
     "- For multi-card spreads, the synthesis is the heart of the reading: weave all cards "
     "into one cohesive narrative that directly addresses the question. The synthesis should "
     "be the most substantial part of the response — not a recap of individual cards, but an "
-    "integrated insight.\n"
+    "integrated insight. Honour the target synthesis length given in the spread details.\n"
     "- For single-card readings, do not restate the card interpretation in the synthesis. "
     "Instead, offer a practical takeaway — actionable guidance, a reflective question for "
     "the querent to sit with, or a concrete step they can take based on the card's message."
@@ -87,7 +91,8 @@ _SIGNIFICATORS_SYSTEM_PROMPT = (
     "- The synthesis should paint a cohesive portrait of the querent as a person — "
     "how their day number, life path, star sign, and decanate interact, reinforce, "
     "or temper each other. This is the heart of the chart: an integrated character "
-    "study, not a summary of individual cards."
+    "study, not a summary of individual cards. "
+    "Honour the target synthesis length given in the spread details."
 )
 
 
@@ -95,6 +100,17 @@ def build_system_prompt(spread_name: str | None = None) -> str:
     if spread_name == SIGNIFICATORS_SPREAD:
         return _SIGNIFICATORS_SYSTEM_PROMPT
     return _SYSTEM_PROMPT
+
+
+def _distinct_card_count(request: InterpretationRequest) -> int:
+    if request.spread_name == SIGNIFICATORS_SPREAD:
+        return len({card.name for card in request.cards})
+    return len(request.cards)
+
+
+def _synthesis_target_words(distinct_cards: int) -> int:
+    extra_cards = max(0, distinct_cards - _SYNTHESIS_FLAT_CARD_LIMIT)
+    return _SYNTHESIS_BASE_WORDS + extra_cards * _SYNTHESIS_WORDS_PER_EXTRA_CARD
 
 
 def build_user_prompt(
@@ -125,6 +141,10 @@ def build_user_prompt(
         lines.append(position_line)
         if meaning is not None:
             lines.append(_format_card(card, meaning))
+
+    target_words = _synthesis_target_words(_distinct_card_count(request))
+    lines.append("")
+    lines.append(f"Synthesis length: aim for roughly {target_words} words.")
 
     return "\n".join(lines)
 
