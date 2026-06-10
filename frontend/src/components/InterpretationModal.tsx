@@ -10,6 +10,17 @@ import type { InterpretResult, InterpretResponse } from "@/types/interpret";
 
 type ModalState = "loading" | "result" | "error";
 
+const SHORT_MONTHS = [
+  "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+];
+
+// Format a "YYYY-MM-DD" birthdate as "12 Mar 1990" (matches readings list style)
+const formatBirthDate = (iso: string): string => {
+  const [year, month, day] = iso.split("-").map(Number);
+  return `${day} ${SHORT_MONTHS[month - 1]} ${year}`;
+};
+
 interface InterpretationModalProps {
   reading: ReadingResult;
   onClose: () => void;
@@ -141,18 +152,27 @@ const InterpretationModal: React.FC<InterpretationModalProps> = React.memo(({
               "linear-gradient(135deg, rgba(26,0,51,0.98) 0%, rgba(45,27,78,0.98) 100%)",
           }}
         >
-          <h2
-            className="text-xl sm:text-2xl font-bold text-[#d4af37] tracking-wider"
-            style={{
-              fontFamily: "'Cinzel', serif",
-              textShadow: "0 0 15px rgba(212,175,55,0.4)",
-            }}
-          >
-            ✦ Interpretation ✦
-          </h2>
+          <div className="flex flex-col gap-1 min-w-0">
+            <h2
+              className="text-xl sm:text-2xl font-bold text-[#d4af37] tracking-wider"
+              style={{
+                fontFamily: "'Cinzel', serif",
+                textShadow: "0 0 15px rgba(212,175,55,0.4)",
+              }}
+            >
+              ✦ Interpretation ✦
+            </h2>
+            <p
+              className="text-xs sm:text-sm text-[#d4af37]/70 tracking-wide truncate"
+              style={{ fontFamily: "'Cinzel', serif" }}
+            >
+              {reading.readingType}
+              {reading.birth_date && ` · ${formatBirthDate(reading.birth_date)}`}
+            </p>
+          </div>
           <button
             onClick={onClose}
-            className="text-[#d4af37]/60 hover:text-[#d4af37] transition-colors text-2xl leading-none px-2"
+            className="shrink-0 text-[#d4af37]/60 hover:text-[#d4af37] transition-colors text-2xl leading-none px-2"
             aria-label="Close"
           >
             ×
