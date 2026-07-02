@@ -5,8 +5,7 @@ import { publicFetch, setAuthCookies } from "@/lib/api-client";
 import { loginSchema } from "@/lib/validation/auth-schemas";
 import type { LoginFormState, TokenResponse } from "@/types/auth";
 
-export const login = async (
-  _prevState: LoginFormState,
+const authenticateWithCredentials = async (
   formData: FormData
 ): Promise<LoginFormState> => {
   console.log("[AUTH:LOGIN] Login attempt", { email: formData.get("email") });
@@ -38,5 +37,22 @@ export const login = async (
   console.log("[AUTH:LOGIN] Login successful — setting cookies");
   await setAuthCookies(result.data);
 
+  return { success: true };
+};
+
+export const login = async (
+  _prevState: LoginFormState,
+  formData: FormData
+): Promise<LoginFormState> => {
+  const result = await authenticateWithCredentials(formData);
+  if (!result.success) return result;
+
   redirect("/user/profile");
+};
+
+export const loginInline = async (
+  _prevState: LoginFormState,
+  formData: FormData
+): Promise<LoginFormState> => {
+  return authenticateWithCredentials(formData);
 };
