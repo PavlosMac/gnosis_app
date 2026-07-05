@@ -8,7 +8,7 @@ import type { LoginFormState, TokenResponse } from "@/types/auth";
 const authenticateWithCredentials = async (
   formData: FormData
 ): Promise<LoginFormState> => {
-  console.log("[AUTH:LOGIN] Login attempt", { email: formData.get("email") });
+  console.log("[AUTH:LOGIN] Login attempt");
 
   const raw = {
     email: formData.get("email"),

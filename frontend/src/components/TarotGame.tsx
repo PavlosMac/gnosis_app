@@ -1,9 +1,11 @@
 "use client";
 import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import Reading from "@/components/Reading";
 import ShuffledDeck from "@/components/ShuffledDeck";
 import ShuffleAnimation from "@/components/ShuffleAnimation";
 import InterpretationModal from "@/components/InterpretationModal";
+import LoginToInterpretModal from "@/components/LoginToInterpretModal";
 import OrnateFrame from "@/components/OrnateFrame";
 import readingsConfig from "@/lib/readings-config.json";
 import { parseAndValidateDate } from "@/lib/dateValidation";
@@ -45,11 +47,14 @@ const DECK_SCROLL_DELAY = 300;
 const READING_SCROLL_DELAY = 100;
 
 export default function TarotGame({ user }: TarotGameProps) {
+  const router = useRouter();
   const [selectedReading, setSelectedReading] = useState<ReadingConfig>(readings[1]);
   const [allowReversals, setAllowReversals] = useState(false);
   const [userQuestion, setUserQuestion] = useState<string>("");
   const [showOracleInfo, setShowOracleInfo] = useState(false);
   const [showInterpretModal, setShowInterpretModal] = useState(false);
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(!!user);
   const [interpretResult, setInterpretResult] = useState<InterpretResult | null>(null);
   const [game, dispatch] = useGameReducer();
   const deckRef = useRef<HTMLDivElement>(null);
@@ -103,10 +108,20 @@ export default function TarotGame({ user }: TarotGameProps) {
   const handleNewReading = useCallback(() => {
     dispatch({ type: 'RESET' });
     setShowInterpretModal(false);
+    setShowLoginModal(false);
     setInterpretResult(null);
   }, []);
 
   const handleCloseModal = useCallback(() => setShowInterpretModal(false), []);
+
+  const handleCloseLoginModal = useCallback(() => setShowLoginModal(false), []);
+
+  const handleLoginSuccess = useCallback(() => {
+    setShowLoginModal(false);
+    setIsLoggedIn(true);
+    router.refresh();
+    setShowInterpretModal(true);
+  }, [router]);
 
   const handleResultReceived = useCallback((r: InterpretResult) => {
     setInterpretResult(r);
@@ -434,17 +449,15 @@ export default function TarotGame({ user }: TarotGameProps) {
                   ✦ New Reading ✦
                 </button>
 
-                {user && (
-                  <button
-                    className="px-10 py-4 bg-gradient-to-br from-[#8a2be2]/80 to-[#5a1a9e]/80 text-[#e6d5b8] rounded-lg
-                               shadow-lg hover:shadow-[#8a2be2]/40 transition-all duration-300 font-bold text-lg
-                               hover:scale-105 active:scale-95 border border-[#8a2be2]/40"
-                    style={{ fontFamily: "'Cinzel', serif", letterSpacing: '0.1em' }}
-                    onClick={() => setShowInterpretModal(true)}
-                  >
-                    ✦ Oracle Interpretation ✦
-                  </button>
-                )}
+                <button
+                  className="px-8 sm:px-10 py-3 sm:py-4 bg-gradient-to-br from-[#8a2be2]/80 to-[#5a1a9e]/80 text-[#e6d5b8] rounded-lg
+                             shadow-lg hover:shadow-[#8a2be2]/40 transition-all duration-300 font-bold text-base sm:text-lg
+                             hover:scale-105 active:scale-95 border border-[#8a2be2]/40"
+                  style={{ fontFamily: "'Cinzel', serif", letterSpacing: '0.1em' }}
+                  onClick={() => isLoggedIn ? setShowInterpretModal(true) : setShowLoginModal(true)}
+                >
+                  {isLoggedIn ? "✦ Oracle Interpretation ✦" : "✦ Login to Get Interpretation ✦"}
+                </button>
               </div>
             )}
           </div>
@@ -508,6 +521,13 @@ export default function TarotGame({ user }: TarotGameProps) {
         onClose={handleCloseModal}
         initialResult={interpretResult}
         onResultReceived={handleResultReceived}
+      />
+    )}
+
+    {showLoginModal && completedReading && (
+      <LoginToInterpretModal
+        onClose={handleCloseLoginModal}
+        onSuccess={handleLoginSuccess}
       />
     )}
     </>
