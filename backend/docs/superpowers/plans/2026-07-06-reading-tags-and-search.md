@@ -16,7 +16,7 @@
 - Max 5 tags per reading (`MAX_TAGS_PER_READING = 5`) — exceeding it raises a validation error (422), never silently truncates.
 - Tags are only ever set via `PATCH /readings/{id}/tags` — never at creation (`POST /readings` is unchanged).
 - `PATCH /readings/{id}/tags` is a full replace, not a merge, of the tag list.
-- The frontend sends tags as one raw comma-separated string, e.g. `{"tags": "career, big-decision, love"}`, not a JSON array. Splitting/trimming/lowercasing/deduping/cap-enforcement all happen in a Pydantic `field_validator`.
+- Tags travel as one raw comma-separated string on the wire, both in the PATCH body (e.g. `{"tags": "career, big-decision, love"}`) and the GET search param (e.g. `?tags=career,love`) — never a JSON array or repeated query params. Both are parsed by the shared `parse_comma_separated_tags` helper (`schemas.py`); the 5-tag cap is enforced only on top of that in `UpdateReadingTagsRequest`, not on GET.
 - Multi-tag search is OR-match (`$in`), ranked by number of matching tags descending, then `created_at` descending as a tiebreaker.
 - `$setIntersection` is NOT available in `mongomock` (confirmed by direct testing) — the ranking pipeline must use `$filter` + `$in` + `$$this` instead, which works on both mongomock and real MongoDB.
 - `spread_type` and `birth_date` are exact-match filters, combined via `$match` alongside the tag filter.
@@ -244,7 +244,7 @@ git commit -m "feat: add Reading.tags field and UpdateReadingTagsCommand"
 
 **Interfaces:**
 - Consumes: nothing new.
-- Produces: `UpdateReadingTagsRequest(AppSchema)` with `tags: list[str]` (input accepted as a raw string, output is the normalized list). `MAX_TAGS_PER_READING = 5` constant in `schemas.py`.
+- Produces: `parse_comma_separated_tags(value: str) -> list[str]` module-level function in `schemas.py` (split/trim/lowercase/dedupe, no cap — reused by Task 5's GET search param parsing). `UpdateReadingTagsRequest(AppSchema)` with `tags: list[str]` (input accepted as a raw string, output is the normalized list, with the 5-cap enforced on top of `parse_comma_separated_tags`). `MAX_TAGS_PER_READING = 5` constant in `schemas.py`.
 
 - [ ] **Step 1: Write the failing tests**
 
@@ -297,6 +297,22 @@ def test_allows_exactly_five_tags():
     assert result.tags == ["a", "b", "c", "d", "e"]
 ```
 
+Add a direct test for the shared helper too — Task 5 imports it independently
+of `UpdateReadingTagsRequest`:
+
+```python
+from src.readings.schemas import parse_comma_separated_tags
+
+
+def test_parse_comma_separated_tags_normalizes():
+    assert parse_comma_separated_tags(" Career, love, love,") == ["career", "love"]
+
+
+def test_parse_comma_separated_tags_no_cap():
+    result = parse_comma_separated_tags("a, b, c, d, e, f")
+    assert result == ["a", "b", "c", "d", "e", "f"]
+```
+
 - [ ] **Step 2: Run tests to verify they fail**
 
 Run: `make test params="tests/readings/test_schemas.py -v"`
@@ -316,21 +332,30 @@ from pydantic import Field, field_validator
 MAX_TAGS_PER_READING = 5
 
 
+def parse_comma_separated_tags(value: str) -> list[str]:
+    parsed: list[str] = []
+    for piece in value.split(","):
+        tag = piece.strip().lower()
+        if tag and tag not in parsed:
+            parsed.append(tag)
+    return parsed
+
+
 class UpdateReadingTagsRequest(AppSchema):
     tags: list[str]
 
     @field_validator("tags", mode="before")
     @classmethod
-    def parse_tags(cls, value: str) -> list[str]:
-        parsed: list[str] = []
-        for piece in value.split(","):
-            tag = piece.strip().lower()
-            if tag and tag not in parsed:
-                parsed.append(tag)
+    def validate_tags(cls, value: str) -> list[str]:
+        parsed = parse_comma_separated_tags(value)
         if len(parsed) > MAX_TAGS_PER_READING:
             raise ValueError(f"A reading can have at most {MAX_TAGS_PER_READING} tags")
         return parsed
 ```
+
+`parse_comma_separated_tags` has no cap — the 5-tag limit is a write-side
+storage constraint on `UpdateReadingTagsRequest` only. Task 5's GET search
+param reuses `parse_comma_separated_tags` directly, without the cap.
 
 - [ ] **Step 4: Run tests to verify they pass**
 
@@ -795,7 +820,7 @@ git commit -m "feat: add spread_type and birth_date search params to GET /readin
 - Test: `tests/readings/test_router.py`
 
 **Interfaces:**
-- Consumes: `ReadingReadRepository._build_filter` (Task 4), `UpdateReadingTagsHandler` (Task 1, used in tests to set up tagged readings).
+- Consumes: `ReadingReadRepository._build_filter` (Task 4), `UpdateReadingTagsHandler` (Task 1, used in tests to set up tagged readings), `parse_comma_separated_tags` (Task 2, used in the router to parse the comma-separated `tags` query param).
 - Produces: `ReadingReadRepository.find_by_user_id_ranked_by_tags(user_id, tags, skip, limit, spread_type=None, birth_date=None) -> list[dict]`. `ListUserReadingsQuery.tags: list[str] | None`.
 
 - [ ] **Step 1: Write the failing tests**
@@ -875,7 +900,7 @@ async def test_list_readings_filters_by_tags(client, auth_token):
     )
 
     resp = await client.get(
-        "/api/v1/readings?tags=career&tags=love",
+        "/api/v1/readings?tags=career,love",
         headers={"Authorization": f"Bearer {auth_token}"},
     )
     data = resp.json()
@@ -993,7 +1018,26 @@ Replace `handle`:
 
 - [ ] **Step 5: Add the `tags` query param to the router**
 
-In `src/readings/router.py`, update `list_readings`:
+`tags` arrives as one comma-separated string (`?tags=career,love`), matching
+the PATCH body format — not FastAPI's native repeated-param list syntax. It's
+parsed with the same `parse_comma_separated_tags` helper from Task 2 (no
+5-cap applied here — that cap is a write-side limit on `UpdateReadingTagsRequest`
+only).
+
+In `src/readings/router.py`, add `parse_comma_separated_tags` to the schemas
+import:
+
+```python
+from src.readings.schemas import (
+    CreateReadingRequest,
+    ReadingListItem,
+    ReadingReadModel,
+    UpdateReadingTagsRequest,
+    parse_comma_separated_tags,
+)
+```
+
+Update `list_readings`:
 
 ```python
 @router.get("", response_model=PaginatedResponse[ReadingListItem])
@@ -1004,7 +1048,7 @@ async def list_readings(
     page_size: int = Query(default=20, ge=1, le=100),
     spread_type: str | None = Query(default=None),
     birth_date: date | None = Query(default=None),
-    tags: list[str] | None = Query(default=None),
+    tags: str | None = Query(default=None),
 ) -> PaginatedResponse[ReadingListItem]:
     return await mediator.query(
         ListUserReadingsQuery(
@@ -1013,7 +1057,7 @@ async def list_readings(
             page_size=page_size,
             spread_type=spread_type,
             birth_date=birth_date,
-            tags=tags,
+            tags=parse_comma_separated_tags(tags) if tags else None,
         )
     )
 ```
