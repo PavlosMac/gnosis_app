@@ -38,8 +38,8 @@ const ReadingTags = ({ readingId, initialTags }: ReadingTagsProps) => {
     setError(null);
   };
 
-  const commitTags = (rawTags: string[]) => {
-    const next = [...draft];
+  const buildNextTags = (base: string[], rawTags: string[]) => {
+    const next = [...base];
     let rejected: string | null = null;
     for (const raw of rawTags) {
       const tag = raw.trim().toLowerCase();
@@ -52,6 +52,11 @@ const ReadingTags = ({ readingId, initialTags }: ReadingTagsProps) => {
       if (next.includes(tag)) continue;
       next.push(tag);
     }
+    return { next, rejected };
+  };
+
+  const commitTags = (rawTags: string[]) => {
+    const { next, rejected } = buildNextTags(draft, rawTags);
     setDraft(next);
     setError(rejected);
   };
@@ -84,15 +89,22 @@ const ReadingTags = ({ readingId, initialTags }: ReadingTagsProps) => {
   };
 
   const save = async () => {
+    const { next: tagsToSave, rejected } = buildNextTags(draft, input ? [input] : []);
+    if (rejected) {
+      setError(rejected);
+      return;
+    }
+
     setSaving(true);
     setError(null);
-    const result = await updateReadingTags(readingId, draft);
+    const result = await updateReadingTags(readingId, tagsToSave);
     setSaving(false);
     if (!result.ok) {
       setError(result.error);
       return;
     }
     setTags(result.data.tags);
+    setInput("");
     setEditing(false);
     router.refresh();
   };
