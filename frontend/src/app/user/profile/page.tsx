@@ -91,7 +91,7 @@ const ProfilePage = async () => {
                 className="text-[#e6d5b8]/60 text-sm tracking-wider uppercase group-hover:text-[#d4af37] transition-colors"
                 style={{ fontFamily: "'Cinzel', serif" }}
               >
-                Past Readings
+                Readings Journal
               </span>
               <span className="text-[#d4af37]/40 group-hover:text-[#d4af37] transition-colors">
                 &#8594;

@@ -19,6 +19,9 @@ const truncate = (text: string | null, max: number) => {
   return text.length > max ? text.slice(0, max) + "…" : text;
 };
 
+const isValidIsoDate = (value: string): boolean =>
+  /^\d{4}-\d{2}-\d{2}$/.test(value) && !Number.isNaN(new Date(value).getTime());
+
 const ReadingsPage = async ({
   searchParams,
 }: {
@@ -33,9 +36,11 @@ const ReadingsPage = async ({
     page: pageParam,
     spread_type: spreadType,
     tags,
-    birth_date: birthDate,
+    birth_date: birthDateParam,
   } = await searchParams;
   const currentPage = Math.max(1, parseInt(pageParam ?? "1", 10) || 1);
+  const birthDate =
+    birthDateParam && isValidIsoDate(birthDateParam) ? birthDateParam : undefined;
   const result = await getReadings(currentPage, PAGE_SIZE, {
     spreadType,
     tags,
@@ -69,7 +74,7 @@ const ReadingsPage = async ({
               textShadow: "0 0 30px rgba(212,175,55,0.4)",
             }}
           >
-            Past Readings
+            Readings Journal
           </h1>
           <div className="flex items-center justify-center gap-3 mt-3">
             <div className="w-12 h-px bg-gradient-to-r from-transparent to-[#d4af37]/40" />
@@ -89,6 +94,7 @@ const ReadingsPage = async ({
         </div>
 
         <ReadingsFilterPanel
+          key={`${spreadType ?? ""}|${tags ?? ""}|${birthDate ?? ""}`}
           currentSpreadType={spreadType}
           currentTags={tags}
           currentBirthDate={birthDate}
