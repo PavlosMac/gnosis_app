@@ -113,18 +113,28 @@ const ReadingTags = ({ readingId, initialTags }: ReadingTagsProps) => {
 
   return (
     <div className="flex flex-wrap items-center gap-2 mb-6">
-      {(editing ? draft : tags).map((tag) => (
-        <span
-          key={tag}
-          className={
-            editing
-              ? "flex items-center gap-1.5 pl-3 pr-1.5 py-1 rounded-full border border-[#d4af37]/30 bg-[#1a0033]/60 text-[#e6d5b8]/80 text-xs tracking-wide"
-              : "px-3 py-1 rounded-full border border-[#d4af37]/30 bg-[#1a0033]/60 text-[#e6d5b8]/80 text-xs tracking-wide"
-          }
-          style={{ fontFamily: "'Crimson Pro', serif" }}
-        >
-          {tag}
-          {editing && (
+      {!editing &&
+        tags.map((tag) => (
+          <button
+            key={tag}
+            type="button"
+            onClick={startEditing}
+            className="px-3 py-1 rounded-full border border-[#d4af37]/30 bg-[#1a0033]/60 text-[#e6d5b8]/80 text-xs tracking-wide
+                       hover:border-[#d4af37]/60 hover:text-[#e6d5b8] transition-colors"
+            style={{ fontFamily: "'Crimson Pro', serif" }}
+          >
+            {tag}
+          </button>
+        ))}
+
+      {editing &&
+        draft.map((tag) => (
+          <span
+            key={tag}
+            className="flex items-center gap-1.5 pl-3 pr-1.5 py-1 rounded-full border border-[#d4af37]/30 bg-[#1a0033]/60 text-[#e6d5b8]/80 text-xs tracking-wide"
+            style={{ fontFamily: "'Crimson Pro', serif" }}
+          >
+            {tag}
             <button
               type="button"
               onClick={() => removeDraftTag(tag)}
@@ -133,9 +143,8 @@ const ReadingTags = ({ readingId, initialTags }: ReadingTagsProps) => {
             >
               ×
             </button>
-          )}
-        </span>
-      ))}
+          </span>
+        ))}
 
       {editing && (
         <input
