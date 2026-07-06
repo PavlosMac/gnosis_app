@@ -1,6 +1,7 @@
 import Link from "next/link";
 import TarotPageLayout from "@/components/TarotPageLayout";
 import { getReadings } from "./actions";
+import ReadingsFilterPanel from "@/components/ReadingsFilterPanel";
 
 const PAGE_SIZE = 10;
 
@@ -86,6 +87,12 @@ const ReadingsPage = async ({
             </p>
           )}
         </div>
+
+        <ReadingsFilterPanel
+          currentSpreadType={spreadType}
+          currentTags={tags}
+          currentBirthDate={birthDate}
+        />
 
         {!result.ok ? (
           <div className="text-center text-red-400/80 py-8">
