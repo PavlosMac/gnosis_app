@@ -53,20 +53,27 @@ No existing endpoint mutates a reading after creation. Add:
   ) -> ReadingReadModel:
       ...
   ```
-- `src/readings/schemas.py` — new `UpdateReadingTagsRequest(AppSchema)`.
-  The frontend sends tags as a single raw comma-separated string (it does
-  not parse into a JSON array), e.g. `{"tags": "career, big-decision, love"}`.
-  The schema's `tags` field is typed `list[str]`, with a
-  `@field_validator("tags", mode="before")` that:
+- `src/readings/schemas.py` — new module-level `parse_comma_separated_tags(value: str) -> list[str]`
+  helper that:
   - splits the input string on `,`
   - strips whitespace from each piece
   - drops any piece that's empty after stripping (handles a stray trailing
     comma, e.g. `"career, love,"`)
   - lowercases each piece
   - dedupes, keeping first-seen order
-  - raises a `ValueError` (→ 422) if the resulting list exceeds
-    `MAX_TAGS_PER_READING = 5` (named constant in `schemas.py`) — no
-    silent truncation
+
+  This helper is shared by both the PATCH body parsing (below) and the GET
+  search param parsing (next section) — both accept the same comma-string
+  format, so the normalization logic lives in one place.
+- `src/readings/schemas.py` — new `UpdateReadingTagsRequest(AppSchema)`.
+  The frontend sends tags as a single raw comma-separated string (it does
+  not parse into a JSON array), e.g. `{"tags": "career, big-decision, love"}`.
+  The schema's `tags` field is typed `list[str]`, with a
+  `@field_validator("tags", mode="before")` that calls
+  `parse_comma_separated_tags(value)`, then raises a `ValueError` (→ 422) if
+  the resulting list exceeds `MAX_TAGS_PER_READING = 5` (named constant in
+  `schemas.py`) — no silent truncation. The 5-cap is a write-side storage
+  limit; it does not apply to the GET search param below.
 - Full replace semantics: PATCH sets the tag list to exactly what's passed,
   it does not merge with existing tags.
 - Response is the normal `ReadingReadModel`, with `tags` serialized back as
@@ -80,11 +87,18 @@ No existing endpoint mutates a reading after creation. Add:
 ```python
 spread_type: str | None = Query(default=None)
 birth_date: date | None = Query(default=None)
-tags: list[str] | None = Query(default=None)
+tags: str | None = Query(default=None)
 ```
 
-Passed into `ListUserReadingsQuery` (`src/readings/queries/list_user_readings.py:11-14`),
-which gains matching optional fields.
+`tags` arrives as a single comma-separated string (e.g. `?tags=career,love`),
+consistent with the PATCH body format — not FastAPI's native repeated-param
+list syntax (`?tags=a&tags=b`). The router parses it with the same
+`parse_comma_separated_tags` helper before constructing the query:
+`tags=parse_comma_separated_tags(tags) if tags else None`.
+
+`ListUserReadingsQuery` (`src/readings/queries/list_user_readings.py:11-14`)
+still holds `tags` internally as `list[str] | None` — only the wire format
+changes, not the internal query/repository contract.
 
 ## Ranked tag matching
 
