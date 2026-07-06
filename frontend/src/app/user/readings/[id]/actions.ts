@@ -29,6 +29,8 @@ export const getReading = async (
     return { ok: false, error: "You do not have permission to view this reading." };
   }
 
+  console.log("[TAGS] GET tags", { id, tags: result.data.tags });
+
   return { ok: true, data: result.data };
 };
 
@@ -43,13 +45,18 @@ export const updateReadingTags = async (
   if (!parsed.success)
     return { ok: false, error: parsed.error.issues[0].message };
 
+  const body = { tags: tags.join(", ") };
+  console.log("[TAGS] PATCH payload", { readingId, body });
+
   const result = await authenticatedFetch<ReadingDetail>(
     `/api/v1/readings/${readingId}/tags`,
-    { method: "PATCH", body: JSON.stringify({ tags: tags.join(", ") }) }
+    { method: "PATCH", body: JSON.stringify(body) }
   );
 
   if (!result.ok)
     return { ok: false, error: result.message ?? "Failed to update tags." };
+
+  console.log("[TAGS] PATCH response tags", result.data.tags);
 
   return { ok: true, data: result.data };
 };
