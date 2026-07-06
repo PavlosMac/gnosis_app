@@ -2,7 +2,8 @@
 
 import { authenticatedFetch } from "@/lib/api-client";
 import { getCurrentUser } from "@/lib/session";
-import type { ReadingDetail } from "@/types/reading";
+import type { ReadingDetail, UpdateTagsResult } from "@/types/reading";
+import { updateTagsSchema } from "@/lib/validation/reading-schemas";
 
 export const getReading = async (
   id: string
@@ -27,6 +28,28 @@ export const getReading = async (
   if (result.data.user_id !== user.id) {
     return { ok: false, error: "You do not have permission to view this reading." };
   }
+
+  return { ok: true, data: result.data };
+};
+
+export const updateReadingTags = async (
+  readingId: string,
+  tags: string[]
+): Promise<UpdateTagsResult> => {
+  const user = await getCurrentUser();
+  if (!user) return { ok: false, error: "You must be logged in." };
+
+  const parsed = updateTagsSchema.safeParse({ tags });
+  if (!parsed.success)
+    return { ok: false, error: parsed.error.issues[0].message };
+
+  const result = await authenticatedFetch<ReadingDetail>(
+    `/api/v1/readings/${readingId}/tags`,
+    { method: "PATCH", body: JSON.stringify({ tags: tags.join(", ") }) }
+  );
+
+  if (!result.ok)
+    return { ok: false, error: result.message ?? "Failed to update tags." };
 
   return { ok: true, data: result.data };
 };
