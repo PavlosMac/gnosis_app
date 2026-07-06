@@ -7,7 +7,7 @@ import { findCardByNameSafe } from "@/services/cardLookup";
 import type { TarotCardData } from "@/types/models";
 import ReadingTags from "@/components/ReadingTags";
 
-const formatDate = (iso: string) => {
+const formatDateTime = (iso: string) => {
   const d = new Date(iso);
   return d.toLocaleDateString("en-GB", {
     day: "numeric",
@@ -15,6 +15,15 @@ const formatDate = (iso: string) => {
     year: "numeric",
     hour: "2-digit",
     minute: "2-digit",
+  });
+};
+
+const formatDate = (iso: string) => {
+  const d = new Date(iso);
+  return d.toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
   });
 };
 
@@ -83,11 +92,17 @@ const ReadingDetailPage = async ({
             <div className="w-12 h-px bg-gradient-to-l from-transparent to-[#d4af37]/40" />
           </div>
           <time
-            dateTime={reading.created_at}
+            dateTime={
+              reading.spread_type === "Significators" && reading.birth_date
+                ? reading.birth_date
+                : reading.created_at
+            }
             className="text-[#e6d5b8]/40 text-sm mt-3 block"
             style={{ fontFamily: "'Crimson Pro', serif" }}
           >
-            {formatDate(reading.created_at)}
+            {reading.spread_type === "Significators" && reading.birth_date
+              ? formatDate(reading.birth_date)
+              : formatDateTime(reading.created_at)}
           </time>
         </div>
 
