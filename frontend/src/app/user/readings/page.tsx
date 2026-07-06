@@ -178,8 +178,8 @@ const ReadingsPage = async ({
                       {reading.tags.map((tag) => (
                         <span
                           key={tag}
-                          className="px-3 py-1 rounded-full border border-[#d4af37]/30 bg-[#1a0033]/60
-                                     text-[#e6d5b8]/80 text-xs tracking-wide"
+                          className="px-4 py-1.5 rounded-full border border-[#d4af37]/30 bg-[#1a0033]/60
+                                     text-[#e6d5b8]/80 text-sm tracking-wide"
                           style={{ fontFamily: "'Crimson Pro', serif" }}
                         >
                           {tag}
