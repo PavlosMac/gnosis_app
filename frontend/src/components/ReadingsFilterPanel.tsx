@@ -69,7 +69,7 @@ const ReadingsFilterPanel = ({
                   type="button"
                   aria-pressed={spreadType === reading.name}
                   onClick={() => togglePill(reading.name)}
-                  className={`px-4 py-2 rounded-full border text-xs tracking-wide transition-all duration-300
+                  className={`px-4 py-2 rounded-full border text-xs sm:text-sm tracking-wide transition-all duration-300
                     ${spreadType === reading.name
                       ? 'bg-gradient-to-br from-[#d4af37] to-[#b8942f] text-[#1a0033] border-[#d4af37] font-bold'
                       : 'border-[#d4af37]/30 text-[#e6d5b8]/60 hover:border-[#d4af37]/60 hover:text-[#e6d5b8]/90'}`}

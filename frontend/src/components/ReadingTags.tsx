@@ -119,7 +119,7 @@ const ReadingTags = ({ readingId, initialTags }: ReadingTagsProps) => {
             key={tag}
             type="button"
             onClick={startEditing}
-            className="px-4 py-1.5 rounded-full border border-[#d4af37]/30 bg-[#1a0033]/60 text-[#e6d5b8]/80 text-sm tracking-wide
+            className="px-3 sm:px-4 py-1 sm:py-1.5 rounded-full border border-[#d4af37]/30 bg-[#1a0033]/60 text-[#e6d5b8]/80 text-xs sm:text-sm tracking-wide
                        hover:border-[#d4af37]/60 hover:text-[#e6d5b8] transition-colors"
             style={{ fontFamily: "'Crimson Pro', serif" }}
           >
@@ -131,7 +131,7 @@ const ReadingTags = ({ readingId, initialTags }: ReadingTagsProps) => {
         draft.map((tag) => (
           <span
             key={tag}
-            className="flex items-center gap-1.5 pl-4 pr-2 py-1.5 rounded-full border border-[#d4af37]/30 bg-[#1a0033]/60 text-[#e6d5b8]/80 text-sm tracking-wide"
+            className="flex items-center gap-1.5 pl-3 sm:pl-4 pr-1.5 sm:pr-2 py-1 sm:py-1.5 rounded-full border border-[#d4af37]/30 bg-[#1a0033]/60 text-[#e6d5b8]/80 text-xs sm:text-sm tracking-wide"
             style={{ fontFamily: "'Crimson Pro', serif" }}
           >
             {tag}
@@ -155,7 +155,7 @@ const ReadingTags = ({ readingId, initialTags }: ReadingTagsProps) => {
           onKeyDown={handleKeyDown}
           onPaste={handlePaste}
           placeholder={atMax ? "Max 5 tags" : "Add a tag…"}
-          className="px-4 py-1.5 rounded-full border border-[#d4af37]/30 bg-[#1a0033]/40 text-[#e6d5b8] text-sm
+          className="px-3 sm:px-4 py-1 sm:py-1.5 rounded-full border border-[#d4af37]/30 bg-[#1a0033]/40 text-[#e6d5b8] text-xs sm:text-sm
                      placeholder-[#e6d5b8]/30 focus:outline-none focus:border-[#d4af37]/60 disabled:opacity-50"
           style={{ fontFamily: "'Crimson Pro', serif" }}
         />
