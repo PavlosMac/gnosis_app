@@ -133,7 +133,7 @@ const ReadingsFilterPanel = ({
                          border border-[#d4af37]/50 shadow-lg text-sm"
               style={{ fontFamily: "'Cinzel', serif", letterSpacing: "0.1em" }}
             >
-              Apply
+              &#10022; Apply
             </button>
             <button
               type="button"
@@ -141,7 +141,7 @@ const ReadingsFilterPanel = ({
               className="px-8 py-3 border border-[#d4af37]/40 text-[#d4af37] hover:bg-[#d4af37]/10 rounded-lg transition-all text-sm"
               style={{ fontFamily: "'Cinzel', serif" }}
             >
-              Clear
+              &#10006; Clear
             </button>
           </div>
         </div>
