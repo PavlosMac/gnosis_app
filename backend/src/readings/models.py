@@ -16,6 +16,7 @@ class Reading:
         model: str,
         question: str | None = None,
         birth_date: date | None = None,
+        tags: list[str] | None = None,
         id: str | None = None,
         created_at: datetime | None = None,
     ) -> None:
@@ -24,6 +25,7 @@ class Reading:
         self.spread_type = spread_type
         self.question = question
         self.birth_date = birth_date
+        self.tags = tags
         self.cards = cards
         self.card_interpretations = card_interpretations
         self.synthesis = synthesis
@@ -48,6 +50,8 @@ class Reading:
             doc["question"] = self.question
         if self.birth_date is not None:
             doc["birth_date"] = self.birth_date.isoformat()
+        if self.tags is not None:
+            doc["tags"] = self.tags
         return doc
 
     @classmethod
@@ -58,6 +62,7 @@ class Reading:
             spread_type=doc["spread_type"],
             question=doc.get("question"),
             birth_date=date.fromisoformat(doc["birth_date"]) if doc.get("birth_date") else None,
+            tags=doc.get("tags", []),
             cards=doc["cards"],
             card_interpretations=doc["card_interpretations"],
             synthesis=doc["synthesis"],

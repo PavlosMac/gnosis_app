@@ -4,7 +4,12 @@ from bson import ObjectId
 from src.llm.mock_adapter import MockLLMAdapter
 from src.llm.schemas import CardInSpread
 from src.readings.commands.create_reading import CreateReadingCommand, CreateReadingHandler
+from src.readings.commands.update_reading_tags import (
+    UpdateReadingTagsCommand,
+    UpdateReadingTagsHandler,
+)
 from src.readings.repository import ReadingReadRepository, ReadingWriteRepository
+from src.readings.service import ReadingNotFoundError
 
 
 @pytest.fixture
@@ -66,3 +71,47 @@ async def test_create_reading_without_question(handler):
     result = await handler.handle(command)
     assert result.question is None
     assert result.cards[0].orientation == "reversed"
+
+
+@pytest.fixture
+def update_tags_handler(mock_db):
+    return UpdateReadingTagsHandler(
+        read_repo=ReadingReadRepository(mock_db),
+        write_repo=ReadingWriteRepository(mock_db),
+    )
+
+
+async def test_update_reading_tags_normalizes_and_saves(handler, valid_command, update_tags_handler):
+    created = await handler.handle(valid_command)
+    result = await update_tags_handler.handle(
+        UpdateReadingTagsCommand(
+            reading_id=created.id,
+            user_id=valid_command.user_id,
+            tags=["career", "big decision"],
+        )
+    )
+    assert result.tags == ["career", "big decision"]
+    assert result.id == created.id
+
+
+async def test_update_reading_tags_not_found(update_tags_handler):
+    with pytest.raises(ReadingNotFoundError):
+        await update_tags_handler.handle(
+            UpdateReadingTagsCommand(
+                reading_id=str(ObjectId()),
+                user_id=str(ObjectId()),
+                tags=["career"],
+            )
+        )
+
+
+async def test_update_reading_tags_wrong_user(handler, valid_command, update_tags_handler):
+    created = await handler.handle(valid_command)
+    with pytest.raises(ReadingNotFoundError):
+        await update_tags_handler.handle(
+            UpdateReadingTagsCommand(
+                reading_id=created.id,
+                user_id=str(ObjectId()),
+                tags=["career"],
+            )
+        )
