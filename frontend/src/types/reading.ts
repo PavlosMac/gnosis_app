@@ -31,6 +31,7 @@ export interface ReadingListItem {
   cards: SavedCard[];
   created_at: string;
   birth_date?: string;
+  tags: string[];
 }
 
 export interface ReadingDetail extends ReadingListItem {
@@ -39,6 +40,10 @@ export interface ReadingDetail extends ReadingListItem {
   model: string;
   tokens_used: number;
 }
+
+export type UpdateTagsResult =
+  | { ok: true; data: ReadingDetail }
+  | { ok: false; error: string };
 
 export interface PaginatedReadings {
   items: ReadingListItem[];
