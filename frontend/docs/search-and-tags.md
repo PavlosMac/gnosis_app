@@ -209,7 +209,7 @@ content */}` comment (line 94). Props: `readingId: string`, `initialTags: string
   - Once the working array reaches 5 tags, the add-input is disabled with an inline
     "Max 5 tags" hint (removing a chip re-enables it).
   - A new tag longer than 15 characters is rejected at commit time (Enter/`,`/paste)
-    with an inline "15 characters max" hint — the input keeps whatever was typed so the
+    with an inline "tags should be comma separated" hint — the input keeps whatever was typed so the
     user can trim it, rather than silently truncating.
   - Removing every chip down to zero and saving is allowed — this is how a reading's
     tags get cleared entirely (`PATCH` body `{"tags": ""}`, which the backend validator
