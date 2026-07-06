@@ -120,3 +120,73 @@ async def test_list_readings_pagination(client, auth_token):
     assert len(data["items"]) == 2
     assert data["total"] == 3
     assert data["page"] == 1
+
+
+async def test_update_reading_tags(client, auth_token):
+    create_resp = await client.post(
+        "/api/v1/readings",
+        json=VALID_READING_BODY,
+        headers={"Authorization": f"Bearer {auth_token}"},
+    )
+    reading_id = create_resp.json()["_id"]
+    resp = await client.patch(
+        f"/api/v1/readings/{reading_id}/tags",
+        json={"tags": "Career, big decision"},
+        headers={"Authorization": f"Bearer {auth_token}"},
+    )
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["tags"] == ["career", "big decision"]
+    assert data["_id"] == reading_id
+
+
+async def test_update_reading_tags_too_many(client, auth_token):
+    create_resp = await client.post(
+        "/api/v1/readings",
+        json=VALID_READING_BODY,
+        headers={"Authorization": f"Bearer {auth_token}"},
+    )
+    reading_id = create_resp.json()["_id"]
+    resp = await client.patch(
+        f"/api/v1/readings/{reading_id}/tags",
+        json={"tags": "a,b,c,d,e,f"},
+        headers={"Authorization": f"Bearer {auth_token}"},
+    )
+    assert resp.status_code == 422
+
+
+async def test_update_reading_tags_too_long(client, auth_token):
+    create_resp = await client.post(
+        "/api/v1/readings",
+        json=VALID_READING_BODY,
+        headers={"Authorization": f"Bearer {auth_token}"},
+    )
+    reading_id = create_resp.json()["_id"]
+    resp = await client.patch(
+        f"/api/v1/readings/{reading_id}/tags",
+        json={"tags": "a-tag-that-is-definitely-too-long"},
+        headers={"Authorization": f"Bearer {auth_token}"},
+    )
+    assert resp.status_code == 422
+
+
+async def test_update_reading_tags_wrong_user(client, auth_token):
+    create_resp = await client.post(
+        "/api/v1/readings",
+        json=VALID_READING_BODY,
+        headers={"Authorization": f"Bearer {auth_token}"},
+    )
+    reading_id = create_resp.json()["_id"]
+
+    reg = await client.post(
+        "/api/v1/auth/register",
+        json={"email": "other2@example.com", "password": "securepassword123"},
+    )
+    other_token = reg.json()["access_token"]
+
+    resp = await client.patch(
+        f"/api/v1/readings/{reading_id}/tags",
+        json={"tags": "career"},
+        headers={"Authorization": f"Bearer {other_token}"},
+    )
+    assert resp.status_code == 404

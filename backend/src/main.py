@@ -26,6 +26,10 @@ from src.llm.openai_adapter import OpenAIAdapter
 from src.llm.port import LLMPort
 from src.llm.router import router as llm_router
 from src.readings.commands.create_reading import CreateReadingCommand, CreateReadingHandler
+from src.readings.commands.update_reading_tags import (
+    UpdateReadingTagsCommand,
+    UpdateReadingTagsHandler,
+)
 from src.readings.queries.get_reading_by_id import GetReadingByIdHandler, GetReadingByIdQuery
 from src.readings.queries.list_user_readings import ListUserReadingsHandler, ListUserReadingsQuery
 from src.readings.repository import ReadingReadRepository, ReadingWriteRepository
@@ -55,6 +59,10 @@ def _wire_mediator(mediator: Mediator, llm: LLMPort) -> None:
     reading_read_repo = ReadingReadRepository(db)
 
     mediator.register_command(CreateReadingCommand, CreateReadingHandler(reading_write_repo, llm))
+    mediator.register_command(
+        UpdateReadingTagsCommand,
+        UpdateReadingTagsHandler(reading_read_repo, reading_write_repo),
+    )
     mediator.register_query(GetReadingByIdQuery, GetReadingByIdHandler(reading_read_repo))
     mediator.register_query(ListUserReadingsQuery, ListUserReadingsHandler(reading_read_repo))
 

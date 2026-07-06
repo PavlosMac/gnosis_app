@@ -31,6 +31,10 @@ async def app(mock_db):
     from src.llm.mock_adapter import MockLLMAdapter
     from src.main import app
     from src.readings.commands.create_reading import CreateReadingCommand, CreateReadingHandler
+    from src.readings.commands.update_reading_tags import (
+        UpdateReadingTagsCommand,
+        UpdateReadingTagsHandler,
+    )
     from src.readings.queries.get_reading_by_id import (
         GetReadingByIdHandler,
         GetReadingByIdQuery,
@@ -59,6 +63,10 @@ async def app(mock_db):
 
     mediator.register_command(
         CreateReadingCommand, CreateReadingHandler(reading_write_repo, mock_llm)
+    )
+    mediator.register_command(
+        UpdateReadingTagsCommand,
+        UpdateReadingTagsHandler(reading_read_repo, reading_write_repo),
     )
     mediator.register_query(GetReadingByIdQuery, GetReadingByIdHandler(reading_read_repo))
     mediator.register_query(ListUserReadingsQuery, ListUserReadingsHandler(reading_read_repo))

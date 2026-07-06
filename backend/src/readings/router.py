@@ -3,9 +3,15 @@ from fastapi import APIRouter, Query
 from src.core.dependencies import CurrentUserId, MediatorDep
 from src.core.pagination import PaginatedResponse
 from src.readings.commands.create_reading import CreateReadingCommand
+from src.readings.commands.update_reading_tags import UpdateReadingTagsCommand
 from src.readings.queries.get_reading_by_id import GetReadingByIdQuery
 from src.readings.queries.list_user_readings import ListUserReadingsQuery
-from src.readings.schemas import CreateReadingRequest, ReadingListItem, ReadingReadModel
+from src.readings.schemas import (
+    CreateReadingRequest,
+    ReadingListItem,
+    ReadingReadModel,
+    UpdateReadingTagsRequest,
+)
 
 router = APIRouter(prefix="/readings", tags=["readings"])
 
@@ -45,3 +51,18 @@ async def get_reading(
     mediator: MediatorDep,
 ) -> ReadingReadModel:
     return await mediator.query(GetReadingByIdQuery(reading_id=reading_id, user_id=user_id))
+
+
+@router.patch("/{reading_id}/tags", response_model=ReadingReadModel)
+async def update_reading_tags(
+    reading_id: str,
+    body: UpdateReadingTagsRequest,
+    user_id: CurrentUserId,
+    mediator: MediatorDep,
+) -> ReadingReadModel:
+    command = UpdateReadingTagsCommand(
+        reading_id=reading_id,
+        user_id=user_id,
+        tags=body.normalized_tags,
+    )
+    return await mediator.send(command)
