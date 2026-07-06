@@ -21,15 +21,39 @@ const truncate = (text: string | null, max: number) => {
 const ReadingsPage = async ({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string }>;
+  searchParams: Promise<{
+    page?: string;
+    spread_type?: string;
+    tags?: string;
+    birth_date?: string;
+  }>;
 }) => {
-  const { page: pageParam } = await searchParams;
+  const {
+    page: pageParam,
+    spread_type: spreadType,
+    tags,
+    birth_date: birthDate,
+  } = await searchParams;
   const currentPage = Math.max(1, parseInt(pageParam ?? "1", 10) || 1);
-  const result = await getReadings(currentPage, PAGE_SIZE);
+  const result = await getReadings(currentPage, PAGE_SIZE, {
+    spreadType,
+    tags,
+    birthDate,
+  });
 
   const totalPages = result.ok
     ? Math.max(1, Math.ceil(result.data.total / PAGE_SIZE))
     : 1;
+
+  const filterParams = new URLSearchParams();
+  if (spreadType) filterParams.set("spread_type", spreadType);
+  if (tags) filterParams.set("tags", tags);
+  if (birthDate) filterParams.set("birth_date", birthDate);
+  const pageHref = (targetPage: number) => {
+    const params = new URLSearchParams(filterParams);
+    params.set("page", String(targetPage));
+    return `/user/readings?${params.toString()}`;
+  };
 
   return (
     <TarotPageLayout backButtonHref="/user/profile" backButtonLabel="Profile">
@@ -58,6 +82,7 @@ const ReadingsPage = async ({
             >
               {result.data.total} reading{result.data.total !== 1 ? "s" : ""} in
               the archive
+              {tags && " (sorted by relevance)"}
             </p>
           )}
         </div>
@@ -140,6 +165,22 @@ const ReadingsPage = async ({
                     </p>
                   )}
 
+                  {/* Tags */}
+                  {reading.tags.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 mb-3">
+                      {reading.tags.map((tag) => (
+                        <span
+                          key={tag}
+                          className="px-3 py-1 rounded-full border border-[#d4af37]/30 bg-[#1a0033]/60
+                                     text-[#e6d5b8]/80 text-xs tracking-wide"
+                          style={{ fontFamily: "'Crimson Pro', serif" }}
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+
                   {/* Card count + View Reading footer */}
                   <div className="flex items-center justify-between mt-3">
                     <span
@@ -164,7 +205,7 @@ const ReadingsPage = async ({
               <div className="flex items-center justify-center gap-4 mt-8">
                 {currentPage > 1 ? (
                   <Link
-                    href={`/user/readings?page=${currentPage - 1}`}
+                    href={pageHref(currentPage - 1)}
                     className="px-4 py-2 rounded-lg border border-[#d4af37]/30 text-[#d4af37] text-sm tracking-[0.1em] hover:bg-[#d4af37]/10 transition-colors"
                     style={{ fontFamily: "'Cinzel', serif" }}
                   >
@@ -188,7 +229,7 @@ const ReadingsPage = async ({
 
                 {currentPage < totalPages ? (
                   <Link
-                    href={`/user/readings?page=${currentPage + 1}`}
+                    href={pageHref(currentPage + 1)}
                     className="px-4 py-2 rounded-lg border border-[#d4af37]/30 text-[#d4af37] text-sm tracking-[0.1em] hover:bg-[#d4af37]/10 transition-colors"
                     style={{ fontFamily: "'Cinzel', serif" }}
                   >
