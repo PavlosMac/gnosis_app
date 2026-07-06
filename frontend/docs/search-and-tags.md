@@ -38,14 +38,17 @@ This spans two repos:
 
 - No tag autocomplete or a "manage my tags" screen — tags are freeform text, typed fresh
   each time (though the input is pre-filled with a reading's current tags for editing).
-- No incremental add/remove of a single tag — editing always replaces the whole list via
-  one comma-separated string.
+- No per-tag network call (no dedicated add/remove-single-tag endpoint) — the UI lets
+  you add/remove chips freely while editing, but Save commits the whole edited list as
+  one `PATCH` (full replace), not one call per change.
 - No "distinct spread types this user has used" query — the filter checkboxes list every
   spread type from `readings-config.json`, whether or not the user has used it.
 - No client-side instant filtering — the filter panel is server-side (URL query params),
   matching the existing pagination pattern.
 - No birth-date range filter — exact date match only, consistent with `birth_date` being
   a single specific date per significator reading, not a range someone filters by.
+- No multi-tag filtering (AND/OR across several tags at once) — the Tags filter field is
+  one substring search.
 
 ---
 
@@ -68,7 +71,7 @@ there:
   JSON array over the wire). A `field_validator` normalizes it: split on `,`, strip each
   piece, drop empties, lowercase, dedupe preserving order, and enforce two named
   constants defined alongside the schema: `MAX_TAGS_PER_READING = 5` and
-  `MAX_TAG_LENGTH = 30` (raise `ValueError` if either is exceeded — FastAPI turns this
+  `MAX_TAG_LENGTH = 15` (raise `ValueError` if either is exceeded — FastAPI turns this
   into a 422 with the message, same as any other Pydantic validation error). New
   `UpdateReadingTagsResponse(AppSchema) { id: PyObjectId; tags: list[str] }` for the
   endpoint response. `ReadingReadModel`/`ReadingListItem` (schemas.py:30-51) each gain
@@ -144,21 +147,37 @@ New client component `src/components/ReadingTags.tsx`, rendered in
 panel — right after the header `<div>` closes (line 91) and before the `{/* Interpretation
 content */}` comment (line 94). Props: `readingId: string`, `initialTags: string[]`.
 
-- **View mode**: tags rendered as small pill chips (see Visual design below), plus a
-  round `+` button.
-- **Edit mode** (toggled by the `+` button, or ✕ to cancel): the chip row is replaced by
-  one text input, pre-filled as `tags.join(", ")`, plus round ✓ (save) / ✕ (cancel)
-  buttons in place of `+`.
-- Lightweight client-side check before submitting (immediate feedback, no round trip):
-  split the input on `,`, trim, drop empties — if more than 5 remain, show an inline
-  error and don't submit. Mirrors the existing pattern of pre-validating with zod before
-  hitting the network (e.g. `loginSchema` in `src/lib/validation/auth-schemas.ts`); add a
-  small `src/lib/validation/reading-schemas.ts` with an `updateTagsSchema` doing the same
-  check via `.refine()`.
-- **Server action** `updateReadingTags(readingId, tagsInput)` in
-  `src/app/user/readings/[id]/actions.ts` (new export in the existing file): validates,
-  then `PATCH`es `/api/v1/readings/${readingId}/tags` via `authenticatedFetch` with body
-  `{"tags": tagsInput.trim()}`. Returns `UpdateTagsResult`.
+- **View mode**: tags rendered as small pill chips (see Visual design below, plain, no
+  remove control), plus a round `+` button.
+- **Edit mode** (toggled by the `+` button; ✕ discards changes and reverts to view mode):
+  local component state holds a working copy of the tag array (starting from
+  `initialTags`). Each existing tag renders as a chip with a small `×` that removes it
+  from the working array immediately (local state only, not yet saved). A small text
+  input alongside the chips lets the user type a new tag; pressing Enter or `,` commits
+  the current text as a new chip and clears the input (pasting text containing commas
+  splits into multiple chips at once). A round ✓ button replaces `+` and persists the
+  current working array on click.
+  - Once the working array reaches 5 tags, the add-input is disabled with an inline
+    "Max 5 tags" hint (removing a chip re-enables it).
+  - A new tag longer than 15 characters is rejected at commit time (Enter/`,`/paste)
+    with an inline "15 characters max" hint — the input keeps whatever was typed so the
+    user can trim it, rather than silently truncating.
+  - Removing every chip down to zero and saving is allowed — this is how a reading's
+    tags get cleared entirely (`PATCH` body `{"tags": ""}`, which the backend validator
+    normalizes to `[]`).
+- Both checks above (≤5 tags, ≤15 chars) are enforced twice: instantly client-side as
+  described (no round trip), and again by the backend validator on Save as the
+  authoritative check (in case client and server constants ever drift, or client JS is
+  bypassed) — mirrors the existing pattern of pre-validating with zod before hitting the
+  network (e.g. `loginSchema` in `src/lib/validation/auth-schemas.ts`). Add a small
+  `src/lib/validation/reading-schemas.ts` with `MAX_TAGS_PER_READING = 5` and
+  `MAX_TAG_LENGTH = 15` constants (mirroring the backend's) and an `updateTagsSchema`
+  used at Save time as a final safety net over the working array.
+- **Server action** `updateReadingTags(readingId, tags)` in
+  `src/app/user/readings/[id]/actions.ts` (new export in the existing file; `tags:
+  string[]` — the component's working array, not a raw string): validates via
+  `updateTagsSchema`, then `PATCH`es `/api/v1/readings/${readingId}/tags` via
+  `authenticatedFetch` with body `{"tags": tags.join(", ")}`. Returns `UpdateTagsResult`.
 - On success: update the component's own local `tags` state directly from the response
   (`data.tags`), and separately call `router.refresh()` in the background to keep the
   server-rendered page in sync. Using the response data for the immediate UI update —
@@ -186,11 +205,19 @@ content */}` comment (line 94). Props: `readingId: string`, `initialTags: string
     (`TarotGame.tsx:311-318`): "◆ Filter Readings ◆".
   - Spread types: toggle pills (see Visual design), not native checkboxes.
   - Tag: single text input, styled like `AuthField`.
-  - Birth date: reuses the existing DD/MM/YYYY three-input pattern from
-    `TarotGame.tsx:338-366`, not a native date picker.
+  - Birth date: a native `<input type="date">`, not the DD/MM/YYYY three-input pattern
+    used elsewhere (`TarotGame.tsx:338-366`). A native date input can't produce a
+    partial value — its `.value` is either a complete valid date or empty — which
+    sidesteps the "what if only Day is filled in" question entirely; a half-picked date
+    just reads as no filter. Trade-off: its calendar popup is browser-chrome and can't
+    be fully reskinned to the mystical theme (only the text/background/icon can be
+    styled via CSS, e.g. `color-scheme: dark` and an inverted calendar icon) — accepted
+    as reasonable for a secondary filter control, unlike the main reading-creation
+    birthdate flow which stays as the existing themed DD/MM/YYYY inputs.
   - **Apply**: builds a `URLSearchParams` from local state (omitting `page`, so it
     resets to 1) and navigates via `router.push('/user/readings?' + params)`.
-  - **Clear**: navigates to plain `/user/readings`.
+  - **Clear**: collapses the panel (`setExpanded(false)`) and navigates to plain
+    `/user/readings`.
 - List item cards (`page.tsx:95-159`) show `reading.tags` as small read-only pills
   (same chip style as the detail page's view mode), placed after the birth-date line
   (after line 141), only rendered when `tags.length > 0`.
@@ -200,7 +227,7 @@ content */}` comment (line 94). Props: `readingId: string`, `initialTags: string
 
 ### 4. Visual design (mystical theme)
 
-Chips (both the detail-page tag editor and the list page's read-only display):
+Chips — view mode / list page (read-only, no remove control):
 
 ```jsx
 <span
@@ -209,6 +236,26 @@ Chips (both the detail-page tag editor and the list page's read-only display):
   style={{ fontFamily: "'Crimson Pro', serif" }}
 >
   {tag}
+</span>
+```
+
+Chips — edit mode (adds a small `×` that removes the chip from the working array):
+
+```jsx
+<span
+  className="flex items-center gap-1.5 pl-3 pr-1.5 py-1 rounded-full border border-[#d4af37]/30
+             bg-[#1a0033]/60 text-[#e6d5b8]/80 text-xs tracking-wide"
+  style={{ fontFamily: "'Crimson Pro', serif" }}
+>
+  {tag}
+  <button
+    onClick={() => removeTag(tag)}
+    aria-label={`Remove ${tag}`}
+    className="w-4 h-4 rounded-full text-[#d4af37]/60 hover:text-[#d4af37]
+               hover:bg-[#d4af37]/10 flex items-center justify-center leading-none"
+  >
+    ×
+  </button>
 </span>
 ```
 
@@ -250,14 +297,17 @@ Clear reuses the ghost/ text-button style of "Try Again" in
 
 ## Data flow (end-to-end)
 
-**Adding tags:** user clicks `+` on the detail page → edit mode shows an input →
-user types `career, big decision` → clicks ✓ → client-side check (≤5) → `updateReadingTags`
-server action → `PATCH /api/v1/readings/{id}/tags` with `{"tags": "career, big decision"}`
-→ backend validator normalizes to `["career", "big decision"]`, ownership check via
-`GetReadingByIdHandler`-style lookup, `$set` via `BaseWriteRepository.update` →
-`UpdateReadingTagsResponse { id, tags: ["career", "big decision"] }` → component updates its own state from
-the response (chips re-render immediately) → `router.refresh()` fires in the background
-to keep the server-rendered page data consistent.
+**Adding tags:** user clicks `+` on the detail page → edit mode shows existing tags as
+removable chips plus an add-input → user types `career`, presses Enter (new chip
+appears), removes an old chip via its `×`, types `big decision`, presses Enter → clicks
+✓ → client-side check (≤5 tags, ≤15 chars each, already enforced per-chip as they were
+added) → `updateReadingTags` server action → `PATCH /api/v1/readings/{id}/tags` with
+`{"tags": "career, big decision"}` → backend validator normalizes to `["career", "big
+decision"]`, ownership check via `GetReadingByIdHandler`-style lookup, `$set` via
+`BaseWriteRepository.update` → `UpdateReadingTagsResponse { id, tags: ["career", "big
+decision"] }` → component updates its own state from the response (chips re-render
+immediately) → `router.refresh()` fires in the background to keep the server-rendered
+page data consistent.
 
 **Filtering:** user expands "◆ Filter Readings ◆" → checks "Significators", types
 `career` in Tags, fills in a birth date → clicks Apply → `router.push('/user/readings?
@@ -302,6 +352,20 @@ paginated, filtered results render; Prev/Next links keep the same three params a
   limited to spread types the user has actually used.
 - Filtering is server-side via URL query params, matching the existing pagination
   pattern — not instant client-side filtering.
-- Spread-type filter uses toggle pills (not native checkboxes) and birth date reuses the
-  existing DD/MM/YYYY input group (not a native date picker), both to fit the app's
-  existing mystical visual language.
+- Spread-type filter uses toggle pills (not native checkboxes), to fit the app's
+  mystical visual language.
+- Tag editing is chip-based: existing tags are removable one-by-one via a small `×`
+  while editing, and new tags are added by typing + Enter/comma — still saved as one
+  full-replace `PATCH`, not a call per change.
+- Removing every tag and saving clears a reading's tags entirely (empty string →
+  `[]` backend-side).
+- Tag casing: normalized to lowercase server-side; re-opening the editor shows the
+  normalized (lowercase) form, not whatever casing was originally typed.
+- Max tag length is 15 characters (not the initially-assumed 30), enforced both
+  client-side (per tag, at add time) and backend-side (authoritative).
+- Birth-date filter uses a native `<input type="date">`, not the themed DD/MM/YYYY
+  group used for reading creation — deliberately, since a native date input can't hold
+  a partial value (it's either a complete date or empty), sidestepping the
+  incomplete-date-entry question entirely. Accepted trade-off: its calendar popup can't
+  be fully reskinned to the theme.
+- Clicking Clear on the filter panel also collapses it (not just resetting the URL).
