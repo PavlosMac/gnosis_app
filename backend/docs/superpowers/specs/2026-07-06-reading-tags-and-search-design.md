@@ -94,10 +94,17 @@ pipeline, used only when `tags` is supplied:
 
 ```
 $match:     { user_id, tags: {$in: requested_tags}, ...spread_type/birth_date if given }
-$addFields: { matched_tag_count: { $size: { $setIntersection: ["$tags", requested_tags] } } }
+$addFields: { matched_tag_count: { $size: { $filter: {
+                input: "$tags", cond: { $in: ["$$this", requested_tags] }
+              } } } }
 $sort:      { matched_tag_count: -1, created_at: -1 }
 $skip / $limit
 ```
+
+Note: `$setIntersection` was the first idea but `mongomock` (used by the test
+suite, see `tests/conftest.py`) doesn't implement it — confirmed by running
+it directly against `mongomock_motor`. `$filter` + `$in` computes the same
+overlap count and works against both real MongoDB and mongomock.
 
 `src/readings/repository.py` — add a new method on `ReadingReadRepository`,
 `find_by_user_id_ranked_by_tags(...)`, rather than overloading
