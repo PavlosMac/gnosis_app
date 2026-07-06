@@ -1,3 +1,5 @@
+from datetime import date
+
 from fastapi import APIRouter, Query
 
 from src.core.dependencies import CurrentUserId, MediatorDep
@@ -38,9 +40,17 @@ async def list_readings(
     mediator: MediatorDep,
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=20, ge=1, le=100),
+    spread_type: str | None = Query(default=None),
+    birth_date: date | None = Query(default=None),
 ) -> PaginatedResponse[ReadingListItem]:
     return await mediator.query(
-        ListUserReadingsQuery(user_id=user_id, page=page, page_size=page_size)
+        ListUserReadingsQuery(
+            user_id=user_id,
+            page=page,
+            page_size=page_size,
+            spread_type=spread_type,
+            birth_date=birth_date,
+        )
     )
 
 

@@ -1,9 +1,23 @@
+from datetime import date
 from typing import Any
 
 from bson import ObjectId
 
 from src.database.base_repository import BaseReadRepository, BaseWriteRepository
 from src.database.collections.constants import READINGS_COLLECTION
+
+
+def _build_filter(
+    user_id: str,
+    spread_type: str | None,
+    birth_date: date | None,
+) -> dict[str, Any]:
+    filter_: dict[str, Any] = {"user_id": ObjectId(user_id)}
+    if spread_type:
+        filter_["spread_type"] = spread_type
+    if birth_date:
+        filter_["birth_date"] = birth_date.isoformat()
+    return filter_
 
 
 class ReadingWriteRepository(BaseWriteRepository):
@@ -22,13 +36,20 @@ class ReadingReadRepository(BaseReadRepository):
         user_id: str,
         skip: int = 0,
         limit: int = 20,
+        spread_type: str | None = None,
+        birth_date: date | None = None,
     ) -> list[dict[str, Any]]:
         return await self.find_many(
-            {"user_id": ObjectId(user_id)},
+            _build_filter(user_id, spread_type, birth_date),
             skip=skip,
             limit=limit,
             sort=[("created_at", -1)],
         )
 
-    async def count_by_user_id(self, user_id: str) -> int:
-        return await self.count({"user_id": ObjectId(user_id)})
+    async def count_by_user_id(
+        self,
+        user_id: str,
+        spread_type: str | None = None,
+        birth_date: date | None = None,
+    ) -> int:
+        return await self.count(_build_filter(user_id, spread_type, birth_date))

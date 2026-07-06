@@ -1,3 +1,5 @@
+from datetime import date
+
 import pytest
 from bson import ObjectId
 
@@ -103,3 +105,38 @@ async def test_list_user_readings_pagination(create_handler, list_handler, user_
     page2 = await list_handler.handle(ListUserReadingsQuery(user_id=user_id, page=2, page_size=2))
     assert len(page2.items) == 1
     assert page2.total == 3
+
+
+async def test_list_user_readings_filter_by_spread_type(create_handler, list_handler, user_id):
+    await create_handler.handle(_make_command(user_id, spread="Celtic Cross"))
+    await create_handler.handle(_make_command(user_id, spread="Three Card"))
+    result = await list_handler.handle(
+        ListUserReadingsQuery(user_id=user_id, spread_type="Three Card")
+    )
+    assert len(result.items) == 1
+    assert result.items[0].spread_type == "Three Card"
+
+
+async def test_list_user_readings_filter_by_birth_date_matches(create_handler, list_handler, user_id):
+    command = CreateReadingCommand(
+        user_id=user_id,
+        spread_name="Significators",
+        birth_date=date(1990, 5, 1),
+        cards=[CardInSpread(name="The Fool", position="Present", orientation="upright")],
+    )
+    await create_handler.handle(command)
+    result = await list_handler.handle(
+        ListUserReadingsQuery(user_id=user_id, birth_date=date(1990, 5, 1))
+    )
+    assert len(result.items) == 1
+
+
+async def test_list_user_readings_filter_by_birth_date_excludes_non_matching(
+    create_handler, list_handler, user_id
+):
+    await create_handler.handle(_make_command(user_id))
+    result = await list_handler.handle(
+        ListUserReadingsQuery(user_id=user_id, birth_date=date(1990, 5, 1))
+    )
+    assert result.items == []
+    assert result.total == 0
