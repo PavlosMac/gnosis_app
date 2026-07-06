@@ -97,7 +97,7 @@ const ReadingDetailPage = async ({
                 ? reading.birth_date
                 : reading.created_at
             }
-            className="text-[#e6d5b8]/40 text-sm mt-3 block"
+            className="text-[#e6d5b8]/40 text-base sm:text-lg mt-3 block"
             style={{ fontFamily: "'Crimson Pro', serif" }}
           >
             {reading.spread_type === "Significators" && reading.birth_date
