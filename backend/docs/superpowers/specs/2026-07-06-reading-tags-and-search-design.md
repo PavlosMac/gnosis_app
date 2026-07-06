@@ -44,7 +44,7 @@ No existing endpoint mutates a reading after creation. Add:
   (`base_repository.py:21-23` already supports arbitrary `$set` updates).
 - `src/readings/router.py` — new route:
   ```python
-  @router.patch("/{reading_id}", response_model=ReadingReadModel)
+  @router.patch("/{reading_id}/tags", response_model=ReadingReadModel)
   async def update_reading_tags(
       reading_id: str,
       body: UpdateReadingTagsRequest,
@@ -53,11 +53,25 @@ No existing endpoint mutates a reading after creation. Add:
   ) -> ReadingReadModel:
       ...
   ```
-- `src/readings/schemas.py` — new `UpdateReadingTagsRequest(AppSchema)` with
-  `tags: list[str]`. Tags are lowercased on write for consistent search
-  (`tags = [t.lower() for t in body.tags]` in the handler).
+- `src/readings/schemas.py` — new `UpdateReadingTagsRequest(AppSchema)`.
+  The frontend sends tags as a single raw comma-separated string (it does
+  not parse into a JSON array), e.g. `{"tags": "career, big-decision, love"}`.
+  The schema's `tags` field is typed `list[str]`, with a
+  `@field_validator("tags", mode="before")` that:
+  - splits the input string on `,`
+  - strips whitespace from each piece
+  - drops any piece that's empty after stripping (handles a stray trailing
+    comma, e.g. `"career, love,"`)
+  - lowercases each piece
+  - dedupes, keeping first-seen order
+  - raises a `ValueError` (→ 422) if the resulting list exceeds
+    `MAX_TAGS_PER_READING = 5` (named constant in `schemas.py`) — no
+    silent truncation
 - Full replace semantics: PATCH sets the tag list to exactly what's passed,
   it does not merge with existing tags.
+- Response is the normal `ReadingReadModel`, with `tags` serialized back as
+  `list[str]` — the frontend re-renders chips from that, it does not need
+  to re-parse a string.
 
 ## Search params
 
@@ -121,9 +135,12 @@ the pattern in `002_readings_indexes.py`):
 
 - Unit (`test_commands.py`): `UpdateReadingTagsHandler` — sets tags, rejects
   update for a reading not owned by `user_id`.
+- Unit (`test_schemas.py` or inline): `UpdateReadingTagsRequest` validator —
+  splits/trims/lowercases/dedupes a comma-separated string; drops empty
+  pieces from a trailing comma; raises on more than 5 resulting tags.
 - Unit (`test_queries.py`): `ListUserReadingsHandler` — filters by
   `spread_type`, `birth_date`, `tags`; ranks multi-tag results by overlap
   count descending.
-- Integration (`test_router.py`): `PATCH /readings/{id}` sets tags and
-  returns them in the response; `GET /readings` with each query param
-  returns filtered results.
+- Integration (`test_router.py`): `PATCH /readings/{id}/tags` sets tags and
+  returns them in the response as `list[str]`; 422 when more than 5 tags
+  are sent; `GET /readings` with each query param returns filtered results.
