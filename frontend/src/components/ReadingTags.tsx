@@ -38,24 +38,29 @@ const ReadingTags = ({ readingId, initialTags }: ReadingTagsProps) => {
     setError(null);
   };
 
-  const commitTag = (raw: string) => {
-    const tag = raw.trim().toLowerCase();
-    if (!tag) return;
-    if (draft.length >= MAX_TAGS_PER_READING) return;
-    if (tag.length > MAX_TAG_LENGTH) {
-      setError("tags should be comma separated");
-      return;
+  const commitTags = (rawTags: string[]) => {
+    const next = [...draft];
+    let rejected: string | null = null;
+    for (const raw of rawTags) {
+      const tag = raw.trim().toLowerCase();
+      if (!tag) continue;
+      if (next.length >= MAX_TAGS_PER_READING) continue;
+      if (tag.length > MAX_TAG_LENGTH) {
+        rejected = "tags should be comma separated";
+        continue;
+      }
+      if (next.includes(tag)) continue;
+      next.push(tag);
     }
-    if (draft.includes(tag)) return;
-    setDraft((prev) => [...prev, tag]);
-    setError(null);
+    setDraft(next);
+    setError(rejected);
   };
 
   const handleInputChange = (value: string) => {
     if (value.includes(",")) {
       const parts = value.split(",");
       const last = parts.pop() ?? "";
-      parts.forEach(commitTag);
+      commitTags(parts);
       setInput(last);
       return;
     }
@@ -65,7 +70,7 @@ const ReadingTags = ({ readingId, initialTags }: ReadingTagsProps) => {
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
       e.preventDefault();
-      commitTag(input);
+      commitTags([input]);
       setInput("");
     }
   };
@@ -74,7 +79,7 @@ const ReadingTags = ({ readingId, initialTags }: ReadingTagsProps) => {
     const pasted = e.clipboardData.getData("text");
     if (!pasted.includes(",")) return;
     e.preventDefault();
-    pasted.split(",").forEach(commitTag);
+    commitTags(pasted.split(","));
     setInput("");
   };
 
@@ -151,10 +156,11 @@ const ReadingTags = ({ readingId, initialTags }: ReadingTagsProps) => {
           <button
             type="button"
             onClick={cancelEditing}
+            disabled={saving}
             className="w-7 h-7 rounded-full border border-[#d4af37]/50 text-[#d4af37]/70
                        hover:text-[#d4af37] hover:border-[#d4af37]
                        hover:shadow-[0_0_10px_rgba(212,175,55,0.4)]
-                       transition-all duration-300 flex items-center justify-center text-sm"
+                       transition-all duration-300 flex items-center justify-center text-sm disabled:opacity-50"
           >
             ✕
           </button>

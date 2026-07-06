@@ -91,7 +91,7 @@ const ReadingDetailPage = async ({
           </time>
         </div>
 
-        <ReadingTags readingId={reading._id} initialTags={reading.tags} />
+        <ReadingTags key={reading._id} readingId={reading._id} initialTags={reading.tags} />
 
         {/* Interpretation content */}
         <div className="rounded-2xl border border-[#d4af37]/20 bg-gradient-to-b from-[#1a0033]/80 to-[#0a0015]/80 backdrop-blur-sm p-5 sm:p-8">
