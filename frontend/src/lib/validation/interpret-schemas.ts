@@ -16,5 +16,5 @@ export const interpretRequestSchema = z.object({
     .max(500, "Question must be 500 characters or fewer.")
     .optional(),
   birth_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
-  cards: z.array(interpretCardSchema).min(1).max(22),
+  cards: z.array(interpretCardSchema).min(1).max(11),
 });
