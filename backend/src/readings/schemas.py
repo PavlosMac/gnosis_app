@@ -7,7 +7,7 @@ from src.core.types import PyObjectId
 from src.llm.schemas import CardInSpread, Orientation
 
 MAX_TAGS_PER_READING = 5
-MAX_TAG_LENGTH = 15
+MAX_TAG_LENGTH = 25
 
 
 def parse_comma_separated_tags(raw: str) -> list[str]:
@@ -26,7 +26,7 @@ class CreateReadingRequest(AppSchema):
     spread_name: str = Field(..., min_length=1, max_length=100)
     question: str | None = Field(default=None, min_length=5, max_length=500)
     birth_date: date | None = Field(default=None)
-    cards: list[CardInSpread] = Field(..., min_length=1, max_length=10)
+    cards: list[CardInSpread] = Field(..., min_length=1, max_length=11)
 
 
 class UpdateReadingTagsRequest(AppSchema):
