@@ -46,7 +46,7 @@ const ReadingTags = ({ readingId, initialTags }: ReadingTagsProps) => {
       if (!tag) continue;
       if (next.length >= MAX_TAGS_PER_READING) continue;
       if (tag.length > MAX_TAG_LENGTH) {
-        rejected = "tags should be comma separated";
+        rejected = `Tag too long (max ${MAX_TAG_LENGTH} characters)`;
         continue;
       }
       if (next.includes(tag)) continue;

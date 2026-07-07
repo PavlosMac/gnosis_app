@@ -82,7 +82,7 @@ Errors:   401 (no/invalid token) · 404 (not found, or belongs to another user)
   a single field `tags: str` (the raw comma-separated string — no JSON array over the
   wire). A `field_validator` normalizes it: split on `,`, strip each piece, drop empties,
   lowercase, dedupe preserving order, and enforce two named constants defined alongside
-  the schema: `MAX_TAGS_PER_READING = 5` and `MAX_TAG_LENGTH = 15` (raise `ValueError` if
+  the schema: `MAX_TAGS_PER_READING = 5` and `MAX_TAG_LENGTH = 25` (raise `ValueError` if
   either is exceeded — FastAPI turns this into the 422 shown above). No new response
   schema needed — the endpoint returns the existing `ReadingReadModel`.
   `ReadingReadModel`/`ReadingListItem` (schemas.py:30-51) each gain `tags: list[str] =
@@ -208,19 +208,19 @@ content */}` comment (line 94). Props: `readingId: string`, `initialTags: string
   current working array on click.
   - Once the working array reaches 5 tags, the add-input is disabled with an inline
     "Max 5 tags" hint (removing a chip re-enables it).
-  - A new tag longer than 15 characters is rejected at commit time (Enter/`,`/paste)
-    with an inline "tags should be comma separated" hint — the input keeps whatever was typed so the
+  - A new tag longer than 25 characters is rejected at commit time (Enter/`,`/paste)
+    with an inline "Tag too long (max 25 characters)" hint — the input keeps whatever was typed so the
     user can trim it, rather than silently truncating.
   - Removing every chip down to zero and saving is allowed — this is how a reading's
     tags get cleared entirely (`PATCH` body `{"tags": ""}`, which the backend validator
     normalizes to `[]`).
-- Both checks above (≤5 tags, ≤15 chars) are enforced twice: instantly client-side as
+- Both checks above (≤5 tags, ≤25 chars) are enforced twice: instantly client-side as
   described (no round trip), and again by the backend validator on Save as the
   authoritative check (in case client and server constants ever drift, or client JS is
   bypassed) — mirrors the existing pattern of pre-validating with zod before hitting the
   network (e.g. `loginSchema` in `src/lib/validation/auth-schemas.ts`). Add a small
   `src/lib/validation/reading-schemas.ts` with `MAX_TAGS_PER_READING = 5` and
-  `MAX_TAG_LENGTH = 15` constants (mirroring the backend's) and an `updateTagsSchema`
+  `MAX_TAG_LENGTH = 25` constants (mirroring the backend's) and an `updateTagsSchema`
   used at Save time as a final safety net over the working array.
 - **Server action** `updateReadingTags(readingId, tags)` in
   `src/app/user/readings/[id]/actions.ts` (new export in the existing file; `tags:
@@ -240,7 +240,7 @@ content */}` comment (line 94). Props: `readingId: string`, `initialTags: string
   422 → "The request contained invalid data.") rather than surfacing the backend's
   detailed Pydantic error body — this is existing, unchanged behavior, not something
   this feature works around. In practice a 422 here should be rare, since the client
-  already enforces ≤5 tags / ≤15 chars per tag before ever calling the server action;
+  already enforces ≤5 tags / ≤25 chars per tag before ever calling the server action;
   the generic message is an acceptable fallback for the residual case (e.g. client/server
   constants drift, or JS is bypassed).
 
@@ -364,7 +364,7 @@ Clear reuses the ghost/ text-button style of "Try Again" in
 **Adding tags:** user clicks `+` on the detail page → edit mode shows existing tags as
 removable chips plus an add-input → user types `career`, presses Enter (new chip
 appears), removes an old chip via its `×`, types `big decision`, presses Enter → clicks
-✓ → client-side check (≤5 tags, ≤15 chars each, already enforced per-chip as they were
+✓ → client-side check (≤5 tags, ≤25 chars each, already enforced per-chip as they were
 added) → `updateReadingTags` server action → `PATCH /api/v1/readings/{id}/tags` with
 `{"tags": "career, big decision"}` → backend validator normalizes to `["career", "big
 decision"]`, ownership check via `GetReadingByIdHandler`-style lookup, `$set` via
@@ -432,7 +432,12 @@ attached.
 - Tag casing: normalized to lowercase server-side; re-opening the editor shows the
   normalized (lowercase) form, not whatever casing was originally typed.
 - Max tag length is 15 characters (not the initially-assumed 30), enforced both
-  client-side (per tag, at add time) and backend-side (authoritative).
+  client-side (per tag, at add time) and backend-side (authoritative). **Update
+  (2026-07-07):** raised to 25 characters so two-word tags (e.g. names) fit
+  comfortably; the too-long error also had a copy-paste bug where it showed "tags
+  should be comma separated" instead of describing the length limit — fixed to
+  "Tag too long (max 25 characters)" in `ReadingTags.tsx`, `reading-schemas.ts`, and
+  the backend's `UpdateReadingTagsRequest` validator.
 - Birth-date filter uses a native `<input type="date">`, not the themed DD/MM/YYYY
   group used for reading creation — deliberately, since a native date input can't hold
   a partial value (it's either a complete date or empty), sidestepping the
