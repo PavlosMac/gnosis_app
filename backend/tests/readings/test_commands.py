@@ -36,6 +36,14 @@ def valid_command():
     )
 
 
+@pytest.fixture
+def update_tags_handler(mock_db):
+    return UpdateReadingTagsHandler(
+        write_repo=ReadingWriteRepository(mock_db),
+        read_repo=ReadingReadRepository(mock_db),
+    )
+
+
 async def test_create_reading_returns_read_model(handler, valid_command):
     result = await handler.handle(valid_command)
     assert result.id is not None
@@ -73,34 +81,48 @@ async def test_create_reading_without_question(handler):
     assert result.cards[0].orientation == "reversed"
 
 
-@pytest.fixture
-def update_tags_handler(mock_db):
-    return UpdateReadingTagsHandler(
-        read_repo=ReadingReadRepository(mock_db),
-        write_repo=ReadingWriteRepository(mock_db),
-    )
-
-
-async def test_update_reading_tags_normalizes_and_saves(handler, valid_command, update_tags_handler):
+async def test_update_reading_tags_sets_tags(handler, valid_command, update_tags_handler):
     created = await handler.handle(valid_command)
     result = await update_tags_handler.handle(
         UpdateReadingTagsCommand(
-            reading_id=created.id,
-            user_id=valid_command.user_id,
-            tags=["career", "big decision"],
+            reading_id=created.id, user_id=valid_command.user_id, tags=["career", "love"]
         )
     )
-    assert result.tags == ["career", "big decision"]
-    assert result.id == created.id
+    assert result.tags == ["career", "love"]
 
 
-async def test_update_reading_tags_not_found(update_tags_handler):
+async def test_update_reading_tags_persists(handler, valid_command, update_tags_handler, mock_db):
+    created = await handler.handle(valid_command)
+    await update_tags_handler.handle(
+        UpdateReadingTagsCommand(
+            reading_id=created.id, user_id=valid_command.user_id, tags=["career"]
+        )
+    )
+    read_repo = ReadingReadRepository(mock_db)
+    doc = await read_repo.find_by_id(created.id)
+    assert doc["tags"] == ["career"]
+
+
+async def test_update_reading_tags_replaces_existing(handler, valid_command, update_tags_handler):
+    created = await handler.handle(valid_command)
+    await update_tags_handler.handle(
+        UpdateReadingTagsCommand(
+            reading_id=created.id, user_id=valid_command.user_id, tags=["career", "love"]
+        )
+    )
+    result = await update_tags_handler.handle(
+        UpdateReadingTagsCommand(
+            reading_id=created.id, user_id=valid_command.user_id, tags=["luck"]
+        )
+    )
+    assert result.tags == ["luck"]
+
+
+async def test_update_reading_tags_not_found(update_tags_handler, valid_command):
     with pytest.raises(ReadingNotFoundError):
         await update_tags_handler.handle(
             UpdateReadingTagsCommand(
-                reading_id=str(ObjectId()),
-                user_id=str(ObjectId()),
-                tags=["career"],
+                reading_id=str(ObjectId()), user_id=valid_command.user_id, tags=["career"]
             )
         )
 
@@ -110,8 +132,6 @@ async def test_update_reading_tags_wrong_user(handler, valid_command, update_tag
     with pytest.raises(ReadingNotFoundError):
         await update_tags_handler.handle(
             UpdateReadingTagsCommand(
-                reading_id=created.id,
-                user_id=str(ObjectId()),
-                tags=["career"],
+                reading_id=created.id, user_id=str(ObjectId()), tags=["career"]
             )
         )

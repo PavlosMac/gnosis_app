@@ -66,7 +66,7 @@ async def app(mock_db):
     )
     mediator.register_command(
         UpdateReadingTagsCommand,
-        UpdateReadingTagsHandler(reading_read_repo, reading_write_repo),
+        UpdateReadingTagsHandler(reading_write_repo, reading_read_repo),
     )
     mediator.register_query(GetReadingByIdQuery, GetReadingByIdHandler(reading_read_repo))
     mediator.register_query(ListUserReadingsQuery, ListUserReadingsHandler(reading_read_repo))

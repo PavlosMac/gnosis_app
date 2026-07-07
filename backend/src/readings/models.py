@@ -25,7 +25,7 @@ class Reading:
         self.spread_type = spread_type
         self.question = question
         self.birth_date = birth_date
-        self.tags = tags
+        self.tags = tags if tags is not None else []
         self.cards = cards
         self.card_interpretations = card_interpretations
         self.synthesis = synthesis
@@ -50,7 +50,7 @@ class Reading:
             doc["question"] = self.question
         if self.birth_date is not None:
             doc["birth_date"] = self.birth_date.isoformat()
-        if self.tags is not None:
+        if self.tags:
             doc["tags"] = self.tags
         return doc
 

@@ -10,7 +10,7 @@ MAX_TAGS_PER_READING = 5
 MAX_TAG_LENGTH = 15
 
 
-def normalize_tags(raw: str) -> list[str]:
+def parse_comma_separated_tags(raw: str) -> list[str]:
     seen: set[str] = set()
     normalized: list[str] = []
     for piece in raw.split(","):
@@ -30,22 +30,20 @@ class CreateReadingRequest(AppSchema):
 
 
 class UpdateReadingTagsRequest(AppSchema):
-    tags: str
+    tags: list[str]
 
-    @field_validator("tags")
+    @field_validator("tags", mode="before")
     @classmethod
-    def validate_tags(cls, value: str) -> str:
-        tags = normalize_tags(value)
-        if len(tags) > MAX_TAGS_PER_READING:
+    def validate_tags(cls, value: str) -> list[str]:
+        if not isinstance(value, str):
+            raise ValueError("tags must be a comma-separated string")
+        parsed = parse_comma_separated_tags(value)
+        if len(parsed) > MAX_TAGS_PER_READING:
             raise ValueError(f"A reading can have at most {MAX_TAGS_PER_READING} tags")
-        for tag in tags:
+        for tag in parsed:
             if len(tag) > MAX_TAG_LENGTH:
                 raise ValueError(f"Each tag must be at most {MAX_TAG_LENGTH} characters")
-        return value
-
-    @property
-    def normalized_tags(self) -> list[str]:
-        return normalize_tags(self.tags)
+        return parsed
 
 
 class CardInterpretationReadModel(AppSchema):

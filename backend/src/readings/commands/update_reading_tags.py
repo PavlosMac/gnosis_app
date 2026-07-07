@@ -16,11 +16,11 @@ class UpdateReadingTagsCommand(BaseCommand):
 class UpdateReadingTagsHandler(CommandHandler[UpdateReadingTagsCommand, ReadingReadModel]):
     def __init__(
         self,
-        read_repo: ReadingReadRepository,
         write_repo: ReadingWriteRepository,
+        read_repo: ReadingReadRepository,
     ) -> None:
-        self._read_repo = read_repo
         self._write_repo = write_repo
+        self._read_repo = read_repo
 
     async def handle(self, command: UpdateReadingTagsCommand) -> ReadingReadModel:
         try:
