@@ -59,7 +59,9 @@ async def up(db: AsyncIOMotorDatabase) -> None:
 
 ## How to Run Migrations
 
-Migrations are **always run manually** — they do not run automatically at app startup.
+Migrations run automatically at app startup — `lifespan()` in `src/main.py` calls
+`run_migrations(get_database())` right after `connect_to_mongo()`. To apply a
+pending migration without restarting the app, run it manually:
 
 ### Local (requires MongoDB running)
 

@@ -25,6 +25,7 @@ from src.health.router import router as health_router
 from src.llm.openai_adapter import OpenAIAdapter
 from src.llm.port import LLMPort
 from src.llm.router import router as llm_router
+from src.migrations.runner import run_migrations
 from src.readings.commands.create_reading import CreateReadingCommand, CreateReadingHandler
 from src.readings.commands.update_reading_tags import (
     UpdateReadingTagsCommand,
@@ -61,7 +62,7 @@ def _wire_mediator(mediator: Mediator, llm: LLMPort) -> None:
     mediator.register_command(CreateReadingCommand, CreateReadingHandler(reading_write_repo, llm))
     mediator.register_command(
         UpdateReadingTagsCommand,
-        UpdateReadingTagsHandler(reading_read_repo, reading_write_repo),
+        UpdateReadingTagsHandler(reading_write_repo, reading_read_repo),
     )
     mediator.register_query(GetReadingByIdQuery, GetReadingByIdHandler(reading_read_repo))
     mediator.register_query(ListUserReadingsQuery, ListUserReadingsHandler(reading_read_repo))
@@ -71,6 +72,7 @@ def _wire_mediator(mediator: Mediator, llm: LLMPort) -> None:
 async def lifespan(app: FastAPI):
     logger.info("starting up", app=settings.app_name, env=settings.app_env)
     await connect_to_mongo()
+    await run_migrations(get_database())
 
     app.state.refresh_token_repo = RefreshTokenRepository(get_database())
 
