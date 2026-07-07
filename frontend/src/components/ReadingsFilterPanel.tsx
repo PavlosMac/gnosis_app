@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import readingsConfig from "@/lib/readings-config.json";
 
+const SIGNIFICATORS_SPREAD_TYPE = "Significators";
+
 interface ReadingsFilterPanelProps {
   currentSpreadType?: string;
   currentTags?: string;
@@ -20,10 +22,18 @@ const ReadingsFilterPanel = ({
   const [expanded, setExpanded] = useState(hasActiveFilter);
   const [spreadType, setSpreadType] = useState(currentSpreadType ?? "");
   const [tags, setTags] = useState(currentTags ?? "");
-  const [birthDate, setBirthDate] = useState(currentBirthDate ?? "");
+  const [birthDate, setBirthDate] = useState(
+    currentSpreadType === SIGNIFICATORS_SPREAD_TYPE ? currentBirthDate ?? "" : ""
+  );
+
+  const isSignificators = spreadType === SIGNIFICATORS_SPREAD_TYPE;
 
   const togglePill = (name: string) => {
-    setSpreadType((prev) => (prev === name ? "" : name));
+    setSpreadType((prev) => {
+      const next = prev === name ? "" : name;
+      if (next !== SIGNIFICATORS_SPREAD_TYPE) setBirthDate("");
+      return next;
+    });
   };
 
   const applyFilters = () => {
@@ -103,25 +113,31 @@ const ReadingsFilterPanel = ({
             />
           </div>
 
-          <div>
-            <label
-              htmlFor="birth-date-filter"
-              className="block text-xs text-[#d4af37]/60 tracking-widest uppercase mb-2"
-              style={{ fontFamily: "'Cinzel', serif" }}
-            >
-              Birth Date
-            </label>
-            <input
-              id="birth-date-filter"
-              type="date"
-              value={birthDate}
-              onChange={(e) => setBirthDate(e.target.value)}
-              style={{ colorScheme: "dark", fontFamily: "'Crimson Pro', serif" }}
-              className="w-full px-4 py-3 rounded-lg bg-[#0a0015]/60 border border-[#d4af37]/20
-                         text-[#e6d5b8] text-sm
-                         focus:outline-none focus:border-[#d4af37]/60 focus:ring-1 focus:ring-[#d4af37]/20
-                         transition-all duration-300"
-            />
+          <div
+            className={`grid transition-[grid-template-rows,margin-top] duration-300 ease-in-out
+              ${isSignificators ? "grid-rows-[1fr] mt-0" : "grid-rows-[0fr] -mt-5"}`}
+          >
+            <div className="overflow-hidden min-h-0">
+              <label
+                htmlFor="birth-date-filter"
+                className="block text-xs text-[#d4af37]/60 tracking-widest uppercase mb-2"
+                style={{ fontFamily: "'Cinzel', serif" }}
+              >
+                Birth Date
+              </label>
+              <input
+                id="birth-date-filter"
+                type="date"
+                value={birthDate}
+                onChange={(e) => setBirthDate(e.target.value)}
+                disabled={!isSignificators}
+                style={{ colorScheme: "dark", fontFamily: "'Crimson Pro', serif" }}
+                className="w-full px-4 py-3 rounded-lg bg-[#0a0015]/60 border border-[#d4af37]/20
+                           text-[#e6d5b8] text-sm
+                           focus:outline-none focus:border-[#d4af37]/60 focus:ring-1 focus:ring-[#d4af37]/20
+                           transition-all duration-300"
+              />
+            </div>
           </div>
 
           <div className="flex items-center gap-3">
