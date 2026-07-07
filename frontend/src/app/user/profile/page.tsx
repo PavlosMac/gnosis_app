@@ -60,27 +60,6 @@ const ProfilePage = async () => {
           <ProfileRow label="Name" value={user.displayName || "Seeker"} />
           <ProfileRow label="Email" value={user.email} />
 
-          {/* Credits */}
-          <div className="pt-4 border-t border-[#d4af37]/10">
-            <div className="flex items-center justify-between">
-              <span
-                className="text-[#e6d5b8]/60 text-sm tracking-wider uppercase"
-                style={{ fontFamily: "'Cinzel', serif" }}
-              >
-                Readings
-              </span>
-              <span
-                className="text-2xl text-[#d4af37]"
-                style={{
-                  fontFamily: "'Cinzel', serif",
-                  textShadow: "0 0 10px rgba(212,175,55,0.3)",
-                }}
-              >
-                {user.credits}
-              </span>
-            </div>
-          </div>
-
           {/* Past Readings */}
           <div className="pt-4 border-t border-[#d4af37]/10">
             <Link
