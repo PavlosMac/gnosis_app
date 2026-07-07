@@ -11,12 +11,15 @@ def _build_filter(
     user_id: str,
     spread_type: str | None,
     birth_date: date | None,
+    tags: list[str] | None = None,
 ) -> dict[str, Any]:
     filter_: dict[str, Any] = {"user_id": ObjectId(user_id)}
     if spread_type:
         filter_["spread_type"] = spread_type
     if birth_date:
         filter_["birth_date"] = birth_date.isoformat()
+    if tags is not None:
+        filter_["tags"] = {"$in": tags}
     return filter_
 
 
@@ -51,5 +54,38 @@ class ReadingReadRepository(BaseReadRepository):
         user_id: str,
         spread_type: str | None = None,
         birth_date: date | None = None,
+        tags: list[str] | None = None,
     ) -> int:
-        return await self.count(_build_filter(user_id, spread_type, birth_date))
+        return await self.count(_build_filter(user_id, spread_type, birth_date, tags))
+
+    async def find_by_user_id_ranked_by_tags(
+        self,
+        user_id: str,
+        tags: list[str],
+        skip: int = 0,
+        limit: int = 20,
+        spread_type: str | None = None,
+        birth_date: date | None = None,
+    ) -> list[dict[str, Any]]:
+        match_filter = _build_filter(user_id, spread_type, birth_date, tags)
+        cursor = self._collection.aggregate(
+            [
+                {"$match": match_filter},
+                {
+                    "$addFields": {
+                        "matched_tag_count": {
+                            "$size": {
+                                "$filter": {
+                                    "input": "$tags",
+                                    "cond": {"$in": ["$$this", tags]},
+                                }
+                            }
+                        }
+                    }
+                },
+                {"$sort": {"matched_tag_count": -1, "created_at": -1}},
+                {"$skip": skip},
+                {"$limit": limit},
+            ]
+        )
+        return await cursor.to_list(length=limit)

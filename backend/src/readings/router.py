@@ -13,6 +13,7 @@ from src.readings.schemas import (
     ReadingListItem,
     ReadingReadModel,
     UpdateReadingTagsRequest,
+    parse_comma_separated_tags,
 )
 
 router = APIRouter(prefix="/readings", tags=["readings"])
@@ -42,6 +43,7 @@ async def list_readings(
     page_size: int = Query(default=20, ge=1, le=100),
     spread_type: str | None = Query(default=None),
     birth_date: date | None = Query(default=None),
+    tags: str | None = Query(default=None),
 ) -> PaginatedResponse[ReadingListItem]:
     return await mediator.query(
         ListUserReadingsQuery(
@@ -50,6 +52,7 @@ async def list_readings(
             page_size=page_size,
             spread_type=spread_type,
             birth_date=birth_date,
+            tags=parse_comma_separated_tags(tags) if tags else None,
         )
     )
 
@@ -73,6 +76,6 @@ async def update_reading_tags(
     command = UpdateReadingTagsCommand(
         reading_id=reading_id,
         user_id=user_id,
-        tags=body.normalized_tags,
+        tags=body.tags,
     )
     return await mediator.send(command)

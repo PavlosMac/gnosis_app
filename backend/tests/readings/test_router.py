@@ -170,6 +170,60 @@ async def test_update_reading_tags_too_long(client, auth_token):
     assert resp.status_code == 422
 
 
+async def test_list_readings_filters_by_tags(client, auth_token):
+    one_match = await client.post(
+        "/api/v1/readings",
+        json=VALID_READING_BODY,
+        headers={"Authorization": f"Bearer {auth_token}"},
+    )
+    two_match = await client.post(
+        "/api/v1/readings",
+        json={**VALID_READING_BODY, "spread_name": "Two Match"},
+        headers={"Authorization": f"Bearer {auth_token}"},
+    )
+
+    await client.patch(
+        f"/api/v1/readings/{one_match.json()['_id']}/tags",
+        json={"tags": "career"},
+        headers={"Authorization": f"Bearer {auth_token}"},
+    )
+    await client.patch(
+        f"/api/v1/readings/{two_match.json()['_id']}/tags",
+        json={"tags": "career, love"},
+        headers={"Authorization": f"Bearer {auth_token}"},
+    )
+
+    resp = await client.get(
+        "/api/v1/readings?tags=career,love",
+        headers={"Authorization": f"Bearer {auth_token}"},
+    )
+    data = resp.json()
+    assert [item["spread_type"] for item in data["items"]] == ["Two Match", "Celtic Cross"]
+
+
+async def test_update_reading_tags_unauthenticated(client):
+    resp = await client.patch(
+        "/api/v1/readings/507f1f77bcf86cd799439011/tags",
+        json={"tags": "career"},
+    )
+    assert resp.status_code == 401
+
+
+async def test_update_reading_tags_rejects_non_string(client, auth_token):
+    create_resp = await client.post(
+        "/api/v1/readings",
+        json=VALID_READING_BODY,
+        headers={"Authorization": f"Bearer {auth_token}"},
+    )
+    reading_id = create_resp.json()["_id"]
+    resp = await client.patch(
+        f"/api/v1/readings/{reading_id}/tags",
+        json={"tags": ["career", "love"]},
+        headers={"Authorization": f"Bearer {auth_token}"},
+    )
+    assert resp.status_code == 422
+
+
 async def test_update_reading_tags_wrong_user(client, auth_token):
     create_resp = await client.post(
         "/api/v1/readings",

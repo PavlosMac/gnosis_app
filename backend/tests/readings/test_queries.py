@@ -6,6 +6,10 @@ from bson import ObjectId
 from src.llm.mock_adapter import MockLLMAdapter
 from src.llm.schemas import CardInSpread
 from src.readings.commands.create_reading import CreateReadingCommand, CreateReadingHandler
+from src.readings.commands.update_reading_tags import (
+    UpdateReadingTagsCommand,
+    UpdateReadingTagsHandler,
+)
 from src.readings.queries.get_reading_by_id import GetReadingByIdHandler, GetReadingByIdQuery
 from src.readings.queries.list_user_readings import (
     ListUserReadingsHandler,
@@ -41,6 +45,12 @@ def get_handler(repos):
 def list_handler(repos):
     _, read_repo = repos
     return ListUserReadingsHandler(read_repo)
+
+
+@pytest.fixture
+def update_tags_handler(repos):
+    write_repo, read_repo = repos
+    return UpdateReadingTagsHandler(write_repo=write_repo, read_repo=read_repo)
 
 
 def _make_command(user_id: str, spread: str = "Celtic Cross") -> CreateReadingCommand:
@@ -117,7 +127,9 @@ async def test_list_user_readings_filter_by_spread_type(create_handler, list_han
     assert result.items[0].spread_type == "Three Card"
 
 
-async def test_list_user_readings_filter_by_birth_date_matches(create_handler, list_handler, user_id):
+async def test_list_user_readings_filter_by_birth_date_matches(
+    create_handler, list_handler, user_id
+):
     command = CreateReadingCommand(
         user_id=user_id,
         spread_name="Significators",
@@ -140,3 +152,30 @@ async def test_list_user_readings_filter_by_birth_date_excludes_non_matching(
     )
     assert result.items == []
     assert result.total == 0
+
+
+async def test_list_user_readings_ranks_by_tag_overlap(
+    create_handler, list_handler, update_tags_handler, user_id
+):
+    one_match = await create_handler.handle(_make_command(user_id, spread="One Match"))
+    two_match = await create_handler.handle(_make_command(user_id, spread="Two Match"))
+    no_match = await create_handler.handle(_make_command(user_id, spread="No Match"))
+
+    await update_tags_handler.handle(
+        UpdateReadingTagsCommand(reading_id=one_match.id, user_id=user_id, tags=["career"])
+    )
+    await update_tags_handler.handle(
+        UpdateReadingTagsCommand(
+            reading_id=two_match.id, user_id=user_id, tags=["career", "love"]
+        )
+    )
+    await update_tags_handler.handle(
+        UpdateReadingTagsCommand(reading_id=no_match.id, user_id=user_id, tags=["luck"])
+    )
+
+    result = await list_handler.handle(
+        ListUserReadingsQuery(user_id=user_id, tags=["career", "love"])
+    )
+
+    assert [item.spread_type for item in result.items] == ["Two Match", "One Match"]
+    assert result.total == 2
