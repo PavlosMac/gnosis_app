@@ -48,8 +48,6 @@ class OpenAIAdapter(LLMPort):
             model=self._model,
             spread_name=request.spread_name,
             cards=[c.name for c in request.cards],
-            system_prompt=system_prompt,
-            user_prompt=user_prompt,
         )
 
         try:
