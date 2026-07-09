@@ -5,6 +5,7 @@ from src.interpretations.commands.generate_interpretation import GenerateInterpr
 from src.interpretations.commands.save_interpretation import SaveInterpretationCommand
 from src.interpretations.schemas import (
     GeneratedInterpretationResponse,
+    GenerateInterpretationRequest,
     InterpretationReadModel,
     SaveInterpretationRequest,
 )
@@ -20,9 +21,15 @@ async def generate_interpretation(
     reading_id: str,
     user_id: CurrentUserId,
     mediator: MediatorDep,
+    body: GenerateInterpretationRequest | None = None,
 ) -> GeneratedInterpretationResponse:
     return await mediator.send(
-        GenerateInterpretationCommand(reading_id=reading_id, user_id=user_id)
+        GenerateInterpretationCommand(
+            reading_id=reading_id,
+            user_id=user_id,
+            settings=body.settings if body else None,
+            context=body.context if body else None,
+        )
     )
 
 
@@ -44,5 +51,6 @@ async def save_interpretation(
         model=body.model,
         tokens_used=body.tokens_used,
         settings=body.settings,
+        context=body.context,
     )
     return await mediator.send(command)

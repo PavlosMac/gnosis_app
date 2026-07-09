@@ -14,9 +14,9 @@ from src.interpretations.repository import (
     InterpretationReadRepository,
     InterpretationWriteRepository,
 )
-from src.interpretations.schemas import DEFAULT_SETTINGS
+from src.interpretations.schemas import InterpretationSettingsOverride
 from src.llm.mock_adapter import MockLLMAdapter
-from src.llm.schemas import CardInSpread
+from src.llm.schemas import DEFAULT_SETTINGS, CardInSpread, ReadingStyle
 from src.readings.commands.create_reading import CreateReadingCommand, CreateReadingHandler
 from src.readings.repository import ReadingReadRepository, ReadingWriteRepository
 from src.readings.service import ReadingNotFoundError
@@ -88,6 +88,22 @@ async def test_generate_interpretation_returns_content(
     assert result.synthesis is not None
     assert result.model == "mock"
     assert result.settings == DEFAULT_SETTINGS
+
+
+async def test_generate_interpretation_resolves_partial_settings_override(
+    generate_handler, create_reading_handler, user_id
+):
+    reading = await _create_reading(create_reading_handler, user_id)
+    result = await generate_handler.handle(
+        GenerateInterpretationCommand(
+            reading_id=reading.id,
+            user_id=user_id,
+            settings=InterpretationSettingsOverride(style=ReadingStyle.esoteric),
+        )
+    )
+    assert result.settings.style == ReadingStyle.esoteric
+    assert result.settings.depth == DEFAULT_SETTINGS.depth
+    assert result.settings.tone == DEFAULT_SETTINGS.tone
 
 
 async def test_generate_interpretation_does_not_persist(

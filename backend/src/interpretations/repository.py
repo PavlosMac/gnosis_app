@@ -12,15 +12,12 @@ class InterpretationWriteRepository(BaseWriteRepository):
         return INTERPRETATIONS_COLLECTION
 
     async def upsert_by_reading_id(self, reading_id: str, document: dict[str, Any]) -> None:
-        replacement = {key: value for key, value in document.items() if key != "created_at"}
-        await self._collection.update_one(
-            {"reading_id": ObjectId(reading_id)},
-            {
-                "$set": replacement,
-                "$setOnInsert": {"created_at": document["created_at"]},
-            },
-            upsert=True,
-        )
+        query = {"reading_id": ObjectId(reading_id)}
+        replacement = dict(document)
+        existing = await self._collection.find_one(query, {"created_at": 1})
+        if existing is not None:
+            replacement["created_at"] = existing["created_at"]
+        await self._collection.replace_one(query, replacement, upsert=True)
 
 
 class InterpretationReadRepository(BaseReadRepository):

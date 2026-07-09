@@ -21,6 +21,7 @@ class SaveInterpretationCommand(BaseCommand):
     model: str
     tokens_used: int
     settings: InterpretationSettings
+    context: str | None = None
 
 
 class SaveInterpretationHandler(
@@ -63,6 +64,7 @@ class SaveInterpretationHandler(
             tokens_used=command.tokens_used,
             model=command.model,
             settings=command.settings.model_dump(mode="json"),
+            context=command.context,
         )
         await self._write_repo.upsert_by_reading_id(
             command.reading_id, interpretation.to_document()

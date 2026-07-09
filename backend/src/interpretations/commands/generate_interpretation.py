@@ -6,18 +6,38 @@ from bson.errors import InvalidId
 
 from src.auth.repository import AuthWriteRepository
 from src.cqrs.commands import BaseCommand, CommandHandler
-from src.interpretations.schemas import DEFAULT_SETTINGS, GeneratedInterpretationResponse
+from src.interpretations.schemas import (
+    GeneratedInterpretationResponse,
+    InterpretationSettingsOverride,
+)
 from src.llm.port import LLMPort
-from src.llm.schemas import CardInSpread, InterpretationRequest
+from src.llm.schemas import (
+    DEFAULT_SETTINGS,
+    CardInSpread,
+    InterpretationRequest,
+    InterpretationSettings,
+)
 from src.readings.repository import ReadingReadRepository
 from src.readings.service import ReadingNotFoundError
 
 logger = structlog.stdlib.get_logger(__name__)
 
 
+def _resolve_settings(override: InterpretationSettingsOverride | None) -> InterpretationSettings:
+    if override is None:
+        return DEFAULT_SETTINGS
+    return InterpretationSettings(
+        style=override.style if override.style is not None else DEFAULT_SETTINGS.style,
+        depth=override.depth if override.depth is not None else DEFAULT_SETTINGS.depth,
+        tone=override.tone if override.tone is not None else DEFAULT_SETTINGS.tone,
+    )
+
+
 class GenerateInterpretationCommand(BaseCommand):
     reading_id: str
     user_id: str
+    settings: InterpretationSettingsOverride | None = None
+    context: str | None = None
 
 
 class GenerateInterpretationHandler(
@@ -46,6 +66,7 @@ class GenerateInterpretationHandler(
         if reading is None:
             raise ReadingNotFoundError()
 
+        settings = _resolve_settings(command.settings)
         llm_request = InterpretationRequest(
             spread_name=reading["spread_type"],
             question=reading.get("question"),
@@ -61,6 +82,8 @@ class GenerateInterpretationHandler(
                 )
                 for card in reading["cards"]
             ],
+            settings=settings,
+            context=command.context,
         )
         llm_response = await self._llm.generate_interpretation(llm_request)
 
@@ -86,5 +109,5 @@ class GenerateInterpretationHandler(
             synthesis=llm_response.synthesis,
             model=llm_response.model,
             tokens_used=llm_response.tokens_used,
-            settings=DEFAULT_SETTINGS,
+            settings=settings,
         )

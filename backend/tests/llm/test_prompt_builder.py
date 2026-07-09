@@ -4,19 +4,45 @@ from src.llm.prompt_builder import (
     build_system_prompt,
     build_user_prompt,
 )
-from src.llm.schemas import CardInSpread, InterpretationRequest, Orientation
+from src.llm.schemas import (
+    DEFAULT_SETTINGS,
+    CardInSpread,
+    InterpretationRequest,
+    InterpretationSettings,
+    Orientation,
+    ReadingStyle,
+)
 
 
 def _make_request(
     cards: list[CardInSpread],
-    question: str = "What lies ahead?",
+    question: str | None = "What lies ahead?",
     spread_name: str = "Past-Present-Future",
+    settings: InterpretationSettings = DEFAULT_SETTINGS,
+    context: str | None = None,
 ) -> InterpretationRequest:
-    return InterpretationRequest(spread_name=spread_name, question=question, cards=cards)
+    return InterpretationRequest(
+        spread_name=spread_name,
+        question=question,
+        cards=cards,
+        settings=settings,
+        context=context,
+    )
+
+
+def _make_system_request(
+    spread_name: str = "Past-Present-Future",
+    settings: InterpretationSettings = DEFAULT_SETTINGS,
+) -> InterpretationRequest:
+    return _make_request(
+        [CardInSpread(name="The Fool", position="Past", orientation=Orientation.upright)],
+        spread_name=spread_name,
+        settings=settings,
+    )
 
 
 def test_system_prompt_is_non_empty():
-    prompt = build_system_prompt()
+    prompt = build_system_prompt(_make_system_request())
     assert isinstance(prompt, str)
     assert len(prompt) > 0
 
@@ -139,27 +165,27 @@ def _make_significators_request() -> InterpretationRequest:
 
 
 def test_system_prompt_significators_returns_chart_prompt():
-    prompt = build_system_prompt("Significators")
-    default = build_system_prompt()
+    prompt = build_system_prompt(_make_system_request("Significators"))
+    default = build_system_prompt(_make_system_request())
     assert prompt != default
     assert "significator chart" in prompt.lower()
 
 
 def test_system_prompt_significators_no_reversed_guidance():
-    prompt = build_system_prompt("Significators")
+    prompt = build_system_prompt(_make_system_request("Significators"))
     assert "Reversed cards" not in prompt
     assert "shadow energy" not in prompt
 
 
 def test_system_prompt_significators_character_focus():
-    prompt = build_system_prompt("Significators")
+    prompt = build_system_prompt(_make_system_request("Significators"))
     assert "character" in prompt.lower()
     assert "personality" in prompt.lower()
     assert "life themes" in prompt.lower()
 
 
 def test_system_prompt_significators_life_number_guidance():
-    prompt = build_system_prompt("Significators")
+    prompt = build_system_prompt(_make_system_request("Significators"))
     assert "life number" in prompt.lower() or "Life number" in prompt
 
 
@@ -171,9 +197,32 @@ def test_user_prompt_significators_no_question():
 
 
 def test_system_prompt_unknown_spread_returns_default():
-    default = build_system_prompt()
-    assert build_system_prompt("Unknown Spread") == default
-    assert build_system_prompt("Celtic Cross") == default
+    default = build_system_prompt(_make_system_request())
+    assert build_system_prompt(_make_system_request("Unknown Spread")) == default
+    assert build_system_prompt(_make_system_request("Celtic Cross")) == default
+
+
+# --- Style weights ---
+
+
+def test_system_prompt_includes_default_style_weights():
+    prompt = build_system_prompt(_make_system_request())
+    assert "READING STYLE:" in prompt
+    assert "Esoteric (Kabbalah, alchemy, mythology): 0.2" in prompt
+
+
+def test_system_prompt_esoteric_style_uses_esoteric_weights():
+    esoteric = InterpretationSettings(style=ReadingStyle.esoteric, depth=60, tone=50)
+    prompt = build_system_prompt(_make_system_request(settings=esoteric))
+    assert "Esoteric (Kabbalah, alchemy, mythology): 1.0" in prompt
+    assert "Literal card meanings (upright/reversed meanings, keywords): 0.3" in prompt
+
+
+def test_system_prompt_style_applies_to_significators_too():
+    practical = InterpretationSettings(style=ReadingStyle.practical, depth=60, tone=50)
+    prompt = build_system_prompt(_make_system_request("Significators", settings=practical))
+    assert "significator chart" in prompt.lower()
+    assert "Esoteric (Kabbalah, alchemy, mythology): 0.0" in prompt
 
 
 # --- Synthesis length scaling ---
@@ -216,3 +265,59 @@ def test_user_prompt_includes_synthesis_length_line():
     )
     prompt = build_user_prompt(req)
     assert "Synthesis length: aim for roughly 170 words." in prompt
+
+
+# --- Depth, tone and context ---
+
+
+def _one_card_request(settings: InterpretationSettings) -> InterpretationRequest:
+    return _make_request(
+        [CardInSpread(name="The Fool", position="Past", orientation=Orientation.upright)],
+        settings=settings,
+    )
+
+
+def test_user_prompt_default_depth_is_detailed_and_keeps_synthesis_target():
+    prompt = build_user_prompt(_one_card_request(DEFAULT_SETTINGS))
+    assert "Depth: detailed" in prompt
+    assert "Synthesis length: aim for roughly 170 words." in prompt
+
+
+def test_user_prompt_brief_depth_halves_synthesis_target():
+    settings = InterpretationSettings(style=ReadingStyle.reflective, depth=10, tone=50)
+    prompt = build_user_prompt(_one_card_request(settings))
+    assert "Depth: brief" in prompt
+    assert "Synthesis length: aim for roughly 85 words." in prompt
+
+
+def test_user_prompt_comprehensive_depth_grows_synthesis_target():
+    settings = InterpretationSettings(style=ReadingStyle.reflective, depth=90, tone=50)
+    prompt = build_user_prompt(_one_card_request(settings))
+    assert "Depth: comprehensive" in prompt
+    assert "Synthesis length: aim for roughly 255 words." in prompt
+
+
+def test_user_prompt_tone_bands():
+    gentle = InterpretationSettings(style=ReadingStyle.reflective, depth=60, tone=10)
+    balanced = InterpretationSettings(style=ReadingStyle.reflective, depth=60, tone=50)
+    direct = InterpretationSettings(style=ReadingStyle.reflective, depth=60, tone=80)
+    assert "Tone: gentle" in build_user_prompt(_one_card_request(gentle))
+    assert "Tone: balanced" in build_user_prompt(_one_card_request(balanced))
+    assert "Tone: direct" in build_user_prompt(_one_card_request(direct))
+
+
+def test_user_prompt_includes_context_line_when_set():
+    req = _make_request(
+        [CardInSpread(name="The Fool", position="Past", orientation=Orientation.upright)],
+        context="recently divorced",
+    )
+    prompt = build_user_prompt(req)
+    assert "Additional context from the querent: recently divorced" in prompt
+
+
+def test_user_prompt_omits_context_line_by_default():
+    req = _make_request(
+        [CardInSpread(name="The Fool", position="Past", orientation=Orientation.upright)]
+    )
+    prompt = build_user_prompt(req)
+    assert "Additional context" not in prompt

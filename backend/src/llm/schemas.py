@@ -26,6 +26,9 @@ class InterpretationSettings(BaseModel):
     tone: int = Field(..., ge=0, le=100)
 
 
+DEFAULT_SETTINGS = InterpretationSettings(style=ReadingStyle.reflective, depth=60, tone=50)
+
+
 class CardInSpread(BaseModel):
     model_config = {"frozen": True}
 
@@ -47,6 +50,8 @@ class InterpretationRequest(BaseModel):
     question: str | None = Field(default=None, min_length=5, max_length=500)
     birth_date: date | None = Field(default=None)
     cards: list[CardInSpread] = Field(..., min_length=1, max_length=12)
+    settings: InterpretationSettings = DEFAULT_SETTINGS
+    context: str | None = Field(default=None, max_length=100)
 
 
 class CardInterpretation(BaseModel):

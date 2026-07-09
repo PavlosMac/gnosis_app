@@ -113,6 +113,75 @@ async def test_save_interpretation_overwrites_previous(client, auth_token):
     assert second.json()["synthesis"] == "A revised synthesis."
 
 
+async def test_generate_interpretation_with_partial_settings_override(client, auth_token):
+    reading_id = await _create_reading(client, auth_token)
+    resp = await client.post(
+        f"/api/v1/readings/{reading_id}/interpretation/generate",
+        json={"settings": {"style": "esoteric", "depth": 20}, "context": "recently divorced"},
+        headers={"Authorization": f"Bearer {auth_token}"},
+    )
+    assert resp.status_code == 200
+    assert resp.json()["settings"] == {"style": "esoteric", "depth": 20, "tone": 50}
+
+
+async def test_generate_interpretation_rejects_long_context(client, auth_token):
+    reading_id = await _create_reading(client, auth_token)
+    resp = await client.post(
+        f"/api/v1/readings/{reading_id}/interpretation/generate",
+        json={"context": "x" * 101},
+        headers={"Authorization": f"Bearer {auth_token}"},
+    )
+    assert resp.status_code == 422
+
+
+async def test_generate_interpretation_rejects_out_of_range_depth(client, auth_token):
+    reading_id = await _create_reading(client, auth_token)
+    resp = await client.post(
+        f"/api/v1/readings/{reading_id}/interpretation/generate",
+        json={"settings": {"depth": 150}},
+        headers={"Authorization": f"Bearer {auth_token}"},
+    )
+    assert resp.status_code == 422
+
+
+async def test_save_interpretation_persists_context(client, auth_token):
+    reading_id = await _create_reading(client, auth_token)
+    generated = await _generate(client, auth_token, reading_id)
+
+    resp = await client.post(
+        f"/api/v1/readings/{reading_id}/interpretation",
+        json={**_save_body(generated), "context": "recently divorced"},
+        headers={"Authorization": f"Bearer {auth_token}"},
+    )
+    assert resp.status_code == 200
+    assert resp.json()["context"] == "recently divorced"
+
+    get_resp = await client.get(
+        f"/api/v1/readings/{reading_id}",
+        headers={"Authorization": f"Bearer {auth_token}"},
+    )
+    assert get_resp.json()["interpretation"]["context"] == "recently divorced"
+
+
+async def test_save_interpretation_clears_context_when_omitted(client, auth_token):
+    reading_id = await _create_reading(client, auth_token)
+    generated = await _generate(client, auth_token, reading_id)
+    body = _save_body(generated)
+
+    await client.post(
+        f"/api/v1/readings/{reading_id}/interpretation",
+        json={**body, "context": "recently divorced"},
+        headers={"Authorization": f"Bearer {auth_token}"},
+    )
+    resp = await client.post(
+        f"/api/v1/readings/{reading_id}/interpretation",
+        json=body,
+        headers={"Authorization": f"Bearer {auth_token}"},
+    )
+    assert resp.status_code == 200
+    assert resp.json()["context"] is None
+
+
 async def test_save_interpretation_wrong_user(client, auth_token):
     reading_id = await _create_reading(client, auth_token)
     generated = await _generate(client, auth_token, reading_id)

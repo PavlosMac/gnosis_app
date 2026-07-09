@@ -13,6 +13,7 @@ from src.llm.schemas import (
     CardInSpread,
     InterpretationRequest,
     Orientation,
+    ReadingStyle,
 )
 
 _SEP = ", "
@@ -20,6 +21,93 @@ _SEP = ", "
 _SYNTHESIS_BASE_WORDS = 170
 _SYNTHESIS_FLAT_CARD_LIMIT = 3
 _SYNTHESIS_WORDS_PER_EXTRA_CARD = 60
+
+_STYLE_WEIGHTS: dict[ReadingStyle, dict[str, float]] = {
+    ReadingStyle.practical: {
+        "literal": 1.0,
+        "psychological": 0.8,
+        "symbolic": 0.2,
+        "esoteric": 0.0,
+    },
+    ReadingStyle.reflective: {
+        "literal": 0.8,
+        "psychological": 1.0,
+        "symbolic": 0.5,
+        "esoteric": 0.2,
+    },
+    ReadingStyle.spiritual: {
+        "literal": 0.5,
+        "psychological": 0.9,
+        "symbolic": 0.8,
+        "esoteric": 0.6,
+    },
+    ReadingStyle.esoteric: {
+        "literal": 0.3,
+        "psychological": 0.7,
+        "symbolic": 1.0,
+        "esoteric": 1.0,
+    },
+}
+
+_STYLE_RULES = (
+    "Prioritize higher-weighted interpretation layers. Do not mention every symbolic "
+    "correspondence simply because it exists — only include symbolic or esoteric references "
+    "when they naturally strengthen the reading, and weave them into the interpretation "
+    "instead of listing them. Ground every conclusion in the cards drawn and their spread "
+    "positions. Present metaphysical concepts as interpretive perspectives rather than "
+    "objective facts."
+)
+
+# (upper bound, guidance line, synthesis length factor) — `detailed` is 1.0 so the default
+# depth leaves the card-count-based synthesis target unchanged.
+_DEPTH_BANDS: tuple[tuple[int, str, float], ...] = (
+    (
+        25,
+        "Depth: brief — focus on one primary theme with minimal symbolism and quick, "
+        "actionable guidance. Aim for roughly 150-250 words overall.",
+        0.5,
+    ),
+    (
+        50,
+        "Depth: standard — develop two or three themes with moderate symbolic "
+        "interpretation. Aim for roughly 250-400 words overall.",
+        0.75,
+    ),
+    (
+        75,
+        "Depth: detailed — a rich interpretation with strong synthesis and "
+        "cross-connections between cards. Aim for roughly 400-700 words overall.",
+        1.0,
+    ),
+    (
+        100,
+        "Depth: comprehensive — extensive synthesis and deep symbolic exploration, "
+        "drawing on supporting correspondences where relevant. Aim for roughly 700-1200 "
+        "words overall.",
+        1.5,
+    ),
+)
+
+# (upper bound, guidance line)
+_TONE_BANDS: tuple[tuple[int, str], ...] = (
+    (
+        33,
+        "Tone: gentle — compassionate, exploratory and open-ended; avoid certainty. "
+        "Use phrasing like 'Consider...', 'You may be experiencing...', "
+        "'This card invites you to...'.",
+    ),
+    (
+        66,
+        "Tone: balanced — confident, thoughtful and neutral. Use phrasing like "
+        "'This suggests...', 'A recurring theme is...', 'It appears that...'.",
+    ),
+    (
+        100,
+        "Tone: direct — concise, clear and assertive, while still not presenting "
+        "interpretations as objective fact. Use phrasing like 'This card points "
+        "toward...', 'You're avoiding...', 'The challenge is...'.",
+    ),
+)
 
 
 _SYSTEM_PROMPT = (
@@ -96,10 +184,40 @@ _SIGNIFICATORS_SYSTEM_PROMPT = (
 )
 
 
-def build_system_prompt(spread_name: str | None = None) -> str:
-    if spread_name == SIGNIFICATORS_SPREAD:
-        return _SIGNIFICATORS_SYSTEM_PROMPT
-    return _SYSTEM_PROMPT
+def build_system_prompt(request: InterpretationRequest) -> str:
+    if request.spread_name == SIGNIFICATORS_SPREAD:
+        base = _SIGNIFICATORS_SYSTEM_PROMPT
+    else:
+        base = _SYSTEM_PROMPT
+    return base + _style_guidance(request.settings.style)
+
+
+def _style_guidance(style: ReadingStyle) -> str:
+    weights = _STYLE_WEIGHTS[style]
+    return (
+        "\n\nREADING STYLE:\n"
+        "Weight the interpretation layers as follows (1.0 = primary lens, 0.0 = do not use):\n"
+        f"- Literal card meanings (upright/reversed meanings, keywords): {weights['literal']}\n"
+        f"- Psychological (archetypes, inner dynamics): {weights['psychological']}\n"
+        f"- Symbolic (elements, astrology, numerology): {weights['symbolic']}\n"
+        f"- Esoteric (Kabbalah, alchemy, mythology): {weights['esoteric']}\n"
+        + _STYLE_RULES
+    )
+
+
+def _depth_guidance(depth: int) -> tuple[str, float]:
+    for upper_bound, guidance, synthesis_factor in _DEPTH_BANDS:
+        if depth <= upper_bound:
+            return guidance, synthesis_factor
+    last_band = _DEPTH_BANDS[-1]
+    return last_band[1], last_band[2]
+
+
+def _tone_guidance(tone: int) -> str:
+    for upper_bound, guidance in _TONE_BANDS:
+        if tone <= upper_bound:
+            return guidance
+    return _TONE_BANDS[-1][1]
 
 
 def _distinct_card_count(request: InterpretationRequest) -> int:
@@ -127,6 +245,8 @@ def build_user_prompt(
         )
     else:
         lines.append("No specific question — provide a general reading.")
+    if request.context:
+        lines.append(f"Additional context from the querent: {request.context}")
     lines.append("")
     card_count = len(request.cards)
     lines.append(
@@ -142,8 +262,11 @@ def build_user_prompt(
         if meaning is not None:
             lines.append(_format_card(card, meaning))
 
-    target_words = _synthesis_target_words(_distinct_card_count(request))
+    depth_guidance, synthesis_factor = _depth_guidance(request.settings.depth)
+    target_words = round(_synthesis_target_words(_distinct_card_count(request)) * synthesis_factor)
     lines.append("")
+    lines.append(depth_guidance)
+    lines.append(_tone_guidance(request.settings.tone))
     lines.append(f"Synthesis length: aim for roughly {target_words} words.")
 
     return "\n".join(lines)
