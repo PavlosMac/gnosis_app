@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import TarotPageLayout from "@/components/TarotPageLayout";
-import InterpretationDisplay from "@/components/InterpretationDisplay";
+import InterpretationSection from "./InterpretationSection";
 import { getReading } from "./actions";
 import { findCardByNameSafe } from "@/services/cardLookup";
 import type { TarotCardData } from "@/types/models";
@@ -109,20 +109,18 @@ const ReadingDetailPage = async ({
         <ReadingTags key={reading._id} readingId={reading._id} initialTags={reading.tags} />
 
         {/* Interpretation content */}
-        <div className="rounded-2xl border border-[#d4af37]/20 bg-gradient-to-b from-[#1a0033]/80 to-[#0a0015]/80 backdrop-blur-sm p-5 sm:p-8">
-          <InterpretationDisplay
-            question={reading.question}
-            cardInterpretations={reading.card_interpretations}
-            synthesis={reading.synthesis}
-            cardVisuals={cardVisuals}
-          />
-        </div>
+        <InterpretationSection
+          readingId={reading._id}
+          spreadName={reading.spread_type}
+          question={reading.question}
+          birthDate={reading.birth_date}
+          cardVisuals={cardVisuals}
+          cards={reading.cards}
+          interpretation={reading.interpretation}
+        />
 
-        {/* Footer meta */}
-        <div className="mt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-[#e6d5b8]/30">
-          <span style={{ fontFamily: "'Crimson Pro', serif" }}>
-            Model: {reading.model} &middot; {reading.tokens_used.toLocaleString()} tokens
-          </span>
+        {/* Footer nav */}
+        <div className="mt-8 flex justify-center text-xs">
           <Link
             href="/user/readings"
             className="text-[#d4af37]/50 hover:text-[#d4af37] transition-colors tracking-wider"

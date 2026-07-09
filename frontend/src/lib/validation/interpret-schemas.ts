@@ -18,3 +18,27 @@ export const interpretRequestSchema = z.object({
   birth_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   cards: z.array(interpretCardSchema).min(1).max(11),
 });
+
+export const CONTEXT_MAX_LENGTH = 100;
+
+export const interpretationSettingsSchema = z.object({
+  style: z.enum(["practical", "reflective", "spiritual", "esoteric"]),
+  depth: z.number().int().min(0).max(100),
+  tone: z.number().int().min(0).max(100),
+});
+
+export const saveInterpretationSchema = z.object({
+  card_interpretations: z.array(
+    z.object({
+      card_name: z.string(),
+      position: z.string(),
+      orientation: z.enum(["upright", "reversed"]),
+      interpretation: z.string(),
+    })
+  ),
+  synthesis: z.string(),
+  model: z.string(),
+  tokens_used: z.number().int().min(0),
+  settings: interpretationSettingsSchema,
+  context: z.string().trim().max(CONTEXT_MAX_LENGTH).optional(),
+});

@@ -4,11 +4,15 @@ import React, { useState, useEffect, useCallback, useRef } from "react";
 import { createPortal } from "react-dom";
 import OrnateFrame from "@/components/OrnateFrame";
 import InterpretationDisplay from "@/components/InterpretationDisplay";
-import { getInterpretation } from "@/app/user/interpret/actions";
-import type { ReadingResult } from "@/types/reading";
-import type { InterpretResult, InterpretResponse } from "@/types/interpret";
+import {
+  generateInterpretation,
+  saveInterpretation,
+} from "@/app/user/interpret/actions";
+import { writeInterpretationBackup } from "@/lib/interpretation-backup";
+import type { TarotCardData } from "@/types/models";
+import type { Interpretation } from "@/types/interpret";
 
-type ModalState = "loading" | "result" | "error";
+type ModalState = "generating" | "preview" | "saving" | "error";
 
 const SHORT_MONTHS = [
   "Jan", "Feb", "Mar", "Apr", "May", "Jun",
@@ -22,37 +26,49 @@ const formatBirthDate = (iso: string): string => {
 };
 
 interface InterpretationModalProps {
-  reading: ReadingResult;
+  readingId: string;
+  spreadName: string;
+  question?: string;
+  birthDate?: string;
+  cardVisuals: Record<string, { card: TarotCardData; reversed: boolean } | null>;
+  savedInterpretation?: Interpretation | null;
   onClose: () => void;
-  initialResult: InterpretResult | null;
-  onResultReceived: (r: InterpretResult) => void;
+  onSaved: () => void;
 }
 
 const InterpretationModal: React.FC<InterpretationModalProps> = React.memo(({
-  reading,
+  readingId,
+  spreadName,
+  question,
+  birthDate,
+  cardVisuals,
+  savedInterpretation,
   onClose,
-  initialResult,
-  onResultReceived,
+  onSaved,
 }) => {
-  const getInitialState = (): ModalState => {
-    if (!initialResult) return "loading";
-    return initialResult.ok ? "result" : "error";
-  };
+  const [modalState, setModalState] = useState<ModalState>("generating");
+  const [unsavedResult, setUnsavedResult] = useState<Interpretation | null>(null);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [saveError, setSaveError] = useState("");
+  const [showCloseConfirm, setShowCloseConfirm] = useState(false);
 
-  const [modalState, setModalState] = useState<ModalState>(getInitialState);
-  const [result, setResult] = useState<InterpretResponse | null>(
-    initialResult?.ok ? initialResult.data : null
-  );
-  const [errorMessage, setErrorMessage] = useState(
-    !initialResult?.ok ? (initialResult?.error ?? "") : ""
-  );
+  const isFetchingRef = useRef(false);
+  const hasFetchedRef = useRef(false);
+
+  const requestClose = useCallback(() => {
+    if (unsavedResult) {
+      setShowCloseConfirm(true);
+      return;
+    }
+    onClose();
+  }, [unsavedResult, onClose]);
 
   // Lock body scroll and handle Escape key
   useEffect(() => {
     document.body.style.overflow = "hidden";
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") requestClose();
     };
     window.addEventListener("keydown", handleKeyDown);
 
@@ -60,65 +76,51 @@ const InterpretationModal: React.FC<InterpretationModalProps> = React.memo(({
       document.body.style.overflow = "";
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [onClose]);
+  }, [requestClose]);
 
-  const isFetchingRef = useRef(false);
-  const hasFetchedRef = useRef(false);
-
-  const fetchInterpretation = useCallback(async () => {
+  const generate = useCallback(async () => {
     if (isFetchingRef.current) return;
     isFetchingRef.current = true;
+    setModalState("generating");
+    setSaveError("");
     try {
-      const cards = Object.entries(reading.positions).map(([position, card]) => ({
-        name: card.name,
-        position,
-        orientation: card.reversed ? ("reversed" as const) : ("upright" as const),
-        ...(reading.positionDescriptions?.[position] && {
-          position_description: reading.positionDescriptions[position],
-        }),
-      }));
-
-      const payload = {
-        spread_name: reading.readingType,
-        ...(reading.question && reading.question.trim().length >= 5 && {
-          question: reading.question,
-        }),
-        ...(reading.birth_date && {
-          birth_date: reading.birth_date,
-        }),
-        cards,
-      };
-
-      if (process.env.NODE_ENV === "development")
-        console.log("[INTERPRET:CLIENT] Payload:", JSON.stringify(payload, null, 2));
-      const interpretResult = await getInterpretation(payload);
-
-      onResultReceived(interpretResult);
-
-      if (interpretResult.ok) {
-        setResult(interpretResult.data);
-        setModalState("result");
+      const result = await generateInterpretation(readingId);
+      if (result.ok) {
+        setUnsavedResult(result.data);
+        setModalState("preview");
       } else {
-        setErrorMessage(interpretResult.error);
+        setErrorMessage(result.error);
         setModalState("error");
       }
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "The oracle could not be reached.";
-      setErrorMessage(message);
-      setModalState("error");
-      onResultReceived({ ok: false, error: message });
     } finally {
       isFetchingRef.current = false;
     }
-  }, [reading, onResultReceived]);
+  }, [readingId]);
 
-  // Fire once on mount if no cached result
+  // Fire once on mount
   useEffect(() => {
-    if (!initialResult && !hasFetchedRef.current) {
+    if (!hasFetchedRef.current) {
       hasFetchedRef.current = true;
-      fetchInterpretation();
+      generate();
     }
-  }, [fetchInterpretation]);
+  }, [generate]);
+
+  const handleSave = useCallback(async () => {
+    if (!unsavedResult) return;
+    setModalState("saving");
+    setSaveError("");
+    const replaced = savedInterpretation ?? null;
+    const result = await saveInterpretation(readingId, unsavedResult);
+    if (!result.ok) {
+      setSaveError(result.error);
+      setModalState("preview");
+      return;
+    }
+    if (replaced) writeInterpretationBackup(readingId, replaced);
+    setUnsavedResult(null);
+    onSaved();
+    onClose();
+  }, [unsavedResult, savedInterpretation, readingId, onSaved, onClose]);
 
   return createPortal(
     <div
@@ -129,7 +131,7 @@ const InterpretationModal: React.FC<InterpretationModalProps> = React.memo(({
       {/* Backdrop */}
       <div
         className="absolute inset-0 bg-black/80 backdrop-blur-sm z-0"
-        onClick={onClose}
+        onClick={requestClose}
       />
 
       {/* Modal panel */}
@@ -166,12 +168,12 @@ const InterpretationModal: React.FC<InterpretationModalProps> = React.memo(({
               className="text-xs sm:text-sm text-[#d4af37]/70 tracking-wide truncate"
               style={{ fontFamily: "'Cinzel', serif" }}
             >
-              {reading.readingType}
-              {reading.birth_date && ` · ${formatBirthDate(reading.birth_date)}`}
+              {spreadName}
+              {birthDate && ` · ${formatBirthDate(birthDate)}`}
             </p>
           </div>
           <button
-            onClick={onClose}
+            onClick={requestClose}
             className="shrink-0 text-[#d4af37]/60 hover:text-[#d4af37] transition-colors text-2xl leading-none px-2"
             aria-label="Close"
           >
@@ -181,12 +183,10 @@ const InterpretationModal: React.FC<InterpretationModalProps> = React.memo(({
 
         {/* Body */}
         <div className="p-6">
-          {/* LOADING STATE */}
-          {modalState === "loading" && (
+          {/* GENERATING STATE */}
+          {modalState === "generating" && (
             <div className="flex flex-col items-center gap-6 py-16">
-              <div
-                className="w-16 h-16 border-4 border-[#d4af37]/20 border-t-[#d4af37] rounded-full animate-spin"
-              />
+              <div className="w-16 h-16 border-4 border-[#d4af37]/20 border-t-[#d4af37] rounded-full animate-spin" />
               <p
                 className="text-[#d4af37]/80 text-lg tracking-wider"
                 style={{ fontFamily: "'Cinzel', serif" }}
@@ -196,7 +196,7 @@ const InterpretationModal: React.FC<InterpretationModalProps> = React.memo(({
             </div>
           )}
 
-          {/* ERROR STATE */}
+          {/* ERROR STATE (generate failed) */}
           {modalState === "error" && (
             <div className="flex flex-col items-center gap-6 py-8">
               <p
@@ -206,7 +206,7 @@ const InterpretationModal: React.FC<InterpretationModalProps> = React.memo(({
                 {errorMessage || "The oracle could not be reached."}
               </p>
               <button
-                onClick={() => { setModalState("loading"); fetchInterpretation(); }}
+                onClick={generate}
                 className="px-8 py-3 border border-[#d4af37]/40 text-[#d4af37] hover:bg-[#d4af37]/10 rounded-lg transition-all text-sm"
                 style={{ fontFamily: "'Cinzel', serif" }}
               >
@@ -215,38 +215,97 @@ const InterpretationModal: React.FC<InterpretationModalProps> = React.memo(({
             </div>
           )}
 
-          {/* RESULT STATE */}
-          {modalState === "result" && result && (
+          {/* PREVIEW / SAVING STATE */}
+          {(modalState === "preview" || modalState === "saving") && unsavedResult && (
             <div className="flex flex-col gap-8">
               <InterpretationDisplay
-                question={reading.question}
-                cardInterpretations={result.card_interpretations}
-                synthesis={result.synthesis}
-                cardVisuals={Object.fromEntries(
-                  Object.entries(reading.positions).map(([pos, card]) => [
-                    pos,
-                    { card, reversed: card.reversed },
-                  ])
-                )}
+                question={question}
+                cardInterpretations={unsavedResult.card_interpretations}
+                synthesis={unsavedResult.synthesis}
+                cardVisuals={cardVisuals}
               />
 
-              <button
-                onClick={onClose}
-                className="self-center px-10 py-3 border border-[#d4af37]/30 text-[#d4af37]/70 hover:text-[#d4af37]
-                           hover:border-[#d4af37]/60 rounded-lg transition-all text-sm"
-                style={{ fontFamily: "'Cinzel', serif" }}
-              >
-                Close
-              </button>
+              {saveError && (
+                <p
+                  className="text-red-400 text-center text-sm"
+                  style={{ fontFamily: "'Crimson Pro', serif" }}
+                >
+                  {saveError}
+                </p>
+              )}
+
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                <button
+                  onClick={handleSave}
+                  disabled={modalState === "saving"}
+                  className="px-10 py-3 bg-gradient-to-br from-[#d4af37] to-[#b8942f] text-[#1a0033] rounded-lg
+                             font-bold shadow-lg hover:shadow-[#d4af37]/50 transition-all
+                             disabled:opacity-60 disabled:cursor-not-allowed text-sm"
+                  style={{ fontFamily: "'Cinzel', serif", letterSpacing: "0.1em" }}
+                >
+                  {modalState === "saving" ? "Saving..." : "✦ Save Interpretation ✦"}
+                </button>
+                <button
+                  onClick={generate}
+                  disabled={modalState === "saving"}
+                  className="px-8 py-3 border border-[#d4af37]/30 text-[#d4af37]/70 hover:text-[#d4af37]
+                             hover:border-[#d4af37]/60 rounded-lg transition-all text-sm
+                             disabled:opacity-60 disabled:cursor-not-allowed"
+                  style={{ fontFamily: "'Cinzel', serif" }}
+                >
+                  Regenerate
+                </button>
+              </div>
             </div>
           )}
         </div>
+
+        {/* Unsaved-close confirmation */}
+        {showCloseConfirm && (
+          <div className="absolute inset-0 z-30 flex items-center justify-center bg-black/70">
+            <div
+              className="mx-6 p-6 rounded-xl border-2 border-[#d4af37]/40 text-center"
+              style={{
+                background:
+                  "linear-gradient(135deg, rgba(26,0,51,0.98) 0%, rgba(45,27,78,0.98) 100%)",
+              }}
+            >
+              <p
+                className="text-[#e6d5b8]/90 mb-6"
+                style={{ fontFamily: "'Crimson Pro', serif" }}
+              >
+                Save this interpretation before leaving?
+              </p>
+              <div className="flex items-center justify-center gap-4">
+                <button
+                  onClick={() => {
+                    setShowCloseConfirm(false);
+                    handleSave();
+                  }}
+                  className="px-8 py-2.5 bg-gradient-to-br from-[#d4af37] to-[#b8942f] text-[#1a0033]
+                             rounded-lg font-bold text-sm"
+                  style={{ fontFamily: "'Cinzel', serif" }}
+                >
+                  Save
+                </button>
+                <button
+                  onClick={onClose}
+                  className="px-8 py-2.5 border border-[#d4af37]/30 text-[#d4af37]/70
+                             hover:text-[#d4af37] rounded-lg text-sm"
+                  style={{ fontFamily: "'Cinzel', serif" }}
+                >
+                  Discard
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>,
     document.body
   );
 });
 
-InterpretationModal.displayName = 'InterpretationModal';
+InterpretationModal.displayName = "InterpretationModal";
 
 export default InterpretationModal;

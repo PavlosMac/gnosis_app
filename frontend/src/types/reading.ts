@@ -1,5 +1,5 @@
 import { TarotCardData } from "@/types/models";
-import type { CardOrientation, CardInterpretation } from "@/types/interpret";
+import type { CardOrientation, Interpretation } from "@/types/interpret";
 import type { SignificatorResult } from "@/lib/significators";
 
 export interface SelectedCard extends TarotCardData {
@@ -35,10 +35,7 @@ export interface ReadingListItem {
 }
 
 export interface ReadingDetail extends ReadingListItem {
-  card_interpretations: CardInterpretation[];
-  synthesis: string;
-  model: string;
-  tokens_used: number;
+  interpretation: Interpretation | null;
 }
 
 export type UpdateTagsResult =

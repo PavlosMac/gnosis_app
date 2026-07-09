@@ -10,6 +10,7 @@ export interface InterpretCardRequest {
 export interface InterpretRequest {
   spread_name: string;
   question?: string;
+  birth_date?: string;
   cards: InterpretCardRequest[];
 }
 
@@ -20,13 +21,35 @@ export interface CardInterpretation {
   interpretation: string;
 }
 
-export interface InterpretResponse {
+export type InterpretationStyle =
+  | "practical"
+  | "reflective"
+  | "spiritual"
+  | "esoteric";
+
+export interface InterpretationSettings {
+  style: InterpretationStyle;
+  depth: number;
+  tone: number;
+}
+
+export interface Interpretation {
   card_interpretations: CardInterpretation[];
   synthesis: string;
   model: string;
   tokens_used: number;
+  settings: InterpretationSettings;
+  context?: string;
 }
 
-export type InterpretResult =
-  | { ok: true; data: InterpretResponse }
+export type CreateReadingResult =
+  | { ok: true; readingId: string }
+  | { ok: false; error: string };
+
+export type GenerateInterpretationResult =
+  | { ok: true; data: Interpretation }
+  | { ok: false; error: string };
+
+export type SaveInterpretationResult =
+  | { ok: true }
   | { ok: false; error: string };

@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "test": "vitest run",
     "code-index": "./scripts/generate-code-index.sh"
   },
   "dependencies": {
@@ -25,7 +26,8 @@
     "eslint": "^9.27.0",
     "eslint-config-next": "^16.1.6",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^4.1.10"
   },
   "type": "module"
 }

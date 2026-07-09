@@ -16,3 +16,5 @@ Each entry should include:
 
 <!-- Add new work log entries below this line -->
 
+- **2026-07-09** — Step 1 frontend of decoupled reading/interpretation flow (spec `docs/superpowers/specs/2026-07-08-decoupled-interpretation-flow-design.md`): ribbon save via new `createReading`, generate/preview/save `InterpretationModal`, nested `ReadingDetail.interpretation` with null branch + restore on detail page, vitest setup. Status: completed (manual FE+BE flows verified).
+

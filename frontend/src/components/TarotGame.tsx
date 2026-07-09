@@ -11,9 +11,11 @@ import readingsConfig from "@/lib/readings-config.json";
 import { parseAndValidateDate } from "@/lib/dateValidation";
 
 import { useGameReducer, getSelectedCards, getReading } from "@/hooks/useGameReducer";
+import { createReading } from "@/app/user/interpret/actions";
+import { buildReadingPayload } from "@/lib/reading-payload";
 import type { User } from "@/types/auth";
 import type { SelectedCard } from "@/types/reading";
-import type { InterpretResult } from "@/types/interpret";
+import type { TarotCardData } from "@/types/models";
 
 interface PositionConfig {
   name: string;
@@ -55,7 +57,9 @@ export default function TarotGame({ user }: TarotGameProps) {
   const [showInterpretModal, setShowInterpretModal] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(!!user);
-  const [interpretResult, setInterpretResult] = useState<InterpretResult | null>(null);
+  const [savedReadingId, setSavedReadingId] = useState<string | null>(null);
+  const [savingReading, setSavingReading] = useState(false);
+  const [saveReadingError, setSaveReadingError] = useState<string | null>(null);
   const [game, dispatch] = useGameReducer();
   const deckRef = useRef<HTMLDivElement>(null);
   const readingRef = useRef<HTMLDivElement>(null);
@@ -109,23 +113,54 @@ export default function TarotGame({ user }: TarotGameProps) {
     dispatch({ type: 'RESET' });
     setShowInterpretModal(false);
     setShowLoginModal(false);
-    setInterpretResult(null);
+    setSavedReadingId(null);
+    setSaveReadingError(null);
   }, []);
 
   const handleCloseModal = useCallback(() => setShowInterpretModal(false), []);
 
   const handleCloseLoginModal = useCallback(() => setShowLoginModal(false), []);
 
+  const saveReading = useCallback(async () => {
+    if (!completedReading || savingReading || savedReadingId) return;
+    setSavingReading(true);
+    setSaveReadingError(null);
+    const result = await createReading(buildReadingPayload(completedReading));
+    if (result.ok) {
+      setSavedReadingId(result.readingId);
+    } else {
+      setSaveReadingError(result.error);
+    }
+    setSavingReading(false);
+  }, [completedReading, savingReading, savedReadingId]);
+
+  const handleRibbonClick = useCallback(() => {
+    if (!isLoggedIn) {
+      setShowLoginModal(true);
+      return;
+    }
+    saveReading();
+  }, [isLoggedIn, saveReading]);
+
   const handleLoginSuccess = useCallback(() => {
     setShowLoginModal(false);
     setIsLoggedIn(true);
     router.refresh();
-    setShowInterpretModal(true);
-  }, [router]);
+    saveReading();
+  }, [router, saveReading]);
 
-  const handleResultReceived = useCallback((r: InterpretResult) => {
-    setInterpretResult(r);
-  }, []);
+  const cardVisuals = useMemo(
+    () =>
+      completedReading
+        ? Object.fromEntries(
+            Object.entries(completedReading.positions).map(([pos, card]) => [
+              pos,
+              { card: card as TarotCardData, reversed: card.reversed },
+            ])
+          )
+        : {},
+    [completedReading]
+  );
 
   const handleBirthdateSubmit = useCallback(() => {
     const { dateParts, validation } = parseAndValidateDate(day, month, year);
@@ -426,7 +461,7 @@ export default function TarotGame({ user }: TarotGameProps) {
 
             {/* Reading component - shows after card flip animation completes */}
             {game.phase === 'reading' && (
-              <div ref={readingRef} className="mt-10 flex justify-center animate-fadeIn">
+              <div ref={readingRef} className="relative mt-10 flex justify-center animate-fadeIn">
                 <Reading
                   selectedCards={selectedCards}
                   positions={positionNames}
@@ -434,6 +469,49 @@ export default function TarotGame({ user }: TarotGameProps) {
                   isComplete={isReadingComplete}
                   significatorResult={completedReading?.significatorResult}
                 />
+
+                {isReadingComplete && (
+                  <div className="absolute top-0 right-1 sm:right-4 flex flex-col items-end gap-1">
+                    <button
+                      type="button"
+                      onClick={handleRibbonClick}
+                      disabled={savingReading || !!savedReadingId}
+                      aria-label={savedReadingId ? "Saved to Journal" : "Save this reading"}
+                      className={`p-2 rounded-lg border transition-all duration-300
+                        ${savedReadingId
+                          ? 'border-[#d4af37] bg-gradient-to-br from-[#d4af37] to-[#b8942f] text-[#1a0033]'
+                          : 'border-[#d4af37]/40 text-[#d4af37]/70 hover:text-[#d4af37] hover:border-[#d4af37] bg-[#1a0033]/70'}
+                        disabled:cursor-default`}
+                    >
+                      <svg width="18" height="22" viewBox="0 0 18 22" aria-hidden="true">
+                        <path
+                          d="M2 1h14v20l-7-5-7 5V1z"
+                          fill={savedReadingId ? "currentColor" : "none"}
+                          stroke="currentColor"
+                          strokeWidth="1.5"
+                        />
+                      </svg>
+                    </button>
+                    <span
+                      className="text-[10px] sm:text-xs text-[#d4af37]/60 text-right max-w-[9rem]"
+                      style={{ fontFamily: "'Cinzel', serif" }}
+                    >
+                      {savedReadingId
+                        ? "Saved to Journal"
+                        : savingReading
+                          ? "Saving..."
+                          : "Save this reading to get an interpretation"}
+                    </span>
+                    {saveReadingError && (
+                      <span
+                        className="text-[10px] sm:text-xs text-red-400 text-right max-w-[9rem]"
+                        style={{ fontFamily: "'Crimson Pro', serif" }}
+                      >
+                        {saveReadingError}
+                      </span>
+                    )}
+                  </div>
+                )}
               </div>
             )}
 
@@ -449,15 +527,17 @@ export default function TarotGame({ user }: TarotGameProps) {
                   ✦ New Reading ✦
                 </button>
 
-                <button
-                  className="px-8 sm:px-10 py-3 sm:py-4 bg-gradient-to-br from-[#8a2be2]/80 to-[#5a1a9e]/80 text-[#e6d5b8] rounded-lg
-                             shadow-lg hover:shadow-[#8a2be2]/40 transition-all duration-300 font-bold text-base sm:text-lg
-                             hover:scale-105 active:scale-95 border border-[#8a2be2]/40"
-                  style={{ fontFamily: "'Cinzel', serif", letterSpacing: '0.1em' }}
-                  onClick={() => isLoggedIn ? setShowInterpretModal(true) : setShowLoginModal(true)}
-                >
-                  {isLoggedIn ? "✦ Oracle Interpretation ✦" : "✦ Login to Get Interpretation ✦"}
-                </button>
+                {savedReadingId && (
+                  <button
+                    className="px-8 sm:px-10 py-3 sm:py-4 bg-gradient-to-br from-[#8a2be2]/80 to-[#5a1a9e]/80 text-[#e6d5b8] rounded-lg
+                               shadow-lg hover:shadow-[#8a2be2]/40 transition-all duration-300 font-bold text-base sm:text-lg
+                               hover:scale-105 active:scale-95 border border-[#8a2be2]/40 animate-fadeIn"
+                    style={{ fontFamily: "'Cinzel', serif", letterSpacing: '0.1em' }}
+                    onClick={() => setShowInterpretModal(true)}
+                  >
+                    ✦ Oracle Interpretation ✦
+                  </button>
+                )}
               </div>
             )}
           </div>
@@ -515,12 +595,15 @@ export default function TarotGame({ user }: TarotGameProps) {
       </div>
     )}
 
-    {showInterpretModal && completedReading && (
+    {showInterpretModal && completedReading && savedReadingId && (
       <InterpretationModal
-        reading={completedReading}
+        readingId={savedReadingId}
+        spreadName={completedReading.readingType}
+        question={completedReading.question}
+        birthDate={completedReading.birth_date}
+        cardVisuals={cardVisuals}
         onClose={handleCloseModal}
-        initialResult={interpretResult}
-        onResultReceived={handleResultReceived}
+        onSaved={() => {}}
       />
     )}
 
