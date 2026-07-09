@@ -3,7 +3,11 @@ from datetime import date
 import pytest
 from bson import ObjectId
 
-from src.llm.mock_adapter import MockLLMAdapter
+from src.interpretations.models import Interpretation
+from src.interpretations.repository import (
+    InterpretationReadRepository,
+    InterpretationWriteRepository,
+)
 from src.llm.schemas import CardInSpread
 from src.readings.commands.create_reading import CreateReadingCommand, CreateReadingHandler
 from src.readings.commands.update_reading_tags import (
@@ -32,13 +36,13 @@ def repos(mock_db):
 @pytest.fixture
 def create_handler(repos):
     write_repo, _ = repos
-    return CreateReadingHandler(write_repo=write_repo, llm=MockLLMAdapter())
+    return CreateReadingHandler(write_repo=write_repo)
 
 
 @pytest.fixture
-def get_handler(repos):
+def get_handler(repos, mock_db):
     _, read_repo = repos
-    return GetReadingByIdHandler(read_repo)
+    return GetReadingByIdHandler(read_repo, InterpretationReadRepository(mock_db))
 
 
 @pytest.fixture
@@ -69,6 +73,38 @@ async def test_get_reading_by_id(create_handler, get_handler, user_id):
     result = await get_handler.handle(GetReadingByIdQuery(reading_id=created.id, user_id=user_id))
     assert result.id == created.id
     assert result.spread_type == "Celtic Cross"
+    assert result.interpretation is None
+
+
+async def test_get_reading_by_id_includes_saved_interpretation(
+    create_handler, get_handler, user_id, mock_db
+):
+    created = await create_handler.handle(_make_command(user_id))
+    interpretation = Interpretation(
+        reading_id=created.id,
+        user_id=user_id,
+        card_interpretations=[
+            {
+                "card_name": "The Fool",
+                "position": "Present",
+                "orientation": "upright",
+                "interpretation": "New beginnings.",
+            }
+        ],
+        synthesis="A journey begins.",
+        tokens_used=10,
+        model="mock",
+        settings={"style": "reflective", "depth": 60, "tone": 50},
+    )
+    await InterpretationWriteRepository(mock_db).upsert_by_reading_id(
+        created.id, interpretation.to_document()
+    )
+
+    result = await get_handler.handle(GetReadingByIdQuery(reading_id=created.id, user_id=user_id))
+
+    assert result.interpretation is not None
+    assert result.interpretation.synthesis == "A journey begins."
+    assert result.interpretation.settings.depth == 60
 
 
 async def test_get_reading_not_found(get_handler, user_id):

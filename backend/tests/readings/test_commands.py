@@ -1,7 +1,6 @@
 import pytest
 from bson import ObjectId
 
-from src.llm.mock_adapter import MockLLMAdapter
 from src.llm.schemas import CardInSpread
 from src.readings.commands.create_reading import CreateReadingCommand, CreateReadingHandler
 from src.readings.commands.update_reading_tags import (
@@ -14,10 +13,7 @@ from src.readings.service import ReadingNotFoundError
 
 @pytest.fixture
 def handler(mock_db):
-    return CreateReadingHandler(
-        write_repo=ReadingWriteRepository(mock_db),
-        llm=MockLLMAdapter(),
-    )
+    return CreateReadingHandler(write_repo=ReadingWriteRepository(mock_db))
 
 
 @pytest.fixture
@@ -52,11 +48,7 @@ async def test_create_reading_returns_read_model(handler, valid_command):
     assert result.question == "What does the future hold?"
     assert len(result.cards) == 1
     assert result.cards[0].name == "The Fool"
-    assert len(result.card_interpretations) == 1
-    assert result.card_interpretations[0].card_name == "The Fool"
-    assert result.synthesis is not None
-    assert result.model == "mock"
-    assert result.tokens_used == 0
+    assert result.interpretation is None
 
 
 async def test_create_reading_persists_to_db(handler, valid_command, mock_db):
@@ -79,6 +71,25 @@ async def test_create_reading_without_question(handler):
     result = await handler.handle(command)
     assert result.question is None
     assert result.cards[0].orientation == "reversed"
+
+
+async def test_create_reading_persists_position_description(handler):
+    command = CreateReadingCommand(
+        user_id=str(ObjectId()),
+        spread_name="Celtic Cross",
+        cards=[
+            CardInSpread(
+                name="The Fool",
+                position="Present",
+                orientation="upright",
+                position_description="Will, drive, and what energises the situation",
+            ),
+        ],
+    )
+    result = await handler.handle(command)
+    assert result.cards[0].position_description == (
+        "Will, drive, and what energises the situation"
+    )
 
 
 async def test_update_reading_tags_sets_tags(handler, valid_command, update_tags_handler):

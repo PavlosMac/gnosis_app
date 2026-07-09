@@ -3,8 +3,7 @@ from datetime import date
 import structlog
 
 from src.cqrs.commands import BaseCommand, CommandHandler
-from src.llm.port import LLMPort
-from src.llm.schemas import CardInSpread, InterpretationRequest
+from src.llm.schemas import CardInSpread
 from src.readings.models import Reading
 from src.readings.repository import ReadingWriteRepository
 from src.readings.schemas import ReadingReadModel
@@ -21,23 +20,10 @@ class CreateReadingCommand(BaseCommand):
 
 
 class CreateReadingHandler(CommandHandler[CreateReadingCommand, ReadingReadModel]):
-    def __init__(
-        self,
-        write_repo: ReadingWriteRepository,
-        llm: LLMPort,
-    ) -> None:
+    def __init__(self, write_repo: ReadingWriteRepository) -> None:
         self._write_repo = write_repo
-        self._llm = llm
 
     async def handle(self, command: CreateReadingCommand) -> ReadingReadModel:
-        llm_request = InterpretationRequest(
-            spread_name=command.spread_name,
-            question=command.question,
-            birth_date=command.birth_date,
-            cards=command.cards,
-        )
-        llm_response = await self._llm.generate_interpretation(llm_request)
-
         reading = Reading(
             user_id=command.user_id,
             spread_type=command.spread_name,
@@ -48,21 +34,10 @@ class CreateReadingHandler(CommandHandler[CreateReadingCommand, ReadingReadModel
                     "name": card.name,
                     "position": card.position,
                     "orientation": card.orientation.value,
+                    "position_description": card.position_description,
                 }
                 for card in command.cards
             ],
-            card_interpretations=[
-                {
-                    "card_name": ci.card_name,
-                    "position": ci.position,
-                    "orientation": ci.orientation.value,
-                    "interpretation": ci.interpretation,
-                }
-                for ci in llm_response.card_interpretations
-            ],
-            synthesis=llm_response.synthesis,
-            tokens_used=llm_response.tokens_used,
-            model=llm_response.model,
         )
 
         document = reading.to_document()
@@ -77,10 +52,7 @@ class CreateReadingHandler(CommandHandler[CreateReadingCommand, ReadingReadModel
                 "question": reading.question,
                 "birth_date": reading.birth_date,
                 "cards": reading.cards,
-                "card_interpretations": reading.card_interpretations,
-                "synthesis": reading.synthesis,
-                "tokens_used": reading.tokens_used,
-                "model": reading.model,
+                "interpretation": None,
                 "created_at": reading.created_at,
             }
         )

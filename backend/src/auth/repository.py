@@ -1,6 +1,8 @@
 from datetime import datetime
 from typing import Any
 
+from bson import ObjectId
+
 from src.database.base_repository import BaseReadRepository, BaseWriteRepository
 from src.database.collections.constants import REFRESH_TOKENS_COLLECTION, USERS_COLLECTION
 
@@ -9,6 +11,12 @@ class AuthWriteRepository(BaseWriteRepository):
     @property
     def collection_name(self) -> str:
         return USERS_COLLECTION
+
+    async def increment_tokens_used(self, user_id: str, tokens: int) -> None:
+        await self._collection.update_one(
+            {"_id": ObjectId(user_id)},
+            {"$inc": {"total_tokens_used": tokens}},
+        )
 
 
 class AuthReadRepository(BaseReadRepository):

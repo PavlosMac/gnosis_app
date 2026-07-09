@@ -11,6 +11,21 @@ class Orientation(StrEnum):
     reversed = "reversed"
 
 
+class ReadingStyle(StrEnum):
+    practical = "practical"
+    reflective = "reflective"
+    spiritual = "spiritual"
+    esoteric = "esoteric"
+
+
+class InterpretationSettings(BaseModel):
+    model_config = {"frozen": True}
+
+    style: ReadingStyle
+    depth: int = Field(..., ge=0, le=100)
+    tone: int = Field(..., ge=0, le=100)
+
+
 class CardInSpread(BaseModel):
     model_config = {"frozen": True}
 

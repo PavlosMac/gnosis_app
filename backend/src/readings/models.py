@@ -10,10 +10,6 @@ class Reading:
         user_id: str,
         spread_type: str,
         cards: list[dict[str, Any]],
-        card_interpretations: list[dict[str, Any]],
-        synthesis: str,
-        tokens_used: int,
-        model: str,
         question: str | None = None,
         birth_date: date | None = None,
         tags: list[str] | None = None,
@@ -27,10 +23,6 @@ class Reading:
         self.birth_date = birth_date
         self.tags = tags if tags is not None else []
         self.cards = cards
-        self.card_interpretations = card_interpretations
-        self.synthesis = synthesis
-        self.tokens_used = tokens_used
-        self.model = model
         self.created_at = created_at or datetime.now(UTC)
 
     def to_document(self) -> dict[str, Any]:
@@ -38,10 +30,6 @@ class Reading:
             "user_id": ObjectId(self.user_id),
             "spread_type": self.spread_type,
             "cards": self.cards,
-            "card_interpretations": self.card_interpretations,
-            "synthesis": self.synthesis,
-            "tokens_used": self.tokens_used,
-            "model": self.model,
             "created_at": self.created_at,
         }
         if self.id:
@@ -64,9 +52,5 @@ class Reading:
             birth_date=date.fromisoformat(doc["birth_date"]) if doc.get("birth_date") else None,
             tags=doc.get("tags", []),
             cards=doc["cards"],
-            card_interpretations=doc["card_interpretations"],
-            synthesis=doc["synthesis"],
-            tokens_used=doc["tokens_used"],
-            model=doc["model"],
             created_at=doc.get("created_at"),
         )

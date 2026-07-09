@@ -28,6 +28,18 @@ async def app(mock_db):
         RefreshTokenRepository,
     )
     from src.cqrs.mediator import Mediator
+    from src.interpretations.commands.generate_interpretation import (
+        GenerateInterpretationCommand,
+        GenerateInterpretationHandler,
+    )
+    from src.interpretations.commands.save_interpretation import (
+        SaveInterpretationCommand,
+        SaveInterpretationHandler,
+    )
+    from src.interpretations.repository import (
+        InterpretationReadRepository,
+        InterpretationWriteRepository,
+    )
     from src.llm.mock_adapter import MockLLMAdapter
     from src.main import app
     from src.readings.commands.create_reading import CreateReadingCommand, CreateReadingHandler
@@ -60,16 +72,28 @@ async def app(mock_db):
     mock_llm = MockLLMAdapter()
     reading_write_repo = ReadingWriteRepository(mock_db)
     reading_read_repo = ReadingReadRepository(mock_db)
+    interpretation_write_repo = InterpretationWriteRepository(mock_db)
+    interpretation_read_repo = InterpretationReadRepository(mock_db)
 
-    mediator.register_command(
-        CreateReadingCommand, CreateReadingHandler(reading_write_repo, mock_llm)
-    )
+    mediator.register_command(CreateReadingCommand, CreateReadingHandler(reading_write_repo))
     mediator.register_command(
         UpdateReadingTagsCommand,
         UpdateReadingTagsHandler(reading_write_repo, reading_read_repo),
     )
-    mediator.register_query(GetReadingByIdQuery, GetReadingByIdHandler(reading_read_repo))
+    mediator.register_query(
+        GetReadingByIdQuery, GetReadingByIdHandler(reading_read_repo, interpretation_read_repo)
+    )
     mediator.register_query(ListUserReadingsQuery, ListUserReadingsHandler(reading_read_repo))
+    mediator.register_command(
+        GenerateInterpretationCommand,
+        GenerateInterpretationHandler(reading_read_repo, user_write_repo, mock_llm),
+    )
+    mediator.register_command(
+        SaveInterpretationCommand,
+        SaveInterpretationHandler(
+            reading_read_repo, interpretation_write_repo, interpretation_read_repo
+        ),
+    )
 
     app.state.mediator = mediator
     app.state.refresh_token_repo = RefreshTokenRepository(mock_db)

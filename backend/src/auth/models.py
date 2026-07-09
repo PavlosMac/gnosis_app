@@ -13,6 +13,7 @@ class User:
         credits: int = 0,
         is_superadmin: bool = False,
         stripe_customer_id: str | None = None,
+        total_tokens_used: int = 0,
         id: str | None = None,
         created_at: datetime | None = None,
         updated_at: datetime | None = None,
@@ -24,6 +25,7 @@ class User:
         self.credits = credits
         self.is_superadmin = is_superadmin
         self.stripe_customer_id = stripe_customer_id
+        self.total_tokens_used = total_tokens_used
         self.created_at = created_at or datetime.now(UTC)
         self.updated_at = updated_at or datetime.now(UTC)
 
@@ -33,6 +35,7 @@ class User:
             "password_hash": self.password_hash,
             "credits": self.credits,
             "is_superadmin": self.is_superadmin,
+            "total_tokens_used": self.total_tokens_used,
             "created_at": self.created_at,
             "updated_at": self.updated_at,
         }
@@ -54,6 +57,7 @@ class User:
             credits=doc.get("credits", 0),
             is_superadmin=doc.get("is_superadmin", False),
             stripe_customer_id=doc.get("stripe_customer_id"),
+            total_tokens_used=doc.get("total_tokens_used", 0),
             created_at=doc.get("created_at"),
             updated_at=doc.get("updated_at"),
         )

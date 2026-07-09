@@ -4,6 +4,7 @@ from pydantic import Field, field_validator
 
 from src.core.base_schema import AppSchema
 from src.core.types import PyObjectId
+from src.interpretations.schemas import InterpretationReadModel
 from src.llm.schemas import CardInSpread, Orientation
 
 MAX_TAGS_PER_READING = 5
@@ -46,17 +47,11 @@ class UpdateReadingTagsRequest(AppSchema):
         return parsed
 
 
-class CardInterpretationReadModel(AppSchema):
-    card_name: str
-    position: str
-    orientation: Orientation
-    interpretation: str
-
-
 class CardReadModel(AppSchema):
     name: str
     position: str
     orientation: Orientation
+    position_description: str | None = None
 
 
 class ReadingReadModel(AppSchema):
@@ -67,10 +62,7 @@ class ReadingReadModel(AppSchema):
     birth_date: date | None = None
     tags: list[str] = Field(default_factory=list)
     cards: list[CardReadModel]
-    card_interpretations: list[CardInterpretationReadModel]
-    synthesis: str
-    tokens_used: int
-    model: str
+    interpretation: InterpretationReadModel | None = None
     created_at: datetime
 
 
