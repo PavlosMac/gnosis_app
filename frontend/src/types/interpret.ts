@@ -42,6 +42,11 @@ export interface Interpretation {
   context?: string;
 }
 
+export interface GenerationTuning {
+  settings: InterpretationSettings;
+  context?: string;
+}
+
 export type CreateReadingResult =
   | { ok: true; readingId: string }
   | { ok: false; error: string };

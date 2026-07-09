@@ -27,6 +27,11 @@ export const interpretationSettingsSchema = z.object({
   tone: z.number().int().min(0).max(100),
 });
 
+export const generationTuningSchema = z.object({
+  settings: interpretationSettingsSchema,
+  context: z.string().trim().max(CONTEXT_MAX_LENGTH).optional(),
+});
+
 export const saveInterpretationSchema = z.object({
   card_interpretations: z.array(
     z.object({

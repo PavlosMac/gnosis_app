@@ -461,57 +461,60 @@ export default function TarotGame({ user }: TarotGameProps) {
 
             {/* Reading component - shows after card flip animation completes */}
             {game.phase === 'reading' && (
-              <div ref={readingRef} className="relative mt-10 flex justify-center animate-fadeIn">
-                <Reading
-                  selectedCards={selectedCards}
-                  positions={positionNames}
-                  question={selectedReading.showQuestion ? userQuestion : undefined}
-                  isComplete={isReadingComplete}
-                  significatorResult={completedReading?.significatorResult}
-                />
-
-                {isReadingComplete && (
-                  <div className="absolute top-0 right-1 sm:right-4 flex flex-col items-end gap-1">
-                    <button
-                      type="button"
-                      onClick={handleRibbonClick}
-                      disabled={savingReading || !!savedReadingId}
-                      aria-label={savedReadingId ? "Saved to Journal" : "Save this reading"}
-                      className={`p-2 rounded-lg border transition-all duration-300
-                        ${savedReadingId
-                          ? 'border-[#d4af37] bg-gradient-to-br from-[#d4af37] to-[#b8942f] text-[#1a0033]'
-                          : 'border-[#d4af37]/40 text-[#d4af37]/70 hover:text-[#d4af37] hover:border-[#d4af37] bg-[#1a0033]/70'}
-                        disabled:cursor-default`}
-                    >
-                      <svg width="18" height="22" viewBox="0 0 18 22" aria-hidden="true">
-                        <path
-                          d="M2 1h14v20l-7-5-7 5V1z"
-                          fill={savedReadingId ? "currentColor" : "none"}
-                          stroke="currentColor"
-                          strokeWidth="1.5"
-                        />
-                      </svg>
-                    </button>
-                    <span
-                      className="text-[10px] sm:text-xs text-[#d4af37]/60 text-right max-w-[9rem]"
-                      style={{ fontFamily: "'Cinzel', serif" }}
-                    >
-                      {savedReadingId
-                        ? "Saved to Journal"
-                        : savingReading
-                          ? "Saving..."
-                          : "Save this reading to get an interpretation"}
-                    </span>
-                    {saveReadingError && (
-                      <span
-                        className="text-[10px] sm:text-xs text-red-400 text-right max-w-[9rem]"
-                        style={{ fontFamily: "'Crimson Pro', serif" }}
+              <div ref={readingRef} className="mt-10 flex justify-center animate-fadeIn">
+                <div className="flex flex-col">
+                  {isReadingComplete && (
+                    <div className="self-end flex items-center gap-2 mb-3">
+                      <div className="flex flex-col items-end">
+                        {!savedReadingId && (
+                          <span
+                            className="text-[10px] sm:text-xs text-[#d4af37]/60 text-right"
+                            style={{ fontFamily: "'Cinzel', serif" }}
+                          >
+                            {savingReading ? "Saving..." : "Save before interpretation"}
+                          </span>
+                        )}
+                        {saveReadingError && (
+                          <span
+                            className="text-[10px] sm:text-xs text-red-400 text-right max-w-[11rem]"
+                            style={{ fontFamily: "'Crimson Pro', serif" }}
+                          >
+                            {saveReadingError}
+                          </span>
+                        )}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleRibbonClick}
+                        disabled={savingReading || !!savedReadingId}
+                        title={savedReadingId ? "Saved to Journal" : undefined}
+                        aria-label={savedReadingId ? "Saved to Journal" : "Save this reading"}
+                        className={`shrink-0 p-2 rounded-lg border transition-all duration-300
+                          ${savedReadingId
+                            ? 'border-[#d4af37] bg-gradient-to-br from-[#d4af37] to-[#b8942f] text-[#1a0033]'
+                            : 'border-[#d4af37]/40 text-[#d4af37]/70 hover:text-[#d4af37] hover:border-[#d4af37] bg-[#1a0033]/70'}
+                          disabled:cursor-default`}
                       >
-                        {saveReadingError}
-                      </span>
-                    )}
-                  </div>
-                )}
+                        <svg width="18" height="22" viewBox="0 0 18 22" aria-hidden="true">
+                          <path
+                            d="M2 1h14v20l-7-5-7 5V1z"
+                            fill={savedReadingId ? "currentColor" : "none"}
+                            stroke="currentColor"
+                            strokeWidth="1.5"
+                          />
+                        </svg>
+                      </button>
+                    </div>
+                  )}
+
+                  <Reading
+                    selectedCards={selectedCards}
+                    positions={positionNames}
+                    question={selectedReading.showQuestion ? userQuestion : undefined}
+                    isComplete={isReadingComplete}
+                    significatorResult={completedReading?.significatorResult}
+                  />
+                </div>
               </div>
             )}
 

@@ -4,15 +4,25 @@ import React, { useState, useEffect, useCallback, useRef } from "react";
 import { createPortal } from "react-dom";
 import OrnateFrame from "@/components/OrnateFrame";
 import InterpretationDisplay from "@/components/InterpretationDisplay";
+import InterpretationSettingsControls from "@/components/InterpretationSettingsControls";
 import {
   generateInterpretation,
   saveInterpretation,
 } from "@/app/user/interpret/actions";
 import { writeInterpretationBackup } from "@/lib/interpretation-backup";
+import {
+  DEFAULT_SETTINGS,
+  generationInputsChanged,
+  type GenerationInputs,
+} from "@/lib/interpretation-settings";
 import type { TarotCardData } from "@/types/models";
-import type { Interpretation } from "@/types/interpret";
+import type {
+  Interpretation,
+  InterpretationSettings,
+  GenerationTuning,
+} from "@/types/interpret";
 
-type ModalState = "generating" | "preview" | "saving" | "error";
+type ModalState = "generating" | "preview" | "tweak" | "saving" | "error";
 
 const SHORT_MONTHS = [
   "Jan", "Feb", "Mar", "Apr", "May", "Jun",
@@ -46,14 +56,29 @@ const InterpretationModal: React.FC<InterpretationModalProps> = React.memo(({
   onClose,
   onSaved,
 }) => {
-  const [modalState, setModalState] = useState<ModalState>("generating");
+  const [modalState, setModalState] = useState<ModalState>(
+    savedInterpretation ? "tweak" : "generating"
+  );
   const [unsavedResult, setUnsavedResult] = useState<Interpretation | null>(null);
+  const [tunedSettings, setTunedSettings] = useState<InterpretationSettings>(
+    savedInterpretation?.settings ?? DEFAULT_SETTINGS
+  );
+  const [tunedContext, setTunedContext] = useState(savedInterpretation?.context ?? "");
+  const [lastGenerated, setLastGenerated] = useState<GenerationInputs | null>(
+    savedInterpretation
+      ? {
+          settings: savedInterpretation.settings,
+          context: savedInterpretation.context ?? "",
+        }
+      : null
+  );
   const [errorMessage, setErrorMessage] = useState("");
   const [saveError, setSaveError] = useState("");
   const [showCloseConfirm, setShowCloseConfirm] = useState(false);
 
   const isFetchingRef = useRef(false);
   const hasFetchedRef = useRef(false);
+  const lastAttemptRef = useRef<() => void>(() => {});
 
   const requestClose = useCallback(() => {
     if (unsavedResult) {
@@ -78,32 +103,54 @@ const InterpretationModal: React.FC<InterpretationModalProps> = React.memo(({
     };
   }, [requestClose]);
 
-  const generate = useCallback(async () => {
-    if (isFetchingRef.current) return;
-    isFetchingRef.current = true;
-    setModalState("generating");
-    setSaveError("");
-    try {
-      const result = await generateInterpretation(readingId);
-      if (result.ok) {
-        setUnsavedResult(result.data);
-        setModalState("preview");
-      } else {
-        setErrorMessage(result.error);
-        setModalState("error");
+  const runGenerate = useCallback(
+    async (tuning: GenerationTuning | undefined, sentContext: string) => {
+      if (isFetchingRef.current) return;
+      isFetchingRef.current = true;
+      setModalState("generating");
+      setSaveError("");
+      try {
+        const result = await generateInterpretation(readingId, tuning);
+        if (result.ok) {
+          const trimmedContext = sentContext.trim();
+          setUnsavedResult({
+            ...result.data,
+            ...(trimmedContext && { context: trimmedContext }),
+          });
+          setTunedSettings(result.data.settings);
+          setLastGenerated({ settings: result.data.settings, context: trimmedContext });
+          setModalState("preview");
+        } else {
+          setErrorMessage(result.error);
+          setModalState("error");
+        }
+      } finally {
+        isFetchingRef.current = false;
       }
-    } finally {
-      isFetchingRef.current = false;
-    }
-  }, [readingId]);
+    },
+    [readingId]
+  );
 
-  // Fire once on mount
+  const generateInitial = useCallback(() => {
+    lastAttemptRef.current = generateInitial;
+    runGenerate(undefined, "");
+  }, [runGenerate]);
+
+  const regenerateTuned = useCallback(() => {
+    lastAttemptRef.current = regenerateTuned;
+    runGenerate(
+      { settings: tunedSettings, context: tunedContext.trim() || undefined },
+      tunedContext
+    );
+  }, [runGenerate, tunedSettings, tunedContext]);
+
+  // Fire once on mount, unless opened on a saved interpretation (tweak baseline)
   useEffect(() => {
-    if (!hasFetchedRef.current) {
+    if (!savedInterpretation && !hasFetchedRef.current) {
       hasFetchedRef.current = true;
-      generate();
+      generateInitial();
     }
-  }, [generate]);
+  }, [savedInterpretation, generateInitial]);
 
   const handleSave = useCallback(async () => {
     if (!unsavedResult) return;
@@ -206,7 +253,7 @@ const InterpretationModal: React.FC<InterpretationModalProps> = React.memo(({
                 {errorMessage || "The oracle could not be reached."}
               </p>
               <button
-                onClick={generate}
+                onClick={() => lastAttemptRef.current()}
                 className="px-8 py-3 border border-[#d4af37]/40 text-[#d4af37] hover:bg-[#d4af37]/10 rounded-lg transition-all text-sm"
                 style={{ fontFamily: "'Cinzel', serif" }}
               >
@@ -246,16 +293,63 @@ const InterpretationModal: React.FC<InterpretationModalProps> = React.memo(({
                   {modalState === "saving" ? "Saving..." : "✦ Save Interpretation ✦"}
                 </button>
                 <button
-                  onClick={generate}
+                  onClick={() => setModalState("tweak")}
                   disabled={modalState === "saving"}
                   className="px-8 py-3 border border-[#d4af37]/30 text-[#d4af37]/70 hover:text-[#d4af37]
                              hover:border-[#d4af37]/60 rounded-lg transition-all text-sm
                              disabled:opacity-60 disabled:cursor-not-allowed"
                   style={{ fontFamily: "'Cinzel', serif" }}
                 >
-                  Regenerate
+                  Tune &amp; Regenerate
                 </button>
               </div>
+            </div>
+          )}
+          {/* TWEAK STATE */}
+          {modalState === "tweak" && (
+            <div className="flex flex-col gap-8">
+              <InterpretationSettingsControls
+                settings={tunedSettings}
+                context={tunedContext}
+                onSettingsChange={setTunedSettings}
+                onContextChange={setTunedContext}
+              />
+
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                <button
+                  onClick={regenerateTuned}
+                  disabled={
+                    lastGenerated !== null &&
+                    !generationInputsChanged(
+                      { settings: tunedSettings, context: tunedContext },
+                      lastGenerated
+                    )
+                  }
+                  className="px-10 py-3 bg-gradient-to-br from-[#8a2be2]/80 to-[#5a1a9e]/80 text-[#e6d5b8] rounded-lg
+                             font-bold shadow-lg hover:shadow-[#8a2be2]/40 transition-all text-sm border border-[#8a2be2]/40
+                             disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:shadow-none"
+                  style={{ fontFamily: "'Cinzel', serif", letterSpacing: "0.1em" }}
+                >
+                  ✦ Regenerate ✦
+                </button>
+                {unsavedResult && (
+                  <button
+                    onClick={() => setModalState("preview")}
+                    className="px-8 py-3 border border-[#d4af37]/30 text-[#d4af37]/70 hover:text-[#d4af37]
+                               hover:border-[#d4af37]/60 rounded-lg transition-all text-sm"
+                    style={{ fontFamily: "'Cinzel', serif" }}
+                  >
+                    Back to preview
+                  </button>
+                )}
+              </div>
+
+              <p
+                className="text-center text-xs text-[#e6d5b8]/40"
+                style={{ fontFamily: "'Crimson Pro', serif" }}
+              >
+                Adjust the style, depth, tone, or context to regenerate.
+              </p>
             </div>
           )}
         </div>

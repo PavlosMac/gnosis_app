@@ -4,11 +4,13 @@ import { authenticatedFetch } from "@/lib/api-client";
 import { getCurrentUser } from "@/lib/session";
 import {
   interpretRequestSchema,
+  generationTuningSchema,
   saveInterpretationSchema,
 } from "@/lib/validation/interpret-schemas";
 import type {
   InterpretRequest,
   Interpretation,
+  GenerationTuning,
   CreateReadingResult,
   GenerateInterpretationResult,
   SaveInterpretationResult,
@@ -42,14 +44,26 @@ export const createReading = async (
 };
 
 export const generateInterpretation = async (
-  readingId: string
+  readingId: string,
+  tuning?: GenerationTuning
 ): Promise<GenerateInterpretationResult> => {
   const user = await getCurrentUser();
   if (!user) return { ok: false, error: NOT_LOGGED_IN };
 
+  let body = {};
+  if (tuning) {
+    const parsed = generationTuningSchema.safeParse(tuning);
+    if (!parsed.success)
+      return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid settings." };
+    body = {
+      settings: parsed.data.settings,
+      ...(parsed.data.context && { context: parsed.data.context }),
+    };
+  }
+
   const result = await authenticatedFetch<Interpretation>(
     `/api/v1/readings/${readingId}/interpretation/generate`,
-    { method: "POST", body: JSON.stringify({}) }
+    { method: "POST", body: JSON.stringify(body) }
   );
 
   if (!result.ok)

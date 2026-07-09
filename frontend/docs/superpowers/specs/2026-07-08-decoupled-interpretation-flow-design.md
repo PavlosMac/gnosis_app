@@ -34,7 +34,10 @@ list badge.
   Returns interpretation content **including the resolved `settings`
   actually used**. This echo exists from Step 1 (hardcoded defaults
   `{style: "reflective", depth: 60, tone: 50}` before tuning ships), so the
-  request/response shapes never change between steps. Not persisted.
+  request/response shapes never change between steps. `context` is NOT
+  echoed — the frontend keeps what the user typed and carries it into the
+  save body and the regenerate guard itself. Not persisted. Out-of-range
+  values (depth/tone outside 0–100, context over 100 chars) get a 422.
 - `POST /api/v1/readings/{id}/interpretation` — save (upsert by `reading_id`);
   body echoes generated content + the **whole `settings` object** + `context`.
 - `GET /api/v1/readings/{id}` — reading with nested
