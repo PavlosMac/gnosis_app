@@ -114,7 +114,7 @@ export const authenticatedFetch = async <T>(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<ApiResult<T>> => {
-  console.log("[AUTH:FETCH] authenticatedFetch →", endpoint);
+  console.log("[AUTH:FETCH] authenticatedFetch →", endpoint, options);
 
   let accessToken = await getValidAccessToken();
 
@@ -157,7 +157,13 @@ export const authenticatedFetch = async <T>(
   }
 
   if (!res.ok) {
-    console.log("[AUTH:FETCH] Request failed", { endpoint, status: res.status });
+    const errorBody = await res.text();
+    console.log("[AUTH:FETCH] Request failed", {
+      endpoint,
+      status: res.status,
+      statusText: res.statusText,
+      body: errorBody,
+    });
     return { ok: false, status: res.status, message: safeErrorMessage(res.status, "An unexpected error occurred.") };
   }
 

@@ -1,5 +1,7 @@
 # Decoupled Interpretation Flow — Step 1 Frontend Implementation Plan
 
+> **Superseded (2026-08-21):** see `docs/multi-lens-interpretations.md` — lens/intent/depth settings, one interpretation slot per lens, backup/restore dropped.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Implement Step 1 of `docs/superpowers/specs/2026-07-08-decoupled-interpretation-flow-design.md` — save-reading ribbon, generate/preview/save interpretation modal, detail-page null branch, overwrite backup + restore. No tuning controls (Step 2) and no profile defaults or list badge (Step 3).

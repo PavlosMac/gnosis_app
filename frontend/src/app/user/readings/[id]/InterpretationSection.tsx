@@ -1,18 +1,15 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import InterpretationDisplay from "@/components/InterpretationDisplay";
 import InterpretationModal from "@/components/InterpretationModal";
 import TarotCard from "@/components/TarotCard";
-import { saveInterpretation } from "@/app/user/interpret/actions";
-import {
-  readInterpretationBackup,
-  writeInterpretationBackup,
-} from "@/lib/interpretation-backup";
 import type { TarotCardData } from "@/types/models";
 import type { SavedCard } from "@/types/reading";
-import type { Interpretation } from "@/types/interpret";
+import type { Interpretation, InterpretationLens } from "@/types/interpret";
+
+const capitalize = (s: string): string => s.charAt(0).toUpperCase() + s.slice(1);
 
 interface InterpretationSectionProps {
   readingId: string;
@@ -21,7 +18,7 @@ interface InterpretationSectionProps {
   birthDate?: string;
   cardVisuals: Record<string, { card: TarotCardData; reversed: boolean } | null>;
   cards: SavedCard[];
-  interpretation: Interpretation | null;
+  interpretations: Interpretation[];
 }
 
 const InterpretationSection: React.FC<InterpretationSectionProps> = ({
@@ -31,50 +28,73 @@ const InterpretationSection: React.FC<InterpretationSectionProps> = ({
   birthDate,
   cardVisuals,
   cards,
-  interpretation,
+  interpretations,
 }) => {
   const router = useRouter();
   const [showModal, setShowModal] = useState(false);
-  const [hasBackup, setHasBackup] = useState(false);
-  const [restoring, setRestoring] = useState(false);
-  const [restoreError, setRestoreError] = useState("");
+  const [activeLens, setActiveLens] = useState<InterpretationLens | null>(null);
 
-  // localStorage is client-only; read after mount to avoid hydration mismatch
-  useEffect(() => {
-    setHasBackup(readInterpretationBackup(readingId) !== null);
-  }, [readingId, interpretation]);
-
-  const handleRestore = useCallback(async () => {
-    const backup = readInterpretationBackup(readingId);
-    if (!backup) return;
-    setRestoring(true);
-    setRestoreError("");
-    const result = await saveInterpretation(readingId, backup);
-    if (result.ok) {
-      if (interpretation) writeInterpretationBackup(readingId, interpretation);
-      router.refresh();
-    } else {
-      setRestoreError(result.error);
-    }
-    setRestoring(false);
-  }, [readingId, interpretation, router]);
+  const ordered = [...interpretations].sort((a, b) =>
+    (a.created_at ?? "").localeCompare(b.created_at ?? "")
+  );
+  const active =
+    ordered.find((i) => i.settings.lens === activeLens) ?? ordered[0] ?? null;
 
   return (
     <>
-      {interpretation ? (
+      {active ? (
         <>
+          {/* Lens tabs */}
+          {ordered.length > 1 && (
+            <div
+              role="tablist"
+              aria-label="Saved interpretations"
+              className="flex flex-wrap gap-2 mb-4 justify-center"
+            >
+              {ordered.map((interp) => {
+                const selected = interp.settings.lens === active.settings.lens;
+                return (
+                  <button
+                    key={interp.settings.lens}
+                    role="tab"
+                    aria-selected={selected}
+                    onClick={() => setActiveLens(interp.settings.lens)}
+                    className={`px-4 py-2 rounded-lg border text-xs tracking-[0.1em] transition-all duration-300
+                      ${selected
+                        ? "border-[#d4af37] bg-[#d4af37]/10 text-[#d4af37]"
+                        : "border-[#d4af37]/20 text-[#e6d5b8]/60 hover:text-[#e6d5b8]/90 hover:border-[#d4af37]/50"}`}
+                    style={{ fontFamily: "'Cinzel', serif" }}
+                  >
+                    {capitalize(interp.settings.lens)}
+                    <span className={`ml-2 text-[10px] uppercase ${selected ? "text-[#d4af37]/60" : "text-[#e6d5b8]/40"}`}>
+                      {capitalize(interp.settings.intent)}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
           <div className="rounded-2xl border border-[#d4af37]/20 bg-gradient-to-b from-[#1a0033]/80 to-[#0a0015]/80 backdrop-blur-sm p-5 sm:p-8">
+            {ordered.length === 1 && (
+              <p
+                className="text-center text-xs text-[#d4af37]/60 tracking-[0.2em] uppercase mb-6"
+                style={{ fontFamily: "'Cinzel', serif" }}
+              >
+                {capitalize(active.settings.lens)} · {capitalize(active.settings.intent)}
+              </p>
+            )}
             <InterpretationDisplay
               question={question}
-              cardInterpretations={interpretation.card_interpretations}
-              synthesis={interpretation.synthesis}
+              cardInterpretations={active.card_interpretations}
+              synthesis={active.synthesis}
               cardVisuals={cardVisuals}
             />
           </div>
           <div className="mt-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-[#e6d5b8]/30">
             <span style={{ fontFamily: "'Crimson Pro', serif" }}>
-              Model: {interpretation.model} &middot;{" "}
-              {interpretation.tokens_used.toLocaleString()} tokens
+              Model: {active.model} &middot;{" "}
+              {active.tokens_used.toLocaleString()} tokens
             </span>
             <button
               onClick={() => setShowModal(true)}
@@ -123,28 +143,6 @@ const InterpretationSection: React.FC<InterpretationSectionProps> = ({
         </div>
       )}
 
-      {hasBackup && (
-        <div className="mt-3 text-center">
-          <button
-            onClick={handleRestore}
-            disabled={restoring}
-            className="text-xs text-[#d4af37]/50 hover:text-[#d4af37] transition-colors tracking-wider
-                       disabled:opacity-60 disabled:cursor-not-allowed"
-            style={{ fontFamily: "'Cinzel', serif" }}
-          >
-            {restoring ? "Restoring..." : "Restore previous interpretation"}
-          </button>
-          {restoreError && (
-            <p
-              className="text-red-400 text-xs mt-1"
-              style={{ fontFamily: "'Crimson Pro', serif" }}
-            >
-              {restoreError}
-            </p>
-          )}
-        </div>
-      )}
-
       {showModal && (
         <InterpretationModal
           readingId={readingId}
@@ -152,9 +150,12 @@ const InterpretationSection: React.FC<InterpretationSectionProps> = ({
           question={question ?? undefined}
           birthDate={birthDate}
           cardVisuals={cardVisuals}
-          savedInterpretation={interpretation}
+          savedInterpretations={interpretations}
           onClose={() => setShowModal(false)}
-          onSaved={() => router.refresh()}
+          onSaved={(saved) => {
+            setActiveLens(saved.settings.lens);
+            router.refresh();
+          }}
         />
       )}
     </>

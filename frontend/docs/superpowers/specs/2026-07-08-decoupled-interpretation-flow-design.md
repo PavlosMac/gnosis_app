@@ -1,7 +1,7 @@
 # Decoupled Reading Save + Interpretation Flow (Frontend)
 
 **Date:** 2026-07-08 (revised 2026-07-09)
-**Status:** Approved
+**Status:** Superseded by `docs/multi-lens-interpretations.md` (2026-08-21) — lens/intent/depth settings, one interpretation slot per lens, backup/restore dropped
 **Backend spec:** `gnosis-esoterica-api/docs/advanced-intrepretation.md` (readings/interpretations split)
 
 ## Summary

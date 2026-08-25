@@ -18,3 +18,9 @@ Each entry should include:
 
 - **2026-07-09** — Step 1 frontend of decoupled reading/interpretation flow (spec `docs/superpowers/specs/2026-07-08-decoupled-interpretation-flow-design.md`): ribbon save via new `createReading`, generate/preview/save `InterpretationModal`, nested `ReadingDetail.interpretation` with null branch + restore on detail page, vitest setup. Status: completed (manual FE+BE flows verified).
 
+
+- **2026-08-21** — Multi-lens interpretations (plan `docs/multi-lens-interpretations.md`): replaced style/depth/tone/context tuning with lens (traditional/psychological/esoteric/alchemical) + intent (reflective/predictive) + depth %, one saved interpretation slot per lens (max 4, `PUT /interpretations/{lens}` upsert with replace confirm), lens tabs on reading detail, sticky defaults in localStorage, backup/restore feature removed. Status: completed (FE; awaiting matching FastAPI endpoints).
+
+- **2026-08-21** — Code-review fixes on `update-interpreter`: catch blocks around generate/save server actions in `InterpretationModal` and `TarotGame` (stuck-spinner/stuck-saving states), stale-createReading generation guard, readingId format validation in interpret actions, `interpretations ?? []` fallback in `getReading` for legacy readings. Status: completed (tsc + 17 tests green).
+
+- **2026-08-21** — Reading Style modal (plan `docs/manual-entry-flow.md`, Feature 2): fixed top-right "◈ Reading Style" button in `TarotGame` opens new `ReadingStyleModal` (reuses `InterpretationSettingsControls`); settings seeded from/persisted to the localStorage sticky default; `InterpretationModal` gains `initialSettings`/`autoGenerate` props so the game flow generates immediately (journal page keeps tweak-first). Status: completed (tsc, tests, build green). Feature 1 (manual reading page) still planned in same doc.

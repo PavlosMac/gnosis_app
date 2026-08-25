@@ -19,17 +19,10 @@ export const interpretRequestSchema = z.object({
   cards: z.array(interpretCardSchema).min(1).max(11),
 });
 
-export const CONTEXT_MAX_LENGTH = 100;
-
 export const interpretationSettingsSchema = z.object({
-  style: z.enum(["practical", "reflective", "spiritual", "esoteric"]),
+  lens: z.enum(["traditional", "psychological", "esoteric", "alchemical"]),
+  intent: z.enum(["reflective", "predictive"]),
   depth: z.number().int().min(0).max(100),
-  tone: z.number().int().min(0).max(100),
-});
-
-export const generationTuningSchema = z.object({
-  settings: interpretationSettingsSchema,
-  context: z.string().trim().max(CONTEXT_MAX_LENGTH).optional(),
 });
 
 export const saveInterpretationSchema = z.object({
@@ -45,5 +38,4 @@ export const saveInterpretationSchema = z.object({
   model: z.string(),
   tokens_used: z.number().int().min(0),
   settings: interpretationSettingsSchema,
-  context: z.string().trim().max(CONTEXT_MAX_LENGTH).optional(),
 });

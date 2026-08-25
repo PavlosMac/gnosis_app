@@ -21,16 +21,18 @@ export interface CardInterpretation {
   interpretation: string;
 }
 
-export type InterpretationStyle =
-  | "practical"
-  | "reflective"
-  | "spiritual"
-  | "esoteric";
+export type InterpretationLens =
+  | "traditional"
+  | "psychological"
+  | "esoteric"
+  | "alchemical";
+
+export type InterpretationIntent = "reflective" | "predictive";
 
 export interface InterpretationSettings {
-  style: InterpretationStyle;
-  depth: number;
-  tone: number;
+  lens: InterpretationLens;
+  intent: InterpretationIntent;
+  depth: number; // 0–100 percentage; length budget scaled by card count
 }
 
 export interface Interpretation {
@@ -39,12 +41,8 @@ export interface Interpretation {
   model: string;
   tokens_used: number;
   settings: InterpretationSettings;
-  context?: string;
-}
-
-export interface GenerationTuning {
-  settings: InterpretationSettings;
-  context?: string;
+  created_at?: string; // absent on an unsaved generate result, set once saved
+  updated_at?: string;
 }
 
 export type CreateReadingResult =
@@ -56,5 +54,5 @@ export type GenerateInterpretationResult =
   | { ok: false; error: string };
 
 export type SaveInterpretationResult =
-  | { ok: true }
+  | { ok: true; interpretations: Interpretation[] }
   | { ok: false; error: string };

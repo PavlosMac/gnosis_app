@@ -46,7 +46,7 @@
             "showQuestion": true,
             "meta": {
                 "field": "input",
-                "placeholder": "What is the question?",
+                "placeholder": "What is your question to the Living Oracle?",
                 "button": "submit"
             }
         },

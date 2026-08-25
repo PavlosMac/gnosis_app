@@ -1,5 +1,7 @@
 # Decoupled Interpretation Flow — Step 2 Frontend (Tuning Controls) Implementation Plan
 
+> **Superseded (2026-08-21):** see `docs/multi-lens-interpretations.md` — lens/intent/depth settings, one interpretation slot per lens, backup/restore dropped.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Add the Step 2 tuning UI — style presets + depth/tone sliders + context field in a modal "tweak" state, with the `lastGenerated` regenerate guard — on top of the shipped Step 1 flow.

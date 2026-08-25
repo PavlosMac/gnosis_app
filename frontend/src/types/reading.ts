@@ -35,7 +35,7 @@ export interface ReadingListItem {
 }
 
 export interface ReadingDetail extends ReadingListItem {
-  interpretation: Interpretation | null;
+  interpretations: Interpretation[]; // 0–4, at most one per lens
 }
 
 export type UpdateTagsResult =

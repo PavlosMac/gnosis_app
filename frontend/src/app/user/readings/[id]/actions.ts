@@ -31,7 +31,11 @@ export const getReading = async (
 
   console.log("[TAGS] GET tags", { id, tags: result.data.tags });
 
-  return { ok: true, data: result.data };
+  // Legacy readings (pre multi-lens) have no interpretations key
+  return {
+    ok: true,
+    data: { ...result.data, interpretations: result.data.interpretations ?? [] },
+  };
 };
 
 export const updateReadingTags = async (

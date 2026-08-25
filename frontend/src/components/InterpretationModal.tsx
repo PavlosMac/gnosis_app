@@ -9,20 +9,15 @@ import {
   generateInterpretation,
   saveInterpretation,
 } from "@/app/user/interpret/actions";
-import { writeInterpretationBackup } from "@/lib/interpretation-backup";
 import {
-  DEFAULT_SETTINGS,
-  generationInputsChanged,
-  type GenerationInputs,
-} from "@/lib/interpretation-settings";
+  readDefaultSettings,
+  writeDefaultSettings,
+  settingsEqual,
+} from "@/lib/interpretation-defaults";
 import type { TarotCardData } from "@/types/models";
-import type {
-  Interpretation,
-  InterpretationSettings,
-  GenerationTuning,
-} from "@/types/interpret";
+import type { Interpretation, InterpretationSettings } from "@/types/interpret";
 
-type ModalState = "generating" | "preview" | "tweak" | "saving" | "error";
+type ModalState = "tweak" | "generating" | "preview" | "saving" | "error";
 
 const SHORT_MONTHS = [
   "Jan", "Feb", "Mar", "Apr", "May", "Jun",
@@ -35,15 +30,19 @@ const formatBirthDate = (iso: string): string => {
   return `${day} ${SHORT_MONTHS[month - 1]} ${year}`;
 };
 
+const capitalize = (s: string): string => s.charAt(0).toUpperCase() + s.slice(1);
+
 interface InterpretationModalProps {
   readingId: string;
   spreadName: string;
   question?: string;
   birthDate?: string;
   cardVisuals: Record<string, { card: TarotCardData; reversed: boolean } | null>;
-  savedInterpretation?: Interpretation | null;
+  savedInterpretations: Interpretation[];
   onClose: () => void;
-  onSaved: () => void;
+  onSaved: (saved: Interpretation) => void;
+  initialSettings?: InterpretationSettings;
+  autoGenerate?: boolean;
 }
 
 const InterpretationModal: React.FC<InterpretationModalProps> = React.memo(({
@@ -52,33 +51,33 @@ const InterpretationModal: React.FC<InterpretationModalProps> = React.memo(({
   question,
   birthDate,
   cardVisuals,
-  savedInterpretation,
+  savedInterpretations,
   onClose,
   onSaved,
+  initialSettings,
+  autoGenerate = false,
 }) => {
   const [modalState, setModalState] = useState<ModalState>(
-    savedInterpretation ? "tweak" : "generating"
+    autoGenerate ? "generating" : "tweak"
   );
   const [unsavedResult, setUnsavedResult] = useState<Interpretation | null>(null);
   const [tunedSettings, setTunedSettings] = useState<InterpretationSettings>(
-    savedInterpretation?.settings ?? DEFAULT_SETTINGS
+    () => initialSettings ?? readDefaultSettings()
   );
-  const [tunedContext, setTunedContext] = useState(savedInterpretation?.context ?? "");
-  const [lastGenerated, setLastGenerated] = useState<GenerationInputs | null>(
-    savedInterpretation
-      ? {
-          settings: savedInterpretation.settings,
-          context: savedInterpretation.context ?? "",
-        }
-      : null
-  );
+  const [lastGenerated, setLastGenerated] = useState<InterpretationSettings | null>(null);
   const [errorMessage, setErrorMessage] = useState("");
   const [saveError, setSaveError] = useState("");
   const [showCloseConfirm, setShowCloseConfirm] = useState(false);
+  const [showReplaceConfirm, setShowReplaceConfirm] = useState(false);
 
   const isFetchingRef = useRef(false);
-  const hasFetchedRef = useRef(false);
   const lastAttemptRef = useRef<() => void>(() => {});
+
+  const cardCount = Object.keys(cardVisuals).length;
+  const savedLenses = savedInterpretations.map((i) => i.settings.lens);
+  const replacedInterpretation = unsavedResult
+    ? savedInterpretations.find((i) => i.settings.lens === unsavedResult.settings.lens) ?? null
+    : null;
 
   const requestClose = useCallback(() => {
     if (unsavedResult) {
@@ -104,26 +103,25 @@ const InterpretationModal: React.FC<InterpretationModalProps> = React.memo(({
   }, [requestClose]);
 
   const runGenerate = useCallback(
-    async (tuning: GenerationTuning | undefined, sentContext: string) => {
+    async (settings: InterpretationSettings) => {
       if (isFetchingRef.current) return;
       isFetchingRef.current = true;
       setModalState("generating");
       setSaveError("");
       try {
-        const result = await generateInterpretation(readingId, tuning);
+        const result = await generateInterpretation(readingId, settings);
         if (result.ok) {
-          const trimmedContext = sentContext.trim();
-          setUnsavedResult({
-            ...result.data,
-            ...(trimmedContext && { context: trimmedContext }),
-          });
+          setUnsavedResult(result.data);
           setTunedSettings(result.data.settings);
-          setLastGenerated({ settings: result.data.settings, context: trimmedContext });
+          setLastGenerated(result.data.settings);
           setModalState("preview");
         } else {
           setErrorMessage(result.error);
           setModalState("error");
         }
+      } catch {
+        setErrorMessage("The oracle could not be reached.");
+        setModalState("error");
       } finally {
         isFetchingRef.current = false;
       }
@@ -131,43 +129,51 @@ const InterpretationModal: React.FC<InterpretationModalProps> = React.memo(({
     [readingId]
   );
 
-  const generateInitial = useCallback(() => {
-    lastAttemptRef.current = generateInitial;
-    runGenerate(undefined, "");
-  }, [runGenerate]);
+  const generateTuned = useCallback(() => {
+    lastAttemptRef.current = generateTuned;
+    runGenerate(tunedSettings);
+  }, [runGenerate, tunedSettings]);
 
-  const regenerateTuned = useCallback(() => {
-    lastAttemptRef.current = regenerateTuned;
-    runGenerate(
-      { settings: tunedSettings, context: tunedContext.trim() || undefined },
-      tunedContext
-    );
-  }, [runGenerate, tunedSettings, tunedContext]);
-
-  // Fire once on mount, unless opened on a saved interpretation (tweak baseline)
+  // When opened with autoGenerate, start generating immediately (once).
+  // isFetchingRef also absorbs StrictMode's double effect invocation.
+  const autoGeneratedRef = useRef(false);
   useEffect(() => {
-    if (!savedInterpretation && !hasFetchedRef.current) {
-      hasFetchedRef.current = true;
-      generateInitial();
-    }
-  }, [savedInterpretation, generateInitial]);
+    if (!autoGenerate || autoGeneratedRef.current) return;
+    autoGeneratedRef.current = true;
+    generateTuned();
+  }, [autoGenerate, generateTuned]);
 
-  const handleSave = useCallback(async () => {
+  const performSave = useCallback(async () => {
     if (!unsavedResult) return;
     setModalState("saving");
     setSaveError("");
-    const replaced = savedInterpretation ?? null;
-    const result = await saveInterpretation(readingId, unsavedResult);
+    let result;
+    try {
+      result = await saveInterpretation(readingId, unsavedResult);
+    } catch {
+      setSaveError("The interpretation could not be saved.");
+      setModalState("preview");
+      return;
+    }
     if (!result.ok) {
       setSaveError(result.error);
       setModalState("preview");
       return;
     }
-    if (replaced) writeInterpretationBackup(readingId, replaced);
+    writeDefaultSettings(unsavedResult.settings);
     setUnsavedResult(null);
-    onSaved();
+    onSaved(unsavedResult);
     onClose();
-  }, [unsavedResult, savedInterpretation, readingId, onSaved, onClose]);
+  }, [unsavedResult, readingId, onSaved, onClose]);
+
+  // Save, asking first when this lens slot already holds a saved interpretation
+  const handleSaveRequest = useCallback(() => {
+    if (replacedInterpretation) {
+      setShowReplaceConfirm(true);
+      return;
+    }
+    performSave();
+  }, [replacedInterpretation, performSave]);
 
   return createPortal(
     <div
@@ -265,6 +271,14 @@ const InterpretationModal: React.FC<InterpretationModalProps> = React.memo(({
           {/* PREVIEW / SAVING STATE */}
           {(modalState === "preview" || modalState === "saving") && unsavedResult && (
             <div className="flex flex-col gap-8">
+              <p
+                className="text-center text-xs text-[#d4af37]/60 tracking-[0.2em] uppercase"
+                style={{ fontFamily: "'Cinzel', serif" }}
+              >
+                {capitalize(unsavedResult.settings.lens)} ·{" "}
+                {capitalize(unsavedResult.settings.intent)}
+              </p>
+
               <InterpretationDisplay
                 question={question}
                 cardInterpretations={unsavedResult.card_interpretations}
@@ -283,7 +297,7 @@ const InterpretationModal: React.FC<InterpretationModalProps> = React.memo(({
 
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                 <button
-                  onClick={handleSave}
+                  onClick={handleSaveRequest}
                   disabled={modalState === "saving"}
                   className="px-10 py-3 bg-gradient-to-br from-[#d4af37] to-[#b8942f] text-[#1a0033] rounded-lg
                              font-bold shadow-lg hover:shadow-[#d4af37]/50 transition-all
@@ -305,32 +319,29 @@ const InterpretationModal: React.FC<InterpretationModalProps> = React.memo(({
               </div>
             </div>
           )}
+
           {/* TWEAK STATE */}
           {modalState === "tweak" && (
             <div className="flex flex-col gap-8">
               <InterpretationSettingsControls
                 settings={tunedSettings}
-                context={tunedContext}
                 onSettingsChange={setTunedSettings}
-                onContextChange={setTunedContext}
+                cardCount={cardCount}
+                savedLenses={savedLenses}
               />
 
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                 <button
-                  onClick={regenerateTuned}
+                  onClick={generateTuned}
                   disabled={
-                    lastGenerated !== null &&
-                    !generationInputsChanged(
-                      { settings: tunedSettings, context: tunedContext },
-                      lastGenerated
-                    )
+                    lastGenerated !== null && settingsEqual(tunedSettings, lastGenerated)
                   }
                   className="px-10 py-3 bg-gradient-to-br from-[#8a2be2]/80 to-[#5a1a9e]/80 text-[#e6d5b8] rounded-lg
                              font-bold shadow-lg hover:shadow-[#8a2be2]/40 transition-all text-sm border border-[#8a2be2]/40
                              disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:shadow-none"
                   style={{ fontFamily: "'Cinzel', serif", letterSpacing: "0.1em" }}
                 >
-                  ✦ Regenerate ✦
+                  {unsavedResult ? "✦ Regenerate ✦" : "✦ Consult the Oracle ✦"}
                 </button>
                 {unsavedResult && (
                   <button
@@ -344,15 +355,62 @@ const InterpretationModal: React.FC<InterpretationModalProps> = React.memo(({
                 )}
               </div>
 
-              <p
-                className="text-center text-xs text-[#e6d5b8]/40"
-                style={{ fontFamily: "'Crimson Pro', serif" }}
-              >
-                Adjust the style, depth, tone, or context to regenerate.
-              </p>
+              {unsavedResult && (
+                <p
+                  className="text-center text-xs text-[#e6d5b8]/40"
+                  style={{ fontFamily: "'Crimson Pro', serif" }}
+                >
+                  Adjust the lens, intent, or depth to regenerate.
+                </p>
+              )}
             </div>
           )}
         </div>
+
+        {/* Replace-slot confirmation */}
+        {showReplaceConfirm && unsavedResult && replacedInterpretation && (
+          <div className="absolute inset-0 z-30 flex items-center justify-center bg-black/70">
+            <div
+              className="mx-6 p-6 rounded-xl border-2 border-[#d4af37]/40 text-center"
+              style={{
+                background:
+                  "linear-gradient(135deg, rgba(26,0,51,0.98) 0%, rgba(45,27,78,0.98) 100%)",
+              }}
+            >
+              <p
+                className="text-[#e6d5b8]/90 mb-6"
+                style={{ fontFamily: "'Crimson Pro', serif" }}
+              >
+                {replacedInterpretation.settings.intent !== unsavedResult.settings.intent
+                  ? `Replace your saved ${capitalize(unsavedResult.settings.lens)} interpretation
+                     (${capitalize(replacedInterpretation.settings.intent)}) with this
+                     ${capitalize(unsavedResult.settings.intent)} one?`
+                  : `Replace your saved ${capitalize(unsavedResult.settings.lens)} interpretation?`}
+              </p>
+              <div className="flex items-center justify-center gap-4">
+                <button
+                  onClick={() => {
+                    setShowReplaceConfirm(false);
+                    performSave();
+                  }}
+                  className="px-8 py-2.5 bg-gradient-to-br from-[#d4af37] to-[#b8942f] text-[#1a0033]
+                             rounded-lg font-bold text-sm"
+                  style={{ fontFamily: "'Cinzel', serif" }}
+                >
+                  Replace
+                </button>
+                <button
+                  onClick={() => setShowReplaceConfirm(false)}
+                  className="px-8 py-2.5 border border-[#d4af37]/30 text-[#d4af37]/70
+                             hover:text-[#d4af37] rounded-lg text-sm"
+                  style={{ fontFamily: "'Cinzel', serif" }}
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Unsaved-close confirmation */}
         {showCloseConfirm && (
@@ -374,7 +432,7 @@ const InterpretationModal: React.FC<InterpretationModalProps> = React.memo(({
                 <button
                   onClick={() => {
                     setShowCloseConfirm(false);
-                    handleSave();
+                    handleSaveRequest();
                   }}
                   className="px-8 py-2.5 bg-gradient-to-br from-[#d4af37] to-[#b8942f] text-[#1a0033]
                              rounded-lg font-bold text-sm"
