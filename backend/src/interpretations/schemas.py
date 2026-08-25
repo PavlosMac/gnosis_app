@@ -4,20 +4,13 @@ from pydantic import Field
 
 from src.core.base_schema import AppSchema
 from src.core.types import PyObjectId
-from src.llm.schemas import InterpretationSettings, Orientation, ReadingStyle
-
-MAX_CONTEXT_LENGTH = 100
-
-
-class InterpretationSettingsOverride(AppSchema):
-    style: ReadingStyle | None = None
-    depth: int | None = Field(default=None, ge=0, le=100)
-    tone: int | None = Field(default=None, ge=0, le=100)
+from src.llm.schemas import InterpretationSettings, Orientation
 
 
 class GenerateInterpretationRequest(AppSchema):
-    settings: InterpretationSettingsOverride | None = None
-    context: str | None = Field(default=None, max_length=MAX_CONTEXT_LENGTH)
+    # No defaults: the frontend always sends all three, so stored settings always reflect
+    # what the user actually chose rather than a server-side fallback.
+    settings: InterpretationSettings
 
 
 class CardInterpretationReadModel(AppSchema):
@@ -41,7 +34,6 @@ class SaveInterpretationRequest(AppSchema):
     model: str = Field(..., min_length=1)
     tokens_used: int = Field(..., ge=0)
     settings: InterpretationSettings
-    context: str | None = Field(default=None, max_length=MAX_CONTEXT_LENGTH)
 
 
 class InterpretationReadModel(AppSchema):
@@ -53,6 +45,12 @@ class InterpretationReadModel(AppSchema):
     tokens_used: int
     model: str
     settings: InterpretationSettings
-    context: str | None = None
     created_at: datetime
     updated_at: datetime
+
+
+class InterpretationsResponse(AppSchema):
+    """Every saved slot for a reading — returned by the upsert so the client
+    refreshes without a second GET."""
+
+    interpretations: list[InterpretationReadModel]

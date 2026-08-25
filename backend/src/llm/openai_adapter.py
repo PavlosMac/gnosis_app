@@ -1,7 +1,15 @@
 from typing import Any
 
 import structlog
-from openai import APIConnectionError, APIStatusError, AsyncOpenAI, RateLimitError
+from openai import (
+    APIConnectionError,
+    APIStatusError,
+    AsyncOpenAI,
+    ContentFilterFinishReasonError,
+    LengthFinishReasonError,
+    OpenAIError,
+    RateLimitError,
+)
 
 from src.llm.card_catalog import get_card_meaning
 from src.llm.errors import (
@@ -11,7 +19,12 @@ from src.llm.errors import (
     LLMResponseError,
 )
 from src.llm.port import LLMPort
-from src.llm.prompt_builder import build_system_prompt, build_user_prompt
+from src.llm.prompt_builder import (
+    build_system_prompt,
+    build_user_prompt,
+    max_completion_tokens,
+    request_word_budget,
+)
 from src.llm.schemas import (
     InterpretationRequest,
     InterpretationResponse,
@@ -43,17 +56,31 @@ class OpenAIAdapter(LLMPort):
         system_prompt = build_system_prompt(request)
         user_prompt = build_user_prompt(request, meanings)
 
+        # Derived per request — a 1-card draw and an 11-card Tree of Life differ ~8× in
+        # output size, and the reserved cap counts against TPM rate limits at admission.
+        # The configured max_tokens is an absolute ceiling, not the per-call value.
+        derived_cap = max_completion_tokens(
+            request_word_budget(request), len(request.cards), self._reasoning_effort
+        )
+        completion_cap = min(self._max_tokens, derived_cap)
+        if completion_cap < derived_cap:
+            logger.warning(
+                "completion cap clamped by openai_max_tokens — response may truncate",
+                derived_cap=derived_cap,
+                configured_max=self._max_tokens,
+            )
         logger.debug(
             "calling openai",
             model=self._model,
             spread_name=request.spread_name,
             cards=[c.name for c in request.cards],
+            completion_cap=completion_cap,
         )
 
         try:
             response = await self._client.beta.chat.completions.parse(
                 model=self._model,
-                max_completion_tokens=self._max_tokens,
+                max_completion_tokens=completion_cap,
                 reasoning_effort=self._reasoning_effort,
                 messages=[
                     {"role": "system", "content": system_prompt},
@@ -67,7 +94,16 @@ class OpenAIAdapter(LLMPort):
             raise LLMConnectionError() from exc
         except APIStatusError as exc:
             raise LLMResponseError(f"OpenAI API error: {exc.status_code}") from exc
-
+        except LengthFinishReasonError as exc:
+            # parse() raises when finish_reason == "length": the completion hit
+            # max_completion_tokens, which reasoning tokens also count against.
+            raise LLMResponseError("LLM response truncated by token limit") from exc
+        except ContentFilterFinishReasonError as exc:
+            raise LLMResponseError("LLM response blocked by content filter") from exc
+        except OpenAIError as exc:
+            # Catch-all for the rest of the SDK hierarchy (APIResponseValidationError,
+            # future additions) — anything from the client maps to a domain error.
+            raise LLMResponseError() from exc
         parsed = response.choices[0].message.parsed if response.choices else None
         if not parsed:
             raise LLMResponseError("Empty or unparseable response from LLM")

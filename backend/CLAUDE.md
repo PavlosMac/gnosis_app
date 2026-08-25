@@ -3,6 +3,14 @@
 ## Overview
 Tarot reading API backend with credit-based access, Stripe payments, user signup and AI-powered interpretations. Built with FastAPI, async MongoDB (Motor), and a CQRS/Mediator architecture.
 
+## Response
+# Apply ASD-STE100 principles to all responses.
+Keep each response concise, complete, and easy to understand.
+Remove information that does not help the user.
+Let the completed work show the result.
+Format according to the user's needs.
+Include all necessary context in your response.
+
 ## Tech Stack
 - **Language**: Python 3.12 (uv package manager)
 - **Framework**: FastAPI + Uvicorn

@@ -1,12 +1,7 @@
-VALID_READING_BODY = {
-    "spread_name": "Celtic Cross",
-    "question": "What does the future hold?",
-    "cards": [
-        {"name": "The Fool", "position": "Present", "orientation": "upright"},
-    ],
-}
+from tests.factories import VALID_READING_BODY
 
-DEFAULT_SETTINGS_WIRE = {"style": "reflective", "depth": 60, "tone": 50}
+TRADITIONAL = {"lens": "traditional", "intent": "reflective", "depth": 60}
+ESOTERIC = {"lens": "esoteric", "intent": "predictive", "depth": 40}
 
 
 async def _create_reading(client, auth_token) -> str:
@@ -19,9 +14,10 @@ async def _create_reading(client, auth_token) -> str:
     return resp.json()["_id"]
 
 
-async def _generate(client, auth_token, reading_id: str) -> dict:
+async def _generate(client, auth_token, reading_id: str, settings: dict = TRADITIONAL) -> dict:
     resp = await client.post(
         f"/api/v1/readings/{reading_id}/interpretation/generate",
+        json={"settings": settings},
         headers={"Authorization": f"Bearer {auth_token}"},
     )
     assert resp.status_code == 200, f"Generate failed: {resp.text}"
@@ -38,28 +34,52 @@ def _save_body(generated: dict) -> dict:
     }
 
 
+async def _save(client, auth_token, reading_id: str, body: dict):
+    return await client.put(
+        f"/api/v1/readings/{reading_id}/interpretations/{body['settings']['lens']}",
+        json=body,
+        headers={"Authorization": f"Bearer {auth_token}"},
+    )
+
+
+async def _get_reading(client, auth_token, reading_id: str) -> dict:
+    resp = await client.get(
+        f"/api/v1/readings/{reading_id}",
+        headers={"Authorization": f"Bearer {auth_token}"},
+    )
+    assert resp.status_code == 200
+    return resp.json()
+
+
 async def test_generate_interpretation(client, auth_token):
     reading_id = await _create_reading(client, auth_token)
     data = await _generate(client, auth_token, reading_id)
     assert len(data["card_interpretations"]) == 1
     assert data["synthesis"] is not None
-    assert data["settings"] == DEFAULT_SETTINGS_WIRE
+    assert data["settings"] == TRADITIONAL
 
 
 async def test_generate_interpretation_does_not_persist(client, auth_token):
     reading_id = await _create_reading(client, auth_token)
     await _generate(client, auth_token, reading_id)
+    reading = await _get_reading(client, auth_token, reading_id)
+    assert reading["interpretations"] == []
 
-    resp = await client.get(
-        f"/api/v1/readings/{reading_id}",
+
+async def test_generate_interpretation_requires_settings(client, auth_token):
+    reading_id = await _create_reading(client, auth_token)
+    resp = await client.post(
+        f"/api/v1/readings/{reading_id}/interpretation/generate",
+        json={},
         headers={"Authorization": f"Bearer {auth_token}"},
     )
-    assert resp.json()["interpretation"] is None
+    assert resp.status_code == 422
 
 
 async def test_generate_interpretation_not_found(client, auth_token):
     resp = await client.post(
         "/api/v1/readings/507f1f77bcf86cd799439011/interpretation/generate",
+        json={"settings": TRADITIONAL},
         headers={"Authorization": f"Bearer {auth_token}"},
     )
     assert resp.status_code == 404
@@ -67,68 +87,17 @@ async def test_generate_interpretation_not_found(client, auth_token):
 
 async def test_generate_interpretation_unauthenticated(client):
     resp = await client.post(
-        "/api/v1/readings/507f1f77bcf86cd799439011/interpretation/generate"
+        "/api/v1/readings/507f1f77bcf86cd799439011/interpretation/generate",
+        json={"settings": TRADITIONAL},
     )
     assert resp.status_code == 401
 
 
-async def test_save_interpretation(client, auth_token):
-    reading_id = await _create_reading(client, auth_token)
-    generated = await _generate(client, auth_token, reading_id)
-
-    resp = await client.post(
-        f"/api/v1/readings/{reading_id}/interpretation",
-        json=_save_body(generated),
-        headers={"Authorization": f"Bearer {auth_token}"},
-    )
-    assert resp.status_code == 200
-    data = resp.json()
-    assert data["reading_id"] == reading_id
-    assert data["synthesis"] == generated["synthesis"]
-    assert data["settings"] == DEFAULT_SETTINGS_WIRE
-
-    get_resp = await client.get(
-        f"/api/v1/readings/{reading_id}",
-        headers={"Authorization": f"Bearer {auth_token}"},
-    )
-    assert get_resp.json()["interpretation"]["synthesis"] == generated["synthesis"]
-
-
-async def test_save_interpretation_overwrites_previous(client, auth_token):
-    reading_id = await _create_reading(client, auth_token)
-    generated = await _generate(client, auth_token, reading_id)
-    body = _save_body(generated)
-
-    first = await client.post(
-        f"/api/v1/readings/{reading_id}/interpretation",
-        json=body,
-        headers={"Authorization": f"Bearer {auth_token}"},
-    )
-    second = await client.post(
-        f"/api/v1/readings/{reading_id}/interpretation",
-        json={**body, "synthesis": "A revised synthesis."},
-        headers={"Authorization": f"Bearer {auth_token}"},
-    )
-    assert second.json()["_id"] == first.json()["_id"]
-    assert second.json()["synthesis"] == "A revised synthesis."
-
-
-async def test_generate_interpretation_with_partial_settings_override(client, auth_token):
+async def test_generate_interpretation_rejects_unknown_lens(client, auth_token):
     reading_id = await _create_reading(client, auth_token)
     resp = await client.post(
         f"/api/v1/readings/{reading_id}/interpretation/generate",
-        json={"settings": {"style": "esoteric", "depth": 20}, "context": "recently divorced"},
-        headers={"Authorization": f"Bearer {auth_token}"},
-    )
-    assert resp.status_code == 200
-    assert resp.json()["settings"] == {"style": "esoteric", "depth": 20, "tone": 50}
-
-
-async def test_generate_interpretation_rejects_long_context(client, auth_token):
-    reading_id = await _create_reading(client, auth_token)
-    resp = await client.post(
-        f"/api/v1/readings/{reading_id}/interpretation/generate",
-        json={"context": "x" * 101},
+        json={"settings": {**TRADITIONAL, "lens": "spiritual"}},
         headers={"Authorization": f"Bearer {auth_token}"},
     )
     assert resp.status_code == 422
@@ -138,48 +107,69 @@ async def test_generate_interpretation_rejects_out_of_range_depth(client, auth_t
     reading_id = await _create_reading(client, auth_token)
     resp = await client.post(
         f"/api/v1/readings/{reading_id}/interpretation/generate",
-        json={"settings": {"depth": 150}},
+        json={"settings": {**TRADITIONAL, "depth": 150}},
         headers={"Authorization": f"Bearer {auth_token}"},
     )
     assert resp.status_code == 422
 
 
-async def test_save_interpretation_persists_context(client, auth_token):
+async def test_save_interpretation(client, auth_token):
     reading_id = await _create_reading(client, auth_token)
     generated = await _generate(client, auth_token, reading_id)
 
-    resp = await client.post(
-        f"/api/v1/readings/{reading_id}/interpretation",
-        json={**_save_body(generated), "context": "recently divorced"},
-        headers={"Authorization": f"Bearer {auth_token}"},
-    )
+    resp = await _save(client, auth_token, reading_id, _save_body(generated))
     assert resp.status_code == 200
-    assert resp.json()["context"] == "recently divorced"
+    saved = resp.json()["interpretations"]
+    assert len(saved) == 1
+    assert saved[0]["reading_id"] == reading_id
+    assert saved[0]["settings"] == TRADITIONAL
 
-    get_resp = await client.get(
-        f"/api/v1/readings/{reading_id}",
-        headers={"Authorization": f"Bearer {auth_token}"},
-    )
-    assert get_resp.json()["interpretation"]["context"] == "recently divorced"
+    reading = await _get_reading(client, auth_token, reading_id)
+    assert reading["interpretations"][0]["synthesis"] == generated["synthesis"]
 
 
-async def test_save_interpretation_clears_context_when_omitted(client, auth_token):
+async def test_save_replaces_the_same_lens(client, auth_token):
     reading_id = await _create_reading(client, auth_token)
     generated = await _generate(client, auth_token, reading_id)
     body = _save_body(generated)
 
-    await client.post(
-        f"/api/v1/readings/{reading_id}/interpretation",
-        json={**body, "context": "recently divorced"},
-        headers={"Authorization": f"Bearer {auth_token}"},
+    first = await _save(client, auth_token, reading_id, body)
+    second = await _save(
+        client, auth_token, reading_id, {**body, "synthesis": "A revised synthesis."}
     )
-    resp = await client.post(
-        f"/api/v1/readings/{reading_id}/interpretation",
-        json=body,
-        headers={"Authorization": f"Bearer {auth_token}"},
-    )
+    assert second.status_code == 200
+    assert len(second.json()["interpretations"]) == 1
+    assert second.json()["interpretations"][0]["_id"] == first.json()["interpretations"][0]["_id"]
+    assert second.json()["interpretations"][0]["synthesis"] == "A revised synthesis."
+
+
+async def test_each_lens_is_its_own_slot(client, auth_token):
+    reading_id = await _create_reading(client, auth_token)
+
+    traditional = await _generate(client, auth_token, reading_id, TRADITIONAL)
+    await _save(client, auth_token, reading_id, _save_body(traditional))
+    esoteric = await _generate(client, auth_token, reading_id, ESOTERIC)
+    resp = await _save(client, auth_token, reading_id, _save_body(esoteric))
+
     assert resp.status_code == 200
-    assert resp.json()["context"] is None
+    lenses = [i["settings"]["lens"] for i in resp.json()["interpretations"]]
+    assert sorted(lenses) == ["esoteric", "traditional"]
+
+    reading = await _get_reading(client, auth_token, reading_id)
+    assert len(reading["interpretations"]) == 2
+
+
+async def test_save_rejects_lens_mismatch_between_path_and_body(client, auth_token):
+    reading_id = await _create_reading(client, auth_token)
+    generated = await _generate(client, auth_token, reading_id)
+
+    resp = await client.put(
+        f"/api/v1/readings/{reading_id}/interpretations/esoteric",
+        json=_save_body(generated),  # settings.lens is traditional
+        headers={"Authorization": f"Bearer {auth_token}"},
+    )
+    assert resp.status_code == 422
+    assert "does not match" in resp.json()["detail"]
 
 
 async def test_save_interpretation_wrong_user(client, auth_token):
@@ -192,9 +182,5 @@ async def test_save_interpretation_wrong_user(client, auth_token):
     )
     other_token = reg.json()["access_token"]
 
-    resp = await client.post(
-        f"/api/v1/readings/{reading_id}/interpretation",
-        json=_save_body(generated),
-        headers={"Authorization": f"Bearer {other_token}"},
-    )
+    resp = await _save(client, other_token, reading_id, _save_body(generated))
     assert resp.status_code == 404

@@ -1,7 +1,7 @@
 services:
   mongodb:
     image: mongo:7
-    command: ["mongod"]
+    command: ["mongod", "--quiet", "--logpath", "/dev/null"]
     logging:
       driver: "none"
     ports:
@@ -15,6 +15,8 @@ services:
       retries: 3
 
   api:
+    stdin_open: true # docker run -i
+    tty: true        # docker run -t
     build: .
     ports:
       - "8001:8000"

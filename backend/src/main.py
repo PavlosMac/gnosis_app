@@ -3,6 +3,7 @@ from contextlib import asynccontextmanager
 import structlog
 from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
+from motor.motor_asyncio import AsyncIOMotorDatabase
 from openai import AsyncOpenAI
 
 from src.auth.commands.register_user import RegisterUserCommand, RegisterUserHandler
@@ -30,6 +31,10 @@ from src.interpretations.commands.save_interpretation import (
     SaveInterpretationCommand,
     SaveInterpretationHandler,
 )
+from src.interpretations.queries.get_interpretations_by_reading_id import (
+    GetInterpretationsByReadingIdHandler,
+    GetInterpretationsByReadingIdQuery,
+)
 from src.interpretations.repository import (
     InterpretationReadRepository,
     InterpretationWriteRepository,
@@ -56,9 +61,9 @@ configure_logging()
 logger = structlog.stdlib.get_logger(__name__)
 
 
-def _wire_mediator(mediator: Mediator, llm: LLMPort) -> None:
-    db = get_database()
-
+def _wire_mediator(mediator: Mediator, llm: LLMPort, db: AsyncIOMotorDatabase) -> None:
+    """Single owner of all handler registrations — tests wire their mediator through
+    this too, so a handler registered here is registered everywhere."""
     user_write_repo = AuthWriteRepository(db)
     user_read_repo = AuthReadRepository(db)
 
@@ -89,9 +94,11 @@ def _wire_mediator(mediator: Mediator, llm: LLMPort) -> None:
     )
     mediator.register_command(
         SaveInterpretationCommand,
-        SaveInterpretationHandler(
-            reading_read_repo, interpretation_write_repo, interpretation_read_repo
-        ),
+        SaveInterpretationHandler(reading_read_repo, interpretation_write_repo),
+    )
+    mediator.register_query(
+        GetInterpretationsByReadingIdQuery,
+        GetInterpretationsByReadingIdHandler(interpretation_read_repo),
     )
 
 
@@ -102,7 +109,6 @@ async def lifespan(app: FastAPI):
     await run_migrations(get_database())
 
     app.state.refresh_token_repo = RefreshTokenRepository(get_database())
-
     if settings.openai_api_key:
         openai_client = AsyncOpenAI(api_key=settings.openai_api_key)
         llm_adapter = OpenAIAdapter(
@@ -120,7 +126,7 @@ async def lifespan(app: FastAPI):
     app.state.llm = llm_adapter
 
     mediator = Mediator()
-    _wire_mediator(mediator, llm_adapter)
+    _wire_mediator(mediator, llm_adapter, get_database())
     app.state.mediator = mediator
 
     logger.info("startup complete")

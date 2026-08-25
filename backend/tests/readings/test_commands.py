@@ -48,7 +48,7 @@ async def test_create_reading_returns_read_model(handler, valid_command):
     assert result.question == "What does the future hold?"
     assert len(result.cards) == 1
     assert result.cards[0].name == "The Fool"
-    assert result.interpretation is None
+    assert result.interpretations == []
 
 
 async def test_create_reading_persists_to_db(handler, valid_command, mock_db):
@@ -87,9 +87,7 @@ async def test_create_reading_persists_position_description(handler):
         ],
     )
     result = await handler.handle(command)
-    assert result.cards[0].position_description == (
-        "Will, drive, and what energises the situation"
-    )
+    assert result.cards[0].position_description == ("Will, drive, and what energises the situation")
 
 
 async def test_update_reading_tags_sets_tags(handler, valid_command, update_tags_handler):

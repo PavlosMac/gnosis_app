@@ -1,7 +1,14 @@
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
-from openai import APIConnectionError, APIStatusError, RateLimitError
+from openai import (
+    APIConnectionError,
+    APIStatusError,
+    ContentFilterFinishReasonError,
+    LengthFinishReasonError,
+    OpenAIError,
+    RateLimitError,
+)
 
 from src.llm.errors import (
     CardNotFoundError,
@@ -13,9 +20,12 @@ from src.llm.openai_adapter import OpenAIAdapter
 from src.llm.schemas import (
     CardInSpread,
     CardInterpretation,
+    InterpretationLens,
     InterpretationRequest,
+    InterpretationSettings,
     LLMInterpretationResult,
     Orientation,
+    ReadingIntent,
 )
 
 
@@ -69,6 +79,11 @@ def _make_request(*cards: CardInSpread) -> InterpretationRequest:
         spread_name="Test Spread",
         question="What does this spread reveal?",
         cards=list(cards),
+        settings=InterpretationSettings(
+            lens=InterpretationLens.traditional,
+            intent=ReadingIntent.reflective,
+            depth=60,
+        ),
     )
 
 
@@ -158,8 +173,74 @@ async def test_api_status_error_mapped():
         await adapter.generate_interpretation(req)
 
 
+async def test_length_finish_reason_mapped():
+    """parse() raises when the completion hits max_completion_tokens — the error
+    inherits OpenAIError directly, not APIStatusError, so it needs its own clause."""
+    client = _make_client()
+    client.beta.chat.completions.parse = AsyncMock(
+        side_effect=LengthFinishReasonError(completion=MagicMock())
+    )
+    adapter = OpenAIAdapter(client=client, model="gpt-4o", max_tokens=1024, reasoning_effort="none")
+    req = _make_request(
+        CardInSpread(name="The Fool", position="Past", orientation=Orientation.upright)
+    )
+    with pytest.raises(LLMResponseError):
+        await adapter.generate_interpretation(req)
+
+
+async def test_content_filter_finish_reason_mapped():
+    client = _make_client()
+    client.beta.chat.completions.parse = AsyncMock(side_effect=ContentFilterFinishReasonError())
+    adapter = OpenAIAdapter(client=client, model="gpt-4o", max_tokens=1024, reasoning_effort="none")
+    req = _make_request(
+        CardInSpread(name="The Fool", position="Past", orientation=Orientation.upright)
+    )
+    with pytest.raises(LLMResponseError):
+        await adapter.generate_interpretation(req)
+
+
+async def test_any_other_openai_error_mapped():
+    """The catch-all: no exception from the SDK hierarchy may escape as a 500."""
+    client = _make_client()
+    client.beta.chat.completions.parse = AsyncMock(side_effect=OpenAIError("unexpected"))
+    adapter = OpenAIAdapter(client=client, model="gpt-4o", max_tokens=1024, reasoning_effort="none")
+    req = _make_request(
+        CardInSpread(name="The Fool", position="Past", orientation=Orientation.upright)
+    )
+    with pytest.raises(LLMResponseError):
+        await adapter.generate_interpretation(req)
+
+
 async def test_close_calls_client_close():
     client = _make_client()
     adapter = OpenAIAdapter(client=client, model="gpt-4o", max_tokens=1024, reasoning_effort="none")
     await adapter.close()
     client.close.assert_awaited_once()
+
+
+async def test_completion_cap_is_derived_per_request():
+    from src.llm.prompt_builder import max_completion_tokens, request_word_budget
+
+    client = _make_client()
+    adapter = OpenAIAdapter(
+        client=client, model="gpt-4o", max_tokens=10000, reasoning_effort="none"
+    )
+    req = _make_request(
+        CardInSpread(name="The Fool", position="Past", orientation=Orientation.upright)
+    )
+    await adapter.generate_interpretation(req)
+    expected = max_completion_tokens(request_word_budget(req), len(req.cards), "none")
+    sent = client.beta.chat.completions.parse.call_args.kwargs["max_completion_tokens"]
+    assert sent == expected
+    assert sent < 10000  # the constructor ceiling is not the per-call value
+
+
+async def test_completion_cap_clamped_by_configured_ceiling():
+    client = _make_client()
+    adapter = OpenAIAdapter(client=client, model="gpt-4o", max_tokens=1024, reasoning_effort="none")
+    req = _make_request(
+        CardInSpread(name="The Fool", position="Past", orientation=Orientation.upright)
+    )
+    await adapter.generate_interpretation(req)
+    sent = client.beta.chat.completions.parse.call_args.kwargs["max_completion_tokens"]
+    assert sent == 1024

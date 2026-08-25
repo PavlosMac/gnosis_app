@@ -2,6 +2,7 @@ from datetime import date
 from typing import Any
 
 from bson import ObjectId
+from bson.errors import InvalidId
 
 from src.database.base_repository import BaseReadRepository, BaseWriteRepository
 from src.database.collections.constants import READINGS_COLLECTION
@@ -33,6 +34,16 @@ class ReadingReadRepository(BaseReadRepository):
     @property
     def collection_name(self) -> str:
         return READINGS_COLLECTION
+
+    async def find_owned(self, reading_id: str, user_id: str) -> dict[str, Any] | None:
+        """The reading if it exists and belongs to user_id, else None — a malformed
+        reading_id is indistinguishable from not-found, so ownership checks can't leak
+        whether an id exists."""
+        try:
+            oid = ObjectId(reading_id)
+        except InvalidId:
+            return None
+        return await self.find_one({"_id": oid, "user_id": ObjectId(user_id)})
 
     async def find_by_user_id(
         self,

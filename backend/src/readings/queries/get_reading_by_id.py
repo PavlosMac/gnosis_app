@@ -1,6 +1,3 @@
-from bson import ObjectId
-from bson.errors import InvalidId
-
 from src.cqrs.queries import BaseQuery, QueryHandler
 from src.interpretations.repository import InterpretationReadRepository
 from src.readings.repository import ReadingReadRepository
@@ -23,14 +20,10 @@ class GetReadingByIdHandler(QueryHandler[GetReadingByIdQuery, ReadingReadModel])
         self._interpretation_read_repo = interpretation_read_repo
 
     async def handle(self, query: GetReadingByIdQuery) -> ReadingReadModel:
-        try:
-            oid = ObjectId(query.reading_id)
-        except InvalidId:
-            raise ReadingNotFoundError()
-        doc = await self._read_repo.find_one({"_id": oid, "user_id": ObjectId(query.user_id)})
+        doc = await self._read_repo.find_owned(query.reading_id, query.user_id)
         if doc is None:
             raise ReadingNotFoundError()
-        doc["interpretation"] = await self._interpretation_read_repo.find_by_reading_id(
+        doc["interpretations"] = await self._interpretation_read_repo.find_all_by_reading_id(
             query.reading_id
         )
         return ReadingReadModel.model_validate(doc)

@@ -11,22 +11,28 @@ class Orientation(StrEnum):
     reversed = "reversed"
 
 
-class ReadingStyle(StrEnum):
-    practical = "practical"
-    reflective = "reflective"
-    spiritual = "spiritual"
+class InterpretationLens(StrEnum):
+    """How the cards are read. One lens per interpretation — never blended."""
+
+    traditional = "traditional"
+    psychological = "psychological"
     esoteric = "esoteric"
+    alchemical = "alchemical"
+
+
+class ReadingIntent(StrEnum):
+    """What the reading answers: what is, or what is likely to come."""
+
+    reflective = "reflective"
+    predictive = "predictive"
 
 
 class InterpretationSettings(BaseModel):
     model_config = {"frozen": True}
 
-    style: ReadingStyle
+    lens: InterpretationLens
+    intent: ReadingIntent
     depth: int = Field(..., ge=0, le=100)
-    tone: int = Field(..., ge=0, le=100)
-
-
-DEFAULT_SETTINGS = InterpretationSettings(style=ReadingStyle.reflective, depth=60, tone=50)
 
 
 class CardInSpread(BaseModel):
@@ -50,8 +56,7 @@ class InterpretationRequest(BaseModel):
     question: str | None = Field(default=None, min_length=5, max_length=500)
     birth_date: date | None = Field(default=None)
     cards: list[CardInSpread] = Field(..., min_length=1, max_length=12)
-    settings: InterpretationSettings = DEFAULT_SETTINGS
-    context: str | None = Field(default=None, max_length=100)
+    settings: InterpretationSettings
 
 
 class CardInterpretation(BaseModel):
@@ -95,7 +100,8 @@ class LLMInterpretationResult(BaseModel):
             "For multi-card spreads: a cohesive narrative weaving all cards together to "
             "directly address the querent's question. Not a summary of individual cards, "
             "but an integrated insight that reveals something the individual interpretations "
-            "alone do not. Match its length to the target word count given in the spread details. "
+            "alone do not. Match its length to the synthesis word count given in the "
+            "system prompt's OUTPUT section. "
             "For single-card readings: do not restate the card interpretation. Instead, "
             "offer a practical takeaway — actionable guidance, a reflective question, or a "
             "concrete step the querent can take based on the card's message."

@@ -52,7 +52,6 @@ class CreateReadingHandler(CommandHandler[CreateReadingCommand, ReadingReadModel
                 "question": reading.question,
                 "birth_date": reading.birth_date,
                 "cards": reading.cards,
-                "interpretation": None,
                 "created_at": reading.created_at,
             }
         )

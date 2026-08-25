@@ -14,7 +14,6 @@ class Interpretation:
         tokens_used: int,
         model: str,
         settings: dict[str, Any],
-        context: str | None = None,
         id: str | None = None,
         created_at: datetime | None = None,
         updated_at: datetime | None = None,
@@ -27,7 +26,6 @@ class Interpretation:
         self.tokens_used = tokens_used
         self.model = model
         self.settings = settings
-        self.context = context
         self.created_at = created_at or datetime.now(UTC)
         self.updated_at = updated_at or datetime.now(UTC)
 
@@ -45,8 +43,6 @@ class Interpretation:
         }
         if self.id:
             doc["_id"] = ObjectId(self.id)
-        if self.context is not None:
-            doc["context"] = self.context
         return doc
 
     @classmethod
@@ -60,7 +56,6 @@ class Interpretation:
             tokens_used=doc["tokens_used"],
             model=doc["model"],
             settings=doc["settings"],
-            context=doc.get("context"),
             created_at=doc.get("created_at"),
             updated_at=doc.get("updated_at"),
         )

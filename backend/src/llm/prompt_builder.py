@@ -3,221 +3,86 @@
 No I/O, no side effects — all state comes in via arguments.
 Orientation determines which meaning fields are included: upright cards show upright
 fields only; reversed cards show reversed fields only (both positive and negative aspects).
+
+The system prompt is composed from ordered blocks in `prompt_components`; this module
+renders the card data those blocks instruct the model to read, and derives the word
+budget from the querent's depth setting. `word_budget` is a pure function of the
+request, so both prompt builders derive it internally and always agree.
 """
 
-from typing import Any
+import math
+from typing import Any, get_args
 
-from src.llm import card_catalog
+from src.core.config import ReasoningEffort
+from src.llm import card_catalog, prompt_components
 from src.llm.schemas import (
     SIGNIFICATORS_SPREAD,
     CardInSpread,
     InterpretationRequest,
     Orientation,
-    ReadingStyle,
 )
 
 _SEP = ", "
 
-_SYNTHESIS_BASE_WORDS = 170
-_SYNTHESIS_FLAT_CARD_LIMIT = 3
-_SYNTHESIS_WORDS_PER_EXTRA_CARD = 60
+# Total reading length at depth 0 and depth 100. Mirrored by the frontend's
+# `estimatedWordsPerCard` hint — changing these without changing that makes the slider
+# lie about what it will produce.
+MIN_TOTAL_WORDS = 150
+MAX_TOTAL_WORDS = 1200
 
-_STYLE_WEIGHTS: dict[ReadingStyle, dict[str, float]] = {
-    ReadingStyle.practical: {
-        "literal": 1.0,
-        "psychological": 0.8,
-        "symbolic": 0.2,
-        "esoteric": 0.0,
-    },
-    ReadingStyle.reflective: {
-        "literal": 0.8,
-        "psychological": 1.0,
-        "symbolic": 0.5,
-        "esoteric": 0.2,
-    },
-    ReadingStyle.spiritual: {
-        "literal": 0.5,
-        "psychological": 0.9,
-        "symbolic": 0.8,
-        "esoteric": 0.6,
-    },
-    ReadingStyle.esoteric: {
-        "literal": 0.3,
-        "psychological": 0.7,
-        "symbolic": 1.0,
-        "esoteric": 1.0,
-    },
+# Synthesis takes this share of the total; the cards divide the rest between them.
+SYNTHESIS_SHARE = 0.3
+
+# Prose→token conversion with margin: English runs ≈1.3 tokens per word (measured 1.3–1.4 on
+# real readings, JSON escaping included), plus the model's habit of overshooting the target.
+TOKENS_PER_WORD = 1.6
+
+# Each JSON entry echoes card_name/position/orientation plus structural punctuation.
+CARD_ENTRY_OVERHEAD_TOKENS = 40
+
+# Reasoning tokens draw from the same max_completion_tokens budget as the prose, and grow with
+# effort and spread size (observed at medium: 176–1,511). Underestimating truncates a response
+# we already paid reasoning for, so each tier carries roughly 2–3× the worst usage observed at
+# the tier below it.
+REASONING_HEADROOM: dict[str, int] = {
+    "none": 500,
+    "low": 2000,
+    "medium": 4000,
+    "high": 8000,
+    "xhigh": 12000,
 }
 
-_STYLE_RULES = (
-    "Prioritize higher-weighted interpretation layers. Do not mention every symbolic "
-    "correspondence simply because it exists — only include symbolic or esoteric references "
-    "when they naturally strengthen the reading, and weave them into the interpretation "
-    "instead of listing them. Ground every conclusion in the cards drawn and their spread "
-    "positions. Present metaphysical concepts as interpretive perspectives rather than "
-    "objective facts."
-)
-
-# (upper bound, guidance line, synthesis length factor) — `detailed` is 1.0 so the default
-# depth leaves the card-count-based synthesis target unchanged.
-_DEPTH_BANDS: tuple[tuple[int, str, float], ...] = (
-    (
-        25,
-        "Depth: brief — focus on one primary theme with minimal symbolism and quick, "
-        "actionable guidance. Aim for roughly 150-250 words overall.",
-        0.5,
-    ),
-    (
-        50,
-        "Depth: standard — develop two or three themes with moderate symbolic "
-        "interpretation. Aim for roughly 250-400 words overall.",
-        0.75,
-    ),
-    (
-        75,
-        "Depth: detailed — a rich interpretation with strong synthesis and "
-        "cross-connections between cards. Aim for roughly 400-700 words overall.",
-        1.0,
-    ),
-    (
-        100,
-        "Depth: comprehensive — extensive synthesis and deep symbolic exploration, "
-        "drawing on supporting correspondences where relevant. Aim for roughly 700-1200 "
-        "words overall.",
-        1.5,
-    ),
-)
-
-# (upper bound, guidance line)
-_TONE_BANDS: tuple[tuple[int, str], ...] = (
-    (
-        33,
-        "Tone: gentle — compassionate, exploratory and open-ended; avoid certainty. "
-        "Use phrasing like 'Consider...', 'You may be experiencing...', "
-        "'This card invites you to...'.",
-    ),
-    (
-        66,
-        "Tone: balanced — confident, thoughtful and neutral. Use phrasing like "
-        "'This suggests...', 'A recurring theme is...', 'It appears that...'.",
-    ),
-    (
-        100,
-        "Tone: direct — concise, clear and assertive, while still not presenting "
-        "interpretations as objective fact. Use phrasing like 'This card points "
-        "toward...', 'You're avoiding...', 'The challenge is...'.",
-    ),
-)
+# Fail at import, not at request time, if the config Literal and this table drift apart.
+if set(REASONING_HEADROOM) != set(get_args(ReasoningEffort)):
+    raise RuntimeError("REASONING_HEADROOM out of sync with config.ReasoningEffort")
 
 
-_SYSTEM_PROMPT = (
-    "You are an expert tarot reader with deep knowledge of esoteric symbolism, "
-    "Kabbalah, and Jungian archetypes. You provide insightful, nuanced tarot "
-    "interpretations that weave together the cards' individual meanings into a "
-    "coherent narrative. When the querent provides a question, address it directly. "
-    "When no question is given, let the cards and their positions speak — offer a "
-    "general reading shaped by the spread name, layout and the energies present. "
-    "Be thoughtful, specific, and grounded in the symbolism provided. "
-    "Avoid generic statements — speak directly to the spread.\n\n"
-    "ORIENTATION GUIDANCE:\n"
-    "- Upright cards carry both strengths and challenges — acknowledge the shadow side "
-    "where relevant rather than presenting a purely positive picture.\n"
-    "- Reversed cards are not simply 'negative' — they carry both blocked/shadow energy "
-    "and an opportunity for growth or inner work. Let the balance between these aspects "
-    "be informed by the querent's question and how neighbouring cards in the spread "
-    "shape the meaning.\n\n"
-    "POSITION GUIDANCE:\n"
-    "- Each card's position carries interpretive weight. When a position meaning is provided, "
-    "let it shape how you read the card — the same card means something different in a "
-    "'Fire' position (will, drive) than in a 'Water' position (emotions, intuition).\n\n"
-    "FORMAT INSTRUCTIONS:\n"
-    "- For each card, provide a focused interpretation tied to the querent's question. "
-    "Explain how this card in this position speaks to what the querent is asking — "
-    "not a generic textbook definition. Be thorough enough to honour the symbolism "
-    "but concise enough that every sentence earns its place.\n"
-    "- For multi-card spreads, the synthesis is the heart of the reading: weave all cards "
-    "into one cohesive narrative that directly addresses the question. The synthesis should "
-    "be the most substantial part of the response — not a recap of individual cards, but an "
-    "integrated insight. Honour the target synthesis length given in the spread details.\n"
-    "- For single-card readings, do not restate the card interpretation in the synthesis. "
-    "Instead, offer a practical takeaway — actionable guidance, a reflective question for "
-    "the querent to sit with, or a concrete step they can take based on the card's message."
-)
+def max_completion_tokens(budget: tuple[int, int], card_count: int, reasoning_effort: str) -> int:
+    """The per-request completion-token cap: budgeted prose, JSON echo, reasoning headroom.
 
-_SIGNIFICATORS_SYSTEM_PROMPT = (
-    "You are an expert tarot reader with deep knowledge of esoteric symbolism, "
-    "Kabbalah, and Jungian archetypes. You are interpreting a personal significator "
-    "chart — a numerological and astrological profile derived from the querent's "
-    "birth data. This is not a situational reading; it is a portrait of the querent's "
-    "innate character, life themes, and spiritual makeup.\n\n"
-    "SIGNIFICATOR GUIDANCE:\n"
-    "- Every card in this chart is upright. These are not drawn at random — they are "
-    "calculated from the querent's birth date and star sign. Treat each card as a "
-    "permanent facet of who the querent is, not as passing energy or advice.\n"
-    "- Do not reference reversed meanings, shadow sides, or challenges in the way you "
-    "would for a standard reading. Instead, explore the full depth of each card's "
-    "upright expression as it shapes the querent's character.\n\n"
-    "POSITION GUIDANCE:\n"
-    "- **Day number**: The card tied to the day of birth. It reflects the querent's "
-    "outward personality — how they present to the world and their most visible traits.\n"
-    "- **Life number**: Derived from the full birth date. When multiple cards share "
-    "this position (e.g. life number 1, life number 2, life number 3), they represent "
-    "facets of the same numerological energy. The original number reduces through these "
-    "cards — interpret them as layers of the same core theme, each revealing a different "
-    "dimension of the querent's life path.\n"
-    "- **Star sign**: The Major Arcana connected to the querent's sun sign. It speaks to "
-    "their deepest drives, core identity, and the archetypal energy they embody.\n"
-    "- **Decanate**: A Minor Arcana card that bridges the querent's birth date to the "
-    "everyday expression of their star sign energy. It grounds the Major Arcana themes "
-    "in practical, lived experience.\n\n"
-    "FORMAT INSTRUCTIONS:\n"
-    "- For each card, provide a rich interpretation exploring what this significator "
-    "reveals about the querent's character, personality, and life themes. Ground the "
-    "reading in the card's symbolism, esoteric correspondences, and the specific "
-    "position it occupies in the chart. These are character-defining cards — give "
-    "each one the depth it deserves.\n"
-    "- The synthesis should paint a cohesive portrait of the querent as a person — "
-    "how their day number, life path, star sign, and decanate interact, reinforce, "
-    "or temper each other. This is the heart of the chart: an integrated character "
-    "study, not a summary of individual cards. "
-    "Honour the target synthesis length given in the spread details."
-)
-
-
-def build_system_prompt(request: InterpretationRequest) -> str:
-    if request.spread_name == SIGNIFICATORS_SPREAD:
-        base = _SIGNIFICATORS_SYSTEM_PROMPT
-    else:
-        base = _SYSTEM_PROMPT
-    return base + _style_guidance(request.settings.style)
-
-
-def _style_guidance(style: ReadingStyle) -> str:
-    weights = _STYLE_WEIGHTS[style]
+    `card_count` is the raw card count (len(request.cards)), not the distinct count the word
+    budget divides by — the output echoes one JSON entry per card as given, so duplicate
+    significator cards still produce entries. Overestimating there is the safe direction.
+    """
+    words_per_card, synthesis_words = budget
+    prose_words = words_per_card * card_count + synthesis_words
     return (
-        "\n\nREADING STYLE:\n"
-        "Weight the interpretation layers as follows (1.0 = primary lens, 0.0 = do not use):\n"
-        f"- Literal card meanings (upright/reversed meanings, keywords): {weights['literal']}\n"
-        f"- Psychological (archetypes, inner dynamics): {weights['psychological']}\n"
-        f"- Symbolic (elements, astrology, numerology): {weights['symbolic']}\n"
-        f"- Esoteric (Kabbalah, alchemy, mythology): {weights['esoteric']}\n"
-        + _STYLE_RULES
+        math.ceil(prose_words * TOKENS_PER_WORD)
+        + CARD_ENTRY_OVERHEAD_TOKENS * card_count
+        + REASONING_HEADROOM[reasoning_effort]
     )
 
 
-def _depth_guidance(depth: int) -> tuple[str, float]:
-    for upper_bound, guidance, synthesis_factor in _DEPTH_BANDS:
-        if depth <= upper_bound:
-            return guidance, synthesis_factor
-    last_band = _DEPTH_BANDS[-1]
-    return last_band[1], last_band[2]
+def word_budget(depth: int, card_count: int) -> tuple[int, int]:
+    """Return (words_per_card, synthesis_words) for a depth setting and spread size.
 
-
-def _tone_guidance(tone: int) -> str:
-    for upper_bound, guidance in _TONE_BANDS:
-        if tone <= upper_bound:
-            return guidance
-    return _TONE_BANDS[-1][1]
+    The total scales with depth; the per-card share shrinks as the spread grows, so a
+    ten-card spread does not produce ten times the prose of a one-card draw.
+    """
+    total = MIN_TOTAL_WORDS + (MAX_TOTAL_WORDS - MIN_TOTAL_WORDS) * depth / 100
+    synthesis_words = round(total * SYNTHESIS_SHARE)
+    words_per_card = round(total * (1 - SYNTHESIS_SHARE) / card_count)
+    return words_per_card, synthesis_words
 
 
 def _distinct_card_count(request: InterpretationRequest) -> int:
@@ -226,9 +91,21 @@ def _distinct_card_count(request: InterpretationRequest) -> int:
     return len(request.cards)
 
 
-def _synthesis_target_words(distinct_cards: int) -> int:
-    extra_cards = max(0, distinct_cards - _SYNTHESIS_FLAT_CARD_LIMIT)
-    return _SYNTHESIS_BASE_WORDS + extra_cards * _SYNTHESIS_WORDS_PER_EXTRA_CARD
+def request_word_budget(request: InterpretationRequest) -> tuple[int, int]:
+    """The (words_per_card, synthesis_words) budget for a request."""
+    return word_budget(request.settings.depth, _distinct_card_count(request))
+
+
+def build_system_prompt(request: InterpretationRequest) -> str:
+    words_per_card, synthesis_words = request_word_budget(request)
+    return prompt_components.build_prompt(
+        lens=request.settings.lens,
+        intent=request.settings.intent,
+        spread_name=request.spread_name,
+        card_count=_distinct_card_count(request),
+        words_per_card=words_per_card,
+        synthesis_words=synthesis_words,
+    )
 
 
 def build_user_prompt(
@@ -245,8 +122,6 @@ def build_user_prompt(
         )
     else:
         lines.append("No specific question — provide a general reading.")
-    if request.context:
-        lines.append(f"Additional context from the querent: {request.context}")
     lines.append("")
     card_count = len(request.cards)
     lines.append(
@@ -262,12 +137,12 @@ def build_user_prompt(
         if meaning is not None:
             lines.append(_format_card(card, meaning))
 
-    depth_guidance, synthesis_factor = _depth_guidance(request.settings.depth)
-    target_words = round(_synthesis_target_words(_distinct_card_count(request)) * synthesis_factor)
+    words_per_card, synthesis_words = request_word_budget(request)
     lines.append("")
-    lines.append(depth_guidance)
-    lines.append(_tone_guidance(request.settings.tone))
-    lines.append(f"Synthesis length: aim for roughly {target_words} words.")
+    lines.append(
+        f"Length: roughly {words_per_card} words per card, "
+        f"and roughly {synthesis_words} words for the synthesis."
+    )
 
     return "\n".join(lines)
 
