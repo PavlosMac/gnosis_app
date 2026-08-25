@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { createPortal } from "react-dom";
+import Link from "next/link";
 import OrnateFrame from "@/components/OrnateFrame";
 import InterpretationDisplay from "@/components/InterpretationDisplay";
 import InterpretationSettingsControls from "@/components/InterpretationSettingsControls";
@@ -14,6 +15,7 @@ import {
   writeDefaultSettings,
   settingsEqual,
 } from "@/lib/interpretation-defaults";
+import { stashUnsavedInterpretation, loginToSaveHref } from "@/lib/interpretation-stash";
 import type { TarotCardData } from "@/types/models";
 import type { Interpretation, InterpretationSettings } from "@/types/interpret";
 
@@ -43,6 +45,8 @@ interface InterpretationModalProps {
   onSaved: (saved: Interpretation) => void;
   initialSettings?: InterpretationSettings;
   autoGenerate?: boolean;
+  // Open directly in preview with an unsaved result (restored after a login round-trip)
+  initialResult?: Interpretation;
 }
 
 const InterpretationModal: React.FC<InterpretationModalProps> = React.memo(({
@@ -56,17 +60,25 @@ const InterpretationModal: React.FC<InterpretationModalProps> = React.memo(({
   onSaved,
   initialSettings,
   autoGenerate = false,
+  initialResult,
 }) => {
   const [modalState, setModalState] = useState<ModalState>(
-    autoGenerate ? "generating" : "tweak"
+    initialResult ? "preview" : autoGenerate ? "generating" : "tweak"
   );
-  const [unsavedResult, setUnsavedResult] = useState<Interpretation | null>(null);
+  const [unsavedResult, setUnsavedResult] = useState<Interpretation | null>(
+    initialResult ?? null
+  );
   const [tunedSettings, setTunedSettings] = useState<InterpretationSettings>(
-    () => initialSettings ?? readDefaultSettings()
+    () => initialResult?.settings ?? initialSettings ?? readDefaultSettings()
   );
-  const [lastGenerated, setLastGenerated] = useState<InterpretationSettings | null>(null);
+  const [lastGenerated, setLastGenerated] = useState<InterpretationSettings | null>(
+    initialResult?.settings ?? null
+  );
   const [errorMessage, setErrorMessage] = useState("");
   const [saveError, setSaveError] = useState("");
+  // Set when a request came back unauthenticated: retrying cannot succeed, so
+  // the UI offers a login round-trip (stashing the unsaved result) instead
+  const [sessionExpired, setSessionExpired] = useState(false);
   const [showCloseConfirm, setShowCloseConfirm] = useState(false);
   const [showReplaceConfirm, setShowReplaceConfirm] = useState(false);
 
@@ -117,6 +129,7 @@ const InterpretationModal: React.FC<InterpretationModalProps> = React.memo(({
           setModalState("preview");
         } else {
           setErrorMessage(result.error);
+          if (result.unauthenticated) setSessionExpired(true);
           setModalState("error");
         }
       } catch {
@@ -157,6 +170,7 @@ const InterpretationModal: React.FC<InterpretationModalProps> = React.memo(({
     }
     if (!result.ok) {
       setSaveError(result.error);
+      if (result.unauthenticated) setSessionExpired(true);
       setModalState("preview");
       return;
     }
@@ -165,6 +179,14 @@ const InterpretationModal: React.FC<InterpretationModalProps> = React.memo(({
     onSaved(unsavedResult);
     onClose();
   }, [unsavedResult, readingId, onSaved, onClose]);
+
+  // Keep the unsaved result across the login round-trip; the reading detail
+  // page reopens this modal in preview from the stash once the user is back
+  const stashForLogin = useCallback(() => {
+    if (unsavedResult) stashUnsavedInterpretation(readingId, unsavedResult);
+  }, [readingId, unsavedResult]);
+
+  const loginHref = loginToSaveHref(readingId);
 
   // Save, asking first when this lens slot already holds a saved interpretation
   const handleSaveRequest = useCallback(() => {
@@ -258,13 +280,23 @@ const InterpretationModal: React.FC<InterpretationModalProps> = React.memo(({
               >
                 {errorMessage || "The oracle could not be reached."}
               </p>
-              <button
-                onClick={() => lastAttemptRef.current()}
-                className="px-8 py-3 border border-[#d4af37]/40 text-[#d4af37] hover:bg-[#d4af37]/10 rounded-lg transition-all text-sm"
-                style={{ fontFamily: "'Cinzel', serif" }}
-              >
-                Try Again
-              </button>
+              {sessionExpired ? (
+                <Link
+                  href={loginHref}
+                  className="px-8 py-3 border border-[#d4af37]/40 text-[#d4af37] hover:bg-[#d4af37]/10 rounded-lg transition-all text-sm"
+                  style={{ fontFamily: "'Cinzel', serif" }}
+                >
+                  Log In
+                </Link>
+              ) : (
+                <button
+                  onClick={() => lastAttemptRef.current()}
+                  className="px-8 py-3 border border-[#d4af37]/40 text-[#d4af37] hover:bg-[#d4af37]/10 rounded-lg transition-all text-sm"
+                  style={{ fontFamily: "'Cinzel', serif" }}
+                >
+                  Try Again
+                </button>
+              )}
             </div>
           )}
 
@@ -296,16 +328,28 @@ const InterpretationModal: React.FC<InterpretationModalProps> = React.memo(({
               )}
 
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                <button
-                  onClick={handleSaveRequest}
-                  disabled={modalState === "saving"}
-                  className="px-10 py-3 bg-gradient-to-br from-[#d4af37] to-[#b8942f] text-[#1a0033] rounded-lg
-                             font-bold shadow-lg hover:shadow-[#d4af37]/50 transition-all
-                             disabled:opacity-60 disabled:cursor-not-allowed text-sm"
-                  style={{ fontFamily: "'Cinzel', serif", letterSpacing: "0.1em" }}
-                >
-                  {modalState === "saving" ? "Saving..." : "✦ Save Interpretation ✦"}
-                </button>
+                {sessionExpired ? (
+                  <Link
+                    href={loginHref}
+                    onClick={stashForLogin}
+                    className="px-10 py-3 bg-gradient-to-br from-[#d4af37] to-[#b8942f] text-[#1a0033] rounded-lg
+                               font-bold shadow-lg hover:shadow-[#d4af37]/50 transition-all text-sm"
+                    style={{ fontFamily: "'Cinzel', serif", letterSpacing: "0.1em" }}
+                  >
+                    ✦ Log In to Save ✦
+                  </Link>
+                ) : (
+                  <button
+                    onClick={handleSaveRequest}
+                    disabled={modalState === "saving"}
+                    className="px-10 py-3 bg-gradient-to-br from-[#d4af37] to-[#b8942f] text-[#1a0033] rounded-lg
+                               font-bold shadow-lg hover:shadow-[#d4af37]/50 transition-all
+                               disabled:opacity-60 disabled:cursor-not-allowed text-sm"
+                    style={{ fontFamily: "'Cinzel', serif", letterSpacing: "0.1em" }}
+                  >
+                    {modalState === "saving" ? "Saving..." : "✦ Save Interpretation ✦"}
+                  </button>
+                )}
                 <button
                   onClick={() => setModalState("tweak")}
                   disabled={modalState === "saving"}
@@ -426,27 +470,41 @@ const InterpretationModal: React.FC<InterpretationModalProps> = React.memo(({
                 className="text-[#e6d5b8]/90 mb-6"
                 style={{ fontFamily: "'Crimson Pro', serif" }}
               >
-                Save this interpretation before leaving?
+                {sessionExpired
+                  ? "Your session has expired. Log in to keep this interpretation, or leave and lose it."
+                  : "Save this interpretation before leaving?"}
               </p>
               <div className="flex items-center justify-center gap-4">
-                <button
-                  onClick={() => {
-                    setShowCloseConfirm(false);
-                    handleSaveRequest();
-                  }}
-                  className="px-8 py-2.5 bg-gradient-to-br from-[#d4af37] to-[#b8942f] text-[#1a0033]
-                             rounded-lg font-bold text-sm"
-                  style={{ fontFamily: "'Cinzel', serif" }}
-                >
-                  Save
-                </button>
+                {sessionExpired ? (
+                  <Link
+                    href={loginHref}
+                    onClick={stashForLogin}
+                    className="px-8 py-2.5 bg-gradient-to-br from-[#d4af37] to-[#b8942f] text-[#1a0033]
+                               rounded-lg font-bold text-sm"
+                    style={{ fontFamily: "'Cinzel', serif" }}
+                  >
+                    Log In
+                  </Link>
+                ) : (
+                  <button
+                    onClick={() => {
+                      setShowCloseConfirm(false);
+                      handleSaveRequest();
+                    }}
+                    className="px-8 py-2.5 bg-gradient-to-br from-[#d4af37] to-[#b8942f] text-[#1a0033]
+                               rounded-lg font-bold text-sm"
+                    style={{ fontFamily: "'Cinzel', serif" }}
+                  >
+                    Save
+                  </button>
+                )}
                 <button
                   onClick={onClose}
                   className="px-8 py-2.5 border border-[#d4af37]/30 text-[#d4af37]/70
                              hover:text-[#d4af37] rounded-lg text-sm"
                   style={{ fontFamily: "'Cinzel', serif" }}
                 >
-                  Discard
+                  {sessionExpired ? "Leave" : "Discard"}
                 </button>
               </div>
             </div>

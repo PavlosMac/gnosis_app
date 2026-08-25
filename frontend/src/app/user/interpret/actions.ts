@@ -51,7 +51,7 @@ export const generateInterpretation = async (
   settings: InterpretationSettings
 ): Promise<GenerateInterpretationResult> => {
   const user = await getCurrentUser();
-  if (!user) return { ok: false, error: NOT_LOGGED_IN };
+  if (!user) return { ok: false, error: NOT_LOGGED_IN, unauthenticated: true };
 
   if (!READING_ID_REGEX.test(readingId))
     return { ok: false, error: "Invalid reading ID." };
@@ -66,7 +66,11 @@ export const generateInterpretation = async (
   );
 
   if (!result.ok)
-    return { ok: false, error: result.message ?? "The oracle could not be reached." };
+    return {
+      ok: false,
+      error: result.message ?? "The oracle could not be reached.",
+      unauthenticated: result.status === 401,
+    };
 
   return { ok: true, data: result.data };
 };
@@ -76,7 +80,7 @@ export const saveInterpretation = async (
   interpretation: Interpretation
 ): Promise<SaveInterpretationResult> => {
   const user = await getCurrentUser();
-  if (!user) return { ok: false, error: NOT_LOGGED_IN };
+  if (!user) return { ok: false, error: NOT_LOGGED_IN, unauthenticated: true };
 
   if (!READING_ID_REGEX.test(readingId))
     return { ok: false, error: "Invalid reading ID." };
@@ -91,7 +95,11 @@ export const saveInterpretation = async (
   );
 
   if (!result.ok)
-    return { ok: false, error: result.message ?? "The interpretation could not be saved." };
+    return {
+      ok: false,
+      error: result.message ?? "The interpretation could not be saved.",
+      unauthenticated: result.status === 401,
+    };
 
   return { ok: true, interpretations: result.data.interpretations };
 };

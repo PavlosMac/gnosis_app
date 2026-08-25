@@ -40,6 +40,10 @@ const authenticateWithCredentials = async (
   return { success: true };
 };
 
+// Only same-origin absolute paths — never protocol-relative (//host) or external URLs
+const isSafeReturnPath = (value: unknown): value is string =>
+  typeof value === "string" && /^\/(?!\/)/.test(value);
+
 export const login = async (
   _prevState: LoginFormState,
   formData: FormData
@@ -47,7 +51,8 @@ export const login = async (
   const result = await authenticateWithCredentials(formData);
   if (!result.success) return result;
 
-  redirect("/user/profile");
+  const from = formData.get("from");
+  redirect(isSafeReturnPath(from) ? from : "/user/profile");
 };
 
 export const loginInline = async (

@@ -49,10 +49,12 @@ export type CreateReadingResult =
   | { ok: true; readingId: string }
   | { ok: false; error: string };
 
+// unauthenticated: the session is gone (no cookie, or refresh failed) — the
+// client can offer a login round-trip instead of a retry that cannot succeed
 export type GenerateInterpretationResult =
   | { ok: true; data: Interpretation }
-  | { ok: false; error: string };
+  | { ok: false; error: string; unauthenticated?: boolean };
 
 export type SaveInterpretationResult =
   | { ok: true; interpretations: Interpretation[] }
-  | { ok: false; error: string };
+  | { ok: false; error: string; unauthenticated?: boolean };

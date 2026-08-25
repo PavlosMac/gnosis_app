@@ -1,10 +1,11 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import InterpretationDisplay from "@/components/InterpretationDisplay";
 import InterpretationModal from "@/components/InterpretationModal";
 import TarotCard from "@/components/TarotCard";
+import { takeUnsavedInterpretation } from "@/lib/interpretation-stash";
 import type { TarotCardData } from "@/types/models";
 import type { SavedCard } from "@/types/reading";
 import type { Interpretation, InterpretationLens } from "@/types/interpret";
@@ -33,6 +34,17 @@ const InterpretationSection: React.FC<InterpretationSectionProps> = ({
   const router = useRouter();
   const [showModal, setShowModal] = useState(false);
   const [activeLens, setActiveLens] = useState<InterpretationLens | null>(null);
+  // An interpretation stashed before a "Log in to save" round-trip; reopen the
+  // modal in preview so the user can finish saving. sessionStorage is
+  // client-only, so this runs after mount rather than in an initializer.
+  const [restored, setRestored] = useState<Interpretation | null>(null);
+  useEffect(() => {
+    const stashed = takeUnsavedInterpretation(readingId);
+    if (stashed) {
+      setRestored(stashed);
+      setShowModal(true);
+    }
+  }, [readingId]);
 
   const ordered = [...interpretations].sort((a, b) =>
     (a.created_at ?? "").localeCompare(b.created_at ?? "")
@@ -151,7 +163,11 @@ const InterpretationSection: React.FC<InterpretationSectionProps> = ({
           birthDate={birthDate}
           cardVisuals={cardVisuals}
           savedInterpretations={interpretations}
-          onClose={() => setShowModal(false)}
+          initialResult={restored ?? undefined}
+          onClose={() => {
+            setShowModal(false);
+            setRestored(null);
+          }}
           onSaved={(saved) => {
             setActiveLens(saved.settings.lens);
             router.refresh();

@@ -9,11 +9,12 @@ import type { LoginFormState } from "@/types/auth";
 
 interface LoginFormProps {
   registrationEnabled: boolean;
+  from?: string;
 }
 
 const initialState: LoginFormState = { success: false };
 
-const LoginForm = ({ registrationEnabled }: LoginFormProps) => {
+const LoginForm = ({ registrationEnabled, from }: LoginFormProps) => {
   const [state, formAction, pending] = useActionState(login, initialState);
 
   return (
@@ -51,6 +52,7 @@ const LoginForm = ({ registrationEnabled }: LoginFormProps) => {
           )}
 
           <form action={formAction} className="space-y-6">
+            {from && <input type="hidden" name="from" value={from} />}
             <AuthField
               name="email"
               type="email"
