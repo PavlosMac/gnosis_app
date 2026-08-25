@@ -21,13 +21,13 @@ export interface CardInterpretation {
   interpretation: string;
 }
 
-export type InterpretationLens =
-  | "traditional"
-  | "psychological"
-  | "esoteric"
-  | "alchemical";
+// Single source of truth for the lens/intent enums — the zod schema and the
+// UI option lists derive from these arrays
+export const LENSES = ["traditional", "psychological", "esoteric", "alchemical"] as const;
+export const INTENTS = ["reflective", "predictive"] as const;
 
-export type InterpretationIntent = "reflective" | "predictive";
+export type InterpretationLens = (typeof LENSES)[number];
+export type InterpretationIntent = (typeof INTENTS)[number];
 
 export interface InterpretationSettings {
   lens: InterpretationLens;
@@ -55,6 +55,7 @@ export type GenerateInterpretationResult =
   | { ok: true; data: Interpretation }
   | { ok: false; error: string; unauthenticated?: boolean };
 
+// interpretations: the reading's full saved list after the upsert
 export type SaveInterpretationResult =
   | { ok: true; interpretations: Interpretation[] }
   | { ok: false; error: string; unauthenticated?: boolean };

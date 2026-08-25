@@ -114,7 +114,7 @@ export const authenticatedFetch = async <T>(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<ApiResult<T>> => {
-  console.log("[AUTH:FETCH] authenticatedFetch →", endpoint, options);
+  console.log("[AUTH:FETCH] authenticatedFetch →", endpoint, options.method ?? "GET");
 
   let accessToken = await getValidAccessToken();
 
@@ -124,7 +124,7 @@ export const authenticatedFetch = async <T>(
     accessToken = await refreshAccessToken();
     if (!accessToken) {
       console.log("[AUTH:FETCH] No valid token after refresh — returning 401");
-      return { ok: false, status: 401, message: "Not authenticated" };
+      return { ok: false, status: 401, message: "Not authenticated", unauthenticated: true };
     }
   }
 
@@ -151,18 +151,22 @@ export const authenticatedFetch = async <T>(
         const data: T = await retryRes.json();
         return { ok: true, data };
       }
-      return { ok: false, status: retryRes.status, message: safeErrorMessage(retryRes.status, "Session expired. Please log in again.") };
+      return {
+        ok: false,
+        status: retryRes.status,
+        message: safeErrorMessage(retryRes.status, "Session expired. Please log in again."),
+        unauthenticated: retryRes.status === 401,
+      };
     }
-    return { ok: false, status: 401, message: "Session expired. Please log in again." };
+    return { ok: false, status: 401, message: "Session expired. Please log in again.", unauthenticated: true };
   }
 
   if (!res.ok) {
-    const errorBody = await res.text();
     console.log("[AUTH:FETCH] Request failed", {
       endpoint,
       status: res.status,
-      statusText: res.statusText,
-      body: errorBody,
+      // response body is only read for local diagnostics
+      ...(process.env.NODE_ENV !== "production" && { body: await res.text() }),
     });
     return { ok: false, status: res.status, message: safeErrorMessage(res.status, "An unexpected error occurred.") };
   }

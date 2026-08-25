@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { LENSES, INTENTS } from "@/types/interpret";
 
 export const interpretCardSchema = z.object({
   name: z.string().trim().min(1).max(100),
@@ -19,9 +20,12 @@ export const interpretRequestSchema = z.object({
   cards: z.array(interpretCardSchema).min(1).max(11),
 });
 
+// Ids are interpolated into backend URLs — accept nothing but a Mongo ObjectId
+export const readingIdSchema = z.string().regex(/^[a-f0-9]{24}$/, "Invalid reading ID.");
+
 export const interpretationSettingsSchema = z.object({
-  lens: z.enum(["traditional", "psychological", "esoteric", "alchemical"]),
-  intent: z.enum(["reflective", "predictive"]),
+  lens: z.enum(LENSES),
+  intent: z.enum(INTENTS),
   depth: z.number().int().min(0).max(100),
 });
 

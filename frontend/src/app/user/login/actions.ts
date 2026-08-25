@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { publicFetch, setAuthCookies } from "@/lib/api-client";
 import { loginSchema } from "@/lib/validation/auth-schemas";
+import { isSafeReturnPath } from "@/lib/auth-return-path";
 import type { LoginFormState, TokenResponse } from "@/types/auth";
 
 const authenticateWithCredentials = async (
@@ -39,10 +40,6 @@ const authenticateWithCredentials = async (
 
   return { success: true };
 };
-
-// Only same-origin absolute paths — never protocol-relative (//host) or external URLs
-const isSafeReturnPath = (value: unknown): value is string =>
-  typeof value === "string" && /^\/(?!\/)/.test(value);
 
 export const login = async (
   _prevState: LoginFormState,

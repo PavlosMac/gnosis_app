@@ -6,6 +6,7 @@ import {
   interpretRequestSchema,
   interpretationSettingsSchema,
   saveInterpretationSchema,
+  readingIdSchema,
 } from "@/lib/validation/interpret-schemas";
 import type {
   InterpretRequest,
@@ -18,8 +19,6 @@ import type {
 
 const NOT_LOGGED_IN = "You must be logged in to request an interpretation.";
 
-// Ids are interpolated into the backend URL — reject anything but a Mongo ObjectId
-const READING_ID_REGEX = /^[a-f0-9]{24}$/;
 
 export const createReading = async (
   payload: InterpretRequest
@@ -53,7 +52,7 @@ export const generateInterpretation = async (
   const user = await getCurrentUser();
   if (!user) return { ok: false, error: NOT_LOGGED_IN, unauthenticated: true };
 
-  if (!READING_ID_REGEX.test(readingId))
+  if (!readingIdSchema.safeParse(readingId).success)
     return { ok: false, error: "Invalid reading ID." };
 
   const parsed = interpretationSettingsSchema.safeParse(settings);
@@ -69,7 +68,7 @@ export const generateInterpretation = async (
     return {
       ok: false,
       error: result.message ?? "The oracle could not be reached.",
-      unauthenticated: result.status === 401,
+      unauthenticated: result.unauthenticated,
     };
 
   return { ok: true, data: result.data };
@@ -82,7 +81,7 @@ export const saveInterpretation = async (
   const user = await getCurrentUser();
   if (!user) return { ok: false, error: NOT_LOGGED_IN, unauthenticated: true };
 
-  if (!READING_ID_REGEX.test(readingId))
+  if (!readingIdSchema.safeParse(readingId).success)
     return { ok: false, error: "Invalid reading ID." };
 
   const parsed = saveInterpretationSchema.safeParse(interpretation);
@@ -98,7 +97,7 @@ export const saveInterpretation = async (
     return {
       ok: false,
       error: result.message ?? "The interpretation could not be saved.",
-      unauthenticated: result.status === 401,
+      unauthenticated: result.unauthenticated,
     };
 
   return { ok: true, interpretations: result.data.interpretations };

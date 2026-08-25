@@ -1,4 +1,5 @@
 import { saveInterpretationSchema } from "@/lib/validation/interpret-schemas";
+import { loginHrefFor } from "@/lib/auth-return-path";
 import type { Interpretation } from "@/types/interpret";
 
 // Holds an unsaved interpretation across a login round-trip when the session
@@ -32,5 +33,6 @@ export const takeUnsavedInterpretation = (readingId: string): Interpretation | n
   }
 };
 
+// After login, land on the reading page — the only place that restores the stash
 export const loginToSaveHref = (readingId: string): string =>
-  `/user/login?from=${encodeURIComponent(`/user/readings/${readingId}`)}`;
+  loginHrefFor(`/user/readings/${readingId}`);

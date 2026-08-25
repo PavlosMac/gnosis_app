@@ -1,17 +1,24 @@
+import { interpretationSettingsSchema } from "@/lib/validation/interpret-schemas";
+import { LENSES, INTENTS } from "@/types/interpret";
 import type {
   InterpretationSettings,
   InterpretationLens,
   InterpretationIntent,
 } from "@/types/interpret";
 
-export const LENSES: InterpretationLens[] = [
-  "traditional",
-  "psychological",
-  "esoteric",
-  "alchemical",
-];
+export { LENSES, INTENTS };
 
-export const INTENTS: InterpretationIntent[] = ["reflective", "predictive"];
+export const LENS_LABELS: Record<InterpretationLens, string> = {
+  traditional: "Traditional",
+  psychological: "Psychological",
+  esoteric: "Esoteric",
+  alchemical: "Alchemical",
+};
+
+export const INTENT_LABELS: Record<InterpretationIntent, string> = {
+  reflective: "Reflective",
+  predictive: "Predictive",
+};
 
 export const DEFAULT_SETTINGS: InterpretationSettings = {
   lens: "traditional",
@@ -39,26 +46,13 @@ export const settingsEqual = (
 
 const STORAGE_KEY = "interpretation-default-settings";
 
-const isValidSettings = (value: unknown): value is InterpretationSettings => {
-  if (typeof value !== "object" || value === null) return false;
-  const { lens, intent, depth } = value as Record<string, unknown>;
-  return (
-    LENSES.includes(lens as InterpretationLens) &&
-    INTENTS.includes(intent as InterpretationIntent) &&
-    typeof depth === "number" &&
-    Number.isInteger(depth) &&
-    depth >= 0 &&
-    depth <= 100
-  );
-};
-
 export const readDefaultSettings = (): InterpretationSettings => {
   if (typeof window === "undefined") return DEFAULT_SETTINGS;
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (!raw) return DEFAULT_SETTINGS;
-    const parsed: unknown = JSON.parse(raw);
-    return isValidSettings(parsed) ? parsed : DEFAULT_SETTINGS;
+    const parsed = interpretationSettingsSchema.safeParse(JSON.parse(raw));
+    return parsed.success ? parsed.data : DEFAULT_SETTINGS;
   } catch {
     return DEFAULT_SETTINGS;
   }

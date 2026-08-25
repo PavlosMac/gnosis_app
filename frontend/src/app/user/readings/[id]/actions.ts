@@ -4,6 +4,7 @@ import { authenticatedFetch } from "@/lib/api-client";
 import { getCurrentUser } from "@/lib/session";
 import type { ReadingDetail, UpdateTagsResult } from "@/types/reading";
 import { updateTagsSchema } from "@/lib/validation/reading-schemas";
+import { readingIdSchema } from "@/lib/validation/interpret-schemas";
 
 export const getReading = async (
   id: string
@@ -14,7 +15,7 @@ export const getReading = async (
   const user = await getCurrentUser();
   if (!user) return { ok: false, error: "You must be logged in." };
 
-  if (!id || !/^[a-f0-9]{24}$/.test(id))
+  if (!readingIdSchema.safeParse(id).success)
     return { ok: false, error: "Invalid reading ID." };
 
   const result = await authenticatedFetch<ReadingDetail>(
@@ -44,6 +45,9 @@ export const updateReadingTags = async (
 ): Promise<UpdateTagsResult> => {
   const user = await getCurrentUser();
   if (!user) return { ok: false, error: "You must be logged in." };
+
+  if (!readingIdSchema.safeParse(readingId).success)
+    return { ok: false, error: "Invalid reading ID." };
 
   const parsed = updateTagsSchema.safeParse({ tags });
   if (!parsed.success)

@@ -1,16 +1,16 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import InterpretationDisplay from "@/components/InterpretationDisplay";
 import InterpretationModal from "@/components/InterpretationModal";
 import TarotCard from "@/components/TarotCard";
 import { takeUnsavedInterpretation } from "@/lib/interpretation-stash";
+import { LENS_LABELS, INTENT_LABELS } from "@/lib/interpretation-defaults";
 import type { TarotCardData } from "@/types/models";
 import type { SavedCard } from "@/types/reading";
 import type { Interpretation, InterpretationLens } from "@/types/interpret";
 
-const capitalize = (s: string): string => s.charAt(0).toUpperCase() + s.slice(1);
 
 interface InterpretationSectionProps {
   readingId: string;
@@ -32,19 +32,27 @@ const InterpretationSection: React.FC<InterpretationSectionProps> = ({
   interpretations,
 }) => {
   const router = useRouter();
-  const [showModal, setShowModal] = useState(false);
+  // null = closed; initialResult set when reopening in preview from a stash
+  const [modal, setModal] = useState<{ initialResult?: Interpretation } | null>(null);
   const [activeLens, setActiveLens] = useState<InterpretationLens | null>(null);
-  // An interpretation stashed before a "Log in to save" round-trip; reopen the
+
+  // An interpretation stashed before a "Log in to save" round-trip: reopen the
   // modal in preview so the user can finish saving. sessionStorage is
   // client-only, so this runs after mount rather than in an initializer.
-  const [restored, setRestored] = useState<Interpretation | null>(null);
   useEffect(() => {
     const stashed = takeUnsavedInterpretation(readingId);
-    if (stashed) {
-      setRestored(stashed);
-      setShowModal(true);
-    }
+    if (stashed) setModal({ initialResult: stashed });
   }, [readingId]);
+
+  const openModal = useCallback(() => setModal({}), []);
+  const closeModal = useCallback(() => setModal(null), []);
+  const handleSaved = useCallback(
+    (saved: Interpretation) => {
+      setActiveLens(saved.settings.lens);
+      router.refresh();
+    },
+    [router]
+  );
 
   const ordered = [...interpretations].sort((a, b) =>
     (a.created_at ?? "").localeCompare(b.created_at ?? "")
@@ -77,9 +85,9 @@ const InterpretationSection: React.FC<InterpretationSectionProps> = ({
                         : "border-[#d4af37]/20 text-[#e6d5b8]/60 hover:text-[#e6d5b8]/90 hover:border-[#d4af37]/50"}`}
                     style={{ fontFamily: "'Cinzel', serif" }}
                   >
-                    {capitalize(interp.settings.lens)}
+                    {LENS_LABELS[interp.settings.lens]}
                     <span className={`ml-2 text-[10px] uppercase ${selected ? "text-[#d4af37]/60" : "text-[#e6d5b8]/40"}`}>
-                      {capitalize(interp.settings.intent)}
+                      {INTENT_LABELS[interp.settings.intent]}
                     </span>
                   </button>
                 );
@@ -93,7 +101,7 @@ const InterpretationSection: React.FC<InterpretationSectionProps> = ({
                 className="text-center text-xs text-[#d4af37]/60 tracking-[0.2em] uppercase mb-6"
                 style={{ fontFamily: "'Cinzel', serif" }}
               >
-                {capitalize(active.settings.lens)} · {capitalize(active.settings.intent)}
+                {LENS_LABELS[active.settings.lens]} · {INTENT_LABELS[active.settings.intent]}
               </p>
             )}
             <InterpretationDisplay
@@ -109,7 +117,7 @@ const InterpretationSection: React.FC<InterpretationSectionProps> = ({
               {active.tokens_used.toLocaleString()} tokens
             </span>
             <button
-              onClick={() => setShowModal(true)}
+              onClick={openModal}
               className="text-[#d4af37]/60 hover:text-[#d4af37] transition-colors tracking-wider text-xs"
               style={{ fontFamily: "'Cinzel', serif" }}
             >
@@ -143,7 +151,7 @@ const InterpretationSection: React.FC<InterpretationSectionProps> = ({
           </div>
           <div className="mt-8 flex justify-center">
             <button
-              onClick={() => setShowModal(true)}
+              onClick={openModal}
               className="px-8 sm:px-10 py-3 sm:py-4 bg-gradient-to-br from-[#8a2be2]/80 to-[#5a1a9e]/80 text-[#e6d5b8] rounded-lg
                          shadow-lg hover:shadow-[#8a2be2]/40 transition-all duration-300 font-bold text-base sm:text-lg
                          hover:scale-105 active:scale-95 border border-[#8a2be2]/40"
@@ -155,7 +163,7 @@ const InterpretationSection: React.FC<InterpretationSectionProps> = ({
         </div>
       )}
 
-      {showModal && (
+      {modal && (
         <InterpretationModal
           readingId={readingId}
           spreadName={spreadName}
@@ -163,15 +171,9 @@ const InterpretationSection: React.FC<InterpretationSectionProps> = ({
           birthDate={birthDate}
           cardVisuals={cardVisuals}
           savedInterpretations={interpretations}
-          initialResult={restored ?? undefined}
-          onClose={() => {
-            setShowModal(false);
-            setRestored(null);
-          }}
-          onSaved={(saved) => {
-            setActiveLens(saved.settings.lens);
-            router.refresh();
-          }}
+          initialResult={modal.initialResult}
+          onClose={closeModal}
+          onSaved={handleSaved}
         />
       )}
     </>

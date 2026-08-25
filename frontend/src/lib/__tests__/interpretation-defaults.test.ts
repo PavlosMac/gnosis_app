@@ -7,6 +7,7 @@ import {
   settingsEqual,
 } from "@/lib/interpretation-defaults";
 import type { InterpretationSettings } from "@/types/interpret";
+import { fakeStorage } from "./helpers/fake-storage";
 
 const settings: InterpretationSettings = {
   lens: "esoteric",
@@ -14,13 +15,6 @@ const settings: InterpretationSettings = {
   depth: 80,
 };
 
-const fakeStorage = () => {
-  const store = new Map<string, string>();
-  return {
-    getItem: (k: string) => store.get(k) ?? null,
-    setItem: (k: string, v: string) => void store.set(k, v),
-  };
-};
 
 describe("sticky default settings", () => {
   afterEach(() => vi.unstubAllGlobals());

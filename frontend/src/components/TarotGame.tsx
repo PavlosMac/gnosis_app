@@ -83,12 +83,12 @@ export default function TarotGame({ user }: TarotGameProps) {
     setInterpretationSettings(readDefaultSettings());
   }, []);
 
-  // Persist only explicit changes — a persist-on-state effect would also fire
-  // on mount and briefly clobber the stored default with DEFAULT_SETTINGS
-  const handleStyleSettingsChange = useCallback((settings: InterpretationSettings) => {
-    setInterpretationSettings(settings);
-    writeDefaultSettings(settings);
-  }, []);
+  // Persist when the style modal closes rather than on every slider tick, and
+  // never from a mount effect (which would clobber the stored default)
+  const handleCloseStyleModal = useCallback(() => {
+    setShowStyleModal(false);
+    writeDefaultSettings(interpretationSettings);
+  }, [interpretationSettings]);
 
   const [day, setDay] = useState<string>("");
   const [month, setMonth] = useState<string>("");
@@ -148,14 +148,15 @@ export default function TarotGame({ user }: TarotGameProps) {
 
   const handleCloseModal = useCallback(() => setShowInterpretModal(false), []);
 
-  const handleInterpretationSaved = useCallback((saved: Interpretation) => {
-    setSavedInterpretations((prev) => [
-      ...prev.filter((i) => i.settings.lens !== saved.settings.lens),
-      saved,
-    ]);
-    // Keep the reading style in step with settings tuned inside the modal
-    setInterpretationSettings(saved.settings);
-  }, []);
+  const handleInterpretationSaved = useCallback(
+    (saved: Interpretation, interpretations: Interpretation[]) => {
+      setSavedInterpretations(interpretations);
+      // Keep the reading style in step with settings tuned inside the modal
+      // (the modal has already persisted them as the sticky default)
+      setInterpretationSettings(saved.settings);
+    },
+    []
+  );
 
   const handleCloseLoginModal = useCallback(() => setShowLoginModal(false), []);
 
@@ -659,9 +660,9 @@ export default function TarotGame({ user }: TarotGameProps) {
     {showStyleModal && (
       <ReadingStyleModal
         settings={interpretationSettings}
-        onSettingsChange={handleStyleSettingsChange}
+        onSettingsChange={setInterpretationSettings}
         cardCount={selectedReading.cards || selectedReading.positions.length}
-        onClose={() => setShowStyleModal(false)}
+        onClose={handleCloseStyleModal}
       />
     )}
 

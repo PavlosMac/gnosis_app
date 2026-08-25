@@ -5,6 +5,7 @@ import {
   loginToSaveHref,
 } from "@/lib/interpretation-stash";
 import type { Interpretation } from "@/types/interpret";
+import { fakeStorage } from "./helpers/fake-storage";
 
 const interpretation: Interpretation = {
   card_interpretations: [
@@ -14,15 +15,6 @@ const interpretation: Interpretation = {
   model: "test-model",
   tokens_used: 100,
   settings: { lens: "esoteric", intent: "predictive", depth: 80 },
-};
-
-const fakeStorage = () => {
-  const store = new Map<string, string>();
-  return {
-    getItem: (k: string) => store.get(k) ?? null,
-    setItem: (k: string, v: string) => void store.set(k, v),
-    removeItem: (k: string) => void store.delete(k),
-  };
 };
 
 describe("interpretation stash", () => {

@@ -1,16 +1,21 @@
 "use client";
 
 import React from "react";
-import { LENSES, INTENTS, estimatedWordsPerCard } from "@/lib/interpretation-defaults";
+import {
+  LENSES,
+  INTENTS,
+  LENS_LABELS,
+  INTENT_LABELS,
+  estimatedWordsPerCard,
+} from "@/lib/interpretation-defaults";
 import type {
   InterpretationSettings,
   InterpretationLens,
   InterpretationIntent,
 } from "@/types/interpret";
 
-const LENS_META: Record<InterpretationLens, { label: string; description: string; icon: React.ReactNode }> = {
+const LENS_META: Record<InterpretationLens, { description: string; icon: React.ReactNode }> = {
   traditional: {
-    label: "Traditional",
     description: "Conventional meanings, read plainly.",
     icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
@@ -20,7 +25,6 @@ const LENS_META: Record<InterpretationLens, { label: string; description: string
     ),
   },
   psychological: {
-    label: "Psychological",
     description: "Inner patterns and what they defend.",
     icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
@@ -30,7 +34,6 @@ const LENS_META: Record<InterpretationLens, { label: string; description: string
     ),
   },
   esoteric: {
-    label: "Esoteric",
     description: "Sign, planet, path and number.",
     icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" aria-hidden="true">
@@ -39,7 +42,6 @@ const LENS_META: Record<InterpretationLens, { label: string; description: string
     ),
   },
   alchemical: {
-    label: "Alchemical",
     description: "What is dissolving, joining, fixing.",
     icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" aria-hidden="true">
@@ -50,15 +52,9 @@ const LENS_META: Record<InterpretationLens, { label: string; description: string
   },
 };
 
-const INTENT_META: Record<InterpretationIntent, { label: string; description: string }> = {
-  reflective: {
-    label: "Reflective",
-    description: "What is present, rather than what will happen.",
-  },
-  predictive: {
-    label: "Predictive",
-    description: "What is likely to unfold.",
-  },
+const INTENT_DESCRIPTIONS: Record<InterpretationIntent, string> = {
+  reflective: "What is present, rather than what will happen.",
+  predictive: "What is likely to unfold.",
 };
 
 interface InterpretationSettingsControlsProps {
@@ -119,7 +115,7 @@ const InterpretationSettingsControls: React.FC<InterpretationSettingsControlsPro
                     className={`text-sm tracking-[0.1em] ${selected ? "text-[#d4af37]" : "text-[#e6d5b8]/80"}`}
                     style={{ fontFamily: "'Cinzel', serif" }}
                   >
-                    {meta.label}
+                    {LENS_LABELS[lens]}
                   </span>
                   {savedLenses.includes(lens) && (
                     <span
@@ -174,7 +170,7 @@ const InterpretationSettingsControls: React.FC<InterpretationSettingsControlsPro
                 disabled:cursor-not-allowed`}
               style={{ fontFamily: "'Cinzel', serif" }}
             >
-              {INTENT_META[intent].label}
+              {INTENT_LABELS[intent]}
             </button>
           );
         })}
@@ -183,7 +179,7 @@ const InterpretationSettingsControls: React.FC<InterpretationSettingsControlsPro
         className="text-xs text-[#e6d5b8]/50 mt-1.5"
         style={{ fontFamily: "'Crimson Pro', serif" }}
       >
-        {INTENT_META[settings.intent].description}
+        {INTENT_DESCRIPTIONS[settings.intent]}
       </p>
     </div>
 
