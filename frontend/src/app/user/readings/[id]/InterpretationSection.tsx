@@ -5,10 +5,12 @@ import { useRouter } from "next/navigation";
 import InterpretationDisplay from "@/components/InterpretationDisplay";
 import InterpretationModal from "@/components/InterpretationModal";
 import TarotCard from "@/components/TarotCard";
+import KabbalahLayout from "@/components/KabbalahLayout";
+import { isTreeOfLife } from "@/components/Reading";
 import { takeUnsavedInterpretation } from "@/lib/interpretation-stash";
 import { LENS_LABELS, INTENT_LABELS } from "@/lib/interpretation-defaults";
 import type { TarotCardData } from "@/types/models";
-import type { SavedCard } from "@/types/reading";
+import type { SavedCard, SelectedCard } from "@/types/reading";
 import type { Interpretation, InterpretationLens } from "@/types/interpret";
 
 
@@ -21,6 +23,54 @@ interface InterpretationSectionProps {
   cards: SavedCard[];
   interpretations: Interpretation[];
 }
+
+interface SpreadCardsProps {
+  cards: SavedCard[];
+  cardVisuals: InterpretationSectionProps["cardVisuals"];
+}
+
+/** The saved spread, laid out as in the game: Tree of Life as a tree, everything else as a row */
+const SpreadCards: React.FC<SpreadCardsProps> = ({ cards, cardVisuals }) => {
+  const positions = cards.map((c) => c.position);
+  if (isTreeOfLife(positions)) {
+    const selectedCards = cards.map((saved, i) => {
+      const visual = cardVisuals[saved.position];
+      return visual ? ({ ...visual.card, idx: i, reversed: visual.reversed } as SelectedCard) : undefined;
+    });
+    // KabbalahLayout zips by index; skip unresolved cards while keeping alignment
+    const known = selectedCards.flatMap((c, i) => (c ? [{ card: c, position: positions[i] }] : []));
+    return (
+      <KabbalahLayout
+        selectedCards={known.map((k) => k.card)}
+        positions={known.map((k) => k.position)}
+      />
+    );
+  }
+  return (
+    <div className="flex flex-wrap justify-center gap-6">
+      {cards.map((saved) => {
+        const visual = cardVisuals[saved.position];
+        return (
+          <div key={saved.position} className="flex flex-col items-center gap-2">
+            {visual && (
+              <TarotCard
+                card={{ ...visual.card, reversed: visual.reversed }}
+                small={true}
+                showMeaning={false}
+              />
+            )}
+            <span
+              className="text-xs text-[#e6d5b8]/60 text-center"
+              style={{ fontFamily: "'Cinzel', serif" }}
+            >
+              {saved.position}
+            </span>
+          </div>
+        );
+      })}
+    </div>
+  );
+};
 
 const InterpretationSection: React.FC<InterpretationSectionProps> = ({
   readingId,
@@ -64,6 +114,11 @@ const InterpretationSection: React.FC<InterpretationSectionProps> = ({
     <>
       {active ? (
         <>
+          {/* The spread itself, laid out as in the game */}
+          <div className="rounded-2xl border border-[#d4af37]/20 bg-gradient-to-b from-[#1a0033]/80 to-[#0a0015]/80 backdrop-blur-sm p-5 sm:p-8 mb-6">
+            <SpreadCards cards={cards} cardVisuals={cardVisuals} />
+          </div>
+
           {/* Lens tabs */}
           {ordered.length > 1 && (
             <div
@@ -127,28 +182,7 @@ const InterpretationSection: React.FC<InterpretationSectionProps> = ({
         </>
       ) : (
         <div className="rounded-2xl border border-[#d4af37]/20 bg-gradient-to-b from-[#1a0033]/80 to-[#0a0015]/80 backdrop-blur-sm p-5 sm:p-8">
-          <div className="flex flex-wrap justify-center gap-6">
-            {cards.map((saved) => {
-              const visual = cardVisuals[saved.position];
-              return (
-                <div key={saved.position} className="flex flex-col items-center gap-2">
-                  {visual && (
-                    <TarotCard
-                      card={{ ...visual.card, reversed: visual.reversed }}
-                      small={true}
-                      showMeaning={false}
-                    />
-                  )}
-                  <span
-                    className="text-xs text-[#e6d5b8]/60 text-center"
-                    style={{ fontFamily: "'Cinzel', serif" }}
-                  >
-                    {saved.position}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
+          <SpreadCards cards={cards} cardVisuals={cardVisuals} />
           <div className="mt-8 flex justify-center">
             <button
               onClick={openModal}

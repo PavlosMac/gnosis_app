@@ -86,23 +86,31 @@ export const TAROT_DECK: TarotCardData[] = [
   { idx: 77, name: "King of Swords", imageUrl: "https://steve-p.org/cards/small/sm_RWSa-S-KI.webp", meaning: "Intellectual, authority, truth", reversedMeaning: "Manipulative, cruel, weakness" },
 ];
 
+// ── Deck layout ────────────────────────────────────────────────────────
+// TAROT_DECK lays each suit out as Ace…Ten, Page, Knight, Queen, King.
+const SUIT_START = { pentacles: 22, wands: 36, cups: 50, swords: 64 } as const;
+type Suit = keyof typeof SUIT_START;
+
+const suitSlice = (suit: Suit) => {
+  const start = SUIT_START[suit];
+  const [page, knight, queen, king] = TAROT_DECK.slice(start + 10, start + 14);
+  return { pips: TAROT_DECK.slice(start, start + 10), page, knight, queen, king };
+};
+
+const SUITS = (Object.keys(SUIT_START) as Suit[]).map(suitSlice);
+
 // Card category mapping
 export const TAROT_MAP = {
-  majorArcana: TAROT_DECK.filter(card => card.idx >= 0 && card.idx <= 21),
-  minorArcana: TAROT_DECK.filter(card => {
-    // Numbered cards (Ace through Ten) from each suit
-    const pentaclesNumbered = card.idx >= 22 && card.idx <= 31;
-    const wandsNumbered = card.idx >= 36 && card.idx <= 45;
-    const cupsNumbered = card.idx >= 50 && card.idx <= 59;
-    const swordsNumbered = card.idx >= 64 && card.idx <= 73;
-    return pentaclesNumbered || wandsNumbered || cupsNumbered || swordsNumbered;
-  }),
-  courtCards: TAROT_DECK.filter(card => {
-    // Page, Knight, Queen, King from each suit
-    const pentaclesCourt = card.idx >= 32 && card.idx <= 35;
-    const wandsCourt = card.idx >= 46 && card.idx <= 49;
-    const cupsCourt = card.idx >= 60 && card.idx <= 63;
-    const swordsCourt = card.idx >= 74 && card.idx <= 77;
-    return pentaclesCourt || wandsCourt || cupsCourt || swordsCourt;
-  }),
+  majorArcana: TAROT_DECK.slice(0, 22),
+  minorArcana: SUITS.flatMap((s) => s.pips),
+  courtCards: SUITS.flatMap((s) => [s.page, s.knight, s.queen, s.king]),
 };
+
+// Manual (face-up) deck order: Majors → Ace–10 of Wands, Cups, Swords,
+// Pentacles → court cards grouped by suit in that order, each as Knight, Queen, King, Page.
+const MANUAL_SUITS = (['wands', 'cups', 'swords', 'pentacles'] as const).map(suitSlice);
+export const MANUAL_DECK_ORDER: TarotCardData[] = [
+  ...TAROT_MAP.majorArcana,
+  ...MANUAL_SUITS.flatMap((s) => s.pips),
+  ...MANUAL_SUITS.flatMap((s) => [s.knight, s.queen, s.king, s.page]),
+];

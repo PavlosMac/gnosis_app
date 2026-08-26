@@ -1,7 +1,7 @@
 # Manual Reading Page + "Reading Style" Modal — Design & Plan
 
 Date: 2026-08-21
-Status: Feature 2 (Reading Style) in progress; Feature 1 (Manual Reading) planned.
+Status: Feature 2 (Reading Style) completed 2026-08-21; Feature 1 (Manual Reading, profile label "Manual Interpretation") completed 2026-08-25.
 
 ## Context
 
@@ -41,7 +41,7 @@ New actions (each guarded to no-op outside its valid phase, matching the `SELECT
 
 Same visual layout as `ShuffledDeck` (flex-wrap grid, same `max-w-[400px] sm:max-w-[856px]`, card sizing, hover scale/glow idioms) but:
 
-- `TAROT_DECK` in canonical order (Major 0-21, Pentacles, Wands, Cups, Swords) — no `secureShuffleArray`, no `getSecureRandomBoolean`.
+- `MANUAL_DECK_ORDER` (`src/lib/cards.ts`, derived from `TAROT_DECK`): Majors 0-21 → Ace–10 of Wands, Cups, Swords, Pentacles → court cards grouped by suit in that same order, each as Knight, Queen, King, Page — no `secureShuffleArray`, no `getSecureRandomBoolean`. Reversal is set only from the tray (no on-card toggle).
 - Front face (card image) always visible; no flip animation.
 - Tap an unselected card → `onAddCard({ ...card, reversed: false })`; a picked card gets a gold ring + position badge and dims; tapping it again unselects. Once `numCards` are picked, remaining cards dim/disable.
 - **Sticky tray above the deck** (gradient background idiom from `InterpretationModal`'s sticky header): progress line "Choose card 2 of 3 — Present"; picked-card chips in position order, each with thumbnail, name, ⤾ reverse toggle (`rotate-180` on the image), and × remove; "✦ Reveal the Reading ✦" gold-gradient button (disabled until complete) and "◇ Go Back ◇" (→ `RESET`).
@@ -51,7 +51,7 @@ Same visual layout as `ShuffledDeck` (flex-wrap grid, same `max-w-[400px] sm:max
 ### Route + profile entry
 
 - **New `src/app/user/manual-reading/page.tsx`** (server component): `getCurrentUser()`, `redirect("/user/login")` if absent (proxy also guards `/user/*`); page shell mirrors `src/app/reading/page.tsx` (starfield + fonts + `overflow-y-auto`), back button → `/user/profile` labeled "Sanctum"; renders `<TarotGame user={user} mode="manual" />`.
-- **`src/app/user/profile/page.tsx`**: add a "Manual Reading" link row (exact idiom of the Readings Journal row) → `/user/manual-reading`.
+- **`src/app/user/profile/page.tsx`**: add a "Manual Interpretation" link row (exact idiom of the Readings Journal row) → `/user/manual-reading`.
 
 ### TarotGame changes (Feature 1)
 

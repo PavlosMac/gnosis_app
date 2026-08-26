@@ -32,7 +32,7 @@ const SIGNIFICATOR_POSITIONS = ["day number", "life number", "star sign", "decan
 
 const normalize = (positions: string[]) => positions.map((p) => p.trim().toLowerCase());
 
-const isTreeOfLife = (positions: string[]) =>
+export const isTreeOfLife = (positions: string[]) =>
   TREE_OF_LIFE_POSITIONS.every((pos) => normalize(positions).includes(pos));
 
 const isSignificators = (positions: string[]) => {

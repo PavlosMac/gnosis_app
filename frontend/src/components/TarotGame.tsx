@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef, useCallback, useMemo } from "react"
 import { useRouter } from "next/navigation";
 import Reading from "@/components/Reading";
 import ShuffledDeck from "@/components/ShuffledDeck";
+import FaceUpDeck from "@/components/FaceUpDeck";
 import ShuffleAnimation from "@/components/ShuffleAnimation";
 import InterpretationModal from "@/components/InterpretationModal";
 import LoginToInterpretModal from "@/components/LoginToInterpretModal";
@@ -11,7 +12,7 @@ import OrnateFrame from "@/components/OrnateFrame";
 import readingsConfig from "@/lib/readings-config.json";
 import { parseAndValidateDate } from "@/lib/dateValidation";
 
-import { useGameReducer, getSelectedCards, getReading } from "@/hooks/useGameReducer";
+import { useGameReducer, getSelectedCards, getReading, isPostDeal, isPickingCards, hasDeckOnScreen } from "@/hooks/useGameReducer";
 import { createReading } from "@/app/user/interpret/actions";
 import {
   DEFAULT_SETTINGS,
@@ -45,9 +46,14 @@ interface ReadingConfig {
 
 interface TarotGameProps {
   user?: User | null;
+  /** 'draw' shuffles and deals face-down; 'manual' shows the deck face-up so the user re-enters a physical spread */
+  mode?: 'draw' | 'manual';
 }
 
 const readings = readingsConfig.readings as ReadingConfig[];
+// Significators are birthdate-computed — nothing to enter by hand
+const manualReadings = readings.filter((r) => r.cards > 0);
+const DEFAULT_READING_NAME = readings[1].name;
 
 // Animation timing constants (in ms)
 const CARD_FLIP_DURATION = 600; // matches CSS .card-flip-inner transition
@@ -56,9 +62,13 @@ const SHOW_READING_DELAY = CARD_FLIP_DURATION + CARD_FLIP_BUFFER;
 const DECK_SCROLL_DELAY = 300;
 const READING_SCROLL_DELAY = 100;
 
-export default function TarotGame({ user }: TarotGameProps) {
+export default function TarotGame({ user, mode = 'draw' }: TarotGameProps) {
   const router = useRouter();
-  const [selectedReading, setSelectedReading] = useState<ReadingConfig>(readings[1]);
+  const isManual = mode === 'manual';
+  const spreadOptions = isManual ? manualReadings : readings;
+  const [selectedReading, setSelectedReading] = useState<ReadingConfig>(
+    () => spreadOptions.find((r) => r.name === DEFAULT_READING_NAME) ?? spreadOptions[0]
+  );
   const [allowReversals, setAllowReversals] = useState(false);
   const [userQuestion, setUserQuestion] = useState<string>("");
   const [showOracleInfo, setShowOracleInfo] = useState(false);
@@ -98,7 +108,8 @@ export default function TarotGame({ user }: TarotGameProps) {
   const numCards = selectedReading.cards;
   const selectedCards = getSelectedCards(game);
   const completedReading = getReading(game);
-  const isSelecting = game.phase !== 'setup' && game.phase !== 'shuffling' && game.phase !== 'birthdate-input';
+  const isSelecting = isPostDeal(game);
+  const isCompact = hasDeckOnScreen(game);
   const isReadingComplete = numCards > 0 ? selectedCards.length === numCards : selectedCards.length > 0;
 
   // Memoize derived state to prevent recalculation and stabilize references
@@ -112,7 +123,9 @@ export default function TarotGame({ user }: TarotGameProps) {
   );
 
   const startGame = () => {
-    if (selectedReading.cards === 0) {
+    if (isManual) {
+      dispatch({ type: 'START_MANUAL_ENTRY' });
+    } else if (selectedReading.cards === 0) {
       dispatch({ type: 'START_BIRTHDATE_INPUT', readingName: selectedReading.name });
     } else {
       dispatch({ type: 'START_SHUFFLE' });
@@ -135,6 +148,28 @@ export default function TarotGame({ user }: TarotGameProps) {
     });
   }, [numCards, positionNames, selectedReading.name, selectedReading.showQuestion, userQuestion, positionDescriptions]);
 
+  const handleManualAdd = useCallback((card: SelectedCard) => {
+    dispatch({ type: 'MANUAL_ADD_CARD', card, numCards });
+  }, [numCards]);
+
+  const handleManualRemove = useCallback((cardIdx: number) => {
+    dispatch({ type: 'MANUAL_REMOVE_CARD', cardIdx });
+  }, []);
+
+  const handleManualToggle = useCallback((cardIdx: number) => {
+    dispatch({ type: 'MANUAL_TOGGLE_ORIENTATION', cardIdx });
+  }, []);
+
+  const handleManualComplete = useCallback(() => {
+    dispatch({
+      type: 'MANUAL_COMPLETE',
+      positions: positionNames,
+      readingName: selectedReading.name,
+      question: selectedReading.showQuestion ? (userQuestion || undefined) : undefined,
+      positionDescriptions,
+    });
+  }, [positionNames, selectedReading.name, selectedReading.showQuestion, userQuestion, positionDescriptions]);
+
   const handleNewReading = useCallback(() => {
     saveGenerationRef.current += 1;
     dispatch({ type: 'RESET' });
@@ -154,8 +189,10 @@ export default function TarotGame({ user }: TarotGameProps) {
       // Keep the reading style in step with settings tuned inside the modal
       // (the modal has already persisted them as the sticky default)
       setInterpretationSettings(saved.settings);
+      // The journal entry is where saved interpretations are read and extended
+      if (savedReadingId) router.push(`/user/readings/${savedReadingId}`);
     },
-    []
+    [router, savedReadingId]
   );
 
   const handleCloseLoginModal = useCallback(() => setShowLoginModal(false), []);
@@ -229,7 +266,7 @@ export default function TarotGame({ user }: TarotGameProps) {
 
   // Scroll the deck into view when the spread appears (after shuffle)
   useEffect(() => {
-    if (game.phase === 'selecting' && deckRef.current) {
+    if (isPickingCards(game) && deckRef.current) {
       const timer = setTimeout(() => {
         deckRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }, DECK_SCROLL_DELAY);
@@ -276,24 +313,13 @@ export default function TarotGame({ user }: TarotGameProps) {
 
   return (
     <>
-    <div className="relative w-full max-w-6xl mx-auto mt-16 overflow-hidden rounded-xl border-2 border-[#d4af37]/30 shadow-2xl"
+    {/* overflow-clip (not hidden) so the face-up deck's sticky tray can pin to the page scroll */}
+    <div className="relative w-full max-w-6xl mx-auto mt-16 overflow-clip rounded-xl border-2 border-[#d4af37]/30 shadow-2xl"
          style={{
            background: 'linear-gradient(135deg, rgba(26,0,51,0.95) 0%, rgba(45,27,78,0.95) 100%)',
          }}>
       {/* Ornate corner decorations */}
       <OrnateFrame />
-
-      {/* Reading style — top right of the game panel */}
-      <button
-        type="button"
-        onClick={() => setShowStyleModal(true)}
-        className="absolute top-3 right-3 sm:top-4 sm:right-4 z-20 flex items-center gap-2 px-3 py-2
-                   text-[#d4af37]/60 hover:text-[#d4af37] transition-colors"
-        style={{ fontFamily: "'Cinzel', serif" }}
-      >
-        <span aria-hidden="true">◈</span>
-        <span className="text-xs sm:text-sm tracking-wider">Reading Style</span>
-      </button>
 
       {/* Mystical glow effect */}
       <div className="absolute inset-0 opacity-30 pointer-events-none"
@@ -302,16 +328,31 @@ export default function TarotGame({ user }: TarotGameProps) {
            }} />
 
       {/* Content */}
-      <div className={`relative z-10 ${isSelecting ? 'p-1 sm:p-12' : 'p-6 sm:p-12'}`}>
-        <h1 className={`text-4xl sm:text-6xl font-bold mb-2 text-center text-[#d4af37] tracking-wider ${isSelecting ? 'hidden sm:block' : ''}`}
+      <div className={`relative z-10 ${isCompact ? 'p-1 sm:p-12' : 'p-6 sm:p-12'}`}>
+        <h1 className={`text-4xl sm:text-6xl font-bold mb-2 text-center text-[#d4af37] tracking-wider ${isCompact ? 'hidden sm:block' : ''}`}
             style={{ fontFamily: "'Cinzel', serif", textShadow: '0 0 20px rgba(212,175,55,0.5)' }}>
-          Reading Oracle
+          {isManual ? 'Manual Reading' : 'Reading Oracle'}
         </h1>
 
-        <p className={`text-center text-[#d4af37]/70 mb-8 text-sm sm:text-base tracking-wide ${isSelecting ? 'hidden sm:block' : ''}`}
+        <p className={`text-center text-[#d4af37]/70 mb-8 text-sm sm:text-base tracking-wide ${isCompact ? 'hidden sm:block' : ''}`}
            style={{ fontFamily: "'Crimson Pro', serif" }}>
-          ✦ Unveil the Mysteries of Your Path ✦
+          {isManual ? '✦ Lay Out the Cards You Have Drawn ✦' : '✦ Unveil the Mysteries of Your Path ✦'}
         </p>
+
+        {/* Reading style — inline under the title on mobile, top-right of the panel on sm+.
+            Not rendered during the shuffle animation or birthdate entry (nothing to style yet). */}
+        {game.phase !== 'shuffling' && game.phase !== 'birthdate-input' && (
+        <button
+          type="button"
+          onClick={() => setShowStyleModal(true)}
+          className={`${isPickingCards(game) ? 'hidden sm:flex' : 'flex'} mx-auto ${isCompact ? 'mt-2' : '-mt-4'} mb-6 sm:m-0 sm:absolute sm:top-4 sm:right-4 sm:z-20
+                      items-center gap-2 px-3 py-2 text-[#d4af37]/60 hover:text-[#d4af37] transition-colors`}
+          style={{ fontFamily: "'Cinzel', serif" }}
+        >
+          <span aria-hidden="true">◈</span>
+          <span className="text-xs sm:text-sm tracking-wider">Reading Style</span>
+        </button>
+        )}
 
         {/* Pre-game selection screen */}
         {game.phase === 'setup' && (
@@ -330,14 +371,14 @@ export default function TarotGame({ user }: TarotGameProps) {
                 style={{ fontFamily: "'Crimson Pro', serif" }}
                 value={selectedReading.name}
                 onChange={(e) => {
-                  const reading = readings.find(r => r.name === e.target.value);
+                  const reading = spreadOptions.find(r => r.name === e.target.value);
                   if (reading) {
                     setSelectedReading(reading);
                     setUserQuestion("");
                   }
                 }}
               >
-                {readings.map((reading) => (
+                {spreadOptions.map((reading) => (
                   <option key={reading.name} value={reading.name} className="bg-[#1a0033]">
                     {reading.name} ({reading.cards} {reading.cards === 1 ? 'Card' : 'Cards'})
                   </option>
@@ -349,7 +390,8 @@ export default function TarotGame({ user }: TarotGameProps) {
               </p>
             </div>
 
-            {/* Reversals segmented pill */}
+            {/* Reversals segmented pill — manual mode sets orientation per card in the tray */}
+            {!isManual && (
             <div className="w-full max-w-md flex flex-col items-center">
               <div role="group" aria-label="Card orientation" className="flex w-full border-2 border-[#d4af37]/30 rounded-lg overflow-hidden bg-[#0a0015]/40">
                 <button
@@ -382,6 +424,7 @@ export default function TarotGame({ user }: TarotGameProps) {
                 {allowReversals ? 'Cards may appear reversed' : 'Cards appear upright only'}
               </p>
             </div>
+            )}
 
             {selectedReading.meta?.field === "input" && (
               <input
@@ -491,6 +534,22 @@ export default function TarotGame({ user }: TarotGameProps) {
         {/* Shuffle Animation */}
         {game.phase === 'shuffling' && (
           <ShuffleAnimation onComplete={handleShuffleComplete} />
+        )}
+
+        {/* Manual entry — face-up deck, user picks their physical spread */}
+        {game.phase === 'manual-select' && (
+          <div ref={deckRef} className="animate-fadeIn">
+            <FaceUpDeck
+              numCards={numCards}
+              positions={positionNames}
+              selectedCards={selectedCards}
+              onAddCard={handleManualAdd}
+              onRemoveCard={handleManualRemove}
+              onToggleOrientation={handleManualToggle}
+              onComplete={handleManualComplete}
+              onCancel={handleNewReading}
+            />
+          </div>
         )}
 
         {/* Game in progress - deck and card selection */}

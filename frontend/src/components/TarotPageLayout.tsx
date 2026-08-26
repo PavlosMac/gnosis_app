@@ -22,6 +22,10 @@ interface TarotPageLayoutProps {
   showBackButton?: boolean;
   backButtonHref?: string;
   backButtonLabel?: string;
+  /** Allow the page to scroll (long content such as a full deck) */
+  scrollable?: boolean;
+  /** Override the content wrapper's padding/sizing */
+  contentClassName?: string;
 }
 
 // Generate deterministic star positions (avoids hydration mismatch)
@@ -38,16 +42,18 @@ const TarotPageLayout: React.FC<TarotPageLayoutProps> = ({
   showBackButton = true,
   backButtonHref = "/",
   backButtonLabel = "Portal",
+  scrollable = false,
+  contentClassName = "pt-10 px-4 pb-10",
 }) => {
   // Memoize stars to prevent recalculation
   const stars = useMemo(generateStars, []);
 
   return (
     <main
-      className={`min-h-screen relative overflow-hidden ${cinzel.variable} ${crimsonPro.variable}`}
+      className={`min-h-screen relative ${scrollable ? 'overflow-y-auto' : 'overflow-hidden'} ${cinzel.variable} ${crimsonPro.variable}`}
     >
       {/* Mystical starfield background */}
-      <div className="fixed inset-0 bg-gradient-to-b from-[#0a0015] via-[#1a0033] to-[#2d1b4e]">
+      <div className="fixed inset-0 bg-gradient-to-b from-[#0a0015] via-[#1a0033] to-[#2d1b4e] pointer-events-none">
         {/* Animated stars */}
         <div className="absolute inset-0 opacity-60">
           {stars.map((star, i) => (
@@ -65,7 +71,7 @@ const TarotPageLayout: React.FC<TarotPageLayoutProps> = ({
       </div>
 
       {/* Content */}
-      <div className="relative z-10 flex flex-col items-center justify-start pt-10 px-4 pb-10">
+      <div className={`relative z-10 flex flex-col items-center justify-start ${contentClassName}`}>
         {/* Back button */}
         {showBackButton && (
           <Link
