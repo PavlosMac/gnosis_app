@@ -30,6 +30,8 @@ make lint           # ruff check src/ tests/
 make format         # ruff format + ruff check --fix
 make docker-up      # docker compose up -d (MongoDB:27019 + API:8001)
 make docker-down    # docker compose down
+make prompt-doc     # regenerate the generated regions of docs/prompt_reference.md
+make prompt-doc-check  # exit 1 if docs/prompt_reference.md is stale
 ```
 
 ## Architecture

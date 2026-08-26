@@ -148,13 +148,21 @@ def build_user_prompt(
 
 
 def _format_card(card: CardInSpread, meaning: dict[str, Any]) -> str:
+    """Correspondences first, meaning lists last.
+
+    The lens blocks tell the model to anchor on the correspondences; on a major they
+    are ~60 tokens against ~350 tokens of lists, so they go directly under the header
+    where they are read first rather than after the lists where they were diluted.
+    """
     if card_catalog.is_major_arcana(card.name):
         return _format_major_arcana(meaning, card.orientation)
-    block = _format_suit_context(card.name)
-    block += _format_minor_arcana(meaning, card.orientation)
+    parts = [_format_suit_context(card.name)]
     if card_catalog.is_court_card(card.name):
-        block += "\n" + _format_court_meta(meaning)
-    return block
+        parts.append(_format_court_meta(meaning))
+    else:
+        parts.append(_format_esoteric_meta(meaning.get("meta", {})))
+    parts.append(_format_minor_arcana(meaning, card.orientation))
+    return "\n".join(p for p in parts if p)
 
 
 def _format_major_arcana(card: dict[str, Any], orientation: Orientation) -> str:
@@ -162,35 +170,43 @@ def _format_major_arcana(card: dict[str, Any], orientation: Orientation) -> str:
     archetype = meta.get("archetype", "")
     keywords: list[str] = meta.get("keywords", [])
 
-    if orientation == Orientation.upright:
-        upright = card.get("upright", {})
-        positive: list[str] = upright.get("positive", [])
-        negative: list[str] = upright.get("negative", [])
-        parts = [f"  Upright — {_SEP.join(positive)}"]
-        if negative:
-            parts.append(f"  Challenges — {_SEP.join(negative)}")
-    else:
-        reversed_ = card.get("reversed", {})
-        pos: list[str] = reversed_.get("positive", [])
-        neg: list[str] = reversed_.get("negative", [])
-        parts = [f"  Reversed (shadow) — {_SEP.join(neg)}"]
-        if pos:
-            parts.append(f"  Reversed (growth) — {_SEP.join(pos)}")
-
+    parts: list[str] = []
     if archetype:
         parts.append(f"  Archetype: {archetype}")
     if keywords:
         parts.append(f"  Keywords: {_SEP.join(keywords)}")
-
     esoteric = _format_esoteric_meta(meta)
     if esoteric:
         parts.append(esoteric)
+
+    if orientation == Orientation.upright:
+        upright = card.get("upright", {})
+        positive: list[str] = upright.get("positive", [])
+        negative: list[str] = upright.get("negative", [])
+        parts.append(f"  Upright — {_SEP.join(positive)}")
+        if negative:
+            parts.append(f"  Challenges — {_SEP.join(negative)}")
+    else:
+        reversed_ = card.get("reversed", {})
+        pos: list[str] = reversed_.get("positive") or []
+        neg: list[str] = reversed_.get("negative") or []
+        parts.append(f"  Reversed (shadow) — {_SEP.join(neg)}")
+        if pos:
+            parts.append(f"  Reversed (growth) — {_SEP.join(pos)}")
 
     return "\n".join(parts)
 
 
 def _format_esoteric_meta(meta: dict[str, Any]) -> str:
+    """Render the correspondence lines shared by majors (Tsarion) and pips (Golden Dawn).
+
+    Every field is optional: majors carry core/alchemy/mythic and no decan; pips carry
+    title/decan and no core; Aces carry no astrology at all.
+    """
     parts: list[str] = []
+
+    if title := meta.get("title"):
+        parts.append(f"  Title: {title}")
 
     core = meta.get("core", {})
     core_items: list[str] = []
@@ -203,10 +219,15 @@ def _format_esoteric_meta(meta: dict[str, Any]) -> str:
 
     astro = meta.get("astrology", {})
     if sign := astro.get("sign"):
-        planets = astro.get("planet", [])
-        astro_str = f"  Astrology: {sign}"
-        if planets:
-            astro_str += f" ({_SEP.join(planets)})"
+        planets: list[str] = astro.get("planet") or []
+        if decan := astro.get("decan"):
+            astro_str = f"  Astrology: {_SEP.join(planets)} in {sign} — decan {decan}"
+        else:
+            astro_str = f"  Astrology: {sign}"
+            if planets:
+                astro_str += f" ({_SEP.join(planets)})"
+        if season := astro.get("season"):
+            astro_str += f" — season: {season}"
         parts.append(astro_str)
 
     esoteric = meta.get("esoteric", {})
@@ -214,12 +235,17 @@ def _format_esoteric_meta(meta: dict[str, Any]) -> str:
         parts.append(f"  Kabbalah: {kabbalah}")
     if alchemy := esoteric.get("alchemy"):
         parts.append(f"  Alchemy: {_SEP.join(alchemy)}")
+    if mythic := esoteric.get("mythic"):
+        parts.append(f"  Mythic: {_SEP.join(mythic)}")
 
     numerology = meta.get("numerology", {})
     if num_meaning := numerology.get("meaning"):
         num = numerology.get("number", "")
-        reduction = numerology.get("reduction", "")
-        parts.append(f"  Numerology: {num} → {reduction} — {num_meaning}")
+        reduction = numerology.get("reduction")
+        num_str = f"  Numerology: {num}"
+        if reduction is not None and reduction != num:
+            num_str += f" → {reduction}"
+        parts.append(f"{num_str} — {num_meaning}")
 
     return "\n".join(parts)
 
@@ -230,7 +256,7 @@ def _format_suit_context(card_name: str) -> str:
         return ""
     element = suit.get("element", "")
     temporal = suit.get("temporal", "")
-    return f"  Suit: {suit.get('name', '')} ({element}) — temporal scope: {temporal}\n"
+    return f"  Suit: {suit.get('name', '')} ({element}) — temporal scope: {temporal}"
 
 
 def _format_minor_arcana(card: dict[str, Any], orientation: Orientation) -> str:
@@ -259,4 +285,8 @@ def _format_court_meta(card: dict[str, Any]) -> str:
         parts.append(f"Elemental: {elemental}")
     if psyche := meta.get("psyche"):
         parts.append(f"Psyche: {psyche}")
+    if rules := meta.get("rules"):
+        parts.append(f"Rules: {rules}")
+    if age := meta.get("age_sex"):
+        parts.append(f"Age: {age}")
     return "  " + " | ".join(parts) if parts else ""

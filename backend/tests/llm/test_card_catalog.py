@@ -80,3 +80,70 @@ def test_get_suit_info_court():
 
 def test_get_suit_info_major_returns_none():
     assert card_catalog.get_suit_info("The Tower") is None
+
+
+# --- Pip attributions (Golden Dawn Book T) ---
+
+_WORLDS = {"wands": "Atziluth", "cups": "Briah", "swords": "Yetzirah", "disks": "Assiah"}
+_SEPHIROTH = {
+    1: "Kether",
+    2: "Chokmah",
+    3: "Binah",
+    4: "Chesed",
+    5: "Geburah",
+    6: "Tiphareth",
+    7: "Netzach",
+    8: "Hod",
+    9: "Yesod",
+    10: "Malkuth",
+}
+
+
+def _pips() -> list[dict]:
+    return [
+        card
+        for name in card_catalog.get_all_card_names()
+        if not card_catalog.is_major_arcana(name) and not card_catalog.is_court_card(name)
+        if (card := card_catalog.get_card_meaning(name)) is not None
+    ]
+
+
+def test_every_pip_has_meta():
+    pips = _pips()
+    assert len(pips) == 40
+    for card in pips:
+        meta = card["meta"]
+        assert meta["title"]
+        assert meta["numerology"]["number"] == card["number"]
+        assert meta["numerology"]["meaning"]
+        assert meta["esoteric"]["kabbalah"].endswith(_WORLDS[card["suit"]])
+
+
+def test_pip_sephira_matches_number():
+    for card in _pips():
+        assert card["meta"]["esoteric"]["kabbalah"].startswith(_SEPHIROTH[card["number"]])
+
+
+def test_aces_have_no_astrology():
+    for card in _pips():
+        if card["number"] == 1:
+            assert "astrology" not in card["meta"]
+            assert card["meta"]["title"].startswith("Root of the Powers of")
+
+
+def test_pip_decans_cover_the_zodiac_once():
+    decans = [card["meta"]["astrology"]["decan"] for card in _pips() if card["number"] != 1]
+    assert len(decans) == 36
+    assert len(set(decans)) == 36
+    signs = [card["meta"]["astrology"]["sign"] for card in _pips() if card["number"] != 1]
+    assert len(set(signs)) == 12
+    for sign in set(signs):
+        assert signs.count(sign) == 3
+
+
+def test_pip_lookup_includes_meta():
+    card = card_catalog.get_card_meaning("Five of Disks")
+    assert card is not None
+    assert card["meta"]["astrology"]["planet"] == ["Mercury"]
+    assert card["meta"]["astrology"]["sign"] == "Taurus"
+    assert card["meta"]["esoteric"]["kabbalah"] == "Geburah in Assiah"

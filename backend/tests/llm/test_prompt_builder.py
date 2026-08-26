@@ -9,7 +9,7 @@ from src.llm.prompt_builder import (
     request_word_budget,
     word_budget,
 )
-from src.llm.prompt_components import LENS_SYNTHESIS
+from src.llm.prompt_components import LENS_REGISTER, LENS_SYNTHESIS
 from src.llm.schemas import (
     CardInSpread,
     InterpretationLens,
@@ -379,23 +379,75 @@ def test_multi_card_synthesis_is_a_window_not_a_portrait():
 
 def test_esoteric_synthesis_anchors_in_spread_structure():
     """Regression: a Tree of Life spread under the esoteric lens produced a synthesis
-    that never named a sephira — position names are themselves correspondences there."""
+    that never named a sephira — position names are themselves correspondences there.
+    The clause also carries the cards' own correspondences for spreads whose positions
+    are plain (Past/Present/Future)."""
     prompt = _multi_card_prompt(InterpretationLens.esoteric)
-    assert "Anchor the synthesis in the spread's own structure" in prompt
+    assert "Carry the correspondences into the synthesis" in prompt
+    assert "spheres, houses, stations, elements" in prompt
 
 
-def test_single_card_synthesis_has_no_lens_clause():
-    prompt = _system_prompt(
-        _make_system_request(settings=_settings(lens=InterpretationLens.esoteric))
-    )
+def _single_card_prompt(lens: InterpretationLens) -> str:
+    return _system_prompt(_make_system_request(settings=_settings(lens=lens)))
+
+
+def _significators_prompt(lens: InterpretationLens) -> str:
+    return _system_prompt(_make_system_request("Significators", settings=_settings(lens=lens)))
+
+
+def test_single_card_synthesis_carries_lens_register():
+    """Regression: a single-card esoteric reading of The Lovers named no sign, planet,
+    sephira or number — the single-card synthesis had no lens clause at all."""
+    prompt = _single_card_prompt(InterpretationLens.esoteric)
+    assert LENS_REGISTER[InterpretationLens.esoteric] in prompt
     assert LENS_SYNTHESIS[InterpretationLens.esoteric] not in prompt
 
 
-def test_significators_synthesis_has_no_lens_clause():
-    prompt = _system_prompt(
-        _make_system_request("Significators", settings=_settings(lens=InterpretationLens.esoteric))
-    )
+def test_significators_synthesis_carries_lens_register():
+    prompt = _significators_prompt(InterpretationLens.esoteric)
+    assert LENS_REGISTER[InterpretationLens.esoteric] in prompt
     assert LENS_SYNTHESIS[InterpretationLens.esoteric] not in prompt
+
+
+def test_every_lens_emits_its_own_register_clause():
+    assert len(set(LENS_REGISTER.values())) == len(InterpretationLens)
+    for lens in InterpretationLens:
+        assert LENS_REGISTER[lens] in _single_card_prompt(lens)
+        assert LENS_REGISTER[lens] in _significators_prompt(lens)
+
+
+def test_multi_card_synthesis_uses_spread_clause_not_register():
+    for lens in InterpretationLens:
+        assert LENS_REGISTER[lens] not in _multi_card_prompt(lens)
+
+
+@pytest.mark.parametrize("lens", list(InterpretationLens))
+def test_lens_clause_is_last_before_output(lens: InterpretationLens):
+    """Later text carries more weight: the lens must be the last thing before OUTPUT on
+    every synthesis path, or the generic synthesis instruction overrides it."""
+    cases = [
+        (_single_card_prompt(lens), LENS_REGISTER[lens]),
+        (_significators_prompt(lens), LENS_REGISTER[lens]),
+        (_multi_card_prompt(lens), LENS_SYNTHESIS[lens]),
+    ]
+    for prompt, clause in cases:
+        clause_at = prompt.rindex(clause)
+        assert prompt.index("SYNTHESIS.") < clause_at < prompt.index("OUTPUT.")
+        assert prompt[clause_at + len(clause) :].lstrip().startswith("OUTPUT.")
+
+
+def test_esoteric_lens_asks_for_named_correspondences():
+    esoteric = _single_card_prompt(InterpretationLens.esoteric)
+    assert "Name them in the" in esoteric
+    for lens in InterpretationLens:
+        if lens is not InterpretationLens.esoteric:
+            assert "Name them in the" not in _single_card_prompt(lens)
+
+
+def test_traditional_lens_stays_free_of_esoteric_terms():
+    prompt = _single_card_prompt(InterpretationLens.traditional)
+    assert "sephira" not in prompt
+    assert "decan" not in prompt
 
 
 # --- Word budget ---
@@ -500,3 +552,67 @@ def test_completion_cap_rejects_unknown_effort():
     # Config's Literal constrains the value; a drifted string must fail loudly, not guess.
     with pytest.raises(KeyError):
         max_completion_tokens(word_budget(depth=60, card_count=3), 3, "extreme")
+
+
+# --- Card block content: correspondences reach the model ---
+
+
+def _card_prompt(name: str, orientation: Orientation = Orientation.upright) -> str:
+    return _user_prompt(
+        _make_request([CardInSpread(name=name, position="Present", orientation=orientation)])
+    )
+
+
+def test_major_arcana_sends_season_and_mythic():
+    prompt = _card_prompt("The Lovers")
+    assert "Astrology: Gemini (Mercury, Pluto) — season: Summer" in prompt
+    assert "Mythic: Mercury, Apollo, Diarmid, Lancelot, Tristan" in prompt
+    assert "Kabbalah: Hod. Path 17" in prompt
+
+
+def test_numerology_omits_redundant_reduction():
+    assert "Numerology: 6 — Choice, union" in _card_prompt("The Lovers")
+    assert "Numerology: 22 → 4 — Mastery" in _card_prompt("The Fool")
+
+
+def test_pip_sends_decan_sephira_and_title():
+    prompt = _card_prompt("Five of Disks")
+    assert "Title: Worry" in prompt
+    assert "Astrology: Mercury in Taurus — decan Taurus I (0°–10°) — season: Spring" in prompt
+    assert "Kabbalah: Geburah in Assiah" in prompt
+    assert "Numerology: 5 — Disruption" in prompt
+
+
+def test_pentacles_alias_renders_pip_meta():
+    assert "Kabbalah: Geburah in Assiah" in _card_prompt("Five of Pentacles")
+
+
+def test_ace_sends_root_and_kether_without_sign():
+    prompt = _card_prompt("Ace of Wands")
+    assert "Title: Root of the Powers of Fire" in prompt
+    assert "Kabbalah: Kether in Atziluth" in prompt
+    assert "Astrology:" not in prompt
+
+
+def test_court_sends_rules_and_age():
+    prompt = _card_prompt("Knight of Wands")
+    assert "Rules: 8 and 9 of Wands" in prompt
+    assert "Age: Men aged thirty six and older" in prompt
+
+
+def test_correspondences_precede_meaning_lists():
+    """The lens anchors on the correspondences, so they must be read before the lists."""
+    for name, marker in [
+        ("The Lovers", "Kabbalah: Hod. Path 17"),
+        ("Five of Disks", "Kabbalah: Geburah in Assiah"),
+        ("Knight of Wands", "Kabbalah: Chokmah in Atziluth"),
+    ]:
+        prompt = _card_prompt(name)
+        assert prompt.index(marker) < prompt.index("Upright —"), name
+    reversed_prompt = _card_prompt("Five of Disks", Orientation.reversed)
+    assert reversed_prompt.index("Kabbalah:") < reversed_prompt.index("Reversed (shadow) —")
+
+
+def test_suit_line_precedes_pip_correspondences():
+    prompt = _card_prompt("Two of Cups")
+    assert prompt.index("Suit: Suit of Cups (Water)") < prompt.index("Title: Love")

@@ -1,3 +1,5 @@
+> **Historical (superseded 2026-08-25).** Describes the original `create()` / `temperature=0.7` design. The current pipeline is documented in [prompt_reference.md](prompt_reference.md).
+
 # LLM Port & Adapter (OpenAI) for Tarot Interpretation
 
 ## Context

@@ -1,6 +1,8 @@
 # Multi-Lens Interpretations — Backend
 
 **Status:** Implemented — base reference for iteration
+
+> Current prompt wording and the composed pipeline: [prompt_reference.md](prompt_reference.md) (regenerate with `make prompt-doc`).
 **Date:** 2026-08-21
 **Branch:** `update-interpreter`
 **Frontend counterpart:** [`front-end-interpreter-design.md`](front-end-interpreter-design.md)

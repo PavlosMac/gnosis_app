@@ -77,9 +77,9 @@ class CardInterpretation(BaseModel):
         ...,
         description=(
             "A focused interpretation of this card in this position, specific to the "
-            "querent's question. Be thorough enough to ground the reading in the card's "
-            "symbolism and esoteric correspondences, but concise enough that every sentence "
-            "earns its place. Avoid generic textbook definitions and filler."
+            "querent's question and written in the register the system prompt's LENS "
+            "block sets. Ground it in the card material supplied. Every sentence must "
+            "earn its place: no generic textbook definitions, no filler."
         ),
     )
 
@@ -97,14 +97,12 @@ class LLMInterpretationResult(BaseModel):
     synthesis: str = Field(
         ...,
         description=(
-            "For multi-card spreads: a cohesive narrative weaving all cards together to "
-            "directly address the querent's question. Not a summary of individual cards, "
-            "but an integrated insight that reveals something the individual interpretations "
-            "alone do not. Match its length to the synthesis word count given in the "
-            "system prompt's OUTPUT section. "
-            "For single-card readings: do not restate the card interpretation. Instead, "
-            "offer a practical takeaway — actionable guidance, a reflective question, or a "
-            "concrete step the querent can take based on the card's message."
+            "The synthesis the system prompt's SYNTHESIS section describes, at the length "
+            "its OUTPUT section gives. Multi-card spreads: one integrated reading of the "
+            "cards together that reveals what the individual interpretations do not — not "
+            "a summary. Single-card readings: a practical takeaway, not a restatement of "
+            "the card interpretation. Significator charts: a cohesive portrait of the "
+            "querent."
         ),
     )
 

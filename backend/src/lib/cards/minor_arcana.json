@@ -1,7 +1,7 @@
 {
   "_meta": {
     "source": "Path of the Fool - Michael Tsarion (2013, Unslaved Media)",
-    "notes": "All four suits sourced directly from Tsarion Path of the Fool."
+    "notes": "All four suits sourced directly from Tsarion Path of the Fool. Pip `meta` (title, decan, sephira, numerology gloss) authored 2026-08 from Golden Dawn Book T decans/sephiroth and Thoth titles — not Tsarion; list meanings remain Tsarion."
   },
   "suits": {
     "wands": [
@@ -9,6 +9,16 @@
         "name": "Ace of Wands",
         "number": 1,
         "suit": "wands",
+        "meta": {
+          "title": "Root of the Powers of Fire",
+          "esoteric": {
+            "kabbalah": "Kether in Atziluth"
+          },
+          "numerology": {
+            "number": 1,
+            "meaning": "Root: the element whole and undivided, pure potential"
+          }
+        },
         "upright": [
           "Concentrated energy",
           "Vitality",
@@ -79,6 +89,24 @@
         "name": "Two of Wands",
         "number": 2,
         "suit": "wands",
+        "meta": {
+          "title": "Dominion",
+          "astrology": {
+            "planet": [
+              "Mars"
+            ],
+            "sign": "Aries",
+            "decan": "Aries I (0°–10°)",
+            "season": "Spring"
+          },
+          "esoteric": {
+            "kabbalah": "Chokmah in Atziluth"
+          },
+          "numerology": {
+            "number": 2,
+            "meaning": "Force: the suit's first outward impulse, not yet given form"
+          }
+        },
         "upright": [
           "Static period ends",
           "Success in two areas",
@@ -158,6 +186,24 @@
         "name": "Three of Wands",
         "number": 3,
         "suit": "wands",
+        "meta": {
+          "title": "Virtue",
+          "astrology": {
+            "planet": [
+              "Sun"
+            ],
+            "sign": "Aries",
+            "decan": "Aries II (10°–20°)",
+            "season": "Spring"
+          },
+          "esoteric": {
+            "kabbalah": "Binah in Atziluth"
+          },
+          "numerology": {
+            "number": 3,
+            "meaning": "Form: the impulse takes shape and is understood"
+          }
+        },
         "upright": [
           "Favorable progress",
           "Projects successfully underway",
@@ -225,6 +271,24 @@
         "name": "Four of Wands",
         "number": 4,
         "suit": "wands",
+        "meta": {
+          "title": "Completion",
+          "astrology": {
+            "planet": [
+              "Venus"
+            ],
+            "sign": "Aries",
+            "decan": "Aries III (20°–30°)",
+            "season": "Spring"
+          },
+          "esoteric": {
+            "kabbalah": "Chesed in Atziluth"
+          },
+          "numerology": {
+            "number": 4,
+            "meaning": "Consolidation: the form settles, expands and is enjoyed"
+          }
+        },
         "upright": [
           "Accomplishment",
           "Completion",
@@ -292,6 +356,24 @@
         "name": "Five of Wands",
         "number": 5,
         "suit": "wands",
+        "meta": {
+          "title": "Strife",
+          "astrology": {
+            "planet": [
+              "Saturn"
+            ],
+            "sign": "Leo",
+            "decan": "Leo I (0°–10°)",
+            "season": "Summer"
+          },
+          "esoteric": {
+            "kabbalah": "Geburah in Atziluth"
+          },
+          "numerology": {
+            "number": 5,
+            "meaning": "Disruption: the settled form is tested and broken open"
+          }
+        },
         "upright": [
           "Progress despite conflict and infighting",
           "Making the best of a bad situation",
@@ -380,6 +462,24 @@
         "name": "Six of Wands",
         "number": 6,
         "suit": "wands",
+        "meta": {
+          "title": "Victory",
+          "astrology": {
+            "planet": [
+              "Jupiter"
+            ],
+            "sign": "Leo",
+            "decan": "Leo II (10°–20°)",
+            "season": "Summer"
+          },
+          "esoteric": {
+            "kabbalah": "Tiphareth in Atziluth"
+          },
+          "numerology": {
+            "number": 6,
+            "meaning": "Balance: the element at its harmonious centre, fully itself"
+          }
+        },
         "upright": [
           "New direction found",
           "Vitality",
@@ -448,6 +548,24 @@
         "name": "Seven of Wands",
         "number": 7,
         "suit": "wands",
+        "meta": {
+          "title": "Valour",
+          "astrology": {
+            "planet": [
+              "Mars"
+            ],
+            "sign": "Leo",
+            "decan": "Leo III (20°–30°)",
+            "season": "Summer"
+          },
+          "esoteric": {
+            "kabbalah": "Netzach in Atziluth"
+          },
+          "numerology": {
+            "number": 7,
+            "meaning": "Instability: the element weakened as it descends into desire"
+          }
+        },
         "upright": [
           "Holding one's ground",
           "Standing up against resistance",
@@ -534,6 +652,24 @@
         "name": "Eight of Wands",
         "number": 8,
         "suit": "wands",
+        "meta": {
+          "title": "Swiftness",
+          "astrology": {
+            "planet": [
+              "Mercury"
+            ],
+            "sign": "Sagittarius",
+            "decan": "Sagittarius I (0°–10°)",
+            "season": "Autumn"
+          },
+          "esoteric": {
+            "kabbalah": "Hod in Atziluth"
+          },
+          "numerology": {
+            "number": 8,
+            "meaning": "Craft: the element rationalised, fast-moving, partial"
+          }
+        },
         "upright": [
           "Extroversion",
           "Action",
@@ -648,6 +784,24 @@
         "name": "Nine of Wands",
         "number": 9,
         "suit": "wands",
+        "meta": {
+          "title": "Strength",
+          "astrology": {
+            "planet": [
+              "Moon"
+            ],
+            "sign": "Sagittarius",
+            "decan": "Sagittarius II (10°–20°)",
+            "season": "Autumn"
+          },
+          "esoteric": {
+            "kabbalah": "Yesod in Atziluth"
+          },
+          "numerology": {
+            "number": 9,
+            "meaning": "Foundation: the element consolidated near its final form"
+          }
+        },
         "upright": [
           "Endurance",
           "Persistence",
@@ -731,6 +885,24 @@
         "name": "Ten of Wands",
         "number": 10,
         "suit": "wands",
+        "meta": {
+          "title": "Oppression",
+          "astrology": {
+            "planet": [
+              "Saturn"
+            ],
+            "sign": "Sagittarius",
+            "decan": "Sagittarius III (20°–30°)",
+            "season": "Autumn"
+          },
+          "esoteric": {
+            "kabbalah": "Malkuth in Atziluth"
+          },
+          "numerology": {
+            "number": 10,
+            "meaning": "Manifestation: the element fully materialised, at its end"
+          }
+        },
         "upright": [
           "Completion",
           "Finale",
@@ -828,6 +1000,16 @@
         "name": "Ace of Cups",
         "number": 1,
         "suit": "cups",
+        "meta": {
+          "title": "Root of the Powers of Water",
+          "esoteric": {
+            "kabbalah": "Kether in Briah"
+          },
+          "numerology": {
+            "number": 1,
+            "meaning": "Root: the element whole and undivided, pure potential"
+          }
+        },
         "upright": [
           "Receptivity",
           "Openness",
@@ -940,6 +1122,24 @@
         "name": "Two of Cups",
         "number": 2,
         "suit": "cups",
+        "meta": {
+          "title": "Love",
+          "astrology": {
+            "planet": [
+              "Venus"
+            ],
+            "sign": "Cancer",
+            "decan": "Cancer I (0°–10°)",
+            "season": "Summer"
+          },
+          "esoteric": {
+            "kabbalah": "Chokmah in Briah"
+          },
+          "numerology": {
+            "number": 2,
+            "meaning": "Force: the suit's first outward impulse, not yet given form"
+          }
+        },
         "upright": [
           "Sharing",
           "Unity",
@@ -1048,6 +1248,24 @@
         "name": "Three of Cups",
         "number": 3,
         "suit": "cups",
+        "meta": {
+          "title": "Abundance",
+          "astrology": {
+            "planet": [
+              "Mercury"
+            ],
+            "sign": "Cancer",
+            "decan": "Cancer II (10°–20°)",
+            "season": "Summer"
+          },
+          "esoteric": {
+            "kabbalah": "Binah in Briah"
+          },
+          "numerology": {
+            "number": 3,
+            "meaning": "Form: the impulse takes shape and is understood"
+          }
+        },
         "upright": [
           "Dedication",
           "Certainty",
@@ -1117,6 +1335,24 @@
         "name": "Four of Cups",
         "number": 4,
         "suit": "cups",
+        "meta": {
+          "title": "Luxury",
+          "astrology": {
+            "planet": [
+              "Moon"
+            ],
+            "sign": "Cancer",
+            "decan": "Cancer III (20°–30°)",
+            "season": "Summer"
+          },
+          "esoteric": {
+            "kabbalah": "Chesed in Briah"
+          },
+          "numerology": {
+            "number": 4,
+            "meaning": "Consolidation: the form settles, expands and is enjoyed"
+          }
+        },
         "upright": [
           "Knowing exactly what we desire and need",
           "Relaxation",
@@ -1209,6 +1445,24 @@
         "name": "Five of Cups",
         "number": 5,
         "suit": "cups",
+        "meta": {
+          "title": "Disappointment",
+          "astrology": {
+            "planet": [
+              "Mars"
+            ],
+            "sign": "Scorpio",
+            "decan": "Scorpio I (0°–10°)",
+            "season": "Autumn"
+          },
+          "esoteric": {
+            "kabbalah": "Geburah in Briah"
+          },
+          "numerology": {
+            "number": 5,
+            "meaning": "Disruption: the settled form is tested and broken open"
+          }
+        },
         "upright": [
           "Disappointment",
           "Lost love",
@@ -1257,6 +1511,24 @@
         "name": "Six of Cups",
         "number": 6,
         "suit": "cups",
+        "meta": {
+          "title": "Pleasure",
+          "astrology": {
+            "planet": [
+              "Sun"
+            ],
+            "sign": "Scorpio",
+            "decan": "Scorpio II (10°–20°)",
+            "season": "Autumn"
+          },
+          "esoteric": {
+            "kabbalah": "Tiphareth in Briah"
+          },
+          "numerology": {
+            "number": 6,
+            "meaning": "Balance: the element at its harmonious centre, fully itself"
+          }
+        },
         "upright": [
           "Connectedness",
           "Readiness",
@@ -1321,6 +1593,24 @@
         "name": "Seven of Cups",
         "number": 7,
         "suit": "cups",
+        "meta": {
+          "title": "Debauch",
+          "astrology": {
+            "planet": [
+              "Venus"
+            ],
+            "sign": "Scorpio",
+            "decan": "Scorpio III (20°–30°)",
+            "season": "Autumn"
+          },
+          "esoteric": {
+            "kabbalah": "Netzach in Briah"
+          },
+          "numerology": {
+            "number": 7,
+            "meaning": "Instability: the element weakened as it descends into desire"
+          }
+        },
         "upright": [
           "Imagination",
           "Subtlety",
@@ -1378,6 +1668,24 @@
         "name": "Eight of Cups",
         "number": 8,
         "suit": "cups",
+        "meta": {
+          "title": "Indolence",
+          "astrology": {
+            "planet": [
+              "Saturn"
+            ],
+            "sign": "Pisces",
+            "decan": "Pisces I (0°–10°)",
+            "season": "Winter"
+          },
+          "esoteric": {
+            "kabbalah": "Hod in Briah"
+          },
+          "numerology": {
+            "number": 8,
+            "meaning": "Craft: the element rationalised, fast-moving, partial"
+          }
+        },
         "upright": [
           "Distancing oneself from a static or negative situation",
           "We prepare to move on and get away",
@@ -1455,6 +1763,24 @@
         "name": "Nine of Cups",
         "number": 9,
         "suit": "cups",
+        "meta": {
+          "title": "Happiness",
+          "astrology": {
+            "planet": [
+              "Jupiter"
+            ],
+            "sign": "Pisces",
+            "decan": "Pisces II (10°–20°)",
+            "season": "Winter"
+          },
+          "esoteric": {
+            "kabbalah": "Yesod in Briah"
+          },
+          "numerology": {
+            "number": 9,
+            "meaning": "Foundation: the element consolidated near its final form"
+          }
+        },
         "upright": [
           "Contentment",
           "Fulfillment",
@@ -1522,6 +1848,24 @@
         "name": "Ten of Cups",
         "number": 10,
         "suit": "cups",
+        "meta": {
+          "title": "Satiety",
+          "astrology": {
+            "planet": [
+              "Mars"
+            ],
+            "sign": "Pisces",
+            "decan": "Pisces III (20°–30°)",
+            "season": "Winter"
+          },
+          "esoteric": {
+            "kabbalah": "Malkuth in Briah"
+          },
+          "numerology": {
+            "number": 10,
+            "meaning": "Manifestation: the element fully materialised, at its end"
+          }
+        },
         "upright": [
           "Conclusion",
           "Completion",
@@ -1589,6 +1933,16 @@
         "name": "Ace of Swords",
         "number": 1,
         "suit": "swords",
+        "meta": {
+          "title": "Root of the Powers of Air",
+          "esoteric": {
+            "kabbalah": "Kether in Yetzirah"
+          },
+          "numerology": {
+            "number": 1,
+            "meaning": "Root: the element whole and undivided, pure potential"
+          }
+        },
         "upright": [
           "Openings",
           "Beginnings",
@@ -1716,6 +2070,24 @@
         "name": "Two of Swords",
         "number": 2,
         "suit": "swords",
+        "meta": {
+          "title": "Peace",
+          "astrology": {
+            "planet": [
+              "Moon"
+            ],
+            "sign": "Libra",
+            "decan": "Libra I (0°–10°)",
+            "season": "Autumn"
+          },
+          "esoteric": {
+            "kabbalah": "Chokmah in Yetzirah"
+          },
+          "numerology": {
+            "number": 2,
+            "meaning": "Force: the suit's first outward impulse, not yet given form"
+          }
+        },
         "upright": [
           "Agreement",
           "Partnership",
@@ -1847,6 +2219,24 @@
         "name": "Three of Swords",
         "number": 3,
         "suit": "swords",
+        "meta": {
+          "title": "Sorrow",
+          "astrology": {
+            "planet": [
+              "Saturn"
+            ],
+            "sign": "Libra",
+            "decan": "Libra II (10°–20°)",
+            "season": "Autumn"
+          },
+          "esoteric": {
+            "kabbalah": "Binah in Yetzirah"
+          },
+          "numerology": {
+            "number": 3,
+            "meaning": "Form: the impulse takes shape and is understood"
+          }
+        },
         "upright": [
           "Fortitude during difficult times",
           "Bravely moving ahead",
@@ -1952,6 +2342,24 @@
         "name": "Four of Swords",
         "number": 4,
         "suit": "swords",
+        "meta": {
+          "title": "Truce",
+          "astrology": {
+            "planet": [
+              "Jupiter"
+            ],
+            "sign": "Libra",
+            "decan": "Libra III (20°–30°)",
+            "season": "Autumn"
+          },
+          "esoteric": {
+            "kabbalah": "Chesed in Yetzirah"
+          },
+          "numerology": {
+            "number": 4,
+            "meaning": "Consolidation: the form settles, expands and is enjoyed"
+          }
+        },
         "upright": [
           "Study",
           "Appraisal",
@@ -2059,6 +2467,24 @@
         "name": "Five of Swords",
         "number": 5,
         "suit": "swords",
+        "meta": {
+          "title": "Defeat",
+          "astrology": {
+            "planet": [
+              "Venus"
+            ],
+            "sign": "Aquarius",
+            "decan": "Aquarius I (0°–10°)",
+            "season": "Winter"
+          },
+          "esoteric": {
+            "kabbalah": "Geburah in Yetzirah"
+          },
+          "numerology": {
+            "number": 5,
+            "meaning": "Disruption: the settled form is tested and broken open"
+          }
+        },
         "upright": [
           "Conflict",
           "Stress",
@@ -2149,6 +2575,24 @@
         "name": "Six of Swords",
         "number": 6,
         "suit": "swords",
+        "meta": {
+          "title": "Science",
+          "astrology": {
+            "planet": [
+              "Mercury"
+            ],
+            "sign": "Aquarius",
+            "decan": "Aquarius II (10°–20°)",
+            "season": "Winter"
+          },
+          "esoteric": {
+            "kabbalah": "Tiphareth in Yetzirah"
+          },
+          "numerology": {
+            "number": 6,
+            "meaning": "Balance: the element at its harmonious centre, fully itself"
+          }
+        },
         "upright": [
           "Positive attitude",
           "Clarity",
@@ -2259,6 +2703,24 @@
         "name": "Seven of Swords",
         "number": 7,
         "suit": "swords",
+        "meta": {
+          "title": "Futility",
+          "astrology": {
+            "planet": [
+              "Moon"
+            ],
+            "sign": "Aquarius",
+            "decan": "Aquarius III (20°–30°)",
+            "season": "Winter"
+          },
+          "esoteric": {
+            "kabbalah": "Netzach in Yetzirah"
+          },
+          "numerology": {
+            "number": 7,
+            "meaning": "Instability: the element weakened as it descends into desire"
+          }
+        },
         "upright": [
           "Individuality",
           "Uniqueness",
@@ -2358,6 +2820,24 @@
         "name": "Eight of Swords",
         "number": 8,
         "suit": "swords",
+        "meta": {
+          "title": "Interference",
+          "astrology": {
+            "planet": [
+              "Jupiter"
+            ],
+            "sign": "Gemini",
+            "decan": "Gemini I (0°–10°)",
+            "season": "Spring"
+          },
+          "esoteric": {
+            "kabbalah": "Hod in Yetzirah"
+          },
+          "numerology": {
+            "number": 8,
+            "meaning": "Craft: the element rationalised, fast-moving, partial"
+          }
+        },
         "upright": [
           "Slavery",
           "Confinement",
@@ -2442,6 +2922,24 @@
         "name": "Nine of Swords",
         "number": 9,
         "suit": "swords",
+        "meta": {
+          "title": "Cruelty",
+          "astrology": {
+            "planet": [
+              "Mars"
+            ],
+            "sign": "Gemini",
+            "decan": "Gemini II (10°–20°)",
+            "season": "Spring"
+          },
+          "esoteric": {
+            "kabbalah": "Yesod in Yetzirah"
+          },
+          "numerology": {
+            "number": 9,
+            "meaning": "Foundation: the element consolidated near its final form"
+          }
+        },
         "upright": [
           "Revelation",
           "Spiritual awakening",
@@ -2550,6 +3048,24 @@
         "name": "Ten of Swords",
         "number": 10,
         "suit": "swords",
+        "meta": {
+          "title": "Ruin",
+          "astrology": {
+            "planet": [
+              "Sun"
+            ],
+            "sign": "Gemini",
+            "decan": "Gemini III (20°–30°)",
+            "season": "Spring"
+          },
+          "esoteric": {
+            "kabbalah": "Malkuth in Yetzirah"
+          },
+          "numerology": {
+            "number": 10,
+            "meaning": "Manifestation: the element fully materialised, at its end"
+          }
+        },
         "upright": [
           "Conclusion",
           "Termination",
@@ -2653,6 +3169,16 @@
         "name": "Ace of Disks",
         "number": 1,
         "suit": "disks",
+        "meta": {
+          "title": "Root of the Powers of Earth",
+          "esoteric": {
+            "kabbalah": "Kether in Assiah"
+          },
+          "numerology": {
+            "number": 1,
+            "meaning": "Root: the element whole and undivided, pure potential"
+          }
+        },
         "upright": [
           "Fortune",
           "Luck",
@@ -2753,6 +3279,24 @@
         "name": "Two of Disks",
         "number": 2,
         "suit": "disks",
+        "meta": {
+          "title": "Change",
+          "astrology": {
+            "planet": [
+              "Jupiter"
+            ],
+            "sign": "Capricorn",
+            "decan": "Capricorn I (0°–10°)",
+            "season": "Winter"
+          },
+          "esoteric": {
+            "kabbalah": "Chokmah in Assiah"
+          },
+          "numerology": {
+            "number": 2,
+            "meaning": "Force: the suit's first outward impulse, not yet given form"
+          }
+        },
         "upright": [
           "Considering new financial ventures",
           "The transitional period",
@@ -2809,6 +3353,24 @@
         "name": "Three of Disks",
         "number": 3,
         "suit": "disks",
+        "meta": {
+          "title": "Works",
+          "astrology": {
+            "planet": [
+              "Mars"
+            ],
+            "sign": "Capricorn",
+            "decan": "Capricorn II (10°–20°)",
+            "season": "Winter"
+          },
+          "esoteric": {
+            "kabbalah": "Binah in Assiah"
+          },
+          "numerology": {
+            "number": 3,
+            "meaning": "Form: the impulse takes shape and is understood"
+          }
+        },
         "upright": [
           "Artistic and lucrative work",
           "Time for labor and discipline",
@@ -2863,6 +3425,24 @@
         "name": "Four of Disks",
         "number": 4,
         "suit": "disks",
+        "meta": {
+          "title": "Power",
+          "astrology": {
+            "planet": [
+              "Sun"
+            ],
+            "sign": "Capricorn",
+            "decan": "Capricorn III (20°–30°)",
+            "season": "Winter"
+          },
+          "esoteric": {
+            "kabbalah": "Chesed in Assiah"
+          },
+          "numerology": {
+            "number": 4,
+            "meaning": "Consolidation: the form settles, expands and is enjoyed"
+          }
+        },
         "upright": [
           "Material security through work and efficiency",
           "Ownership and property",
@@ -2940,6 +3520,24 @@
         "name": "Five of Disks",
         "number": 5,
         "suit": "disks",
+        "meta": {
+          "title": "Worry",
+          "astrology": {
+            "planet": [
+              "Mercury"
+            ],
+            "sign": "Taurus",
+            "decan": "Taurus I (0°–10°)",
+            "season": "Spring"
+          },
+          "esoteric": {
+            "kabbalah": "Geburah in Assiah"
+          },
+          "numerology": {
+            "number": 5,
+            "meaning": "Disruption: the settled form is tested and broken open"
+          }
+        },
         "upright": [
           "Physical and financial hardship and loss",
           "Struggle to make ends meet",
@@ -2995,6 +3593,24 @@
         "name": "Six of Disks",
         "number": 6,
         "suit": "disks",
+        "meta": {
+          "title": "Success",
+          "astrology": {
+            "planet": [
+              "Moon"
+            ],
+            "sign": "Taurus",
+            "decan": "Taurus II (10°–20°)",
+            "season": "Spring"
+          },
+          "esoteric": {
+            "kabbalah": "Tiphareth in Assiah"
+          },
+          "numerology": {
+            "number": 6,
+            "meaning": "Balance: the element at its harmonious centre, fully itself"
+          }
+        },
         "upright": [
           "Payoff",
           "Rewards coming in from a business or enterprise",
@@ -3052,6 +3668,24 @@
         "name": "Seven of Disks",
         "number": 7,
         "suit": "disks",
+        "meta": {
+          "title": "Failure",
+          "astrology": {
+            "planet": [
+              "Saturn"
+            ],
+            "sign": "Taurus",
+            "decan": "Taurus III (20°–30°)",
+            "season": "Spring"
+          },
+          "esoteric": {
+            "kabbalah": "Netzach in Assiah"
+          },
+          "numerology": {
+            "number": 7,
+            "meaning": "Instability: the element weakened as it descends into desire"
+          }
+        },
         "upright": [
           "We pause and take a needed rest",
           "We recuperate and let things develop on their own for a while",
@@ -3149,6 +3783,24 @@
         "name": "Eight of Disks",
         "number": 8,
         "suit": "disks",
+        "meta": {
+          "title": "Prudence",
+          "astrology": {
+            "planet": [
+              "Sun"
+            ],
+            "sign": "Virgo",
+            "decan": "Virgo I (0°–10°)",
+            "season": "Summer"
+          },
+          "esoteric": {
+            "kabbalah": "Hod in Assiah"
+          },
+          "numerology": {
+            "number": 8,
+            "meaning": "Craft: the element rationalised, fast-moving, partial"
+          }
+        },
         "upright": [
           "Interesting work projects underway",
           "A time for creativity",
@@ -3198,6 +3850,24 @@
         "name": "Nine of Disks",
         "number": 9,
         "suit": "disks",
+        "meta": {
+          "title": "Gain",
+          "astrology": {
+            "planet": [
+              "Venus"
+            ],
+            "sign": "Virgo",
+            "decan": "Virgo II (10°–20°)",
+            "season": "Summer"
+          },
+          "esoteric": {
+            "kabbalah": "Yesod in Assiah"
+          },
+          "numerology": {
+            "number": 9,
+            "meaning": "Foundation: the element consolidated near its final form"
+          }
+        },
         "upright": [
           "Enjoyment",
           "Pleasure",
@@ -3243,6 +3913,24 @@
         "name": "Ten of Disks",
         "number": 10,
         "suit": "disks",
+        "meta": {
+          "title": "Wealth",
+          "astrology": {
+            "planet": [
+              "Mercury"
+            ],
+            "sign": "Virgo",
+            "decan": "Virgo III (20°–30°)",
+            "season": "Summer"
+          },
+          "esoteric": {
+            "kabbalah": "Malkuth in Assiah"
+          },
+          "numerology": {
+            "number": 10,
+            "meaning": "Manifestation: the element fully materialised, at its end"
+          }
+        },
         "upright": [
           "Wealth",
           "Success",

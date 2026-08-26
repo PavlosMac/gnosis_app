@@ -15,9 +15,10 @@ narrowest instruction goes last.
     INTENT[intent]  reflective vs predictive (omitted for significators — a chart of
                     permanent character facets has no predictive/reflective axis)
     OBSERVER        optional, when the querent is not a party
-    SYNTHESIS       how the cards resolve into one reading; for multi-card
-                    spreads a lens-specific clause keeps the synthesis in the
-                    same tradition as the card interpretations
+    SYNTHESIS       how the cards resolve into one reading; every synthesis
+                    shape closes with a lens clause (LENS_SYNTHESIS for spreads,
+                    LENS_REGISTER for single-card and significators) so the lens
+                    survives the block that lands after it
     OUTPUT          JSON: per-card interpretations + synthesis
 
 One lens per call, no blending. A reading may be saved once per lens, so every
@@ -206,10 +207,18 @@ dispositions over external events.""",
     InterpretationLens.esoteric: """
 
 LENS: Esoteric.
-Let the correspondences organise the meaning — element, sign, planet, path,
-number, season. Read the card's list entries as evidence of how those
-forces express in this situation. The correspondence is the frame; the
-meanings are what fills it.""",
+Read the card through the correspondences the data supplies — element, sign,
+planet, decan, sephira and world, path, number, season. Name them in the
+interpretation: say which sign and planet, which sephira or path, which
+number, and what each is doing in this situation. Treat each correspondence
+as a force at work in the querent's life, not as an attribute of the card.
+The correspondence is the frame; the card's list entries are evidence of how
+that force is expressing here — choose the entries the correspondences
+account for, and let the correspondence explain why those entries apply.
+Where a card supplies several, lead with the one the question most concerns
+and mention the others only as they bear on it. Where a card supplies a suit
+and a number but no sign, read the number in the element. Do not add
+correspondences the data does not give.""",
     InterpretationLens.alchemical: """
 
 LENS: Alchemical.
@@ -287,6 +296,12 @@ between the others involved. Do not advise the querent to act."""
 # motion; only the significator chart (which has its own synthesis block) is
 # a deliberate character portrait. The closing clause keeps the synthesis in
 # that temporal register.
+#
+# Third observed failure: a single-card esoteric reading of The Lovers whose
+# prose named no sign, planet, sephira or number, although the card data
+# carried all of them. _SYNTHESIS_SINGLE carried no lens clause at all, and
+# the old LENS block never asked for the correspondences to be named — so the
+# model used them silently and wrote plain prose. Hence LENS_REGISTER below.
 # ---------------------------------------------------------------------------
 
 _SYNTHESIS_MULTI = """
@@ -319,10 +334,14 @@ Name the single larger pattern the individual dynamics add up to — what the
 psyche is working through across the whole spread, and what integration
 would ask.""",
     InterpretationLens.esoteric: """
-Anchor the synthesis in the spread's own structure. Where positions carry
+Carry the correspondences into the synthesis. Read the pattern across the
+cards' own signs, planets, sephiroth and numbers — which forces repeat,
+which oppose, whether the elements balance or one dominates, and what the
+run of numbers says about where the matter stands. Where positions carry
 names from an esoteric system — spheres, houses, stations, elements — use
-those names, and read the pattern across them: which positions hold the
-tension, and along which axis resolution flows.""",
+those names too, and read which positions hold the tension and along which
+axis resolution flows. Name what you draw on; do not translate it back into
+plain terms.""",
     InterpretationLens.alchemical: """
 Read the spread as one process: name the operation under way, which cards
 supply the raw material and which the refined form, and what stage the work
@@ -346,11 +365,33 @@ is the heart of the chart — an integrated character study, not a summary of
 the individual cards."""
 
 
+# The register clause is LENS_SYNTHESIS for the two synthesis shapes that have
+# no spread geometry: a single-card takeaway and a significator portrait. Same
+# test as LENS — strip the labels; if two could swap, one is decoration.
+
+LENS_REGISTER: dict[InterpretationLens, str] = {
+    InterpretationLens.traditional: """
+Keep it in the same plain register as the card interpretations: what is
+indicated, for whom, and what matters next.""",
+    InterpretationLens.psychological: """
+Keep it in the same register as the card interpretations: the pattern at
+work, what it protects against, and what integrating it would ask.""",
+    InterpretationLens.esoteric: """
+Keep it in the same register as the card interpretations: name the
+correspondences it rests on — sign, planet, sephira, path, number — and let
+them say what kind of action, timing or attitude fits. Do not translate them
+back into plain terms.""",
+    InterpretationLens.alchemical: """
+Keep it in the same register as the card interpretations: name the operation
+under way and the stage the work has reached.""",
+}
+
+
 def synthesis_block(spread_name: str, card_count: int, lens: InterpretationLens) -> str:
     if spread_name == SIGNIFICATORS_SPREAD:
-        return _SYNTHESIS_SIGNIFICATORS
+        return _SYNTHESIS_SIGNIFICATORS + LENS_REGISTER[lens]
     if card_count == 1:
-        return _SYNTHESIS_SINGLE
+        return _SYNTHESIS_SINGLE + LENS_REGISTER[lens]
     return _SYNTHESIS_MULTI + LENS_SYNTHESIS[lens]
 
 
@@ -413,5 +454,27 @@ if set(LENS) != set(InterpretationLens):
     raise RuntimeError("LENS blocks out of sync with InterpretationLens")
 if set(LENS_SYNTHESIS) != set(InterpretationLens):
     raise RuntimeError("LENS_SYNTHESIS blocks out of sync with InterpretationLens")
+if set(LENS_REGISTER) != set(InterpretationLens):
+    raise RuntimeError("LENS_REGISTER blocks out of sync with InterpretationLens")
 if set(INTENT) != set(ReadingIntent):
     raise RuntimeError("INTENT blocks out of sync with ReadingIntent")
+
+
+def named_blocks() -> list[tuple[str, str]]:
+    """Every authored block in composition order, for documentation dumps."""
+    return [
+        ("BASE", BASE),
+        ("BASE_SIGNIFICATORS", BASE_SIGNIFICATORS),
+        ("CARD_TYPES", CARD_TYPES),
+        ("ORIENTATION", ORIENTATION),
+        ("POSITION", POSITION),
+        *[(f"LENS[{lens.value}]", text) for lens, text in LENS.items()],
+        *[(f"INTENT[{intent.value}]", text) for intent, text in INTENT.items()],
+        ("OBSERVER", OBSERVER),
+        ("SYNTHESIS_MULTI", _SYNTHESIS_MULTI),
+        *[(f"LENS_SYNTHESIS[{lens.value}]", text) for lens, text in LENS_SYNTHESIS.items()],
+        ("SYNTHESIS_SINGLE", _SYNTHESIS_SINGLE),
+        ("SYNTHESIS_SIGNIFICATORS", _SYNTHESIS_SIGNIFICATORS),
+        *[(f"LENS_REGISTER[{lens.value}]", text) for lens, text in LENS_REGISTER.items()],
+        ("OUTPUT (sample: 182 words/card, 234 synthesis)", output_block(182, 234)),
+    ]

@@ -32,7 +32,7 @@ testpaths = ["tests"]
 
 [tool.pyright]
 pythonVersion = "3.12"
-include = ["src"]
+include = ["src", "scripts"]
 typeCheckingMode = "basic"
 reportMissingImports = true
 reportMissingModuleSource = true
