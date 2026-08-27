@@ -144,3 +144,17 @@ async def test_update_reading_tags_wrong_user(handler, valid_command, update_tag
                 reading_id=created.id, user_id=str(ObjectId()), tags=["career"]
             )
         )
+
+
+async def test_create_reading_without_position(handler, mock_db):
+    command = CreateReadingCommand(
+        user_id=str(ObjectId()),
+        spread_name="Three Card Relationship",
+        cards=[CardInSpread(name="The Fool", orientation="upright")],
+    )
+    result = await handler.handle(command)
+    assert result.cards[0].position is None
+
+    doc = await mock_db["readings"].find_one({"_id": ObjectId(result.id)})
+    assert "position" not in doc["cards"][0]
+    assert "position_description" not in doc["cards"][0]

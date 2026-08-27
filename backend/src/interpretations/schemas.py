@@ -15,7 +15,7 @@ class GenerateInterpretationRequest(AppSchema):
 
 class CardInterpretationReadModel(AppSchema):
     card_name: str
-    position: str
+    position: str | None = None
     orientation: Orientation
     interpretation: str
 

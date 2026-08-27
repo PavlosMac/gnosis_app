@@ -130,7 +130,9 @@ def build_user_prompt(
 
     for i, card in enumerate(request.cards, start=1):
         meaning = (meanings or {}).get(card.name) or card_catalog.get_card_meaning(card.name)
-        position_line = f"\n{i}. {card.name} ({card.orientation.value}) — Position: {card.position}"
+        position_line = f"\n{i}. {card.name} ({card.orientation.value})"
+        if card.position:
+            position_line += f" — Position: {card.position}"
         if card.position_description:
             position_line += f"\n  Position meaning: {card.position_description}"
         lines.append(position_line)

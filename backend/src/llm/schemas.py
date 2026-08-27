@@ -39,7 +39,11 @@ class CardInSpread(BaseModel):
     model_config = {"frozen": True}
 
     name: str = Field(..., max_length=100)
-    position: str = Field(..., max_length=100)
+    position: str | None = Field(
+        default=None,
+        max_length=100,
+        description="Spread position name. Omitted for spreads whose cards are read by order.",
+    )
     orientation: Orientation
     position_description: str | None = Field(
         default=None,
@@ -68,9 +72,12 @@ class CardInterpretation(BaseModel):
         ...,
         description="Exact card name as given in the input spread.",
     )
-    position: str = Field(
-        ...,
-        description="The spread position this card occupies, echoed from the input.",
+    position: str | None = Field(
+        default=None,
+        description=(
+            "The spread position this card occupies, echoed from the input, "
+            "or null when the card had no position."
+        ),
     )
     orientation: Orientation
     interpretation: str = Field(

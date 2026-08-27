@@ -1,4 +1,5 @@
 from datetime import date
+from typing import Any
 
 import structlog
 
@@ -19,6 +20,15 @@ class CreateReadingCommand(BaseCommand):
     cards: list[CardInSpread]
 
 
+def _card_document(card: CardInSpread) -> dict[str, Any]:
+    doc: dict[str, Any] = {"name": card.name, "orientation": card.orientation.value}
+    if card.position is not None:
+        doc["position"] = card.position
+    if card.position_description is not None:
+        doc["position_description"] = card.position_description
+    return doc
+
+
 class CreateReadingHandler(CommandHandler[CreateReadingCommand, ReadingReadModel]):
     def __init__(self, write_repo: ReadingWriteRepository) -> None:
         self._write_repo = write_repo
@@ -29,15 +39,7 @@ class CreateReadingHandler(CommandHandler[CreateReadingCommand, ReadingReadModel
             spread_type=command.spread_name,
             question=command.question,
             birth_date=command.birth_date,
-            cards=[
-                {
-                    "name": card.name,
-                    "position": card.position,
-                    "orientation": card.orientation.value,
-                    "position_description": card.position_description,
-                }
-                for card in command.cards
-            ],
+            cards=[_card_document(card) for card in command.cards],
         )
 
         document = reading.to_document()

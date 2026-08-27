@@ -35,7 +35,7 @@ class SaveInterpretationHandler(CommandHandler[SaveInterpretationCommand, None])
             reading_id=command.reading_id,
             user_id=command.user_id,
             card_interpretations=[
-                ci.model_dump(mode="json") for ci in command.card_interpretations
+                ci.model_dump(mode="json", exclude_none=True) for ci in command.card_interpretations
             ],
             synthesis=command.synthesis,
             tokens_used=command.tokens_used,

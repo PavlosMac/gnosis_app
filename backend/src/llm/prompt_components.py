@@ -176,7 +176,8 @@ supplied, let it shape the reading — the same card means something different
 in a position framed around drive and initiative than one framed around
 emotion and connection. Where no position meaning is supplied, read the
 position name itself for what it implies about temporal or thematic placement
-in the spread."""
+in the spread. Where a card has no position name at all, read it by its order
+in the spread and by the spread's own framing."""
 
 
 # ---------------------------------------------------------------------------
@@ -310,7 +311,9 @@ SYNTHESIS.
 After the individual cards, write one synthesis that reads them together. It
 is the largest single block of the reading, but not the bulk of it — the card
 interpretations carry the detail. Weave the cards into one narrative that
-answers the question directly. It must reveal something the individual
+answers the question directly. Refer back to the question when appropriate,
+make a reference or tie in certain keywords.
+It must reveal something the individual
 interpretations do not: where they reinforce each other, where they pull
 against each other, what the spread says as a whole. Do not recap the cards
 one by one, but do read the geometry of the spread — the arrangement of
@@ -405,13 +408,14 @@ OUTPUT.
 Return JSON with exactly these fields:
 
   "card_interpretations": [
-     {{ "card_name": "...", "position": "...",
+     {{ "card_name": "...", "position": "..." | null,
         "orientation": "upright|reversed", "interpretation": "..." }}
   ],
   "synthesis": "..."
 
 One entry per card, in the order the cards were given, echoing each card's
-name, position and orientation exactly as supplied. Each "interpretation" is
+name, position and orientation exactly as supplied (position is null when
+none was given). Each "interpretation" is
 approximately {words_per_card} words and covers that card alone — it must read
 as a statement about the querent's situation, never as a reference entry for
 the card.

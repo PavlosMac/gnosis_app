@@ -204,3 +204,48 @@ async def test_changing_intent_replaces_the_lens_slot_rather_than_adding_one(
     assert second.id == first.id
     assert second.settings.intent == ReadingIntent.predictive
     assert second.created_at == first.created_at
+
+
+async def test_generate_interpretation_for_card_without_position(
+    generate_handler, create_reading_handler, user_id
+):
+    reading = await create_reading_handler.handle(
+        CreateReadingCommand(
+            user_id=user_id,
+            spread_name="Three Card Relationship",
+            cards=[CardInSpread(name="The Fool", orientation="upright")],
+        )
+    )
+    result = await generate_handler.handle(
+        GenerateInterpretationCommand(reading_id=reading.id, user_id=user_id, settings=DEFAULT)
+    )
+    assert result.card_interpretations[0].position is None
+    assert result.card_interpretations[0].card_name == "The Fool"
+
+
+async def test_save_interpretation_omits_null_position(
+    generate_handler, create_reading_handler, save_handler, user_id, mock_db
+):
+    reading = await create_reading_handler.handle(
+        CreateReadingCommand(
+            user_id=user_id,
+            spread_name="Three Card Relationship",
+            cards=[CardInSpread(name="The Fool", orientation="upright")],
+        )
+    )
+    generated = await generate_handler.handle(
+        GenerateInterpretationCommand(reading_id=reading.id, user_id=user_id, settings=DEFAULT)
+    )
+    await save_handler.handle(
+        SaveInterpretationCommand(
+            reading_id=reading.id,
+            user_id=user_id,
+            card_interpretations=generated.card_interpretations,
+            synthesis=generated.synthesis,
+            model=generated.model,
+            tokens_used=generated.tokens_used,
+            settings=DEFAULT,
+        )
+    )
+    doc = await mock_db["interpretations"].find_one({"reading_id": ObjectId(reading.id)})
+    assert "position" not in doc["card_interpretations"][0]

@@ -49,7 +49,7 @@ class UpdateReadingTagsRequest(AppSchema):
 
 class CardReadModel(AppSchema):
     name: str
-    position: str
+    position: str | None = None
     orientation: Orientation
     position_description: str | None = None
 

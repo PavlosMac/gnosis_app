@@ -137,7 +137,8 @@ class MockLLMAdapter(LLMPort):
                     orientation=card.orientation,
                     interpretation=(
                         f"Mock interpretation for {card.name}"
-                        f" in {card.position} position ({card.orientation})."
+                        + (f" in {card.position} position" if card.position else "")
+                        + f" ({card.orientation})."
                     ),
                 )
             )

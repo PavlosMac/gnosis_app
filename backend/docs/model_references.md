@@ -23,8 +23,8 @@
 | user_id              | ObjectId                                             | FK→users |
 | spread_type          | str                                                  |          |
 | question             | str \| null                                          |          |
-| cards                | [{name, position, orientation}]                      | array    |
-| card_interpretations | [{card_name, position, orientation, interpretation}] | array    |
+| cards                | [{name, position?, orientation}]                     | array    |
+| card_interpretations | [{card_name, position?, orientation, interpretation}] | array    |
 | synthesis            | str                                                  |          |
 | tokens_used          | int                                                  |          |
 | model                | str                                                  |          |

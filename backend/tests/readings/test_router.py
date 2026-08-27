@@ -236,3 +236,17 @@ async def test_update_reading_tags_wrong_user(client, auth_token):
         headers={"Authorization": f"Bearer {other_token}"},
     )
     assert resp.status_code == 404
+
+
+async def test_create_reading_without_position(client, auth_token):
+    body = {
+        "spread_name": "Three Card Relationship",
+        "cards": [{"name": "The Fool", "orientation": "upright"}],
+    }
+    resp = await client.post(
+        "/api/v1/readings",
+        json=body,
+        headers={"Authorization": f"Bearer {auth_token}"},
+    )
+    assert resp.status_code == 201
+    assert resp.json()["cards"][0]["position"] is None

@@ -51,7 +51,7 @@ class GenerateInterpretationHandler(
             cards=[
                 CardInSpread(
                     name=card["name"],
-                    position=card["position"],
+                    position=card.get("position"),
                     orientation=card["orientation"],
                     position_description=card.get("position_description"),
                 )

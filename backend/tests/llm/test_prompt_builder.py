@@ -85,6 +85,28 @@ def test_user_prompt_contains_position():
     assert "Present" in prompt
 
 
+def test_user_prompt_omits_position_when_none():
+    req = _make_request([CardInSpread(name="Ace of Wands", orientation=Orientation.upright)])
+    prompt = _user_prompt(req)
+    assert "Position:" not in prompt
+    assert "1. Ace of Wands (upright)" in prompt
+
+
+def test_user_prompt_keeps_position_meaning_without_position_name():
+    req = _make_request(
+        [
+            CardInSpread(
+                name="Ace of Wands",
+                orientation=Orientation.upright,
+                position_description="How you feel about them",
+            )
+        ]
+    )
+    prompt = _user_prompt(req)
+    assert "Position:" not in prompt
+    assert "Position meaning: How you feel about them" in prompt
+
+
 def test_major_arcana_upright_shows_upright_fields():
     req = _make_request(
         [CardInSpread(name="The Fool", position="Past", orientation=Orientation.upright)]
