@@ -31,7 +31,7 @@ export default function InterpretationDisplay({
             Your Question
           </p>
           <p
-            className="text-[#e6d5b8]/80 text-sm sm:text-base italic"
+            className="text-[#e6d5b8]/80 text-sm sm:text-base italic whitespace-pre-wrap"
             style={{ fontFamily: "'Crimson Pro', serif" }}
           >
             &ldquo;{question.trim()}&rdquo;

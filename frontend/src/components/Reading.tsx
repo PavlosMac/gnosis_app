@@ -3,6 +3,10 @@ import React from "react";
 import TarotCard from "./TarotCard";
 import KabbalahLayout from "./KabbalahLayout";
 import SignificatorsLayout from "./SignificatorsLayout";
+import RelationshipLayout from "./RelationshipLayout";
+import { isRelationship } from "@/lib/relationship-spread";
+
+export { isRelationship };
 import type { SelectedCard } from "@/types/reading";
 import type { SignificatorResult } from "@/lib/significators";
 
@@ -51,6 +55,7 @@ const Reading: React.FC<ReadingProps> = React.memo(({
 }) => {
   const useKabbalahLayout = isTreeOfLife(positions);
   const useSignificatorsLayout = isSignificators(positions);
+  const useRelationshipLayout = isRelationship(positions);
 
   return (
     <div className="w-full">
@@ -64,7 +69,7 @@ const Reading: React.FC<ReadingProps> = React.memo(({
             Your Question
           </span>
           <p
-            className="text-xl sm:text-2xl text-[#e6d5b8] mt-2 italic max-w-2xl mx-auto px-4"
+            className="text-xl sm:text-2xl text-[#e6d5b8] mt-2 italic max-w-2xl mx-auto px-4 whitespace-pre-wrap"
             style={{ fontFamily: "'Crimson Pro', serif" }}
           >
             &ldquo;{question}&rdquo;
@@ -77,6 +82,8 @@ const Reading: React.FC<ReadingProps> = React.memo(({
         <SignificatorsLayout significatorResult={significatorResult} />
       ) : useKabbalahLayout ? (
         <KabbalahLayout selectedCards={selectedCards} positions={positions} />
+      ) : useRelationshipLayout ? (
+        <RelationshipLayout selectedCards={selectedCards} positions={positions} />
       ) : (
         <>
           {/* Cards display - Default layout */}

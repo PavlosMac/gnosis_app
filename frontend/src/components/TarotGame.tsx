@@ -22,27 +22,10 @@ import {
 import type { InterpretationSettings } from "@/types/interpret";
 import { buildReadingPayload } from "@/lib/reading-payload";
 import type { User } from "@/types/auth";
-import type { SelectedCard } from "@/types/reading";
+import type { SelectedCard, ReadingConfig } from "@/types/reading";
+import { resolvePositions } from "@/lib/reading-positions";
 import type { TarotCardData } from "@/types/models";
 import type { Interpretation } from "@/types/interpret";
-
-interface PositionConfig {
-  name: string;
-  description: string;
-}
-
-interface ReadingConfig {
-  name: string;
-  description: string;
-  cards: number;
-  positions: PositionConfig[];
-  showQuestion?: boolean;
-  meta?: {
-    field: string;
-    placeholder: string;
-    button: string;
-  };
-}
 
 interface TarotGameProps {
   user?: User | null;
@@ -54,6 +37,9 @@ const readings = readingsConfig.readings as ReadingConfig[];
 // Significators are birthdate-computed — nothing to enter by hand
 const manualReadings = readings.filter((r) => r.cards > 0);
 const DEFAULT_READING_NAME = readings[1].name;
+
+// Matches interpretRequestSchema.question max
+const QUESTION_MAX_LENGTH = 500;
 
 // Animation timing constants (in ms)
 const CARD_FLIP_DURATION = 600; // matches CSS .card-flip-inner transition
@@ -113,13 +99,14 @@ export default function TarotGame({ user, mode = 'draw' }: TarotGameProps) {
   const isReadingComplete = numCards > 0 ? selectedCards.length === numCards : selectedCards.length > 0;
 
   // Memoize derived state to prevent recalculation and stabilize references
+  const resolvedPositions = useMemo(() => resolvePositions(selectedReading), [selectedReading]);
   const positionNames = useMemo(
-    () => selectedReading.positions.map(p => p.name),
-    [selectedReading]
+    () => resolvedPositions.map(p => p.name),
+    [resolvedPositions]
   );
   const positionDescriptions = useMemo(
-    () => Object.fromEntries(selectedReading.positions.map(p => [p.name, p.description])),
-    [selectedReading]
+    () => Object.fromEntries(resolvedPositions.map(p => [p.name, p.description])),
+    [resolvedPositions]
   );
 
   const startGame = () => {
@@ -427,15 +414,25 @@ export default function TarotGame({ user, mode = 'draw' }: TarotGameProps) {
             )}
 
             {selectedReading.meta?.field === "input" && (
-              <input
-                type="text"
-                placeholder={selectedReading.meta.placeholder}
-                value={userQuestion}
-                onChange={(e) => setUserQuestion(e.target.value)}
-                className="w-full max-w-md border-2 border-[#d4af37]/50 rounded-lg px-4 py-3 bg-[#1a0033]/80 text-[#e6d5b8] text-lg backdrop-blur-sm
-                           focus:outline-none focus:border-[#d4af37] focus:ring-2 focus:ring-[#d4af37]/30 transition-all placeholder:text-[#e6d5b8]/50"
-                style={{ fontFamily: "'Crimson Pro', serif" }}
-              />
+              <div className="w-full max-w-xl flex flex-col items-end gap-1">
+                <textarea
+                  rows={3}
+                  maxLength={QUESTION_MAX_LENGTH}
+                  placeholder={selectedReading.meta.placeholder}
+                  value={userQuestion}
+                  onChange={(e) => setUserQuestion(e.target.value)}
+                  aria-label="Your question"
+                  className="w-full resize-y min-h-[5rem] border-2 border-[#d4af37]/50 rounded-lg px-4 py-3 bg-[#1a0033]/80 text-[#e6d5b8] text-lg leading-relaxed backdrop-blur-sm
+                             focus:outline-none focus:border-[#d4af37] focus:ring-2 focus:ring-[#d4af37]/30 transition-all placeholder:text-[#e6d5b8]/50"
+                  style={{ fontFamily: "'Crimson Pro', serif" }}
+                />
+                <span
+                  className="text-[10px] sm:text-xs text-[#e6d5b8]/40 tracking-wider"
+                  style={{ fontFamily: "'Cinzel', serif" }}
+                >
+                  {userQuestion.length}/{QUESTION_MAX_LENGTH}
+                </span>
+              </div>
             )}
 
             <button
@@ -720,7 +717,7 @@ export default function TarotGame({ user, mode = 'draw' }: TarotGameProps) {
       <ReadingStyleModal
         settings={interpretationSettings}
         onSettingsChange={setInterpretationSettings}
-        cardCount={selectedReading.cards || selectedReading.positions.length}
+        cardCount={selectedReading.cards || resolvedPositions.length}
         onClose={handleCloseStyleModal}
       />
     )}

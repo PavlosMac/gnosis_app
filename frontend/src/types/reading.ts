@@ -48,3 +48,24 @@ export interface PaginatedReadings {
   page: number;
   page_size: number;
 }
+
+/** A single position in a spread, as declared in readings-config.json */
+export interface PositionConfig {
+  name: string;
+  description: string;
+}
+
+/** A spread as declared in readings-config.json */
+export interface ReadingConfig {
+  name: string;
+  description?: string;
+  cards: number;
+  /** Omitted for spreads without named positions — see resolvePositions() */
+  positions?: PositionConfig[];
+  showQuestion?: boolean;
+  meta?: {
+    field: string;
+    placeholder: string;
+    button: string;
+  };
+}

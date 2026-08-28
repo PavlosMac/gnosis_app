@@ -6,7 +6,8 @@ import InterpretationDisplay from "@/components/InterpretationDisplay";
 import InterpretationModal from "@/components/InterpretationModal";
 import TarotCard from "@/components/TarotCard";
 import KabbalahLayout from "@/components/KabbalahLayout";
-import { isTreeOfLife } from "@/components/Reading";
+import RelationshipLayout from "@/components/RelationshipLayout";
+import { isTreeOfLife, isRelationship } from "@/components/Reading";
 import { takeUnsavedInterpretation } from "@/lib/interpretation-stash";
 import { LENS_LABELS, INTENT_LABELS } from "@/lib/interpretation-defaults";
 import type { TarotCardData } from "@/types/models";
@@ -29,18 +30,20 @@ interface SpreadCardsProps {
   cardVisuals: InterpretationSectionProps["cardVisuals"];
 }
 
-/** The saved spread, laid out as in the game: Tree of Life as a tree, everything else as a row */
+/** The saved spread, laid out as in the game: Tree of Life as a tree, Relationship as 3×3 pillars, everything else as a row */
 const SpreadCards: React.FC<SpreadCardsProps> = ({ cards, cardVisuals }) => {
   const positions = cards.map((c) => c.position);
-  if (isTreeOfLife(positions)) {
+  const isTree = isTreeOfLife(positions);
+  if (isTree || isRelationship(positions)) {
     const selectedCards = cards.map((saved, i) => {
       const visual = cardVisuals[saved.position];
       return visual ? ({ ...visual.card, idx: i, reversed: visual.reversed } as SelectedCard) : undefined;
     });
-    // KabbalahLayout zips by index; skip unresolved cards while keeping alignment
+    // Kabbalah looks cards up by name and Relationship by pillar suffix, so skipping unresolved cards is safe
     const known = selectedCards.flatMap((c, i) => (c ? [{ card: c, position: positions[i] }] : []));
+    const Layout = isTree ? KabbalahLayout : RelationshipLayout;
     return (
-      <KabbalahLayout
+      <Layout
         selectedCards={known.map((k) => k.card)}
         positions={known.map((k) => k.position)}
       />

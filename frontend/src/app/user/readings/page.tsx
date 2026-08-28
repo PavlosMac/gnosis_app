@@ -161,7 +161,7 @@ const ReadingsPage = async ({
                   {/* Question */}
                   {reading.question && (
                     <p
-                      className="text-[#e6d5b8]/60 text-sm italic mb-3 line-clamp-2"
+                      className="text-[#e6d5b8]/60 text-sm italic mb-3 line-clamp-2 whitespace-pre-line"
                       style={{ fontFamily: "'Crimson Pro', serif" }}
                     >
                       &ldquo;{truncate(reading.question, 120)}&rdquo;

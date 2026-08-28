@@ -51,6 +51,47 @@
             }
         },
         {
+            "name": "Three Card Open Question",
+            "description": "A three card open question reading",
+            "cards": 3,
+            "showQuestion": true,
+            "meta": {
+                "field": "input",
+                "placeholder": "What is your question to the Living Oracle?",
+                "button": "submit"
+            }
+        },
+        {
+            "name": "Relationship Reading",
+            "description": "A nine card spread — you or a person, the relationship, and the other person",
+            "cards": 9,
+            "positions": [
+                { "name": "Current behaviour - querent", "description": "What is the querent's current behaviour?" },
+                { "name": "What is desired - querent", "description": "What is desired by the querent?" },
+                { "name": "How to proceed - querent", "description": "How should the querent proceed?" },
+                { "name": "Current situation - relationship", "description": "What is the current state of the relationship?" },
+                { "name": "What is desired - relationship", "description": "What does the relationship need — where can compromise and equal ground be found?" },
+                { "name": "How to proceed - relationship", "description": "How is the relationship advised to proceed?" },
+                { "name": "Current behaviour - other", "description": "What is the other's current behaviour?" },
+                { "name": "What is desired - other", "description": "What is desired by the other?" },
+                { "name": "How to proceed - other", "description": "How should the other proceed?" }
+            ],
+            "showQuestion": false
+        },
+        {
+            "name": "Career Reading",
+            "description": "A five card career spread",
+            "cards": 5,
+            "positions": [
+                { "name": "Current status", "description": "What does the querent's current work life look like?" },
+                { "name": "Current challenges", "description": "What are the current challenges faced by the querent?" },
+                { "name": "Future opportunities", "description": "What are potential opportunities in the near future?" },
+                { "name": "Future outcomes", "description": "What outcomes are possible if the querent takes positive action?" },
+                { "name": "Action steps", "description": "What actions should the querent take for the best development in their career?" }
+            ],
+            "showQuestion": false
+        },
+        {
             "name": "Tree of Life",
             "description": "An 11 card Kabbalah card reading",
             "cards": 11,

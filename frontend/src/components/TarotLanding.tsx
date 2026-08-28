@@ -49,7 +49,7 @@ const TarotLanding: React.FC = () => {
             className="text-sm sm:text-base text-[#d4af37]/60 tracking-[0.3em] uppercase"
             style={{ fontFamily: "'Cinzel', serif" }}
           >
-            Divine Tools
+            Divination Tools
           </span>
         </div>
 

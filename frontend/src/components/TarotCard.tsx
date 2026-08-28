@@ -50,7 +50,7 @@ const TarotCard: React.FC<TarotCardProps> = React.memo(({ card, showMeaning = tr
                         group-hover:opacity-50 blur transition-opacity duration-500" />
         
         {/* Card itself */}
-        <div className={`relative ${small ? 'w-28 h-44' : 'w-40 h-64'} transition-all duration-500 
+        <div className={`relative ${small ? 'w-20 h-32 sm:w-28 sm:h-44' : 'w-40 h-64'} transition-all duration-500 
                         ${card.reversed ? 'rotate-180' : ''}`}
              style={{
                transformStyle: 'preserve-3d',
@@ -73,19 +73,19 @@ const TarotCard: React.FC<TarotCardProps> = React.memo(({ card, showMeaning = tr
                 alt={card.name}
                 fill
                 className="rounded object-cover p-2"
-                sizes={small ? '112px' : '160px'}
+                sizes={small ? '(min-width: 640px) 112px, 80px' : '160px'}
               />
             </div>
           </div>
         </div>
         
         {/* Card name */}
-        <h3 className={`text-center mt-3 text-[#e6d5b8] tracking-wide ${small ? 'text-xs' : 'text-sm sm:text-base'} font-semibold`}
+        <h3 className={`text-center text-[#e6d5b8] tracking-wide ${small ? 'mt-1.5 sm:mt-3 text-[10px] sm:text-xs' : 'mt-3 text-sm sm:text-base'} font-semibold`}
             style={{ fontFamily: "'Cinzel', serif", textShadow: '0 0 10px rgba(212,175,55,0.3)' }}>
           {card.name}
         </h3>
         {!small && card.reversed && (
-          <p className="text-center text-[#d4af37]/80 text-xs"
+          <p className={`text-center text-[#d4af37]/80 ${small ? 'text-[9px] sm:text-xs' : 'text-xs'}`}
              style={{ fontFamily: "'Cinzel', serif" }}>
             (Reversed)
           </p>

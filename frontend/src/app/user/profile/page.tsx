@@ -75,6 +75,7 @@ const ProfilePage = async () => {
           {/* Identity */}
           <ProfileRow label="Name" value={user.displayName || "Seeker"} />
           <ProfileRow label="Email" value={user.email} />
+          <ProfileLinkRow href="/reading" label="New Reading" />
           <ProfileLinkRow href="/user/readings" label="Readings Journal" />
           <ProfileLinkRow href="/user/manual-reading" label="Manual Interpretation" />
 
