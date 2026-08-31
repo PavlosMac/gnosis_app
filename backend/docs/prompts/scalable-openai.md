@@ -1,7 +1,7 @@
 # Scalable OpenAI Adapter — Implementation Plan
 
-## Status: Draft
-## Date: 2026-04-03
+## Status: Draft — items 1–3 (semaphore, timeout, retry config) still outstanding; item 4 (structured logging) implemented
+## Date: 2026-04-03 (status reviewed 2026-08-31)
 
 ---
 

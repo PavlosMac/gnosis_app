@@ -7,3 +7,15 @@ The Pillar of Severity is the left pillar and represents past energies and is fe
 - Question [optional] : str
 - Spread Name : str
 - Cards[] : card_name, position[optional], orientation [Up, Down]
+
+
+
+Open Question 3 cards:
+Should refer back to the question.
+
+SINGLE_CARD_READING:
+"""The single card reading will include one question by the querent. Interpret this question from the perspective of the card drawn. Consider the orientation also, if the card is in the upright position, remember that major arcana can also have negative upright connotations. Con
+
+TWO_CARD_READING:
+"""
+

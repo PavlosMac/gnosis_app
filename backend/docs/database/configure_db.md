@@ -1,10 +1,10 @@
 # MongoDB — Configuration & Management
 
-Self-hosted MongoDB on the Raspberry Pi, running as a Docker container on `app-network`. See [deployment.md](./deployment.md) for the full Pi architecture.
+Self-hosted MongoDB on the Raspberry Pi, running as a Docker container on `app-network`. See [deployment.md](../deployment/deployment.md) for the full Pi architecture.
 
 ## 1. Authentication
 
-**Current state:** no auth — any container on `app-network` connects freely. Must be hardened before first prod deploy.
+**Current state:** auth enforced (`mongod --auth`). Root user `gnosis_admin` + scoped app user `gnosis_app`. Verified on the Pi 2026-08-29.
 
 ### Strategy: root user + scoped app user
 
@@ -21,12 +21,12 @@ db = db.getSiblingDB("gnosis_esoterica");
 
 db.createUser({
   user: "gnosis_app",
-  pwd: _getEnv("GNOSIS_APP_PASSWORD"),
+  pwd: process.env.GNOSIS_APP_PASSWORD,
   roles: [{ role: "readWrite", db: "gnosis_esoterica" }],
 });
 ```
 
-> `_getEnv()` reads environment variables passed to the `mongod` process.
+> `process.env` is available to init scripts run by the `mongo` image entrypoint.
 
 ### Production compose changes
 
@@ -35,6 +35,8 @@ services:
   mongodb:
     image: mongo:7
     container_name: gnosis-mongodb
+    command: ["mongod", "--auth", "--quiet", "--wiredTigerCacheSizeGB", "0.25"]
+    # no ports: — only reachable on app-network
     environment:
       MONGO_INITDB_ROOT_USERNAME: gnosis_admin
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD}
@@ -44,8 +46,15 @@ services:
       - ./mongo/init-user.js:/docker-entrypoint-initdb.d/init-user.js:ro
     networks:
       - app-network
+    healthcheck:
+      test: ["CMD", "bash", "-c", "</dev/tcp/127.0.0.1/27017"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
     restart: unless-stopped
 ```
+
+Full file: `docker-compose.prod.yml`.
 
 ### API connection string
 
@@ -94,13 +103,18 @@ docker exec gnosis-mongodb mongodump --archive --gzip \
 
 - [x] Create `mongo/init-user.js` in repo
 - [x] Add auth env vars to `docker-compose.prod.yml`
-- [ ] Generate and store passwords in `.env.gnosis.prod` on Pi before first deploy
+- [x] Generate and store passwords in `.env.gnosis.prod` on Pi (verified 2026-08-29: `gnosis_admin` + `gnosis_app` exist, `--auth` enforced)
+- See [production_mongo_commands.md](./production_mongo_commands.md) for the day-to-day access workflow
 
 ---
 
 ## 2. Remote Access (SSH Tunnel)
 
-MongoDB is not exposed to the host or LAN. To manage it from your Mac, use an SSH tunnel.
+MongoDB is not exposed to the host or LAN.
+
+**Preferred:** `scripts/pi-mongo.sh` — runs `mongosh` inside the container over SSH, no port exposure. See [production_mongo_commands.md](./production_mongo_commands.md).
+
+**GUI (Compass) only:** temporarily publish the port on the Pi and tunnel, as below.
 
 ### Step 1 — Temporary port exposure on the Pi
 
@@ -141,26 +155,22 @@ mongosh "mongodb://localhost:27017/gnosis_esoterica"
 
 ## 3. Backups
 
-### Automated backup with cron (on the Pi)
+Implemented in `backup/` (`Dockerfile` + `backup-to-atlas.sh`), designed in
+`docs/deployment/mongodb-backup-design.md`.
 
-```bash
-# Create backup directory
-mkdir -p ~/backups/mongodb
-```
+The script runs in its own container on `app-network` and, in order:
 
-Add a cron job:
-```bash
-crontab -e
-```
+1. `mongodump` of `gnosis_esoterica` → `$BACKUP_DIR/gnosis_esoterica-<stamp>.archive.gz` (default `/home/pi/mongo-backups`)
+2. `rclone copy` of the archive to Backblaze B2 (`$B2_REMOTE`)
+3. `mongorestore --drop` into a MongoDB Atlas mirror (`$ATLAS_URI`)
+4. Local retention: keep the 7 newest archives
 
-```cron
-# Daily MongoDB backup at 3am, keep last 7 days
-0 3 * * * docker exec gnosis-mongodb mongodump --archive --gzip --uri="mongodb://gnosis_admin:$MONGO_ROOT_PASSWORD@localhost:27017/gnosis_esoterica?authSource=admin" > ~/backups/mongodb/gnosis_$(date +\%Y\%m\%d).gz 2>/dev/null && find ~/backups/mongodb -name "*.gz" -mtime +7 -delete
-```
+Any failed step posts one message to `$DISCORD_WEBHOOK_URL`.
 
-> Tip: store `MONGO_ROOT_PASSWORD` in a file the cron job sources, or hardcode it in the cron entry (only root can read crontab).
+Required env: `MONGO_URI` (use `gnosis_admin`, `authSource=admin`, host `gnosis-mongodb:27017`),
+`ATLAS_URI`, `B2_REMOTE`, `DISCORD_WEBHOOK_URL`, optional `BACKUP_DIR`.
 
-### Manual backup
+### Manual one-off backup (no offsite)
 
 ```bash
 docker exec gnosis-mongodb mongodump --archive --gzip \
@@ -189,8 +199,8 @@ See [db_migrations.md](./db_migrations.md) for migration conventions, runner det
 | Concern | Status | Notes |
 |---|---|---|
 | MongoDB auth | Done | Root + scoped `gnosis_app` user via init script |
-| Remote access | Planned | SSH tunnel + management override |
-| Backups | Not configured | `mongodump` cron on Pi |
+| Remote access | Done | `scripts/pi-mongo.sh` over SSH; Compass via tunnel when needed |
+| Backups | Done | `backup/backup-to-atlas.sh`: dump → B2 → Atlas mirror, Discord on failure |
 | Migrations | Done | Lightweight runner, tracked in `_migrations` |
 | Index management | Done | Managed via migrations |
 | TTL indexes | Done | `refresh_tokens.expires_at` |

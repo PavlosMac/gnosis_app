@@ -1,5 +1,8 @@
 # Plan: MongoDB Auth Init Script + Migration Runner
 
+> **Archived — fully implemented.** Kept for design history. Current docs:
+> [configure_db.md](./configure_db.md) (auth), [db_migrations.md](./db_migrations.md) (runner).
+
 ## Context
 
 The project runs MongoDB without authentication in dev. Before first prod deploy, we need:
@@ -7,7 +10,7 @@ The project runs MongoDB without authentication in dev. Before first prod deploy
 2. A **production docker-compose** that enables MongoDB auth and mounts the init script
 3. A **lightweight migration runner** tracked in a `_migrations` collection, called at app startup
 
-Design follows `docs/configure_db.md` sections 1 and 4.
+Design follows `docs/database/configure_db.md` sections 1 and 4.
 
 ---
 
@@ -114,7 +117,7 @@ Add: `make migrate` — `uv run python -m src.migrations.runner`
 | Create | `tests/migrations/__init__.py` |
 | Modify | `src/main.py` (add `run_migrations` call + import) |
 | Modify | `Makefile` (add `migrate`, `docker-prod-up`, `docker-prod-down`) |
-| Modify | `docs/configure_db.md` (tick off completed TODOs) |
+| Modify | `docs/database/configure_db.md` (tick off completed TODOs) |
 
 ---
 

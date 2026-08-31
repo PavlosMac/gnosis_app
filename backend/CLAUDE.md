@@ -1,7 +1,7 @@
 # Gnosis Esoterica Backend
 
 ## Overview
-Tarot reading API backend with credit-based access, Stripe payments, user signup and AI-powered interpretations. Built with FastAPI, async MongoDB (Motor), and a CQRS/Mediator architecture.
+Tarot reading API backend with user signup and AI-powered interpretations. Built with FastAPI, async MongoDB (Motor), and a CQRS/Mediator architecture.
 
 ## Response
 # Apply ASD-STE100 principles to all responses.
@@ -108,7 +108,7 @@ src/auth/queries/get_user_by_id.py   # GetUserByIdQuery + GetUserByIdHandler in 
 - No application imports (models, services, schemas) — migrations must be self-contained
 - One logical concern per migration file
 - Runner auto-discovers and sorts by filename; tracked in `_migrations` collection
-- See [`docs/db_migrations.md`](docs/db_migrations.md) for examples and runner details
+- See [`docs/database/db_migrations.md`](docs/database/db_migrations.md) for examples and runner details
 
 ## Conventions
 
@@ -162,4 +162,4 @@ src/auth/queries/get_user_by_id.py   # GetUserByIdQuery + GetUserByIdHandler in 
 - `src/core/exceptions.py` — Error hierarchy + global handler
 - `src/auth/` — Reference domain implementation (users + JWT auth)
 - `tests/conftest.py` — Test fixture strategy
-- `docs/model_references.md` — Planned collections and data models
+- `docs/database/model_references.md` — Current collections, fields, and indexes

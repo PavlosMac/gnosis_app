@@ -177,10 +177,11 @@ chmod +x deploy-to-pi.sh
 
 ```bash
 # 1. Create project directory
-mkdir -p ~/gnosis-esoterica && cd ~/gnosis-esoterica
+mkdir -p ~/projects/gnosis-esoterica/scripts && cd ~/projects/gnosis-esoterica
 
 # 2. SCP files from dev machine (or clone repo)
-scp docker-compose.prod.yml mongo/init-user.js scripts/pi-pull-and-start.sh scripts/seed_superadmin.sh scripts/seed_superadmin.py pi@<ip>:~/gnosis-esoterica/
+scp docker-compose.prod.yml mongo/init-user.js scripts/pi-pull-and-start.sh scripts/seed_superadmin.sh scripts/seed_superadmin.py pavlos-mk@pavspi.local:~/projects/gnosis-esoterica/
+scp scripts/pi-mongo.sh pavlos-mk@pavspi.local:~/projects/gnosis-esoterica/scripts/
 # (preserve mongo/ and scripts/ directory structure)
 
 # 3. Create .env.gnosis.prod with generated secrets
@@ -237,4 +238,4 @@ docker exec timegnosis-next-app wget -qO- http://gnosis-api:8000/api/v1/health
 - [ ] Set up log aggregation (stdout logs → Pi-level collection)
 - [ ] Toggle register route on/off with .env - deploy first with register disabled
 
-For MongoDB auth, backups, remote access, and migrations see [configure_db.md](./configure_db.md).
+For MongoDB auth, backups, remote access, and migrations see [configure_db.md](../database/configure_db.md).

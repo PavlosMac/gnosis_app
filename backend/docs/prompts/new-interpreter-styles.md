@@ -5,11 +5,11 @@
 > Current prompt wording and the composed pipeline: [prompt_reference.md](prompt_reference.md) (regenerate with `make prompt-doc`).
 **Date:** 2026-08-21
 **Branch:** `update-interpreter`
-**Frontend counterpart:** [`front-end-interpreter-design.md`](front-end-interpreter-design.md)
+**Frontend counterpart:** `front-end-interpreter-design.md` (removed — its contract is captured in this doc)
 
 ## Context
 
-`docs/front-end-interpreter-design.md` specifies a reworked interpretation UI: a lens picker, an
+The frontend interpreter design specified a reworked interpretation UI: a lens picker, an
 intent toggle, and a depth slider, with a reading holding several saved interpretations side by
 side. It names the backend contract as blocking for most of its work. This plan implements that
 contract, plus the composed prompt architecture from the supplied `build_prompt` module.
@@ -253,13 +253,10 @@ Everything `007` was going to do disappears: no index drop, no `$rename`, no val
 `$unset` of `tone`/`context`. `spiritual` never enters the data, so the question of collapsing it
 onto `esoteric` does not arise either.
 
-**Dev databases need a manual reset.** The runner skips by version (`runner.py`, `applied` set),
-so edited files will not re-run where they have already been applied. Before restarting:
-
-```js
-db.interpretations.drop()
-db._migrations.deleteMany({version: {$in: ["005", "006"]}})
-```
+**Dev-database reset — superseded.** This plan originally required a manual
+`db.interpretations.drop()` before restarting (the runner skips by version, so edited files
+would not re-run). Migration `007_repair_legacy_interpretation_settings.py` now repairs
+legacy rows automatically; no manual reset is needed.
 
 ## 8b. Config — `src/core/config.py`
 
@@ -347,10 +344,9 @@ Three things worth knowing that the plan did not anticipate:
 - **`created_at` comparisons in migration tests must be timezone-naive.** BSON carries no
   timezone, so Mongo returns naive UTC datetimes and a `datetime.now(UTC)` comparison fails.
 
-Still outstanding, both flagged during planning and unchanged by the implementation:
+Still outstanding, flagged during planning and unchanged by the implementation:
 
 - The frontend must mirror `SYNTHESIS_SHARE = 0.3` in its `estimatedWordsPerCard` helper, or the
   slider's "≈180 words per card" hint will not match what the backend asks the model for.
-- Dev databases that already ran the old `005`/`006` need
-  `db.interpretations.drop()` and `db._migrations.deleteMany({version: {$in: ["005", "006"]}})`
-  before restarting, since the runner skips by version.
+
+(The dev-database manual reset originally listed here is superseded by migration `007` — see §8.)
