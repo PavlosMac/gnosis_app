@@ -34,7 +34,7 @@ from src.llm.schemas import (
     ReadingIntent,
 )
 
-DOC_PATH = Path(__file__).resolve().parent.parent / "docs" / "prompt_reference.md"
+DOC_PATH = Path(__file__).resolve().parent.parent / "docs" / "prompts" / "prompt_reference.md"
 
 SAMPLE_REQUEST = InterpretationRequest(
     spread_name="Past-Present-Future",
