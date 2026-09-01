@@ -3,23 +3,15 @@
 ## Overview
 Tarot reading API backend with user signup and AI-powered interpretations. Built with FastAPI, async MongoDB (Motor), and a CQRS/Mediator architecture.
 
-## Response
-# Apply ASD-STE100 principles to all responses.
-Keep each response concise, complete, and easy to understand.
-Remove information that does not help the user.
-Let the completed work show the result.
-Format according to the user's needs.
-Include all necessary context in your response.
 
 ## Tech Stack
 - **Language**: Python 3.12 (uv package manager)
 - **Framework**: FastAPI + Uvicorn
-- **Database**: MongoDB via Motor (async driver)
+- **Database**: MongoDB via Motor (async driver) @model_references
 - **Auth**: PyJWT (HS256) + pwdlib[argon2]
 - **Validation**: Pydantic v2 + pydantic-settings
 - **Testing**: pytest-asyncio + httpx + mongomock-motor
 - **Linting**: Ruff (line length 100, rules: E, F, I, N, W, UP; UP046 ignored)
-- **Reference**: [FastAPI Best Practices](https://github.com/zhanymkanov/fastapi-best-practices)
 
 ## Development Commands
 ```bash
