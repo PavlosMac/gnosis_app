@@ -68,3 +68,42 @@ Each decision should include:
 
 <!-- Add new decisions below this line -->
 
+### ADR-004: Lean Interpretation Contract — Server-Owned Word Budget, Intent-Only Settings, Single Narrative (2026-09-01)
+
+**Context:**
+- The multi-lens interpretation flow (~2,700 lines across 14 frontend files) was over-engineered; the gnosis backend rework (`gnosis-esoterica-api/docs/prompts/lean_prompt_architecture.md`) collapses the LLM response to a single `reading` string
+- With per-user dollar budgets, output length is the dominant cost — so the server must own the only lever that sets it
+
+**Decision:**
+- Word budget is fully server-owned (hardcoded `words_per_card` config in the backend); the frontend carries zero word-count logic, no depth setting, no word-estimate display
+- `InterpretationSettings = {intent}` only (Reflective/Predictive); lens picker and depth slider removed from UI and wire
+- Display renders one narrative under "Reading Interpretation": `reading ?? synthesis` (legacy saves and the current backend have `synthesis`; the lean backend returns `reading`); per-card texts no longer displayed but tolerated on the wire
+- A reading has a single displayed interpretation slot: the newest by `created_at`; saving overwrites without a replace prompt (`PUT /api/v1/readings/{id}/interpretation`, singular)
+- Session-expired mid-flow: plain login link back to the reading page (sessionStorage stash removed); the user regenerates after login
+
+**Consequences:**
+- Supersedes the multi-lens decisions from 2026-08-21 (lens tabs, per-lens slots, depth-based word budget)
+- Generate/save 422s against the pre-lean backend by design; e2e verification runs once the lean gnosis backend lands
+- Legacy multi-lens saves stay in the DB but only the newest is shown
+
+**Amendment (2026-09-02, superseded same day):** `intent` was made optional and gated behind a per-spread `INTENT_SPREADS` allowlist.
+
+**Amendment (2026-09-02): intent removed entirely** (plan `docs/remove-interpretation-intent.md`). `InterpretationSettings`/`intent`/the per-spread allowlist and the "Reading Style" affordance are gone — `generateInterpretation`/`saveInterpretation` take no tunable parameters at all, so there is no longer a "which spreads allow intent" list to maintain. The interpretation modal generates once per open with no pre-generate settings step beyond a plain "Consult the Oracle" confirm; there is no regenerate action — trying again means closing and reopening the modal via the existing entry points.
+
+
+### ADR-005: One-Shot Interpretation Contract — Generate-and-Persist, One Interpretation Per Reading (2026-09-03)
+
+**Context:**
+- The lean gnosis backend (branch `new-prompt-architecture`) landed with a different interpretation API than the frontend anticipated: verified directly against its `src/interpretations/router.py` and schemas after a live 404 on the old `/generate` path
+- The backend exposes exactly one endpoint, `POST /api/v1/readings/{id}/interpretation`, which generates **and persists** in the same call, is **idempotent** (a repeat call returns the stored interpretation with no LLM call and no charge — one interpretation per reading, ever), and returns `{interpretation, remaining_budget_usd}`
+
+**Decision:**
+- Frontend fully adopts this contract: `generateInterpretation(readingId)` POSTs to the singular endpoint; `saveInterpretation`/`saveInterpretationSchema` deleted (there is no save step); the modal's states collapse to confirm → generating → result/error with a "Done" close (no unsaved state, no close-confirm)
+- `Interpretation` mirrors the backend's `InterpretationReadModel` exactly: `_id, reading_id, user_id, reading (required string), model, usage (nullable ledger: prompt/completion/reasoning tokens, model, cost_usd), created_at, updated_at`. Legacy `synthesis`/`card_interpretations` tolerance dropped — the backend guarantees `reading`
+- `ReadingDetail.interpretation` is singular (`| null`), replacing the `interpretations` array; the journal page's "New Interpretation" button removed (regenerating is a no-op by design)
+- Budget surfaced: HTTP 402 ("Usage budget exhausted") maps to "Your Oracle budget is exhausted." in `api-client.ts`; the modal's result state shows the remaining budget returned by generate
+
+**Consequences:**
+- The reading page and modal can never disagree about which interpretation to show — there is only one
+- A user who dislikes their interpretation cannot re-roll; that is backend policy ("this is what the reading gets, no more")
+- Charged-with-nothing-stored is impossible (backend reserves worst-case cost, persists, then settles — any failure releases the reservation)

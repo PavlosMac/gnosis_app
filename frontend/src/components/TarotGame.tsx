@@ -7,25 +7,17 @@ import FaceUpDeck from "@/components/FaceUpDeck";
 import ShuffleAnimation from "@/components/ShuffleAnimation";
 import InterpretationModal from "@/components/InterpretationModal";
 import LoginToInterpretModal from "@/components/LoginToInterpretModal";
-import ReadingStyleModal from "@/components/ReadingStyleModal";
 import OrnateFrame from "@/components/OrnateFrame";
 import readingsConfig from "@/lib/readings-config.json";
 import { parseAndValidateDate } from "@/lib/dateValidation";
 
 import { useGameReducer, getSelectedCards, getReading, isPostDeal, isPickingCards, hasDeckOnScreen } from "@/hooks/useGameReducer";
 import { createReading } from "@/app/user/interpret/actions";
-import {
-  DEFAULT_SETTINGS,
-  readDefaultSettings,
-  writeDefaultSettings,
-} from "@/lib/interpretation-defaults";
-import type { InterpretationSettings } from "@/types/interpret";
 import { buildReadingPayload } from "@/lib/reading-payload";
 import type { User } from "@/types/auth";
 import type { SelectedCard, ReadingConfig } from "@/types/reading";
 import { resolvePositions } from "@/lib/reading-positions";
 import type { TarotCardData } from "@/types/models";
-import type { Interpretation } from "@/types/interpret";
 
 interface TarotGameProps {
   user?: User | null;
@@ -64,27 +56,11 @@ export default function TarotGame({ user, mode = 'draw' }: TarotGameProps) {
   const [savedReadingId, setSavedReadingId] = useState<string | null>(null);
   const [savingReading, setSavingReading] = useState(false);
   const [saveReadingError, setSaveReadingError] = useState<string | null>(null);
-  const [savedInterpretations, setSavedInterpretations] = useState<Interpretation[]>([]);
-  const [interpretationSettings, setInterpretationSettings] =
-    useState<InterpretationSettings>(DEFAULT_SETTINGS);
-  const [showStyleModal, setShowStyleModal] = useState(false);
   const [game, dispatch] = useGameReducer();
   const deckRef = useRef<HTMLDivElement>(null);
   const readingRef = useRef<HTMLDivElement>(null);
   // Bumped on RESET so an in-flight createReading can't attach its id to the next reading
   const saveGenerationRef = useRef(0);
-  // Seed reading style from the sticky default after mount (localStorage is
-  // unavailable during SSR; a lazy initializer would cause a hydration mismatch)
-  useEffect(() => {
-    setInterpretationSettings(readDefaultSettings());
-  }, []);
-
-  // Persist when the style modal closes rather than on every slider tick, and
-  // never from a mount effect (which would clobber the stored default)
-  const handleCloseStyleModal = useCallback(() => {
-    setShowStyleModal(false);
-    writeDefaultSettings(interpretationSettings);
-  }, [interpretationSettings]);
 
   const [day, setDay] = useState<string>("");
   const [month, setMonth] = useState<string>("");
@@ -165,22 +141,15 @@ export default function TarotGame({ user, mode = 'draw' }: TarotGameProps) {
     setSavedReadingId(null);
     setSaveReadingError(null);
     setSavingReading(false);
-    setSavedInterpretations([]);
   }, []);
 
   const handleCloseModal = useCallback(() => setShowInterpretModal(false), []);
 
-  const handleInterpretationSaved = useCallback(
-    (saved: Interpretation, interpretations: Interpretation[]) => {
-      setSavedInterpretations(interpretations);
-      // Keep the reading style in step with settings tuned inside the modal
-      // (the modal has already persisted them as the sticky default)
-      setInterpretationSettings(saved.settings);
-      // The journal entry is where saved interpretations are read and extended
-      if (savedReadingId) router.push(`/user/readings/${savedReadingId}`);
-    },
-    [router, savedReadingId]
-  );
+  const handleInterpretationComplete = useCallback(() => {
+    // The interpretation is persisted the moment it is generated; the journal
+    // entry is where it lives from here on
+    if (savedReadingId) router.push(`/user/readings/${savedReadingId}`);
+  }, [router, savedReadingId]);
 
   const handleCloseLoginModal = useCallback(() => setShowLoginModal(false), []);
 
@@ -325,21 +294,6 @@ export default function TarotGame({ user, mode = 'draw' }: TarotGameProps) {
            style={{ fontFamily: "'Crimson Pro', serif" }}>
           {isManual ? '✦ Lay Out the Cards You Have Drawn ✦' : '✦ Unveil the Mysteries of Your Path ✦'}
         </p>
-
-        {/* Reading style — inline under the title on mobile, top-right of the panel on sm+.
-            Not rendered during the shuffle animation or birthdate entry (nothing to style yet). */}
-        {game.phase !== 'shuffling' && game.phase !== 'birthdate-input' && (
-        <button
-          type="button"
-          onClick={() => setShowStyleModal(true)}
-          className={`${isPickingCards(game) ? 'hidden sm:flex' : 'flex'} mx-auto ${isCompact ? 'mt-2' : '-mt-4'} mb-6 sm:m-0 sm:absolute sm:top-4 sm:right-4 sm:z-20
-                      items-center gap-2 px-3 py-2 text-[#d4af37]/60 hover:text-[#d4af37] transition-colors`}
-          style={{ fontFamily: "'Cinzel', serif" }}
-        >
-          <span aria-hidden="true">◈</span>
-          <span className="text-xs sm:text-sm tracking-wider">Reading Style</span>
-        </button>
-        )}
 
         {/* Pre-game selection screen */}
         {game.phase === 'setup' && (
@@ -713,15 +667,6 @@ export default function TarotGame({ user, mode = 'draw' }: TarotGameProps) {
       </div>
     )}
 
-    {showStyleModal && (
-      <ReadingStyleModal
-        settings={interpretationSettings}
-        onSettingsChange={setInterpretationSettings}
-        cardCount={selectedReading.cards || resolvedPositions.length}
-        onClose={handleCloseStyleModal}
-      />
-    )}
-
     {showInterpretModal && completedReading && savedReadingId && (
       <InterpretationModal
         readingId={savedReadingId}
@@ -729,10 +674,8 @@ export default function TarotGame({ user, mode = 'draw' }: TarotGameProps) {
         question={completedReading.question}
         birthDate={completedReading.birth_date}
         cardVisuals={cardVisuals}
-        savedInterpretations={savedInterpretations}
         onClose={handleCloseModal}
-        onSaved={handleInterpretationSaved}
-        initialSettings={interpretationSettings}
+        onComplete={handleInterpretationComplete}
         autoGenerate
       />
     )}

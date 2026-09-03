@@ -6,6 +6,7 @@ import type { TokenResponse } from "@/types/auth";
 const SAFE_MESSAGES: Record<number, string> = {
   400: "The request was invalid.",
   401: "Session expired. Please log in again.",
+  402: "Your Oracle budget is exhausted.",
   403: "You do not have permission for this action.",
   404: "The requested resource was not found.",
   422: "The request contained invalid data.",

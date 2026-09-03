@@ -1,18 +1,12 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import InterpretationDisplay from "@/components/InterpretationDisplay";
 import InterpretationModal from "@/components/InterpretationModal";
-import TarotCard from "@/components/TarotCard";
-import KabbalahLayout from "@/components/KabbalahLayout";
-import RelationshipLayout from "@/components/RelationshipLayout";
-import { isTreeOfLife, isRelationship } from "@/components/Reading";
-import { takeUnsavedInterpretation } from "@/lib/interpretation-stash";
-import { LENS_LABELS, INTENT_LABELS } from "@/lib/interpretation-defaults";
-import type { TarotCardData } from "@/types/models";
-import type { SavedCard, SelectedCard } from "@/types/reading";
-import type { Interpretation, InterpretationLens } from "@/types/interpret";
+import SpreadCards from "@/components/SpreadCards";
+import type { CardVisuals } from "@/components/SpreadCards";
+import type { Interpretation } from "@/types/interpret";
 
 
 interface InterpretationSectionProps {
@@ -20,60 +14,11 @@ interface InterpretationSectionProps {
   spreadName: string;
   question: string | null;
   birthDate?: string;
-  cardVisuals: Record<string, { card: TarotCardData; reversed: boolean } | null>;
-  cards: SavedCard[];
-  interpretations: Interpretation[];
+  cardVisuals: CardVisuals;
+  // The reading's one interpretation — generate is idempotent, so once this
+  // exists there is nothing further to generate
+  interpretation: Interpretation | null;
 }
-
-interface SpreadCardsProps {
-  cards: SavedCard[];
-  cardVisuals: InterpretationSectionProps["cardVisuals"];
-}
-
-/** The saved spread, laid out as in the game: Tree of Life as a tree, Relationship as 3×3 pillars, everything else as a row */
-const SpreadCards: React.FC<SpreadCardsProps> = ({ cards, cardVisuals }) => {
-  const positions = cards.map((c) => c.position);
-  const isTree = isTreeOfLife(positions);
-  if (isTree || isRelationship(positions)) {
-    const selectedCards = cards.map((saved, i) => {
-      const visual = cardVisuals[saved.position];
-      return visual ? ({ ...visual.card, idx: i, reversed: visual.reversed } as SelectedCard) : undefined;
-    });
-    // Kabbalah looks cards up by name and Relationship by pillar suffix, so skipping unresolved cards is safe
-    const known = selectedCards.flatMap((c, i) => (c ? [{ card: c, position: positions[i] }] : []));
-    const Layout = isTree ? KabbalahLayout : RelationshipLayout;
-    return (
-      <Layout
-        selectedCards={known.map((k) => k.card)}
-        positions={known.map((k) => k.position)}
-      />
-    );
-  }
-  return (
-    <div className="flex flex-wrap justify-center gap-6">
-      {cards.map((saved) => {
-        const visual = cardVisuals[saved.position];
-        return (
-          <div key={saved.position} className="flex flex-col items-center gap-2">
-            {visual && (
-              <TarotCard
-                card={{ ...visual.card, reversed: visual.reversed }}
-                small={true}
-                showMeaning={false}
-              />
-            )}
-            <span
-              className="text-xs text-[#e6d5b8]/60 text-center"
-              style={{ fontFamily: "'Cinzel', serif" }}
-            >
-              {saved.position}
-            </span>
-          </div>
-        );
-      })}
-    </div>
-  );
-};
 
 const InterpretationSection: React.FC<InterpretationSectionProps> = ({
   readingId,
@@ -81,111 +26,45 @@ const InterpretationSection: React.FC<InterpretationSectionProps> = ({
   question,
   birthDate,
   cardVisuals,
-  cards,
-  interpretations,
+  interpretation,
 }) => {
   const router = useRouter();
-  // null = closed; initialResult set when reopening in preview from a stash
-  const [modal, setModal] = useState<{ initialResult?: Interpretation } | null>(null);
-  const [activeLens, setActiveLens] = useState<InterpretationLens | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
 
-  // An interpretation stashed before a "Log in to save" round-trip: reopen the
-  // modal in preview so the user can finish saving. sessionStorage is
-  // client-only, so this runs after mount rather than in an initializer.
-  useEffect(() => {
-    const stashed = takeUnsavedInterpretation(readingId);
-    if (stashed) setModal({ initialResult: stashed });
-  }, [readingId]);
+  const openModal = useCallback(() => setModalOpen(true), []);
+  const closeModal = useCallback(() => setModalOpen(false), []);
+  const handleComplete = useCallback(() => {
+    router.refresh();
+  }, [router]);
 
-  const openModal = useCallback(() => setModal({}), []);
-  const closeModal = useCallback(() => setModal(null), []);
-  const handleSaved = useCallback(
-    (saved: Interpretation) => {
-      setActiveLens(saved.settings.lens);
-      router.refresh();
-    },
-    [router]
-  );
-
-  const ordered = [...interpretations].sort((a, b) =>
-    (a.created_at ?? "").localeCompare(b.created_at ?? "")
-  );
-  const active =
-    ordered.find((i) => i.settings.lens === activeLens) ?? ordered[0] ?? null;
+  const usage = interpretation?.usage ?? null;
 
   return (
     <>
-      {active ? (
+      {interpretation ? (
         <>
-          {/* The spread itself, laid out as in the game */}
-          <div className="rounded-2xl border border-[#d4af37]/20 bg-gradient-to-b from-[#1a0033]/80 to-[#0a0015]/80 backdrop-blur-sm p-5 sm:p-8 mb-6">
-            <SpreadCards cards={cards} cardVisuals={cardVisuals} />
-          </div>
-
-          {/* Lens tabs */}
-          {ordered.length > 1 && (
-            <div
-              role="tablist"
-              aria-label="Saved interpretations"
-              className="flex flex-wrap gap-2 mb-4 justify-center"
-            >
-              {ordered.map((interp) => {
-                const selected = interp.settings.lens === active.settings.lens;
-                return (
-                  <button
-                    key={interp.settings.lens}
-                    role="tab"
-                    aria-selected={selected}
-                    onClick={() => setActiveLens(interp.settings.lens)}
-                    className={`px-4 py-2 rounded-lg border text-xs tracking-[0.1em] transition-all duration-300
-                      ${selected
-                        ? "border-[#d4af37] bg-[#d4af37]/10 text-[#d4af37]"
-                        : "border-[#d4af37]/20 text-[#e6d5b8]/60 hover:text-[#e6d5b8]/90 hover:border-[#d4af37]/50"}`}
-                    style={{ fontFamily: "'Cinzel', serif" }}
-                  >
-                    {LENS_LABELS[interp.settings.lens]}
-                    <span className={`ml-2 text-[10px] uppercase ${selected ? "text-[#d4af37]/60" : "text-[#e6d5b8]/40"}`}>
-                      {INTENT_LABELS[interp.settings.intent]}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          )}
-
           <div className="rounded-2xl border border-[#d4af37]/20 bg-gradient-to-b from-[#1a0033]/80 to-[#0a0015]/80 backdrop-blur-sm p-5 sm:p-8">
-            {ordered.length === 1 && (
-              <p
-                className="text-center text-xs text-[#d4af37]/60 tracking-[0.2em] uppercase mb-6"
-                style={{ fontFamily: "'Cinzel', serif" }}
-              >
-                {LENS_LABELS[active.settings.lens]} · {INTENT_LABELS[active.settings.intent]}
-              </p>
-            )}
             <InterpretationDisplay
               question={question}
-              cardInterpretations={active.card_interpretations}
-              synthesis={active.synthesis}
+              narrative={interpretation.reading}
               cardVisuals={cardVisuals}
             />
           </div>
-          <div className="mt-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-[#e6d5b8]/30">
+          <div className="mt-4 text-xs text-[#e6d5b8]/30 text-center sm:text-left">
             <span style={{ fontFamily: "'Crimson Pro', serif" }}>
-              Model: {active.model} &middot;{" "}
-              {active.tokens_used.toLocaleString()} tokens
+              Model: {interpretation.model}
+              {usage && (
+                <>
+                  {" "}&middot;{" "}
+                  {(usage.prompt_tokens + usage.completion_tokens).toLocaleString()} tokens
+                </>
+              )}
             </span>
-            <button
-              onClick={openModal}
-              className="text-[#d4af37]/60 hover:text-[#d4af37] transition-colors tracking-wider text-xs"
-              style={{ fontFamily: "'Cinzel', serif" }}
-            >
-              ✦ New Interpretation ✦
-            </button>
           </div>
         </>
       ) : (
         <div className="rounded-2xl border border-[#d4af37]/20 bg-gradient-to-b from-[#1a0033]/80 to-[#0a0015]/80 backdrop-blur-sm p-5 sm:p-8">
-          <SpreadCards cards={cards} cardVisuals={cardVisuals} />
+          <SpreadCards cardVisuals={cardVisuals} />
           <div className="mt-8 flex justify-center">
             <button
               onClick={openModal}
@@ -200,17 +79,15 @@ const InterpretationSection: React.FC<InterpretationSectionProps> = ({
         </div>
       )}
 
-      {modal && (
+      {modalOpen && (
         <InterpretationModal
           readingId={readingId}
           spreadName={spreadName}
           question={question ?? undefined}
           birthDate={birthDate}
           cardVisuals={cardVisuals}
-          savedInterpretations={interpretations}
-          initialResult={modal.initialResult}
           onClose={closeModal}
-          onSaved={handleSaved}
+          onComplete={handleComplete}
         />
       )}
     </>

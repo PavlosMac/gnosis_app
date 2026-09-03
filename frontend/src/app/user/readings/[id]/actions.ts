@@ -32,10 +32,10 @@ export const getReading = async (
 
   console.log("[TAGS] GET tags", { id, tags: result.data.tags });
 
-  // Legacy readings (pre multi-lens) have no interpretations key
+  // Normalize an absent interpretation to null (the reading has none yet)
   return {
     ok: true,
-    data: { ...result.data, interpretations: result.data.interpretations ?? [] },
+    data: { ...result.data, interpretation: result.data.interpretation ?? null },
   };
 };
 

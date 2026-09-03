@@ -1,59 +1,83 @@
 import { describe, it, expect } from "vitest";
 import {
-  interpretationSettingsSchema,
-  saveInterpretationSchema,
+  interpretRequestSchema,
+  readingIdSchema,
 } from "@/lib/validation/interpret-schemas";
 
-const validSettings = { lens: "traditional", intent: "reflective", depth: 60 };
-
-describe("interpretationSettingsSchema", () => {
-  it("accepts every lens and intent", () => {
-    for (const lens of ["traditional", "psychological", "esoteric", "alchemical"])
-      for (const intent of ["reflective", "predictive"])
-        expect(
-          interpretationSettingsSchema.safeParse({ lens, intent, depth: 0 }).success
-        ).toBe(true);
+describe("readingIdSchema", () => {
+  it("accepts a Mongo ObjectId", () => {
+    expect(readingIdSchema.safeParse("6a991d61c00f6ed3f7412044").success).toBe(true);
   });
 
-  it("rejects unknown lenses and intents (including the old style values)", () => {
-    expect(
-      interpretationSettingsSchema.safeParse({ ...validSettings, lens: "practical" }).success
-    ).toBe(false);
-    expect(
-      interpretationSettingsSchema.safeParse({ ...validSettings, intent: "spiritual" }).success
-    ).toBe(false);
-  });
-
-  it("bounds depth to integer 0–100", () => {
-    expect(interpretationSettingsSchema.safeParse({ ...validSettings, depth: 100 }).success).toBe(true);
-    expect(interpretationSettingsSchema.safeParse({ ...validSettings, depth: -1 }).success).toBe(false);
-    expect(interpretationSettingsSchema.safeParse({ ...validSettings, depth: 101 }).success).toBe(false);
-    expect(interpretationSettingsSchema.safeParse({ ...validSettings, depth: 60.5 }).success).toBe(false);
+  it("rejects anything else (ids are interpolated into backend URLs)", () => {
+    for (const bad of [
+      "",
+      "not-an-id",
+      "6a991d61c00f6ed3f741204", // 23 chars
+      "6a991d61c00f6ed3f74120445", // 25 chars
+      "6A991D61C00F6ED3F7412044", // uppercase
+      "../readings/6a991d61c00f",
+    ])
+      expect(readingIdSchema.safeParse(bad).success).toBe(false);
   });
 });
 
-describe("saveInterpretationSchema", () => {
-  const interpretation = {
-    card_interpretations: [
-      {
-        card_name: "The Fool",
-        position: "Past",
-        orientation: "upright",
-        interpretation: "A leap.",
-      },
-    ],
-    synthesis: "The path is clear.",
-    model: "test-model",
-    tokens_used: 100,
-    settings: validSettings,
+describe("interpretRequestSchema", () => {
+  const card = {
+    name: "The Fool",
+    position: "Past",
+    orientation: "upright",
   };
 
-  it("accepts a full interpretation", () => {
-    expect(saveInterpretationSchema.safeParse(interpretation).success).toBe(true);
+  const request = {
+    spread_name: "Past, Present, Future",
+    question: "What lies ahead for me?",
+    cards: [card],
+  };
+
+  it("accepts a valid request", () => {
+    expect(interpretRequestSchema.safeParse(request).success).toBe(true);
   });
 
-  it("requires settings", () => {
-    const { settings: _settings, ...withoutSettings } = interpretation;
-    expect(saveInterpretationSchema.safeParse(withoutSettings).success).toBe(false);
+  it("accepts an optional position_description up to 500 chars", () => {
+    const withDescription = {
+      ...request,
+      cards: [{ ...card, position_description: "a".repeat(500) }],
+    };
+    expect(interpretRequestSchema.safeParse(withDescription).success).toBe(true);
+
+    const tooLong = {
+      ...request,
+      cards: [{ ...card, position_description: "a".repeat(501) }],
+    };
+    expect(interpretRequestSchema.safeParse(tooLong).success).toBe(false);
+  });
+
+  it("bounds the question to 5–500 chars when present, allows absence", () => {
+    expect(interpretRequestSchema.safeParse({ ...request, question: "Hm?" }).success).toBe(false);
+    expect(
+      interpretRequestSchema.safeParse({ ...request, question: "a".repeat(501) }).success
+    ).toBe(false);
+    const { question: _question, ...withoutQuestion } = request;
+    expect(interpretRequestSchema.safeParse(withoutQuestion).success).toBe(true);
+  });
+
+  it("requires 1–11 cards", () => {
+    expect(interpretRequestSchema.safeParse({ ...request, cards: [] }).success).toBe(false);
+    expect(
+      interpretRequestSchema.safeParse({ ...request, cards: Array(11).fill(card) }).success
+    ).toBe(true);
+    expect(
+      interpretRequestSchema.safeParse({ ...request, cards: Array(12).fill(card) }).success
+    ).toBe(false);
+  });
+
+  it("validates birth_date format when present", () => {
+    expect(
+      interpretRequestSchema.safeParse({ ...request, birth_date: "1990-03-12" }).success
+    ).toBe(true);
+    expect(
+      interpretRequestSchema.safeParse({ ...request, birth_date: "12/03/1990" }).success
+    ).toBe(false);
   });
 });

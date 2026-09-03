@@ -4,17 +4,13 @@ import { authenticatedFetch } from "@/lib/api-client";
 import { getCurrentUser } from "@/lib/session";
 import {
   interpretRequestSchema,
-  interpretationSettingsSchema,
-  saveInterpretationSchema,
   readingIdSchema,
 } from "@/lib/validation/interpret-schemas";
 import type {
   InterpretRequest,
   Interpretation,
-  InterpretationSettings,
   CreateReadingResult,
   GenerateInterpretationResult,
-  SaveInterpretationResult,
 } from "@/types/interpret";
 
 const NOT_LOGGED_IN = "You must be logged in to request an interpretation.";
@@ -45,9 +41,16 @@ export const createReading = async (
   return { ok: true, readingId: result.data._id };
 };
 
+// The one-step response: the interpretation is persisted before this returns.
+// A repeat call is idempotent — the stored interpretation comes back with the
+// budget untouched.
+interface GenerateInterpretationResponse {
+  interpretation: Interpretation;
+  remaining_budget_usd: number;
+}
+
 export const generateInterpretation = async (
-  readingId: string,
-  settings: InterpretationSettings
+  readingId: string
 ): Promise<GenerateInterpretationResult> => {
   const user = await getCurrentUser();
   if (!user) return { ok: false, error: NOT_LOGGED_IN, unauthenticated: true };
@@ -55,13 +58,9 @@ export const generateInterpretation = async (
   if (!readingIdSchema.safeParse(readingId).success)
     return { ok: false, error: "Invalid reading ID." };
 
-  const parsed = interpretationSettingsSchema.safeParse(settings);
-  if (!parsed.success)
-    return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid settings." };
-
-  const result = await authenticatedFetch<Interpretation>(
-    `/api/v1/readings/${readingId}/interpretation/generate`,
-    { method: "POST", body: JSON.stringify({ settings: parsed.data }) }
+  const result = await authenticatedFetch<GenerateInterpretationResponse>(
+    `/api/v1/readings/${readingId}/interpretation`,
+    { method: "POST" }
   );
 
   if (!result.ok)
@@ -71,34 +70,9 @@ export const generateInterpretation = async (
       unauthenticated: result.unauthenticated,
     };
 
-  return { ok: true, data: result.data };
-};
-
-export const saveInterpretation = async (
-  readingId: string,
-  interpretation: Interpretation
-): Promise<SaveInterpretationResult> => {
-  const user = await getCurrentUser();
-  if (!user) return { ok: false, error: NOT_LOGGED_IN, unauthenticated: true };
-
-  if (!readingIdSchema.safeParse(readingId).success)
-    return { ok: false, error: "Invalid reading ID." };
-
-  const parsed = saveInterpretationSchema.safeParse(interpretation);
-  if (!parsed.success)
-    return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid interpretation." };
-
-  const result = await authenticatedFetch<{ interpretations: Interpretation[] }>(
-    `/api/v1/readings/${readingId}/interpretations/${parsed.data.settings.lens}`,
-    { method: "PUT", body: JSON.stringify(parsed.data) }
-  );
-
-  if (!result.ok)
-    return {
-      ok: false,
-      error: result.message ?? "The interpretation could not be saved.",
-      unauthenticated: result.unauthenticated,
-    };
-
-  return { ok: true, interpretations: result.data.interpretations };
+  return {
+    ok: true,
+    data: result.data.interpretation,
+    remainingBudgetUsd: result.data.remaining_budget_usd,
+  };
 };

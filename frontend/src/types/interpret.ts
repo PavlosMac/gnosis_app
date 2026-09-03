@@ -14,35 +14,29 @@ export interface InterpretRequest {
   cards: InterpretCardRequest[];
 }
 
-export interface CardInterpretation {
-  card_name: string;
-  position: string;
-  orientation: CardOrientation;
-  interpretation: string;
-}
-
-// Single source of truth for the lens/intent enums — the zod schema and the
-// UI option lists derive from these arrays
-export const LENSES = ["traditional", "psychological", "esoteric", "alchemical"] as const;
-export const INTENTS = ["reflective", "predictive"] as const;
-
-export type InterpretationLens = (typeof LENSES)[number];
-export type InterpretationIntent = (typeof INTENTS)[number];
-
-export interface InterpretationSettings {
-  lens: InterpretationLens;
-  intent: InterpretationIntent;
-  depth: number; // 0–100 percentage; length budget scaled by card count
-}
-
-export interface Interpretation {
-  card_interpretations: CardInterpretation[];
-  synthesis: string;
+// Per-interpretation usage ledger — the answer to "why did my balance drop".
+// model here is the resolved provider id from the response, not the configured alias.
+export interface InterpretationUsage {
+  prompt_tokens: number;
+  completion_tokens: number;
+  reasoning_tokens: number;
   model: string;
-  tokens_used: number;
-  settings: InterpretationSettings;
-  created_at?: string; // absent on an unsaved generate result, set once saved
-  updated_at?: string;
+  cost_usd: number;
+}
+
+// Mirrors the backend's InterpretationReadModel: one narrative per reading,
+// persisted the moment it is generated (the generate endpoint is idempotent —
+// a repeat call returns this stored document without a new LLM call or charge).
+export interface Interpretation {
+  _id: string;
+  reading_id: string;
+  user_id: string;
+  reading: string;
+  model: string;
+  // Absent (null) on documents migrated from before the usage ledger existed
+  usage: InterpretationUsage | null;
+  created_at: string;
+  updated_at: string;
 }
 
 export type CreateReadingResult =
@@ -52,10 +46,5 @@ export type CreateReadingResult =
 // unauthenticated: the session is gone (no cookie, or refresh failed) — the
 // client can offer a login round-trip instead of a retry that cannot succeed
 export type GenerateInterpretationResult =
-  | { ok: true; data: Interpretation }
-  | { ok: false; error: string; unauthenticated?: boolean };
-
-// interpretations: the reading's full saved list after the upsert
-export type SaveInterpretationResult =
-  | { ok: true; interpretations: Interpretation[] }
+  | { ok: true; data: Interpretation; remainingBudgetUsd: number }
   | { ok: false; error: string; unauthenticated?: boolean };

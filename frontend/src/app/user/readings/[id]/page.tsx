@@ -115,8 +115,7 @@ const ReadingDetailPage = async ({
           question={reading.question}
           birthDate={reading.birth_date}
           cardVisuals={cardVisuals}
-          cards={reading.cards}
-          interpretations={reading.interpretations}
+          interpretation={reading.interpretation}
         />
 
         {/* Footer nav */}
