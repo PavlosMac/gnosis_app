@@ -9,11 +9,9 @@ class Interpretation:
         self,
         reading_id: str,
         user_id: str,
-        card_interpretations: list[dict[str, Any]],
-        synthesis: str,
-        tokens_used: int,
+        reading: str,
         model: str,
-        settings: dict[str, Any],
+        usage: dict[str, Any] | None = None,
         id: str | None = None,
         created_at: datetime | None = None,
         updated_at: datetime | None = None,
@@ -21,11 +19,9 @@ class Interpretation:
         self.id = id
         self.reading_id = reading_id
         self.user_id = user_id
-        self.card_interpretations = card_interpretations
-        self.synthesis = synthesis
-        self.tokens_used = tokens_used
+        self.reading = reading
         self.model = model
-        self.settings = settings
+        self.usage = usage
         self.created_at = created_at or datetime.now(UTC)
         self.updated_at = updated_at or datetime.now(UTC)
 
@@ -33,14 +29,13 @@ class Interpretation:
         doc: dict[str, Any] = {
             "reading_id": ObjectId(self.reading_id),
             "user_id": ObjectId(self.user_id),
-            "card_interpretations": self.card_interpretations,
-            "synthesis": self.synthesis,
-            "tokens_used": self.tokens_used,
+            "reading": self.reading,
             "model": self.model,
-            "settings": self.settings,
             "created_at": self.created_at,
             "updated_at": self.updated_at,
         }
+        if self.usage is not None:
+            doc["usage"] = self.usage
         if self.id:
             doc["_id"] = ObjectId(self.id)
         return doc
@@ -51,11 +46,9 @@ class Interpretation:
             id=str(doc["_id"]),
             reading_id=str(doc["reading_id"]),
             user_id=str(doc["user_id"]),
-            card_interpretations=doc["card_interpretations"],
-            synthesis=doc["synthesis"],
-            tokens_used=doc["tokens_used"],
+            reading=doc["reading"],
             model=doc["model"],
-            settings=doc["settings"],
+            usage=doc.get("usage"),
             created_at=doc.get("created_at"),
             updated_at=doc.get("updated_at"),
         )

@@ -73,43 +73,42 @@ async def test_get_reading_by_id(create_handler, get_handler, user_id):
     result = await get_handler.handle(GetReadingByIdQuery(reading_id=created.id, user_id=user_id))
     assert result.id == created.id
     assert result.spread_type == "Celtic Cross"
-    assert result.interpretations == []
+    assert result.interpretation is None
 
 
-async def test_get_reading_by_id_includes_saved_interpretations(
+async def test_get_reading_by_id_includes_the_stored_interpretation(
     create_handler, get_handler, user_id, mock_db
 ):
     created = await create_handler.handle(_make_command(user_id))
     interpretation = Interpretation(
         reading_id=created.id,
         user_id=user_id,
-        card_interpretations=[
-            {
-                "card_name": "The Fool",
-                "position": "Present",
-                "orientation": "upright",
-                "interpretation": "New beginnings.",
-            }
-        ],
-        synthesis="A journey begins.",
-        tokens_used=10,
+        reading="A journey begins.",
         model="mock",
-        settings={"lens": "traditional", "intent": "reflective", "depth": 60},
     )
-    await InterpretationWriteRepository(mock_db).upsert_by_lens(
+    await InterpretationWriteRepository(mock_db).upsert_by_reading_id(
         created.id, interpretation.to_document()
     )
 
     result = await get_handler.handle(GetReadingByIdQuery(reading_id=created.id, user_id=user_id))
 
-    assert len(result.interpretations) == 1
-    assert result.interpretations[0].synthesis == "A journey begins."
-    assert result.interpretations[0].settings.depth == 60
+    assert result.interpretation is not None
+    assert result.interpretation.reading == "A journey begins."
 
 
 async def test_get_reading_not_found(get_handler, user_id):
     with pytest.raises(ReadingNotFoundError):
         await get_handler.handle(GetReadingByIdQuery(reading_id=str(ObjectId()), user_id=user_id))
+
+
+async def test_get_reading_malformed_id_returns_not_found(get_handler, user_id):
+    """reading_id comes straight off the URL path with no format validation — the
+    reading and interpretation lookups run concurrently, so a malformed id must 404
+    like the ownership check does, not raise InvalidId."""
+    with pytest.raises(ReadingNotFoundError):
+        await get_handler.handle(
+            GetReadingByIdQuery(reading_id="not-an-object-id", user_id=user_id)
+        )
 
 
 async def test_get_reading_wrong_user(create_handler, get_handler, user_id):

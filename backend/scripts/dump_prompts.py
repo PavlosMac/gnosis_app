@@ -1,4 +1,5 @@
-"""Regenerate the generated regions of docs/prompt_reference.md from the real prompt code.
+"""Regenerate the generated regions of docs/prompts/prompt_reference.md from the real
+prompt code.
 
 The doc has two marker-delimited regions:
 
@@ -16,7 +17,6 @@ import argparse
 import sys
 from pathlib import Path
 
-from src.llm import prompt_components
 from src.llm.prompt_builder import (
     REASONING_HEADROOM,
     build_system_prompt,
@@ -26,12 +26,9 @@ from src.llm.prompt_builder import (
 )
 from src.llm.schemas import (
     CardInSpread,
-    InterpretationLens,
     InterpretationRequest,
-    InterpretationSettings,
-    LLMInterpretationResult,
+    LeanReading,
     Orientation,
-    ReadingIntent,
 )
 
 DOC_PATH = Path(__file__).resolve().parent.parent / "docs" / "prompts" / "prompt_reference.md"
@@ -40,18 +37,58 @@ SAMPLE_REQUEST = InterpretationRequest(
     spread_name="Past-Present-Future",
     question="Should I take the job offer in Lisbon?",
     cards=[
-        CardInSpread(name="The Lovers", position="Past", orientation=Orientation.upright),
         CardInSpread(
-            name="Five of Disks",
+            name="The Lovers",
+            position="Past",
+            orientation=Orientation.upright,
+            position_description="What shaped the situation and is now receding.",
+        ),
+        CardInSpread(
+            name="Five of Pentacles",
             position="Present",
             orientation=Orientation.reversed,
-            position_description="What is active now",
+            position_description="The heart of the matter as it stands now.",
         ),
         CardInSpread(name="Queen of Cups", position="Future", orientation=Orientation.upright),
     ],
-    settings=InterpretationSettings(
-        lens=InterpretationLens.esoteric, intent=ReadingIntent.reflective, depth=60
-    ),
+)
+
+# Realistic card counts so the rendered word budgets are representative: a 4-position
+# chart (4 × 100 × 1.5 = 600 words) and a full 11-zone Tree (11 × 100 = 1,100 words).
+# Position meanings arrive from the frontend as position/position_description — the
+# system prompts rendered below carry none of them.
+_SIGNIFICATORS_REQUEST = InterpretationRequest(
+    spread_name="Significators",
+    cards=[
+        CardInSpread(name="The Emperor", position="Day number", orientation=Orientation.upright),
+        CardInSpread(name="Strength", position="Life number", orientation=Orientation.upright),
+        CardInSpread(name="The Sun", position="Star sign", orientation=Orientation.upright),
+        CardInSpread(
+            name="Six of Pentacles", position="Decanate", orientation=Orientation.upright
+        ),
+    ],
+)
+
+_TREE_REQUEST = InterpretationRequest(
+    spread_name="Tree of Life",
+    question="How do I rebuild my life after the divorce?",
+    cards=[
+        CardInSpread(name="The Star", position="Kether", orientation=Orientation.upright),
+        CardInSpread(name="The Magician", position="Chokmah", orientation=Orientation.upright),
+        CardInSpread(name="The Empress", position="Binah", orientation=Orientation.reversed),
+        CardInSpread(name="Ten of Cups", position="Chesed", orientation=Orientation.upright),
+        CardInSpread(name="Five of Swords", position="Geburah", orientation=Orientation.upright),
+        CardInSpread(name="The Sun", position="Tiphareth", orientation=Orientation.upright),
+        CardInSpread(name="Two of Cups", position="Netzach", orientation=Orientation.reversed),
+        CardInSpread(
+            name="Eight of Pentacles", position="Hod", orientation=Orientation.upright
+        ),
+        CardInSpread(name="The Moon", position="Yesod", orientation=Orientation.reversed),
+        CardInSpread(name="The World", position="Malkuth", orientation=Orientation.upright),
+        CardInSpread(
+            name="The High Priestess", position="Daath", orientation=Orientation.upright
+        ),
+    ],
 )
 
 
@@ -79,38 +116,35 @@ def _fence(text: str) -> str:
 
 def render_blocks() -> str:
     out: list[str] = [
-        "_Generated from `src/llm/prompt_components.py` and `src/llm/schemas.py` — "
+        "_Generated from `src/llm/prompt_builder.py` and `src/llm/schemas.py` — "
         "edit the source, then run `make prompt-doc`._",
         "",
     ]
-    for label, text in prompt_components.named_blocks():
-        out += [f"#### {label}", "", _fence(text), ""]
-
-    schema = LLMInterpretationResult.model_json_schema()
-    card_props = schema["$defs"]["CardInterpretation"]["properties"]
-    descriptions = [
-        ("card_interpretations", schema["properties"]["card_interpretations"]["description"]),
-        ("card_interpretations[].interpretation", card_props["interpretation"]["description"]),
-        ("synthesis", schema["properties"]["synthesis"]["description"]),
+    variants = [
+        ("Standard system prompt", SAMPLE_REQUEST),
+        ("Significators variant (portrait chart)", _SIGNIFICATORS_REQUEST),
+        ("Tree of Life variant (zones baked in)", _TREE_REQUEST),
     ]
+    for label, request in variants:
+        out += [f"#### {label}", "", _fence(build_system_prompt(request)), ""]
+
+    schema = LeanReading.model_json_schema()
     out += [
-        "#### Response-format field descriptions (`LLMInterpretationResult`)",
+        "",
+        "#### Response-format field descriptions (`LeanReading`)",
         "",
         "Sent to OpenAI as `response_format`; the model reads these alongside the system prompt.",
         "",
+        f"- `reading` — {schema['properties']['reading']['description']}",
     ]
-    for field, description in descriptions:
-        out += [f"- `{field}` — {description}"]
     return "\n".join(out)
 
 
 def render_sample() -> str:
     request = SAMPLE_REQUEST
-    words_per_card, synthesis_words = request_word_budget(request)
-    cards = len(request.cards)
+    total_words = request_word_budget(request)
     caps = ", ".join(
-        f"{effort}: {max_completion_tokens((words_per_card, synthesis_words), cards, effort)}"
-        for effort in REASONING_HEADROOM
+        f"{effort}: {max_completion_tokens(total_words, effort)}" for effort in REASONING_HEADROOM
     )
     card_lines = [
         f"- {c.name} ({c.orientation.value}) — {c.position}"
@@ -123,10 +157,8 @@ def render_sample() -> str:
         "",
         f"- Spread: {request.spread_name}",
         f"- Question: {request.question}",
-        f"- Settings: lens={request.settings.lens.value}, "
-        f"intent={request.settings.intent.value}, depth={request.settings.depth}",
         *card_lines,
-        f"- Word budget: {words_per_card} words per card, {synthesis_words} for the synthesis",
+        f"- Word budget: {total_words} words total (server-owned, `llm_words_per_card` × cards)",
         f"- `max_completion_tokens` by reasoning effort: {caps}",
         "",
         "#### System prompt",

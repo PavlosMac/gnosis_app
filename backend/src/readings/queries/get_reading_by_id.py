@@ -1,3 +1,5 @@
+import asyncio
+
 from src.cqrs.queries import BaseQuery, QueryHandler
 from src.interpretations.repository import InterpretationReadRepository
 from src.readings.repository import ReadingReadRepository
@@ -20,10 +22,14 @@ class GetReadingByIdHandler(QueryHandler[GetReadingByIdQuery, ReadingReadModel])
         self._interpretation_read_repo = interpretation_read_repo
 
     async def handle(self, query: GetReadingByIdQuery) -> ReadingReadModel:
-        doc = await self._read_repo.find_owned(query.reading_id, query.user_id)
+        # Independent lookups — the interpretation lookup only needs query.reading_id,
+        # not any field of the reading — run concurrently rather than as two sequential
+        # round trips.
+        doc, interpretation = await asyncio.gather(
+            self._read_repo.find_owned(query.reading_id, query.user_id),
+            self._interpretation_read_repo.find_by_reading_id(query.reading_id),
+        )
         if doc is None:
             raise ReadingNotFoundError()
-        doc["interpretations"] = await self._interpretation_read_repo.find_all_by_reading_id(
-            query.reading_id
-        )
+        doc["interpretation"] = interpretation
         return ReadingReadModel.model_validate(doc)

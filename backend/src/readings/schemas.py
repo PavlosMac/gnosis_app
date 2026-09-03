@@ -62,7 +62,7 @@ class ReadingReadModel(AppSchema):
     birth_date: date | None = None
     tags: list[str] = Field(default_factory=list)
     cards: list[CardReadModel]
-    interpretations: list[InterpretationReadModel] = Field(default_factory=list)
+    interpretation: InterpretationReadModel | None = None
     created_at: datetime
 
 

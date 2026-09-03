@@ -13,7 +13,8 @@ class User:
         credits: int = 0,
         is_superadmin: bool = False,
         stripe_customer_id: str | None = None,
-        total_tokens_used: int = 0,
+        budget_usd: float | None = None,
+        usage: dict[str, Any] | None = None,
         id: str | None = None,
         created_at: datetime | None = None,
         updated_at: datetime | None = None,
@@ -25,7 +26,13 @@ class User:
         self.credits = credits
         self.is_superadmin = is_superadmin
         self.stripe_customer_id = stripe_customer_id
-        self.total_tokens_used = total_tokens_used
+        # Per-user override of Settings.user_budget_usd (src/core/config.py) — absent
+        # for the common case of "use the default". usage is the spend aggregate the
+        # budget gate reads/writes (AuthWriteRepository.reserve_usage et al.); it does
+        # not exist until that gate creates it lazily on the user's first reservation,
+        # so it is never set here at construction.
+        self.budget_usd = budget_usd
+        self.usage = usage
         self.created_at = created_at or datetime.now(UTC)
         self.updated_at = updated_at or datetime.now(UTC)
 
@@ -35,7 +42,6 @@ class User:
             "password_hash": self.password_hash,
             "credits": self.credits,
             "is_superadmin": self.is_superadmin,
-            "total_tokens_used": self.total_tokens_used,
             "created_at": self.created_at,
             "updated_at": self.updated_at,
         }
@@ -45,6 +51,10 @@ class User:
             doc["display_name"] = self.display_name
         if self.stripe_customer_id is not None:
             doc["stripe_customer_id"] = self.stripe_customer_id
+        if self.budget_usd is not None:
+            doc["budget_usd"] = self.budget_usd
+        if self.usage is not None:
+            doc["usage"] = self.usage
         return doc
 
     @classmethod
@@ -57,7 +67,8 @@ class User:
             credits=doc.get("credits", 0),
             is_superadmin=doc.get("is_superadmin", False),
             stripe_customer_id=doc.get("stripe_customer_id"),
-            total_tokens_used=doc.get("total_tokens_used", 0),
+            budget_usd=doc.get("budget_usd"),
+            usage=doc.get("usage"),
             created_at=doc.get("created_at"),
             updated_at=doc.get("updated_at"),
         )

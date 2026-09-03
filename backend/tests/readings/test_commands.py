@@ -48,7 +48,7 @@ async def test_create_reading_returns_read_model(handler, valid_command):
     assert result.question == "What does the future hold?"
     assert len(result.cards) == 1
     assert result.cards[0].name == "The Fool"
-    assert result.interpretations == []
+    assert result.interpretation is None
 
 
 async def test_create_reading_persists_to_db(handler, valid_command, mock_db):

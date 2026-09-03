@@ -1,9 +1,3 @@
-from src.core.exceptions import AppError
-
-
-class LensMismatchError(AppError):
-    def __init__(self) -> None:
-        super().__init__(
-            status_code=422,
-            detail="settings.lens does not match the lens in the URL",
-        )
+# BudgetExceededError and the reserve/settle/release choreography live in
+# src.auth.service — the budget gate operates on the user's spend aggregate and is
+# reusable by any paid-LLM feature, not just interpretations.

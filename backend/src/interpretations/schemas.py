@@ -4,53 +4,40 @@ from pydantic import Field
 
 from src.core.base_schema import AppSchema
 from src.core.types import PyObjectId
-from src.llm.schemas import InterpretationSettings, Orientation
 
 
-class GenerateInterpretationRequest(AppSchema):
-    # No defaults: the frontend always sends all three, so stored settings always reflect
-    # what the user actually chose rather than a server-side fallback.
-    settings: InterpretationSettings
+class InterpretationUsage(AppSchema):
+    """The per-interpretation usage ledger — the answer to "why did my balance drop".
 
+    cost_usd is priced from the config table at the moment of the call and never
+    re-derived, so a price-table change doesn't rewrite history. model is the resolved
+    id from the provider response (e.g. `gpt-5.4-2026-…`), not the configured alias.
+    """
 
-class CardInterpretationReadModel(AppSchema):
-    card_name: str
-    position: str | None = None
-    orientation: Orientation
-    interpretation: str
-
-
-class GeneratedInterpretationResponse(AppSchema):
-    card_interpretations: list[CardInterpretationReadModel]
-    synthesis: str
+    prompt_tokens: int = Field(..., ge=0)
+    completion_tokens: int = Field(..., ge=0)
+    reasoning_tokens: int = Field(default=0, ge=0)
     model: str
-    tokens_used: int
-    settings: InterpretationSettings
-
-
-class SaveInterpretationRequest(AppSchema):
-    card_interpretations: list[CardInterpretationReadModel] = Field(..., min_length=1)
-    synthesis: str = Field(..., min_length=1)
-    model: str = Field(..., min_length=1)
-    tokens_used: int = Field(..., ge=0)
-    settings: InterpretationSettings
+    cost_usd: float = Field(..., ge=0)
 
 
 class InterpretationReadModel(AppSchema):
     id: PyObjectId = Field(alias="_id")
     reading_id: PyObjectId
     user_id: PyObjectId
-    card_interpretations: list[CardInterpretationReadModel]
-    synthesis: str
-    tokens_used: int
+    reading: str
     model: str
-    settings: InterpretationSettings
+    # Absent on documents migrated from before the usage ledger existed.
+    usage: InterpretationUsage | None = None
     created_at: datetime
     updated_at: datetime
 
 
-class InterpretationsResponse(AppSchema):
-    """Every saved slot for a reading — returned by the upsert so the client
-    refreshes without a second GET."""
+class GeneratedInterpretationResponse(AppSchema):
+    """The one-step generate response: the interpretation is persisted before this is
+    returned (the nested object is exactly what GET /readings/{id} embeds), plus the
+    caller's remaining budget. A repeat call returns the stored interpretation with the
+    budget untouched."""
 
-    interpretations: list[InterpretationReadModel]
+    interpretation: InterpretationReadModel
+    remaining_budget_usd: float

@@ -5,8 +5,6 @@ module scope — e.g. as default argument values — from any test package. Pyte
 fixtures shared across files live in tests/conftest.py.
 """
 
-from src.llm.schemas import InterpretationLens, InterpretationSettings, ReadingIntent
-
 # The canonical valid POST /readings body used by HTTP-level router tests.
 VALID_READING_BODY = {
     "spread_name": "Celtic Cross",
@@ -17,12 +15,18 @@ VALID_READING_BODY = {
 }
 
 
-def make_settings(
-    lens: InterpretationLens = InterpretationLens.traditional,
-    intent: ReadingIntent = ReadingIntent.reflective,
-    depth: int = 60,
-) -> InterpretationSettings:
-    return InterpretationSettings(lens=lens, intent=intent, depth=depth)
-
-
-DEFAULT_SETTINGS = make_settings()
+def make_usage(
+    prompt_tokens: int = 100,
+    completion_tokens: int = 500,
+    reasoning_tokens: int = 200,
+    model: str = "mock",
+    cost_usd: float = 0.0,
+) -> dict:
+    """A ledger usage payload in the wire shape SaveInterpretationRequest expects."""
+    return {
+        "prompt_tokens": prompt_tokens,
+        "completion_tokens": completion_tokens,
+        "reasoning_tokens": reasoning_tokens,
+        "model": model,
+        "cost_usd": cost_usd,
+    }

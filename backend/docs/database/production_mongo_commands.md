@@ -70,24 +70,26 @@ db.users.updateOne({email: "someone@example.com"}, {$set: {is_superadmin: true}}
 ```js
 db.readings.countDocuments({user_id: "<user_id>"})
 db.readings.find({}, {spread_name:1, created_at:1}).sort({created_at:-1}).limit(5).toArray()
-db.interpretations.aggregate([{$group: {_id: "$settings.lens", n: {$sum: 1}}}]).toArray()
+db.interpretations.countDocuments()
 ```
 
-### User token usage by month
+### User usage by month
 ```js
 db.interpretations.aggregate([
   {$group: {
     _id: {user_id: "$user_id", month: {$dateToString: {format: "%Y-%m", date: "$created_at"}}},
-    tokens: {$sum: "$tokens_used"},
+    prompt_tokens: {$sum: "$usage.prompt_tokens"},
+    completion_tokens: {$sum: "$usage.completion_tokens"},
+    cost_usd: {$sum: "$usage.cost_usd"},
     interpretations: {$sum: 1}
   }},
-  {$sort: {"_id.month": -1, tokens: -1}}
+  {$sort: {"_id.month": -1, cost_usd: -1}}
 ]).toArray()
 ```
 
-### Lifetime tokens per user
+### Lifetime spend per user
 ```js
-db.users.find({}, {email:1, total_tokens_used:1}).sort({total_tokens_used:-1}).toArray()
+db.users.find({}, {email:1, "usage.cost_usd":1, "usage.readings":1}).sort({"usage.cost_usd":-1}).toArray()
 ```
 
 ### Indexes

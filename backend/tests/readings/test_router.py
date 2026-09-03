@@ -12,7 +12,7 @@ async def test_create_reading(client, auth_token):
     assert data["spread_type"] == "Celtic Cross"
     assert data["question"] == "What does the future hold?"
     assert len(data["cards"]) == 1
-    assert data["interpretations"] == []
+    assert data["interpretation"] is None
     assert data["_id"] is not None
 
 
@@ -64,7 +64,7 @@ async def test_get_reading_by_id(client, auth_token):
     data = resp.json()
     assert data["_id"] == reading_id
     assert data["spread_type"] == "Celtic Cross"
-    assert data["interpretations"] == []
+    assert data["interpretation"] is None
 
 
 async def test_get_reading_not_found(client, auth_token):

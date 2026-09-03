@@ -27,14 +27,6 @@ from src.interpretations.commands.generate_interpretation import (
     GenerateInterpretationCommand,
     GenerateInterpretationHandler,
 )
-from src.interpretations.commands.save_interpretation import (
-    SaveInterpretationCommand,
-    SaveInterpretationHandler,
-)
-from src.interpretations.queries.get_interpretations_by_reading_id import (
-    GetInterpretationsByReadingIdHandler,
-    GetInterpretationsByReadingIdQuery,
-)
 from src.interpretations.repository import (
     InterpretationReadRepository,
     InterpretationWriteRepository,
@@ -90,15 +82,14 @@ def _wire_mediator(mediator: Mediator, llm: LLMPort, db: AsyncIOMotorDatabase) -
     mediator.register_query(ListUserReadingsQuery, ListUserReadingsHandler(reading_read_repo))
     mediator.register_command(
         GenerateInterpretationCommand,
-        GenerateInterpretationHandler(reading_read_repo, user_write_repo, llm),
-    )
-    mediator.register_command(
-        SaveInterpretationCommand,
-        SaveInterpretationHandler(reading_read_repo, interpretation_write_repo),
-    )
-    mediator.register_query(
-        GetInterpretationsByReadingIdQuery,
-        GetInterpretationsByReadingIdHandler(interpretation_read_repo),
+        GenerateInterpretationHandler(
+            reading_read_repo,
+            user_read_repo,
+            user_write_repo,
+            interpretation_read_repo,
+            interpretation_write_repo,
+            llm,
+        ),
     )
 
 
@@ -110,12 +101,18 @@ async def lifespan(app: FastAPI):
 
     app.state.refresh_token_repo = RefreshTokenRepository(get_database())
     if settings.openai_api_key:
-        openai_client = AsyncOpenAI(api_key=settings.openai_api_key)
+        openai_client = AsyncOpenAI(
+            api_key=settings.openai_api_key,
+            max_retries=settings.openai_max_retries,
+        )
         llm_adapter = OpenAIAdapter(
             client=openai_client,
             model=settings.openai_model,
             max_tokens=settings.openai_max_tokens,
             reasoning_effort=settings.openai_reasoning_effort,
+            max_concurrent=settings.openai_max_concurrent,
+            timeout=settings.openai_timeout_seconds,
+            acquire_timeout=settings.openai_acquire_timeout_seconds,
         )
         logger.info("llm adapter initialised", adapter="openai", model=settings.openai_model)
     else:

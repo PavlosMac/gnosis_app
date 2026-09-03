@@ -1,209 +1,384 @@
+import asyncio
+
 import pytest
 from bson import ObjectId
 
+from src.auth.repository import AuthReadRepository, AuthWriteRepository
+from src.auth.service import BudgetExceededError
+from src.core.config import settings as app_settings
+from src.core.exceptions import UnauthorizedError
 from src.interpretations.commands.generate_interpretation import GenerateInterpretationCommand
-from src.interpretations.commands.save_interpretation import SaveInterpretationCommand
-from src.interpretations.queries.get_interpretations_by_reading_id import (
-    GetInterpretationsByReadingIdQuery,
+from src.interpretations.repository import InterpretationWriteRepository
+from src.llm.errors import LLMResponseError
+from src.llm.port import LLMPort
+from src.llm.schemas import (
+    CardInSpread,
+    InterpretationRequest,
+    InterpretationResponse,
+    LLMUsage,
 )
-from src.llm.schemas import CardInSpread, InterpretationLens, ReadingIntent
 from src.readings.commands.create_reading import CreateReadingCommand
 from src.readings.service import ReadingNotFoundError
-from tests.factories import DEFAULT_SETTINGS as DEFAULT
-from tests.factories import make_settings as _settings
 
 
-async def test_generate_interpretation_returns_content(generate_handler, make_reading, user_id):
+async def _user_usage(mock_db, user_id: str) -> dict:
+    doc = await AuthReadRepository(mock_db).find_by_id(user_id)
+    return (doc or {}).get("usage", {})
+
+
+def _generate_command(reading_id: str, user_id: str):
+    return GenerateInterpretationCommand(reading_id=reading_id, user_id=user_id)
+
+
+# --- Generate: response shape + persistence ---
+
+
+async def test_generate_interpretation_returns_reading(generate_handler, make_reading, user_id):
     reading = await make_reading()
-    result = await generate_handler.handle(
-        GenerateInterpretationCommand(reading_id=reading.id, user_id=user_id, settings=DEFAULT)
-    )
-    assert len(result.card_interpretations) == 1
-    assert result.card_interpretations[0].card_name == "The Fool"
-    assert result.synthesis is not None
-    assert result.model == "mock"
-    assert result.settings == DEFAULT
+    result = await generate_handler.handle(_generate_command(reading.id, user_id))
+    assert "The Fool" in result.interpretation.reading
+    assert result.interpretation.model == "mock"
 
 
-async def test_generate_interpretation_echoes_the_settings_it_was_given(
+async def test_generate_interpretation_carries_usage_and_remaining_budget(
     generate_handler, make_reading, user_id
 ):
-    """Settings are echoed verbatim — there is no server-side default to fall back to."""
     reading = await make_reading()
-    chosen = _settings(
-        lens=InterpretationLens.alchemical, intent=ReadingIntent.predictive, depth=85
-    )
-    result = await generate_handler.handle(
-        GenerateInterpretationCommand(reading_id=reading.id, user_id=user_id, settings=chosen)
-    )
-    assert result.settings == chosen
+    result = await generate_handler.handle(_generate_command(reading.id, user_id))
+    # The mock adapter reports zero-cost usage, so nothing is charged.
+    assert result.interpretation.usage.cost_usd == 0.0
+    assert result.interpretation.usage.model == "mock"
+    assert result.remaining_budget_usd == app_settings.user_budget_usd
 
 
-async def test_generate_interpretation_does_not_persist(
+async def test_generate_persists_the_interpretation(
     generate_handler, make_reading, user_id, mock_db
 ):
+    """One step: the interpretation is stored the moment it is generated — there is no
+    separate save call, and the stored document carries no settings."""
     reading = await make_reading()
-    await generate_handler.handle(
-        GenerateInterpretationCommand(reading_id=reading.id, user_id=user_id, settings=DEFAULT)
-    )
-    count = await mock_db["interpretations"].count_documents({})
-    assert count == 0
+    result = await generate_handler.handle(_generate_command(reading.id, user_id))
 
-
-async def test_generate_interpretation_increments_total_tokens_used(
-    generate_handler, create_reading_handler, user_id, mock_db
-):
-    reading = await create_reading_handler.handle(
-        CreateReadingCommand(
-            user_id=user_id,
-            spread_name="Significators",
-            cards=[
-                CardInSpread(name="The Fool", position="day number", orientation="upright"),
-            ],
-        )
-    )
-    await mock_db["users"].insert_one({"_id": ObjectId(user_id), "total_tokens_used": 100})
-
-    await generate_handler.handle(
-        GenerateInterpretationCommand(reading_id=reading.id, user_id=user_id, settings=DEFAULT)
-    )
-
-    user_doc = await mock_db["users"].find_one({"_id": ObjectId(user_id)})
-    assert user_doc["total_tokens_used"] == 100 + 4503  # MockLLMAdapter's significators tokens
+    assert await mock_db["interpretations"].count_documents({}) == 1
+    doc = await mock_db["interpretations"].find_one({})
+    assert doc["reading"] == result.interpretation.reading
+    assert doc["model"] == "mock"
+    assert doc["usage"]["cost_usd"] == 0.0
+    assert "settings" not in doc
+    # The response echoes the stored document, ids and timestamps included.
+    assert str(doc["_id"]) == result.interpretation.id
+    assert doc["created_at"] == result.interpretation.created_at
 
 
 async def test_generate_interpretation_not_found(generate_handler, user_id):
     with pytest.raises(ReadingNotFoundError):
-        await generate_handler.handle(
-            GenerateInterpretationCommand(
-                reading_id=str(ObjectId()), user_id=user_id, settings=DEFAULT
-            )
-        )
+        await generate_handler.handle(_generate_command(str(ObjectId()), user_id))
 
 
-async def test_generate_interpretation_wrong_user(generate_handler, make_reading, user_id):
-    reading = await make_reading()
-    other_user = str(ObjectId())
+async def test_generate_interpretation_malformed_reading_id_returns_not_found(
+    generate_handler, user_id
+):
+    """reading_id comes straight off the URL path with no format validation — the
+    interpretation lookup runs concurrently with the ownership check via asyncio.gather,
+    so a malformed id must 404 like the ownership check does, not raise InvalidId."""
     with pytest.raises(ReadingNotFoundError):
-        await generate_handler.handle(
-            GenerateInterpretationCommand(
-                reading_id=reading.id, user_id=other_user, settings=DEFAULT
-            )
+        await generate_handler.handle(_generate_command("not-an-object-id", user_id))
+
+
+async def test_generate_interpretation_raises_unauthorized_when_user_record_is_missing(
+    generate_handler, make_reading, user_id, mock_db
+):
+    """A deleted account with a still-valid access token must surface as an auth error,
+    not as a misleading 'budget exhausted' — reserve_usage's find_one_and_update simply
+    can't match a document that doesn't exist, which is a different failure than an
+    exhausted budget and must not be reported as one."""
+    reading = await make_reading()
+    await mock_db["users"].delete_one({"_id": ObjectId(user_id)})
+
+    with pytest.raises(UnauthorizedError):
+        await generate_handler.handle(_generate_command(reading.id, user_id))
+
+
+async def test_generate_interpretation_wrong_user(generate_handler, make_reading, user_id, mock_db):
+    reading = await make_reading()
+    other_user = ObjectId()
+    await mock_db["users"].insert_one({"_id": other_user, "email": "other@example.com"})
+    with pytest.raises(ReadingNotFoundError):
+        await generate_handler.handle(_generate_command(reading.id, str(other_user)))
+
+
+# --- Idempotency: one interpretation per reading, generated once ---
+
+
+class _FakeLLM(LLMPort):
+    """Reports a fixed usage split, optionally failing or blocking on an event.
+    Counts calls so idempotency tests can assert the LLM was not touched."""
+
+    def __init__(
+        self,
+        usage: LLMUsage | None = None,
+        model: str = "gpt-5.4-2026-01-01",
+        error: Exception | None = None,
+        gate: asyncio.Event | None = None,
+    ) -> None:
+        self.usage = usage or LLMUsage()
+        self.model = model
+        self.error = error
+        self.gate = gate
+        self.calls = 0
+
+    async def generate_interpretation(
+        self, request: InterpretationRequest
+    ) -> InterpretationResponse:
+        self.calls += 1
+        if self.gate is not None:
+            await self.gate.wait()
+        if self.error is not None:
+            raise self.error
+        return InterpretationResponse(
+            reading="A woven reading.", model=self.model, usage=self.usage
         )
 
+    async def close(self) -> None:
+        pass
 
-async def _saved_slots(interpretations_query_handler, reading_id):
-    return await interpretations_query_handler.handle(
-        GetInterpretationsByReadingIdQuery(reading_id=reading_id)
+
+async def test_second_generate_is_idempotent_and_does_not_charge(
+    generate_handler_factory, mock_db, make_reading, user_id
+):
+    """A reading that already has its interpretation gets the stored one back: no LLM
+    call, no reservation, no charge — this is what they get, no more."""
+    llm = _FakeLLM(usage=LLMUsage(prompt_tokens=1000, completion_tokens=2000))
+    handler = generate_handler_factory(llm)
+    reading = await make_reading()
+
+    first = await handler.handle(_generate_command(reading.id, user_id))
+    second = await handler.handle(_generate_command(reading.id, user_id))
+
+    assert llm.calls == 1
+    assert await mock_db["interpretations"].count_documents({}) == 1
+    assert second.interpretation.id == first.interpretation.id
+    assert second.interpretation.reading == first.interpretation.reading
+    usage = await _user_usage(mock_db, user_id)
+    assert usage["readings"] == 1
+    assert usage["cost_usd"] == pytest.approx(first.interpretation.usage.cost_usd)
+    assert second.remaining_budget_usd == pytest.approx(first.remaining_budget_usd)
+
+
+async def test_idempotent_path_computes_remaining_budget_from_current_aggregate(
+    generate_handler_factory, mock_db, make_reading, user_id, generate_handler
+):
+    reading = await make_reading()
+    await generate_handler.handle(_generate_command(reading.id, user_id))
+    # Spend recorded after the interpretation was stored (e.g. other paid features).
+    await mock_db["users"].update_one(
+        {"_id": ObjectId(user_id)}, {"$set": {"usage": {"cost_usd": 1.25}}}
+    )
+
+    llm = _FakeLLM()
+    result = await generate_handler_factory(llm).handle(_generate_command(reading.id, user_id))
+
+    assert llm.calls == 0
+    assert result.remaining_budget_usd == pytest.approx(app_settings.user_budget_usd - 1.25)
+
+
+async def test_concurrent_generates_leave_one_document(
+    generate_handler_factory, mock_db, make_reading, user_id
+):
+    """Two generates racing past the existence check both write, but the upsert is keyed
+    on reading_id alone: last write wins, one document — the double charge is the same
+    accepted race the budget gate already bounds."""
+    gate = asyncio.Event()
+    llm = _FakeLLM(gate=gate)
+    handler = generate_handler_factory(llm)
+    reading = await make_reading()
+
+    first = asyncio.create_task(handler.handle(_generate_command(reading.id, user_id)))
+    second = asyncio.create_task(handler.handle(_generate_command(reading.id, user_id)))
+    await asyncio.sleep(0.01)  # let both pass the existence check and block in the LLM
+    gate.set()
+    await asyncio.gather(first, second)
+
+    assert llm.calls == 2
+    assert await mock_db["interpretations"].count_documents({}) == 1
+
+
+# --- Budget gate: reserve, settle, release ---
+
+
+async def test_generate_settles_exact_actuals_onto_the_user_aggregate(
+    generate_handler_factory, mock_db, make_reading, user_id
+):
+    llm = _FakeLLM(usage=LLMUsage(prompt_tokens=1000, completion_tokens=2000, reasoning_tokens=500))
+    handler = generate_handler_factory(llm)
+    reading = await make_reading()
+
+    result = await handler.handle(_generate_command(reading.id, user_id))
+
+    # gpt-5.4 prices: $2.50/1M in, $15.00/1M out.
+    expected_cost = 1000 / 1e6 * 2.50 + 2000 / 1e6 * 15.00
+    usage = await _user_usage(mock_db, user_id)
+    assert usage["cost_usd"] == pytest.approx(expected_cost)
+    assert usage["prompt_tokens"] == 1000
+    assert usage["completion_tokens"] == 2000
+    assert usage["readings"] == 1
+    assert usage["updated_at"] is not None
+    assert result.interpretation.usage.cost_usd == pytest.approx(expected_cost)
+    assert result.remaining_budget_usd == pytest.approx(
+        app_settings.user_budget_usd - expected_cost
     )
 
 
-async def test_save_interpretation_creates_document(
-    make_reading, generate_and_save, interpretations_query_handler, user_id
+async def test_generate_refuses_when_budget_exhausted(
+    generate_handler_factory, mock_db, make_reading, user_id
 ):
+    handler = generate_handler_factory(_FakeLLM())
     reading = await make_reading()
-    generated = await generate_and_save(reading.id, DEFAULT)
+    await mock_db["users"].update_one(
+        {"_id": ObjectId(user_id)},
+        {"$set": {"usage": {"cost_usd": app_settings.user_budget_usd}}},
+    )
 
-    [saved] = await _saved_slots(interpretations_query_handler, reading.id)
-    assert saved.reading_id == reading.id
-    assert saved.settings == DEFAULT
-    assert saved.synthesis == generated.synthesis
-    assert saved.card_interpretations[0].card_name == "The Fool"
+    with pytest.raises(BudgetExceededError):
+        await handler.handle(_generate_command(reading.id, user_id))
 
 
-async def test_save_interpretation_upserts_on_second_save(
-    make_reading, generate_and_save, interpretations_query_handler, user_id
+async def test_generate_allows_while_under_budget(
+    generate_handler_factory, mock_db, make_reading, user_id
 ):
+    handler = generate_handler_factory(_FakeLLM())
     reading = await make_reading()
+    await mock_db["users"].update_one(
+        {"_id": ObjectId(user_id)},
+        {"$set": {"usage": {"cost_usd": app_settings.user_budget_usd - 0.01}}},
+    )
 
-    await generate_and_save(reading.id, DEFAULT, synthesis="First synthesis")
-    [first] = await _saved_slots(interpretations_query_handler, reading.id)
-    await generate_and_save(reading.id, DEFAULT, synthesis="Second synthesis")
-    [second] = await _saved_slots(interpretations_query_handler, reading.id)
-
-    assert second.id == first.id
-    assert second.synthesis == "Second synthesis"
-    assert second.created_at == first.created_at
+    result = await handler.handle(_generate_command(reading.id, user_id))
+    assert result.interpretation.reading
 
 
-def _save_command(reading_id: str, user_id: str) -> SaveInterpretationCommand:
-    return SaveInterpretationCommand(
-        reading_id=reading_id,
-        user_id=user_id,
-        card_interpretations=[
-            {
-                "card_name": "The Fool",
-                "position": "Present",
-                "orientation": "upright",
-                "interpretation": "New beginnings.",
+async def test_per_user_budget_override_beats_the_default(
+    generate_handler_factory, mock_db, make_reading, user_id
+):
+    handler = generate_handler_factory(_FakeLLM())
+    # Spend beyond the default cap, but under a raised per-user override.
+    await mock_db["users"].update_one(
+        {"_id": ObjectId(user_id)},
+        {
+            "$set": {
+                "usage": {"cost_usd": app_settings.user_budget_usd + 1.0},
+                "budget_usd": app_settings.user_budget_usd + 5.0,
             }
-        ],
-        synthesis="x",
-        model="mock",
-        tokens_used=0,
-        settings=DEFAULT,
+        },
     )
 
+    result = await handler.handle(_generate_command((await make_reading()).id, user_id))
+    assert result.interpretation.reading
 
-async def test_save_interpretation_not_found(save_handler, user_id):
-    with pytest.raises(ReadingNotFoundError):
-        await save_handler.handle(_save_command(str(ObjectId()), user_id))
-
-
-async def test_save_interpretation_wrong_user(make_reading, save_handler, user_id):
-    reading = await make_reading()
-    other_user = str(ObjectId())
-    with pytest.raises(ReadingNotFoundError):
-        await save_handler.handle(_save_command(reading.id, other_user))
+    # And a lowered override refuses spend the default would have allowed — checked on a
+    # fresh reading, since the first one's stored interpretation would be returned free.
+    await mock_db["users"].update_one({"_id": ObjectId(user_id)}, {"$set": {"budget_usd": 0.5}})
+    with pytest.raises(BudgetExceededError):
+        await handler.handle(_generate_command((await make_reading()).id, user_id))
 
 
-async def test_slot_key_is_derived_from_settings_lens(
-    make_reading, generate_and_save, interpretations_query_handler, user_id
+async def test_zero_budget_override_blocks_even_a_brand_new_users_first_request(
+    generate_handler_factory, mock_db, make_reading, user_id
 ):
-    """The repository derives the slot from settings.lens, so no caller can store a
-    document under a different slot than its settings claim — the invariant the old
-    command-level lens/settings.lens mismatch check used to guard at runtime."""
+    """budget_usd=0 must be enforced literally: not treated as unset and defaulted (the
+    handler previously did `budget_usd or default`, which is falsy for 0), and not
+    exempted because the user's usage aggregate doesn't exist yet on their first-ever
+    call (the repository previously carved out an unconditional pass for that case)."""
+    handler = generate_handler_factory(_FakeLLM())
     reading = await make_reading()
-    await generate_and_save(reading.id, _settings(lens=InterpretationLens.esoteric))
+    await mock_db["users"].update_one({"_id": ObjectId(user_id)}, {"$set": {"budget_usd": 0.0}})
 
-    [saved] = await _saved_slots(interpretations_query_handler, reading.id)
-    assert saved.settings.lens == InterpretationLens.esoteric
+    with pytest.raises(BudgetExceededError):
+        await handler.handle(_generate_command(reading.id, user_id))
 
 
-async def test_each_lens_gets_its_own_slot(
-    make_reading, generate_and_save, interpretations_query_handler, user_id
+async def test_failed_call_releases_the_reservation(
+    generate_handler_factory, mock_db, make_reading, user_id
 ):
+    """The user is never charged for a reading they didn't receive."""
+    handler = generate_handler_factory(_FakeLLM(error=LLMResponseError()))
     reading = await make_reading()
 
-    await generate_and_save(reading.id, _settings(lens=InterpretationLens.traditional))
-    await generate_and_save(reading.id, _settings(lens=InterpretationLens.esoteric))
+    with pytest.raises(LLMResponseError):
+        await handler.handle(_generate_command(reading.id, user_id))
 
-    all_interpretations = await _saved_slots(interpretations_query_handler, reading.id)
-    assert len(all_interpretations) == 2
-    assert {i.settings.lens for i in all_interpretations} == {
-        InterpretationLens.traditional,
-        InterpretationLens.esoteric,
-    }
+    usage = await _user_usage(mock_db, user_id)
+    assert usage.get("cost_usd", 0.0) == pytest.approx(0.0)
+    assert "readings" not in usage
 
 
-async def test_changing_intent_replaces_the_lens_slot_rather_than_adding_one(
-    make_reading, generate_and_save, interpretations_query_handler, user_id
+class _FailingInterpretationWriteRepo(InterpretationWriteRepository):
+    async def upsert_by_reading_id(self, reading_id, document):
+        raise RuntimeError("persist failed")
+
+
+async def test_persist_failure_releases_the_reservation(
+    generate_handler_factory, mock_db, make_reading, user_id
 ):
-    """Intent is stored on the slot but is not part of its identity."""
-    reading = await make_reading()
-
-    await generate_and_save(
-        reading.id, _settings(lens=InterpretationLens.traditional, intent=ReadingIntent.reflective)
+    """Persist sits between the LLM call and the settle, inside reserve_budget: if the
+    write fails, the reservation is released — charged-with-nothing-stored is
+    impossible."""
+    llm = _FakeLLM(usage=LLMUsage(prompt_tokens=1000, completion_tokens=2000))
+    handler = generate_handler_factory(
+        llm, interpretation_write_repo=_FailingInterpretationWriteRepo(mock_db)
     )
-    [first] = await _saved_slots(interpretations_query_handler, reading.id)
-    await generate_and_save(
-        reading.id, _settings(lens=InterpretationLens.traditional, intent=ReadingIntent.predictive)
-    )
-    [second] = await _saved_slots(interpretations_query_handler, reading.id)
+    reading = await make_reading()
 
-    assert second.id == first.id
-    assert second.settings.intent == ReadingIntent.predictive
-    assert second.created_at == first.created_at
+    with pytest.raises(RuntimeError, match="persist failed"):
+        await handler.handle(_generate_command(reading.id, user_id))
+
+    assert await mock_db["interpretations"].count_documents({}) == 0
+    usage = await _user_usage(mock_db, user_id)
+    assert usage.get("cost_usd", 0.0) == pytest.approx(0.0)
+    assert "readings" not in usage
+
+
+class _FailingSettleAuthRepo(AuthWriteRepository):
+    async def settle_usage(self, *args, **kwargs):
+        raise RuntimeError("settle failed")
+
+
+async def test_settle_failure_keeps_the_stored_interpretation_and_charges_nothing(
+    generate_handler_factory, mock_db, make_reading, user_id
+):
+    """If settle fails after a successful persist, the reservation release nets the
+    charge to $0 while the interpretation stays stored — errs in the user's favor."""
+    llm = _FakeLLM(usage=LLMUsage(prompt_tokens=1000, completion_tokens=2000))
+    handler = generate_handler_factory(llm, user_write_repo=_FailingSettleAuthRepo(mock_db))
+    reading = await make_reading()
+
+    with pytest.raises(RuntimeError, match="settle failed"):
+        await handler.handle(_generate_command(reading.id, user_id))
+
+    assert await mock_db["interpretations"].count_documents({}) == 1
+    usage = await _user_usage(mock_db, user_id)
+    assert usage.get("cost_usd", 0.0) == pytest.approx(0.0)
+
+
+async def test_concurrent_requests_cannot_stack_overshoot(
+    generate_handler_factory, mock_db, make_reading, user_id
+):
+    """The gate is one filtered find_one_and_update: while a reservation is in flight,
+    a second request already sees the reserved spend and is refused — the cap can be
+    exceeded by at most one reservation, not one per parallel request."""
+    gate = asyncio.Event()
+    handler = generate_handler_factory(_FakeLLM(gate=gate))
+    reading = await make_reading()
+    # A budget smaller than one worst-case reservation: the first request reserves past
+    # the cap, the second must be refused while the first is still in flight.
+    await mock_db["users"].update_one({"_id": ObjectId(user_id)}, {"$set": {"budget_usd": 0.001}})
+
+    first = asyncio.create_task(handler.handle(_generate_command(reading.id, user_id)))
+    await asyncio.sleep(0.01)  # let the first request reserve and block in the LLM call
+    with pytest.raises(BudgetExceededError):
+        await handler.handle(_generate_command(reading.id, user_id))
+    gate.set()
+    await first
 
 
 async def test_generate_interpretation_for_card_without_position(
@@ -216,36 +391,5 @@ async def test_generate_interpretation_for_card_without_position(
             cards=[CardInSpread(name="The Fool", orientation="upright")],
         )
     )
-    result = await generate_handler.handle(
-        GenerateInterpretationCommand(reading_id=reading.id, user_id=user_id, settings=DEFAULT)
-    )
-    assert result.card_interpretations[0].position is None
-    assert result.card_interpretations[0].card_name == "The Fool"
-
-
-async def test_save_interpretation_omits_null_position(
-    generate_handler, create_reading_handler, save_handler, user_id, mock_db
-):
-    reading = await create_reading_handler.handle(
-        CreateReadingCommand(
-            user_id=user_id,
-            spread_name="Three Card Relationship",
-            cards=[CardInSpread(name="The Fool", orientation="upright")],
-        )
-    )
-    generated = await generate_handler.handle(
-        GenerateInterpretationCommand(reading_id=reading.id, user_id=user_id, settings=DEFAULT)
-    )
-    await save_handler.handle(
-        SaveInterpretationCommand(
-            reading_id=reading.id,
-            user_id=user_id,
-            card_interpretations=generated.card_interpretations,
-            synthesis=generated.synthesis,
-            model=generated.model,
-            tokens_used=generated.tokens_used,
-            settings=DEFAULT,
-        )
-    )
-    doc = await mock_db["interpretations"].find_one({"reading_id": ObjectId(reading.id)})
-    assert "position" not in doc["card_interpretations"][0]
+    result = await generate_handler.handle(_generate_command(reading.id, user_id))
+    assert "The Fool" in result.interpretation.reading

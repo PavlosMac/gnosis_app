@@ -25,15 +25,15 @@ The lean design inverts every one of those choices:
 |---|---|---|
 | Card knowledge | Catalog JSON rendered into the user prompt | Model's own (Rider–Waite deck named in the system prompt, plus numerology and astrology) |
 | Output shape | One interpretation per card + synthesis (`LLMInterpretationResult`) | One continuous narrative that weaves every card in (`reading: str`) |
-| Lens | 4 lenses × 3 injection points | Dropped — only **intent** (predictive/reflective) remains |
+| Lens | 4 lenses × 3 injection points | Dropped — and intent followed (§7): interpretations carry no settings at all |
 | System prompt | ~1,300 tokens, 10+ composed blocks | ~330 tokens, one template |
 | Model | `gpt-5.4-mini` | `gpt-5.4` |
 | Word budget | Client `depth` (0–100), near-flat total split across the spread | Server-owned: config `words_per_card` × cards, no client input |
 
-Kept from the current design: intent as a selection filter (not a voice change),
-orientation guidance (reversal ≠ negation), the position three-tier fallback (stated
-meaning → position name → order dealt), the derived completion-token cap, structured
-output via `response_format`.
+Kept from the current design: orientation guidance (reversal ≠ negation), the position
+three-tier fallback (stated meaning → position name → order dealt), the derived
+completion-token cap, structured output via `response_format`. Intent was first kept,
+then made optional, then removed entirely (§7) — there is no settings axis left.
 
 Observed in testing: without a lens block the model reaches for Thoth/esoteric
 attributions on its own (e.g. The Lovers as "the alchemical card"), so the esoteric
@@ -51,13 +51,12 @@ One call per interpretation, same port (`LLMPort`), same error mapping:
 system  = IDENTITY            master Rider–Waite reader, own knowledge + numerology/astrology
         + QUESTION_ANALYSIS   subject, parties, kind of answer sought;
                               open or absent question → more interpretive freedom
-        + INTENT[intent]      predictive | reflective
         + ORIENTATION         reversal = blocked / delayed / internalized / shadow
         + POSITION            stated meaning → position name → order dealt
         + NARRATIVE           one flowing reading, every card woven in, arc + tensions
         + LENGTH(total_words) ceiling, not a target
 
-user    = "Question: …" | "No specific question — provide a general reading."
+user    = "Question: …" | "No question was asked — let the spread itself set the agenda."
         + "Spread: <name> (<n> cards)"
         + one line per card:  "<i>. <Name> (<orientation>) — <Position>: <position_description>"
 
@@ -187,13 +186,15 @@ Spread: Significators (4 cards)
 
 ### Tree of Life variant — DRAFT for review
 
-Situational like the standard reading — QUESTION_ANALYSIS, INTENT and ORIENTATION all
-stay — but the POSITION block is replaced by the Tree's structure: the eleven zone
-meanings are **baked into the system prompt** (the backend owns this spread's
-semantics), so the model reads each card through its zone **and** its pillar's temporal
-current. The frontend no longer needs to send `position_description`s for this spread —
-where it does, they refine the zone's scope. The zones block adds ~500 system tokens,
-negligible against the output-dominated cost.
+Situational like the standard reading — QUESTION_ANALYSIS and ORIENTATION stay (the
+zones themselves carry the temporal framing: Chokmah the immediate future, Binah the
+past, Malkuth six months ahead) — but the POSITION handling is recast for the Tree.
+*Amended 2026-09-02*: the zone meanings are **not** baked into the system prompt after
+all — the frontend owns its spread catalog and sends each card's zone and meaning as
+`position`/`position_description`, like any spread. The template keeps only the
+spread-level **three-pillar structure** (Mercy/Severity/Middle temporal currents),
+which no single card line can carry. The draft below predates that amendment; the
+current template is in `docs/prompts/prompt_reference.md`.
 
 ```
 You are a master tarot reader working with the Rider–Waite deck, drawing on your own
@@ -331,13 +332,13 @@ tokens here) — large spreads at `high` effort would eat further into the margi
 | Concern | Change |
 |---|---|
 | `src/llm/prompt_components.py` + `prompt_builder.py` | Superseded by one small builder (system template + card lines + budget) |
-| `src/llm/schemas.py` | `LLMInterpretationResult` → single `reading` field; `InterpretationResponse` and the interpretations API/domain lose `card_interpretations[]`; `InterpretationSettings` loses `depth` (and `lens`, pending §8) leaving `intent` — **frontend-visible** |
+| `src/llm/schemas.py` | `LLMInterpretationResult` → single `reading` field; `InterpretationResponse` and the interpretations API/domain lose `card_interpretations[]`; `InterpretationSettings` deleted outright (depth, lens, and finally intent — §7): requests carry no settings — **frontend-visible** |
 | `InterpretationSettings.lens` | Unused — drop from the API, or keep and reintroduce as a one-line register block |
 | `card_catalog` / `src/lib/cards/*.json` | Out of the interpretation path (no `CardNotFoundError`); still serves the `/cards` write-ups |
 | `OPENAI_MODEL` | **Decided: `gpt-5.4`** — the reading quality depends on the model thinking well; ~3.3× mini's output price, bounded by the word-budget ceiling |
 | Usage tracking / budget cap | Full design below (§5a) — exact actuals charged in the inbound call: per-interpretation usage ledger + per-user aggregate gated against a $3 default budget |
 | Significators / Tree of Life | Spread-keyed system-prompt variants — drafts in §2 (portrait chart; eleven-zone Tree) |
-| Tunables → `Settings` | Every set variable lives in `src/core/config.py` (pydantic-settings, `.env`-overridable), not as module constants: `llm_words_per_card` (100), `significator_budget_scale` (1.5), the model price table ($/1M in/out per model), the default per-user $ budget, plus the existing `openai_model` / `openai_reasoning_effort` / `openai_max_tokens`. Prompt *text* stays in code; numbers go to config |
+| Tunables → `Settings` | Every set variable lives in `src/core/config.py` (pydantic-settings, `.env`-overridable), not as module constants: `llm_words_per_card` (100), `significator_budget_scale` (1.5), the model price table ($/1M in/out per model), the default per-user $ budget, the production controls `openai_timeout_seconds` (120), `openai_max_concurrent` (10) and `openai_max_retries` (2), plus the existing `openai_model` / `openai_reasoning_effort` / `openai_max_tokens`. Prompt *text* stays in code; numbers go to config |
 | `birth_date`, `observer` | Still accepted / defined, still never rendered — decide or delete |
 | Tests / docs | Prompt-phrase assertions in `tests/llm/test_prompt_builder.py` and the generated regions of `prompt_reference.md` (`make prompt-doc`) rebuild around the new builder |
 
@@ -362,6 +363,11 @@ cost-profile collection. Two records, each with one job:
    price-table change doesn't rewrite history. This is the answer to "why did my
    balance drop": every charge on the user traces to one interpretation document.
 
+   The stored `model` is the *resolved* id from the response (e.g. `gpt-5.4-2026-…`),
+   so the pricing function matches table keys by prefix; an id matching no key is
+   priced at the most expensive table entry with a warning logged — a price-table gap
+   must never fail the reading.
+
 2. **The aggregate — per-user spend** (enforced). A `usage` sub-document on the user,
    updated atomically (`$inc`) in the same inbound call, right after the OpenAI
    response:
@@ -377,20 +383,32 @@ cost-profile collection. Two records, each with one job:
 **The flow** (in the interpretation command handler / service):
 
 ```
-1. if user.usage.cost_usd >= user_budget → BudgetExceededError   (AppError, HTTP 402)
+1. reserve — worst-case cost for this request (completion cap × out price + prompt
+   estimate × in price), $inc'd onto the user aggregate via find_one_and_update
+   with filter usage.cost_usd < budget; no match → BudgetExceededError (402)
 2. call OpenAI → usage split from the response
 3. cost_usd = priced from config table
-4. persist: ledger on the interpretation doc · $inc user aggregate
-5. response carries usage + remaining budget (frontend §6.4)
+4. settle — $inc the aggregate by (actual − reserved); persist ledger on the
+   interpretation doc
+5. on any failure after the reserve — $inc by (−reserved): the user is never
+   charged for a reading they didn't receive
+6. response carries usage + remaining budget (frontend §6.4)
 ```
 
-The gate is a simple threshold: a user with any budget left may start one more reading,
-so the cap can be overshot by at most one reading (~5¢ worst case at current costs —
-same bound for concurrent requests). Acceptable at a $3 budget; if it ever matters,
-step 1 becomes an atomic reserve-then-settle on the user document. Per-spread-type
-cost-profile documents were considered and dropped for simplicity — if the frontend
-later wants "this reading costs about N", derive it on demand from the cap formula ×
-price table rather than maintaining a collection.
+The gate is atomic — check and reserve are one filtered `find_one_and_update`, so
+concurrent requests cannot stack overshoot: the cap can be exceeded by at most one
+reservation. (A plain threshold check was considered and dropped: it is check-then-act,
+so N in-flight requests would all pass it and a scripted user could overshoot the cap
+by one reading *per parallel request*.)
+
+Failed calls — timeout, truncation, content filter, unparseable response — release the
+reservation. The tokens the provider billed for are absorbed, not charged to the user
+(~5¢ worst case per failure at current costs); log the wasted usage wherever the
+response is available so the leak stays visible.
+
+Per-spread-type cost-profile documents were considered and dropped for simplicity — if
+the frontend later wants "this reading costs about N", derive it on demand from the cap
+formula × price table rather than maintaining a collection.
 
 Migrations: user `usage` sub-document + `budget_usd` field. New tunables in
 `Settings`: `user_budget_usd` (3.00) joining the price table from the Tunables row
@@ -402,9 +420,9 @@ config table, and a router test asserting the 402 shape.
 
 ## 6. Frontend changes required
 
-The API contract changes in four places; everything else the frontend sends
+The API contract changes in five places; everything else the frontend sends
 (`spread_name`, `question`, `cards[]` with `position` / `position_description`,
-`orientation`, `intent`) is unchanged.
+`orientation`) is unchanged.
 
 1. **Reading page renders one narrative.** The interpretation response loses
    `card_interpretations[]` + `synthesis` and becomes a single `reading` string. The
@@ -426,6 +444,12 @@ The API contract changes in four places; everything else the frontend sends
    frontend needs to render that error distinctly (not as a generic failure), and
    ideally show remaining budget / usage — which implies a small usage endpoint or a
    `usage` field on the interpretation response worth including in the backend work.
+5. **One-step, intent-free flow** (§7 amendment, superseding the brief
+   optional-intent phase). No intent picker, no settings sent at all. Generation is a
+   single `POST /readings/{id}/interpretation` (no body) that persists immediately and
+   is idempotent — a repeat call returns the stored interpretation free. The preview →
+   save round-trip is gone (no `PUT`), and `GET /readings/{id}` carries a singular
+   `interpretation: {...} | null` instead of the `interpretations` array.
 
 Card names remain RWS as the frontend already sends them (`Five of Pentacles`,
 `The World`, `Page of …`); they now reach the model verbatim, so display names and
@@ -452,8 +476,21 @@ prompt names are finally identical — no Thoth alias mismatch to guard against.
   significator charts included (recast there as a facet of character turned inward) —
   no spread assumes all-upright cards.
 - **Budget enforcement**: $3 default per-user cap (`Settings.user_budget_usd`).
-  Exact actuals charged directly in the inbound call (simple threshold gate, at most
-  one reading of overshoot); no estimate layer — the two-record design in §5a.
+  Exact actuals charged directly in the inbound call via an atomic reserve-then-settle
+  gate; failed calls release the reservation — the user is never charged for a reading
+  they didn't receive — the two-record design in §5a.
+- **Intent removed entirely; one-step idempotent generation** (amended 2026-09-02,
+  twice: this decision first read "intent kept unchanged", was briefly "optional and
+  client-decided" — `docs/make-intent-optional-and-client-decided.md`, now superseded
+  — and landed on full removal the same day). Spread positions already carry whatever
+  temporal framing a reading needs; a predictive/reflective toggle was redundant at
+  best and contradictory at worst, and with depth and lens already gone it was the
+  last remaining setting. So: `ReadingIntent`, `InterpretationSettings`, and every
+  `settings` field are deleted from the API, the prompt, and storage. With no
+  settings left there is nothing to preview or re-request either, so the two-step
+  preview→save flow collapsed into one idempotent `POST /readings/{id}/interpretation`
+  that persists immediately — one interpretation per reading (unique `reading_id`
+  index, migration 008), a repeat call returns the stored one free.
 
 ## 8. Open questions
 

@@ -23,11 +23,24 @@ Decisions confirmed with the user:
   new mandate → update subscription `mandateId` → revoke old mandate.
 - Confirmation emails via a new `EmailPort` + console adapter only; it is the port
   `docs/auth/password-reset-flow.md` plans, built here first so that work reuses it.
+- **Webhook errors split retryable vs terminal**: provider/transient errors return 5xx so
+  Mollie retries; only terminal outcomes return 200 (see router table).
+- A stale second "first" payment paid after the subscription exists is **auto-refunded**
+  (new `refund_payment` on the port) with a warning log — never a silent skip.
+- Failed first checkout surfaces as **computed status `checkout_failed`** (doc in
+  `pending_checkout` with `pending_checkout_payment_id` cleared); the FE polls until
+  status leaves `pending_checkout`.
+- **No grace period**: access ends at `current_period_end`; a successful Mollie retry
+  restores it instantly via the renewal webhook.
+- Silent Mollie-side cancels (mandate revoked at the bank — no renewal webhook) caught by
+  **verify-on-stale-read** in `GET /billing/subscription`.
+- Emails are **best-effort** — an email failure never changes a webhook response or API
+  result.
 
 ## Mollie flow (reference)
 
 1. `customers.create` → `cust_x` (stored on our `subscriptions` doc, **not** on `User` — avoids auth
-   domain/schema churn; `stripe_customer_id` left as dead field).
+   domain/schema churn; `mollie_customer_id` left as dead field).
 2. `payments.create {customerId, sequenceType:"first", amount 12.00 EUR, redirectUrl, webhookUrl,
    metadata{user_id,purpose}}` → `checkout_url`.
 3. Webhook `POST id=tr_x` → `payments.get` → if `paid`: mandate exists → `subscriptions.create
@@ -44,12 +57,16 @@ Decisions confirmed with the user:
   `get_payment(id) -> PaymentDetails`; `list_valid_mandates(customer_id) -> list[str]`;
   `create_subscription(customer_id, mandate_id, amount, interval, description, start_date, webhook_url, metadata) -> SubscriptionDetails`;
   `get_subscription(customer_id, id) -> SubscriptionDetails`; `update_subscription_mandate(...)`;
-  `cancel_subscription(...) -> SubscriptionDetails`; `revoke_mandate(...)`; `close()`.
+  `cancel_subscription(...) -> SubscriptionDetails`; `revoke_mandate(...)`;
+  `refund_payment(payment_id, amount, description) -> None`; `close()`.
 - `schemas.py` — `CheckoutSession{payment_id, checkout_url}`, `PaymentDetails{id, status, amount,
-  customer_id, subscription_id?, mandate_id?, sequence_type, paid_at?, metadata}`,
+  customer_id, subscription_id?, mandate_id?, sequence_type, paid_at?, metadata,
+  amount_refunded?, amount_charged_back?}`,
   `SubscriptionDetails{id, status, next_payment_date?}` (plain `BaseModel`, infra types).
 - `errors.py` — `PaymentProviderError(502)`, `PaymentProviderConnectionError(502)`,
-  `PaymentNotFoundError(404)` (pattern: `src/llm/errors.py`).
+  `PaymentNotFoundError(404)` (pattern: `src/llm/errors.py`). The first two (plus
+  `MandateNotFoundError`) are **retryable** for the webhook route — they must reach
+  Mollie as 5xx, not be swallowed by the AppError→200 policy.
 - `mollie_adapter.py` — `MollieAdapter(client)`; client injected (like `OpenAIAdapter`); every SDK
   exception re-raised as a domain error. Verify exact SDK resource names (`customers`, `payments`,
   `mandates`, `subscriptions`, `*_async`) against the installed version at implementation time.
@@ -66,7 +83,7 @@ Decisions confirmed with the user:
 
 ### `src/billing/` (domain, CLAUDE.md layout)
 - `models.py` — `SubscriptionStatus`: `pending_checkout | active | past_due | canceled`
-  (`expired` is computed, not stored). `PaymentPurpose`: `initial | renewal | mandate_update`.
+  (`expired` and `checkout_failed` are computed, not stored). `PaymentPurpose`: `initial | renewal | mandate_update`.
   `Subscription{user_id, mollie_customer_id, mollie_subscription_id?, mandate_id?, status,
   current_period_end?, pending_checkout_payment_id?, canceled_at?, created_at, updated_at}`.
   `Payment{mollie_payment_id, user_id, subscription_id, mollie_subscription_id?, amount, currency,
@@ -82,7 +99,10 @@ Decisions confirmed with the user:
   (day-clamped, no dateutil).
 - `schemas.py` — `CheckoutResponse{checkout_url}`, `SubscriptionReadModel`/`SubscriptionResponse`
   `{status, has_active_access, current_period_end?, mollie_subscription_id?, ...}` where
-  `status` may also be `"none"` for users without a doc (painless polling), `CancelResponse`.
+  `status` may also be `"none"` (no doc) or `"checkout_failed"` (doc in `pending_checkout`
+  with `pending_checkout_payment_id` cleared) — **FE poll contract: poll until status
+  leaves `pending_checkout`**; `checkout_failed` means show "payment failed, try again"
+  and re-offer checkout, `CancelResponse`.
 - `commands/` — `start_subscription_checkout.py`, `start_mandate_update_checkout.py`,
   `cancel_subscription.py`, `process_payment_webhook.py`. `queries/get_subscription_by_user_id.py`.
 - `router.py` (`prefix="/billing"`):
@@ -93,7 +113,7 @@ Decisions confirmed with the user:
 | GET | `/billing/subscription` | `CurrentUserId` | 200 `SubscriptionResponse` (`status:"none"` if absent) |
 | POST | `/billing/payment-method/checkout` | `CurrentUser` | 201 `CheckoutResponse` (€0.00) |
 | POST | `/billing/cancel` | `CurrentUserId` | 200 `CancelResponse` |
-| POST | `/billing/webhooks/mollie` | none, `id: Form()` | 200 always for `AppError`s (logged); unexpected exceptions → 500 so Mollie retries |
+| POST | `/billing/webhooks/mollie` | none, `id: Form()` | 200 for terminal errors (`PaymentNotFoundError`, validation — logged); **retryable** errors (`PaymentProviderError`, `PaymentProviderConnectionError`, `MandateNotFoundError`) and unexpected exceptions → 5xx so Mollie retries |
 
 ## Handler logic
 
@@ -107,38 +127,93 @@ Decisions confirmed with the user:
   mollie_mandate_update_amount`, purpose `mandate_update`.
 - **CancelSubscription**: requires `mollie_subscription_id` and active/past_due;
   `cancel_subscription`; `set_status(canceled, canceled_at)`; `current_period_end` untouched.
-- **GetSubscriptionByUserId**: pure compute — `has_active_access` = `active`, or
-  `canceled|past_due` with `current_period_end > now`.
+- **GetSubscriptionByUserId**: `has_active_access` = `active`, or `canceled|past_due`
+  with `current_period_end > now` (all datetimes tz-aware UTC end to end; **no grace
+  period** — a successful Mollie retry restores access via the renewal webhook). Status
+  reads `checkout_failed` when the doc is `pending_checkout` with
+  `pending_checkout_payment_id` cleared. **Verify-on-stale-read**: if `active|past_due`
+  and `current_period_end` is more than `subscription_verify_stale_after_hours` past,
+  `get_subscription` from Mollie once and sync status — catches a mandate revoked at
+  the bank, where no renewal webhook fires; on Mollie error serve the stored doc.
 - **ProcessPaymentWebhook**:
   1. `get_payment(id)`; `PaymentNotFoundError` → log, return.
   2. `claim_status(id, details.status, snapshot)`; `None` → already processed → return. Purpose:
      `subscription_id` present → `renewal`, else `metadata.purpose`.
   3. Find subscription by `mollie_subscription_id`, else `mollie_customer_id`, else `metadata.user_id`.
   4. Dispatch `(purpose, status)`:
-     - `initial, paid` (guard `mollie_subscription_id is None`): mandate = `details.mandate_id` or
-       first of `list_valid_mandates`; none → `MandateNotFoundError` (500 → Mollie retries);
-       `create_subscription(start_date=add_one_month(paid_at))`; `activate(...)`;
-       email `subscription_started`. On failure after claim → `reset_processed_status` so retry re-runs.
-     - `initial|mandate_update, failed|expired|canceled`: clear `pending_checkout_payment_id`.
-     - `renewal, paid`: `extend_period(add_one_month(paid_at))`, status active, email `renewed`.
+     - `initial, paid`: if `mollie_subscription_id` already set (a stale second checkout
+       paid late — user double-charged) → **`refund_payment` the stray payment** +
+       warning log, done; never a silent skip. Else mandate = `details.mandate_id` or
+       first of `list_valid_mandates`; none → `MandateNotFoundError` (5xx → Mollie
+       retries); `create_subscription(start_date=add_one_month(paid_at))`;
+       `activate(period_end = subscription.next_payment_date or start_date)` — Mollie's
+       date is authoritative, `add_one_month` is the fallback; email
+       `subscription_started`. On failure after claim → `reset_processed_status` so the
+       retry re-runs (works because provider errors return 5xx per the router policy).
+     - `initial|mandate_update, failed|expired|canceled`: clear `pending_checkout_payment_id`
+       (this is what makes the computed `checkout_failed` status appear to the FE poll).
+     - `renewal, paid`: `extend_period` — prefer Mollie's `next_payment_date` (via
+       `get_subscription`) over `add_one_month(paid_at)` so month-end clamping never
+       drifts from Mollie's schedule; status active, email `renewed`.
      - `renewal, failed|expired|canceled`: status `past_due`, email `payment_failed`; then
        `get_subscription` — if Mollie reports `canceled` → status canceled.
-     - `mandate_update, paid`: `update_subscription_mandate(new)`; `set_mandate`; best-effort
+     - `mandate_update, paid`: guard — if the subscription is no longer `active|past_due`
+       (canceled between checkout and webhook), best-effort `revoke_mandate(new)` + log,
+       done. Else `update_subscription_mandate(new)`; `set_mandate`; best-effort
        `revoke_mandate(old)`.
      - `open|pending`: snapshot only.
+  5. **Emails are best-effort**: each send wrapped in try/except + log — an email failure
+     never changes the webhook response (a retried webhook is already claimed and would
+     skip the email anyway, so failing would only lose the state change too).
+  6. **Refund/chargeback awareness**: snapshot `amount_refunded` / `amount_charged_back`
+     from the fetched payment and log a warning when nonzero. Acting on chargebacks
+     (→ past_due/canceled) is a documented known gap — visible in logs, not silent.
 
 State machine:
 ```
 (none) → pending_checkout → active ⇄ past_due → canceled → [expired: computed when period_end < now]
 active → canceled (POST /cancel; access until period_end)
+pending_checkout → [checkout_failed: computed when pending_checkout_payment_id cleared] → new checkout
 ```
+
+## Frontend contract (basis for the FE-specific spec)
+
+Everything the FE needs, in one place:
+
+1. **Subscribe**: `POST /api/v1/billing/checkout` (Bearer) → `{checkout_url}` → redirect the
+   browser there. 409 = already subscribed (or canceled with time left) — show manage UI
+   instead.
+2. **Return page**: Mollie's redirect carries **no status**. Poll
+   `GET /api/v1/billing/subscription` until `status` leaves `pending_checkout`:
+   - `active` → success, show `current_period_end`
+   - `checkout_failed` → "payment failed, try again" + re-offer checkout (a new
+     `POST /billing/checkout` is allowed from this state)
+   - poll interval ~2s with a timeout fallback (webhooks normally land in seconds)
+3. **Statuses** the read model can return: `none | pending_checkout | checkout_failed |
+   active | past_due | canceled | expired` plus `has_active_access: bool` — **gate UI on
+   `has_active_access`, not on status** (canceled/past_due users may retain access until
+   `current_period_end`; no grace period beyond it).
+4. **Gated endpoints**: `POST /readings` and `POST /interpretations/generate` return
+   **402** without active access — render as "subscription required" with a checkout CTA,
+   not a generic error. GET/list/save stay open (lapsed users keep their history).
+5. **Update payment method**: `POST /api/v1/billing/payment-method/checkout` → same
+   redirect + poll shape (€0.00 authorisation; card/PayPal only). Requires active/past_due.
+6. **Cancel**: `POST /api/v1/billing/cancel` → `{status: "canceled", current_period_end}`
+   — communicate "access until <date>", no refund.
+7. **Failure UX inputs**: `past_due` → show "payment failed, update your payment method"
+   (Mollie retries automatically; access already reflects `has_active_access`).
 
 ## Core changes
 - `src/core/exceptions.py`: `PaymentRequiredError(AppError)` 402, "Active subscription required".
 - `src/core/config.py`: `mollie_api_key=""`, `public_base_url="http://localhost:8000"`,
   `frontend_base_url="http://localhost:3000"`, `frontend_billing_return_path="/billing/return"`,
   `subscription_amount="12.00"`, `subscription_currency="EUR"`, `subscription_description=
-  "Gnosis Esoterica monthly subscription"`, `mollie_mandate_update_amount="0.00"`.
+  "Gnosis Esoterica monthly subscription"`, `mollie_mandate_update_amount="0.00"`,
+  `subscription_verify_stale_after_hours=24`, dev-only `subscription_start_offset_days=30`
+  (`0` → first renewal fires immediately in test mode). **Fail fast**: `app_env ==
+  "production"` with an empty or `test_` `mollie_api_key` refuses to start — the mock
+  payment adapter must be unreachable in production (same class of issue as the
+  hardcoded `jwt_secret_key` default).
 - `.env.example`: add the above (also fix stale JWT/OpenAI keys while there); note ngrok for webhooks.
 - `src/core/dependencies.py`: `get_payments`/`PaymentsDep`, `get_email`/`EmailDep` (copy `get_llm`
   pattern, `app.state.payments` / `app.state.email`); `get_active_subscription(user: CurrentUser,
@@ -166,11 +241,16 @@ active → canceled (POST /cancel; access until period_end)
   initial paid → subscription with `start_date = paid_at + 1 month`, active, 1 email; same webhook
   twice → 1 subscription, 1 email; unknown id no-op; renewal paid extends; renewal failed →
   past_due + email; mandate_update paid → update + revoke recorded; cancel; `add_one_month`
-  clamping (Jan 31 → Feb 28/29).
+  clamping (Jan 31 → Feb 28/29); stray second initial paid → refund recorded, no second
+  subscription; mandate_update paid after cancel → new mandate revoked, no update; email
+  adapter raising → state change still persists, webhook succeeds.
 - `tests/billing/test_queries.py`: `has_active_access` matrix.
 - `tests/billing/test_router.py`: checkout 201; subscription `none` → active after webhook; webhook
-  bogus id → 200; concurrent duplicate webhook (`asyncio.gather`) → one subscription; gate: 402 with
-  `auth_token`, 201 with `subscribed_token`, 201 for superadmin without subscription.
+  bogus id → 200; provider error during webhook → 5xx (Mollie retries), then retry succeeds;
+  failed first payment → subscription reads `checkout_failed` (poll terminates); stale
+  active doc + Mollie reports canceled → GET syncs to canceled; concurrent duplicate
+  webhook (`asyncio.gather`) → one subscription; gate: 402 with `auth_token`, 201 with
+  `subscribed_token`, 201 for superadmin without subscription.
 - `tests/payments/test_mollie_adapter.py`: `MagicMock` client with `AsyncMock` `*_async` methods;
   asserts payload (amount dict, `sequenceType`, `interval`, ISO `startDate`); SDK error → 502.
 
@@ -178,7 +258,11 @@ active → canceled (POST /cancel; access until period_end)
 - New `docs/mollie-subscriptions.md`: flow, state machine, endpoint table, webhook idempotency
   contract, frontend contract (redirect + poll), dev setup (`ngrok http 8000`, `PUBLIC_BASE_URL`,
   Mollie `test_` key, test-mode checkout picks paid/failed), known gaps (reactivate after cancel,
-  no expiry cron, iDEAL excluded from mandate update).
+  no expiry cron, iDEAL excluded from mandate update, chargebacks logged but not acted on,
+  no receipt/VAT invoicing in emails — EU B2C likely requires one eventually, no rate
+  limiting on the webhook/checkout endpoints, no account-deletion/GDPR flow — when that
+  feature lands it must cancel the subscription, revoke the mandate and delete the
+  Mollie customer).
 - `CLAUDE.md`: overview → "subscription-based access (Mollie)"; add `src/payments/`,
   `src/notifications/`, `src/billing/` to Key Files.
 - `docs/database/model_references.md`: replace Stripe `transactions`/`credit_ledger` with

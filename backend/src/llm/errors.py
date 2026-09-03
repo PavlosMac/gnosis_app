@@ -21,6 +21,11 @@ class LLMResponseError(LLMError):
         super().__init__(detail=detail)
 
 
-class CardNotFoundError(AppError):
-    def __init__(self, name: str):
-        super().__init__(status_code=422, detail=f"Unknown card: {name!r}")
+class LLMTimeoutError(LLMError):
+    def __init__(self, detail: str = "LLM request timed out") -> None:
+        super().__init__(status_code=504, detail=detail)
+
+
+class LLMBusyError(LLMError):
+    def __init__(self, detail: str = "LLM service is at capacity, try again shortly") -> None:
+        super().__init__(status_code=503, detail=detail)

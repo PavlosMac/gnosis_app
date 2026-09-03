@@ -20,7 +20,6 @@ from src.database.mongodb import get_database
 async def get_db(request: Request) -> AsyncIOMotorDatabase:
     return get_database()
 
-
 DB = Annotated[AsyncIOMotorDatabase, Depends(get_db)]
 
 

@@ -1,11 +1,13 @@
 import uuid
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 
 import jwt
 
 from src.auth.models import User
-from src.auth.repository import AuthReadRepository, RefreshTokenRepository
+from src.auth.repository import AuthReadRepository, AuthWriteRepository, RefreshTokenRepository
 from src.auth.schemas import TokenResponse
-from src.core.exceptions import ConflictError, UnauthorizedError
+from src.core.exceptions import AppError, ConflictError, UnauthorizedError
 from src.core.security import (
     create_access_token,
     create_refresh_token,
@@ -22,6 +24,37 @@ class EmailAlreadyExistsError(ConflictError):
 class InvalidCredentialsError(UnauthorizedError):
     def __init__(self) -> None:
         super().__init__(detail="Invalid email or password")
+
+
+class BudgetExceededError(AppError):
+    def __init__(self) -> None:
+        super().__init__(
+            status_code=402,
+            detail="Usage budget exhausted",
+        )
+
+
+@asynccontextmanager
+async def reserve_budget(
+    write_repo: AuthWriteRepository, user_id: str, reserved_usd: float, budget_usd: float
+) -> AsyncIterator[None]:
+    """Reserve `reserved_usd` against the user's budget for the duration of the block,
+    releasing it automatically if the block raises for any reason (cancellation
+    included) — the user is never charged for work that didn't complete.
+
+    Any feature that spends against the per-user budget (not just interpretations)
+    should wrap its paid call in this rather than hand-rolling the reserve/release
+    choreography. On success the caller still owns settling the reservation to actuals
+    (AuthWriteRepository.settle_usage) — the exact cost is only known once the paid call
+    returns, which this context manager has no visibility into.
+    """
+    if not await write_repo.reserve_usage(user_id, reserved_usd, budget_usd):
+        raise BudgetExceededError()
+    try:
+        yield
+    except BaseException:
+        await write_repo.release_usage(user_id, reserved_usd)
+        raise
 
 
 class AuthService:

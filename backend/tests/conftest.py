@@ -3,24 +3,17 @@ from bson import ObjectId
 from httpx import ASGITransport, AsyncClient
 from mongomock_motor import AsyncMongoMockClient
 
-from src.auth.repository import AuthWriteRepository
+from src.auth.repository import AuthReadRepository, AuthWriteRepository
 from src.database.mongodb import set_database
 from src.interpretations.commands.generate_interpretation import (
-    GenerateInterpretationCommand,
     GenerateInterpretationHandler,
-)
-from src.interpretations.commands.save_interpretation import (
-    SaveInterpretationCommand,
-    SaveInterpretationHandler,
-)
-from src.interpretations.queries.get_interpretations_by_reading_id import (
-    GetInterpretationsByReadingIdHandler,
 )
 from src.interpretations.repository import (
     InterpretationReadRepository,
     InterpretationWriteRepository,
 )
 from src.llm.mock_adapter import MockLLMAdapter
+from src.llm.port import LLMPort
 from src.llm.schemas import CardInSpread
 from src.readings.commands.create_reading import CreateReadingCommand, CreateReadingHandler
 from src.readings.repository import ReadingReadRepository, ReadingWriteRepository
@@ -98,8 +91,12 @@ async def client(app):
 
 
 @pytest.fixture
-def user_id():
-    return str(ObjectId())
+async def user_id(mock_db):
+    """A user that exists in the database — the budget gate's reserve matches on the
+    user document, so handler-level tests need a real one."""
+    oid = ObjectId()
+    await mock_db["users"].insert_one({"_id": oid, "email": f"{oid}@example.com"})
+    return str(oid)
 
 
 @pytest.fixture
@@ -114,27 +111,34 @@ def create_reading_handler(reading_repos):
 
 
 @pytest.fixture
-def generate_handler(reading_repos, mock_db):
+def generate_handler_factory(reading_repos, mock_db):
+    """Same repo wiring as production (see main._wire_mediator), parametrized on the LLM
+    adapter and the two write repos — tests that need a fake/failing/blocking adapter or
+    a failing persist/settle build off this instead of re-deriving the wiring."""
     _, read_repo = reading_repos
-    return GenerateInterpretationHandler(
-        reading_read_repo=read_repo,
-        user_write_repo=AuthWriteRepository(mock_db),
-        llm=MockLLMAdapter(),
-    )
+
+    def _make(
+        llm: LLMPort | None = None,
+        interpretation_write_repo: InterpretationWriteRepository | None = None,
+        user_write_repo: AuthWriteRepository | None = None,
+    ) -> GenerateInterpretationHandler:
+        return GenerateInterpretationHandler(
+            reading_read_repo=read_repo,
+            user_read_repo=AuthReadRepository(mock_db),
+            user_write_repo=user_write_repo or AuthWriteRepository(mock_db),
+            interpretation_read_repo=InterpretationReadRepository(mock_db),
+            interpretation_write_repo=(
+                interpretation_write_repo or InterpretationWriteRepository(mock_db)
+            ),
+            llm=llm or MockLLMAdapter(),
+        )
+
+    return _make
 
 
 @pytest.fixture
-def save_handler(reading_repos, mock_db):
-    _, read_repo = reading_repos
-    return SaveInterpretationHandler(
-        reading_read_repo=read_repo,
-        write_repo=InterpretationWriteRepository(mock_db),
-    )
-
-
-@pytest.fixture
-def interpretations_query_handler(mock_db):
-    return GetInterpretationsByReadingIdHandler(InterpretationReadRepository(mock_db))
+def generate_handler(generate_handler_factory):
+    return generate_handler_factory()
 
 
 @pytest.fixture
@@ -161,27 +165,3 @@ def make_reading(create_reading_handler, user_id):
     return _make
 
 
-@pytest.fixture
-def generate_and_save(generate_handler, save_handler, user_id):
-    """Async factory: generate an interpretation for a reading and save it under
-    settings.lens. Returns the generated response; read the saved slot back via
-    interpretations_query_handler."""
-
-    async def _run(reading_id, settings, synthesis=None):
-        generated = await generate_handler.handle(
-            GenerateInterpretationCommand(reading_id=reading_id, user_id=user_id, settings=settings)
-        )
-        await save_handler.handle(
-            SaveInterpretationCommand(
-                reading_id=reading_id,
-                user_id=user_id,
-                card_interpretations=generated.card_interpretations,
-                synthesis=synthesis or generated.synthesis,
-                model=generated.model,
-                tokens_used=generated.tokens_used,
-                settings=settings,
-            )
-        )
-        return generated
-
-    return _run

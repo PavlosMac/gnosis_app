@@ -1,7 +1,23 @@
 # Scalable OpenAI Adapter — Implementation Plan
 
-## Status: Draft — items 1–3 (semaphore, timeout, retry config) still outstanding; item 4 (structured logging) implemented
-## Date: 2026-04-03 (status reviewed 2026-08-31)
+## Status: Superseded — folded into [`docs/lean-prompt-migration-plan.md`](../lean-prompt-migration-plan.md) Phase 2 on 2026-09-01. Kept for reference; do not implement from this doc.
+## Date: 2026-04-03 (superseded 2026-09-01)
+
+> **Deltas applied in the fold** (the migration plan is authoritative):
+>
+> - Timeout default raised 60s → **120s** — the lean architecture's 11-card spreads on
+>   `gpt-5.4` with reasoning (~3,400 output tokens) outgrew the "1–3 card reading"
+>   rationale below.
+> - `except APITimeoutError` must precede `except APIConnectionError` — it *subclasses*
+>   it in the OpenAI SDK, so the order below would silently map timeouts to 502.
+> - Semaphore acquire gets a **bounded wait** → 503 instead of unbounded queueing; note
+>   the semaphore is per-process (effective cap × uvicorn workers).
+> - Item 4 was only partially implemented: success-path usage logging exists, but call
+>   duration and failure-path logging are still outstanding and stay in scope.
+> - Item 5 (response caching) **dropped entirely** — it conflicts with the per-user
+>   budget ledger (a cache hit either double-charges or breaks the one-charge-per-
+>   interpretation-doc invariant), and cost is ~95% output-dominated anyway.
+> - Test path is `tests/llm/`, not `tests/test_llm/`.
 
 ---
 

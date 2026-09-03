@@ -1,7 +1,8 @@
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 
 from bson import ObjectId
+from pymongo import ReturnDocument
 
 from src.database.base_repository import BaseReadRepository, BaseWriteRepository
 from src.database.collections.constants import REFRESH_TOKENS_COLLECTION, USERS_COLLECTION
@@ -12,10 +13,57 @@ class AuthWriteRepository(BaseWriteRepository):
     def collection_name(self) -> str:
         return USERS_COLLECTION
 
-    async def increment_tokens_used(self, user_id: str, tokens: int) -> None:
+    async def reserve_usage(self, user_id: str, amount_usd: float, budget_usd: float) -> bool:
+        """Atomically reserve `amount_usd` against the user's spend aggregate.
+
+        Check and reserve are one filtered find_one_and_update, so concurrent requests
+        cannot stack overshoot: the filter compares spend-so-far against budget, meaning
+        the cap can be exceeded by at most one reservation. The usage aggregate is
+        created lazily — a user with no `usage.cost_usd` yet has spent nothing, so `$expr`
+        with `$ifNull` treats it as 0 rather than exempting the first call from the budget
+        check entirely. Returns False when the budget is already exhausted (or the user
+        does not exist)."""
+        doc = await self._collection.find_one_and_update(
+            {
+                "_id": ObjectId(user_id),
+                "$expr": {"$lt": [{"$ifNull": ["$usage.cost_usd", 0]}, budget_usd]},
+            },
+            {"$inc": {"usage.cost_usd": amount_usd}},
+        )
+        return doc is not None
+
+    async def settle_usage(
+        self,
+        user_id: str,
+        reserved_usd: float,
+        actual_cost_usd: float,
+        prompt_tokens: int,
+        completion_tokens: int,
+    ) -> float:
+        """Adjust the reservation to actuals and record the usage split.
+
+        Returns the user's total spend after settling."""
+        doc = await self._collection.find_one_and_update(
+            {"_id": ObjectId(user_id)},
+            {
+                "$inc": {
+                    "usage.cost_usd": actual_cost_usd - reserved_usd,
+                    "usage.prompt_tokens": prompt_tokens,
+                    "usage.completion_tokens": completion_tokens,
+                    "usage.readings": 1,
+                },
+                "$set": {"usage.updated_at": datetime.now(UTC)},
+            },
+            return_document=ReturnDocument.AFTER,
+        )
+        return doc["usage"]["cost_usd"] if doc else actual_cost_usd
+
+    async def release_usage(self, user_id: str, reserved_usd: float) -> None:
+        """Give the reservation back — the user is never charged for a reading they
+        didn't receive."""
         await self._collection.update_one(
             {"_id": ObjectId(user_id)},
-            {"$inc": {"total_tokens_used": tokens}},
+            {"$inc": {"usage.cost_usd": -reserved_usd}},
         )
 
 
