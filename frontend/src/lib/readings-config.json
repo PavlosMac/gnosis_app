@@ -96,17 +96,17 @@
             "description": "An 11 card Kabbalah card reading",
             "cards": 11,
             "positions": [
-                { "name": "Kether", "description": "The Crown — divine will and highest spiritual aspiration" },
-                { "name": "Chokmah", "description": "Wisdom — raw creative force and initial spark" },
-                { "name": "Binah", "description": "Understanding — form, structure, and receptive intelligence" },
-                { "name": "Chesed", "description": "Mercy — expansion, abundance, and loving-kindness" },
-                { "name": "Geburah", "description": "Severity — discipline, strength, and necessary limitation" },
-                { "name": "Tiphereth", "description": "Beauty — harmony, balance, and the integrated self" },
-                { "name": "Netzach", "description": "Victory — emotions, desire, and creative expression" },
-                { "name": "Hod", "description": "Splendor — intellect, communication, and analytical thought" },
-                { "name": "Yesod", "description": "Foundation — the subconscious, dreams, and intuition" },
-                { "name": "Malkuth", "description": "Kingdom — the physical world, manifestation, and grounding" },
-                { "name": "Daath", "description": "Knowledge — the hidden sephira, the abyss, and transformative insight" }
+                { "name": "Kether", "description": "The fruit of the life so far. Karmic situation. The source perspective. The card that falls here represents the nature of the experience you have led so far." },
+                { "name": "Chokmah", "description": "The complexion of current energies. Male figures. Present involvements. This zone connotes current events in our lives and the energy needed to accomplish them. Immediate future, 1–3 weeks." },
+                { "name": "Binah", "description": "Material circumstances. Burdens, tests. Energy from women, toward women. The mother. The past. This zone relates to the Taurean aspects of our life — the physical comforts around us, responsibilities and our material situation. Also the mother or female relationships." },
+                { "name": "Chesed", "description": "Future. Male figures. Opportunities, strengths, allies. This zone covers a longer period of up to 3 months." },
+                { "name": "Geburah", "description": "The recent past. Obstacles. Where energy has been wasted. Weaknesses. Rivals. Opponents. Conflict. Warnings." },
+                { "name": "Tiphereth", "description": "The present situation. Current state of energy and constitution. Pressing needs and concerns. Children. Present achievements. This zone can connote a kind of coming together of extremes, as it is centered in the middle of the tree, reflecting neither future nor past." },
+                { "name": "Netzach", "description": "Emotion. Creativity. Domestic situation. Emotional needs." },
+                { "name": "Hod", "description": "The external world (influences from or toward it). Mental life. Thinking processes. Daily goings on. Friends. Siblings. Informal meetings and contacts." },
+                { "name": "Yesod", "description": "Subconscious temperament. The dominant psychic complex. What is hidden. Secret desires. Fears. Worries. Self-image." },
+                { "name": "Malkuth", "description": "The seed of the next life period (six months ahead). Where we may sabotage ourselves during the coming period. The \"homework\" card." },
+                { "name": "Daath", "description": "The viewpoint of the Higher Intelligence. Perspective of the Guides. Messages from the Source. Relationships. Partner's life. Desires. Objectives. Future expectations. Legalities." }
             ]
         },
         {
