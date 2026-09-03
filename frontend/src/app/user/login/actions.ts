@@ -31,8 +31,11 @@ const authenticateWithCredentials = async (
   });
 
   if (!result.ok) {
-    console.log("[AUTH:LOGIN] Login failed", { error: result.message });
-    return { success: false, error: result.message };
+    console.log("[AUTH:LOGIN] Login failed", { status: result.status, error: result.message });
+    // On the login endpoint 401 means bad credentials, not an expired session —
+    // override the generic SAFE_MESSAGES mapping
+    const error = result.status === 401 ? "Incorrect email or password." : result.message;
+    return { success: false, error };
   }
 
   console.log("[AUTH:LOGIN] Login successful — setting cookies");
