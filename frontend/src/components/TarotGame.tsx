@@ -1,13 +1,14 @@
 "use client";
 import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import Reading from "@/components/Reading";
+import Reading, { isTreeOfLife, isRelationship } from "@/components/Reading";
 import ShuffledDeck from "@/components/ShuffledDeck";
 import FaceUpDeck from "@/components/FaceUpDeck";
 import ShuffleAnimation from "@/components/ShuffleAnimation";
 import InterpretationModal from "@/components/InterpretationModal";
 import LoginToInterpretModal from "@/components/LoginToInterpretModal";
 import OrnateFrame from "@/components/OrnateFrame";
+import SpreadPreview from "@/components/SpreadPreview";
 import readingsConfig from "@/lib/readings-config.json";
 import { parseAndValidateDate } from "@/lib/dateValidation";
 
@@ -48,6 +49,28 @@ export default function TarotGame({ user, mode = 'draw' }: TarotGameProps) {
     () => spreadOptions.find((r) => r.name === DEFAULT_READING_NAME) ?? spreadOptions[0]
   );
   const [allowReversals, setAllowReversals] = useState(false);
+  // Spread layout preview visibility; closed by default, persisted, read after mount to avoid a hydration mismatch
+  const [showPreview, setShowPreview] = useState(false);
+  useEffect(() => {
+    try {
+      if (localStorage.getItem("tarot:spread-preview-open") === "true") setShowPreview(true);
+    } catch { /* storage unavailable — keep default */ }
+  }, []);
+  // After the (re)mounted card settles, bring whichever instance is visible fully into view
+  const scrollPreviewIntoView = useCallback(() => {
+    setTimeout(() => {
+      const anchors = document.querySelectorAll<HTMLElement>("[data-spread-preview-anchor]");
+      const visible = Array.from(anchors).find((el) => el.offsetParent !== null);
+      visible?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }, READING_SCROLL_DELAY);
+  }, []);
+
+  const togglePreview = useCallback(() => {
+    const next = !showPreview;
+    setShowPreview(next);
+    try { localStorage.setItem("tarot:spread-preview-open", String(next)); } catch { /* ignore */ }
+    if (next) scrollPreviewIntoView();
+  }, [showPreview, scrollPreviewIntoView]);
   const [userQuestion, setUserQuestion] = useState<string>("");
   const [showOracleInfo, setShowOracleInfo] = useState(false);
   const [showInterpretModal, setShowInterpretModal] = useState(false);
@@ -269,8 +292,10 @@ export default function TarotGame({ user, mode = 'draw' }: TarotGameProps) {
 
   return (
     <>
+    {/* During setup, the spread preview rides as a sibling card to the right of the oracle card */}
+    <div className="w-full flex flex-col lg:flex-row lg:items-stretch lg:justify-center gap-6 mt-16">
     {/* overflow-clip (not hidden) so the face-up deck's sticky tray can pin to the page scroll */}
-    <div className="relative w-full max-w-6xl mx-auto mt-16 overflow-clip rounded-xl border-2 border-[#d4af37]/30 shadow-2xl"
+    <div className="relative w-full lg:flex-1 lg:min-w-0 max-w-6xl mx-auto lg:mx-0 overflow-clip rounded-xl border-2 border-[#d4af37]/30 shadow-2xl"
          style={{
            background: 'linear-gradient(135deg, rgba(26,0,51,0.95) 0%, rgba(45,27,78,0.95) 100%)',
          }}>
@@ -292,7 +317,7 @@ export default function TarotGame({ user, mode = 'draw' }: TarotGameProps) {
 
         <p className={`text-center text-[#d4af37]/70 mb-8 text-sm sm:text-base tracking-wide ${isCompact ? 'hidden sm:block' : ''}`}
            style={{ fontFamily: "'Crimson Pro', serif" }}>
-          {isManual ? '✦ Lay Out the Cards You Have Drawn ✦' : '✦ Unveil the Mysteries of Your Path ✦'}
+          {isManual ? '✦ Lay Out the Cards You Have Drawn ✦' : '✦ Unveil the Mysteries ✦'}
         </p>
 
         {/* Pre-game selection screen */}
@@ -316,6 +341,8 @@ export default function TarotGame({ user, mode = 'draw' }: TarotGameProps) {
                   if (reading) {
                     setSelectedReading(reading);
                     setUserQuestion("");
+                    // The card re-mounts (possibly taller, or on the other side of the layout) — keep it in view
+                    if (showPreview) scrollPreviewIntoView();
                   }
                 }}
               >
@@ -329,6 +356,31 @@ export default function TarotGame({ user, mode = 'draw' }: TarotGameProps) {
                  style={{ fontFamily: "'Crimson Pro', serif" }}>
                 {selectedReading.description}
               </p>
+              <button
+                type="button"
+                onClick={togglePreview}
+                aria-expanded={showPreview}
+                className="mt-3 flex items-center gap-2 text-[11px] tracking-[0.2em] uppercase
+                           text-[#d4af37]/50 hover:text-[#d4af37]/90 transition-colors select-none"
+                style={{ fontFamily: "'Cinzel', serif" }}
+              >
+                <span aria-hidden="true">✦</span>
+                Spread Layout
+                <svg
+                  viewBox="0 0 12 12"
+                  className={`w-3 h-3 transition-transform duration-300 ${showPreview ? "" : "-rotate-90"}`}
+                  aria-hidden="true"
+                >
+                  <path d="M2 4l4 4 4-4" fill="none" stroke="currentColor" strokeWidth="1.5"
+                        strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </button>
+              {/* Spread layout preview — mobile/tablet instance; desktop shows the aside or below-card instead */}
+              {showPreview && (
+                <div data-spread-preview-anchor className="lg:hidden w-full flex justify-center mt-5">
+                  <SpreadPreview reading={selectedReading} />
+                </div>
+              )}
             </div>
 
             {/* Reversals segmented pill — manual mode sets orientation per card in the tray */}
@@ -512,7 +564,7 @@ export default function TarotGame({ user, mode = 'draw' }: TarotGameProps) {
                 <div className="mb-1 sm:mb-6 text-center hidden sm:block">
                   <span className="font-semibold text-[#e6d5b8] text-lg tracking-wide"
                         style={{ fontFamily: "'Crimson Pro', serif" }}>
-                    Select {numCards} card{numCards > 1 ? 's' : ''} from the sacred deck
+                    Select {numCards} card{numCards > 1 ? 's' : ''} from the Rider Waite deck
                   </span>
                 </div>
 
@@ -617,6 +669,20 @@ export default function TarotGame({ user, mode = 'draw' }: TarotGameProps) {
       </div>
 
     </div>
+
+    {/* Tall spreads (Tree of Life, Relationship) earn the side panel; the rest go below */}
+    {game.phase === 'setup' && showPreview && (isTreeOfLife(positionNames) || isRelationship(positionNames)) && (
+      <aside data-spread-preview-anchor className="hidden lg:flex w-72 shrink-0">
+        <SpreadPreview reading={selectedReading} />
+      </aside>
+    )}
+    </div>
+
+    {game.phase === 'setup' && showPreview && !isTreeOfLife(positionNames) && !isRelationship(positionNames) && (
+      <div data-spread-preview-anchor className="hidden lg:flex w-full max-w-6xl mx-auto justify-center mt-6">
+        <SpreadPreview reading={selectedReading} variant="wide" />
+      </div>
+    )}
 
     {showOracleInfo && (
       <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4"
