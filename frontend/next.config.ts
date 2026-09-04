@@ -64,14 +64,22 @@ const nextConfig: NextConfig = {
     ],
   },
 
-  // Aggressive caching headers for static assets
+  // Aggressive caching headers for static assets — PRODUCTION ONLY.
+  // Dev (Turbopack) chunk filenames are stable across code changes, so
+  // immutable/1-year headers make the browser keep stale chunks and new
+  // code silently never renders (see docs/project_notes/bugs.md 2026-08-27).
+  // Prod chunk names are content-hashed, so long-lived caching is safe there.
   async headers() {
+    const security = {
+      // Apply security headers to all routes
+      source: '/:path*',
+      headers: securityHeaders,
+    };
+    if (process.env.NODE_ENV !== 'production') {
+      return [security];
+    }
     return [
-      {
-        // Apply security headers to all routes
-        source: '/:path*',
-        headers: securityHeaders,
-      },
+      security,
       {
         // Cache static assets (JS, CSS, fonts, images) for 1 year
         source: '/:all*(svg|jpg|jpeg|png|gif|ico|webp|avif|woff|woff2|ttf|otf)',
