@@ -19,7 +19,12 @@ from src.readings.queries.list_user_readings import (
     ListUserReadingsHandler,
     ListUserReadingsQuery,
 )
-from src.readings.repository import ReadingReadRepository, ReadingWriteRepository
+from src.readings.repository import (
+    ReadingReadRepository,
+    ReadingWriteRepository,
+    UserTagsReadRepository,
+    UserTagsWriteRepository,
+)
 from src.readings.service import ReadingNotFoundError
 
 
@@ -31,6 +36,11 @@ def user_id():
 @pytest.fixture
 def repos(mock_db):
     return ReadingWriteRepository(mock_db), ReadingReadRepository(mock_db)
+
+
+@pytest.fixture
+def user_tags_repos(mock_db):
+    return UserTagsWriteRepository(mock_db), UserTagsReadRepository(mock_db)
 
 
 @pytest.fixture
@@ -46,15 +56,19 @@ def get_handler(repos, mock_db):
 
 
 @pytest.fixture
-def list_handler(repos):
+def list_handler(repos, user_tags_repos):
     _, read_repo = repos
-    return ListUserReadingsHandler(read_repo)
+    _, user_tags_read_repo = user_tags_repos
+    return ListUserReadingsHandler(read_repo, user_tags_read_repo)
 
 
 @pytest.fixture
-def update_tags_handler(repos):
+def update_tags_handler(repos, user_tags_repos):
     write_repo, read_repo = repos
-    return UpdateReadingTagsHandler(write_repo=write_repo, read_repo=read_repo)
+    user_tags_write_repo, _ = user_tags_repos
+    return UpdateReadingTagsHandler(
+        write_repo=write_repo, read_repo=read_repo, user_tags_write_repo=user_tags_write_repo
+    )
 
 
 def _make_command(user_id: str, spread: str = "Celtic Cross") -> CreateReadingCommand:
@@ -212,3 +226,39 @@ async def test_list_user_readings_ranks_by_tag_overlap(
 
     assert [item.spread_type for item in result.items] == ["Two Match", "One Match"]
     assert result.total == 2
+
+
+async def test_list_user_readings_user_tags_empty_without_document(
+    create_handler, list_handler, user_id
+):
+    await create_handler.handle(_make_command(user_id))
+    result = await list_handler.handle(ListUserReadingsQuery(user_id=user_id))
+    assert result.user_tags == []
+
+
+async def test_list_user_readings_returns_stored_user_tags(
+    create_handler, list_handler, update_tags_handler, user_id
+):
+    """The vocabulary is the user's full tag set — untouched by the list's filters
+    or page size, so the front-end can cache it across requests."""
+    first = await create_handler.handle(_make_command(user_id, spread="Celtic Cross"))
+    second = await create_handler.handle(_make_command(user_id, spread="Three Card"))
+    other_user = str(ObjectId())
+    theirs = await create_handler.handle(_make_command(other_user))
+
+    await update_tags_handler.handle(
+        UpdateReadingTagsCommand(reading_id=first.id, user_id=user_id, tags=["career", "love"])
+    )
+    await update_tags_handler.handle(
+        UpdateReadingTagsCommand(reading_id=second.id, user_id=user_id, tags=["career"])
+    )
+    await update_tags_handler.handle(
+        UpdateReadingTagsCommand(reading_id=theirs.id, user_id=other_user, tags=["luck"])
+    )
+
+    result = await list_handler.handle(
+        ListUserReadingsQuery(user_id=user_id, spread_type="Three Card", tags=["love"], page_size=1)
+    )
+
+    assert [(t.name, t.count) for t in result.user_tags] == [("career", 2), ("love", 1)]
+    assert result.total == 0

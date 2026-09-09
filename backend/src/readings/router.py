@@ -3,14 +3,13 @@ from datetime import date
 from fastapi import APIRouter, Query
 
 from src.core.dependencies import CurrentUserId, MediatorDep
-from src.core.pagination import PaginatedResponse
 from src.readings.commands.create_reading import CreateReadingCommand
 from src.readings.commands.update_reading_tags import UpdateReadingTagsCommand
 from src.readings.queries.get_reading_by_id import GetReadingByIdQuery
 from src.readings.queries.list_user_readings import ListUserReadingsQuery
 from src.readings.schemas import (
     CreateReadingRequest,
-    ReadingListItem,
+    ReadingListResponse,
     ReadingReadModel,
     UpdateReadingTagsRequest,
     parse_comma_separated_tags,
@@ -35,7 +34,7 @@ async def create_reading(
     return await mediator.send(command)
 
 
-@router.get("", response_model=PaginatedResponse[ReadingListItem])
+@router.get("", response_model=ReadingListResponse)
 async def list_readings(
     user_id: CurrentUserId,
     mediator: MediatorDep,
@@ -44,7 +43,7 @@ async def list_readings(
     spread_type: str | None = Query(default=None),
     birth_date: date | None = Query(default=None),
     tags: str | None = Query(default=None),
-) -> PaginatedResponse[ReadingListItem]:
+) -> ReadingListResponse:
     return await mediator.query(
         ListUserReadingsQuery(
             user_id=user_id,

@@ -30,6 +30,7 @@ async def test_list_readings_empty(client, auth_token):
     data = resp.json()
     assert data["items"] == []
     assert data["total"] == 0
+    assert data["user_tags"] == []
 
 
 async def test_list_readings_after_create(client, auth_token):
@@ -191,6 +192,42 @@ async def test_list_readings_filters_by_tags(client, auth_token):
     )
     data = resp.json()
     assert [item["spread_type"] for item in data["items"]] == ["Two Match", "Celtic Cross"]
+
+
+async def test_list_readings_returns_user_tags(client, auth_token):
+    first = await client.post(
+        "/api/v1/readings",
+        json=VALID_READING_BODY,
+        headers={"Authorization": f"Bearer {auth_token}"},
+    )
+    second = await client.post(
+        "/api/v1/readings",
+        json=VALID_READING_BODY,
+        headers={"Authorization": f"Bearer {auth_token}"},
+    )
+    await client.patch(
+        f"/api/v1/readings/{first.json()['_id']}/tags",
+        json={"tags": "Career, love"},
+        headers={"Authorization": f"Bearer {auth_token}"},
+    )
+    await client.patch(
+        f"/api/v1/readings/{second.json()['_id']}/tags",
+        json={"tags": "career"},
+        headers={"Authorization": f"Bearer {auth_token}"},
+    )
+
+    resp = await client.get(
+        "/api/v1/readings?tags=luck&page_size=1",
+        headers={"Authorization": f"Bearer {auth_token}"},
+    )
+
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["items"] == []
+    assert data["user_tags"] == [
+        {"name": "career", "count": 2},
+        {"name": "love", "count": 1},
+    ]
 
 
 async def test_update_reading_tags_unauthenticated(client):

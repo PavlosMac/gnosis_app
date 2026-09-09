@@ -1,13 +1,18 @@
 import pytest
 from bson import ObjectId
 
+from src.database.collections.constants import USER_TAGS_COLLECTION
 from src.llm.schemas import CardInSpread
 from src.readings.commands.create_reading import CreateReadingCommand, CreateReadingHandler
 from src.readings.commands.update_reading_tags import (
     UpdateReadingTagsCommand,
     UpdateReadingTagsHandler,
 )
-from src.readings.repository import ReadingReadRepository, ReadingWriteRepository
+from src.readings.repository import (
+    ReadingReadRepository,
+    ReadingWriteRepository,
+    UserTagsWriteRepository,
+)
 from src.readings.service import ReadingNotFoundError
 
 
@@ -37,6 +42,7 @@ def update_tags_handler(mock_db):
     return UpdateReadingTagsHandler(
         write_repo=ReadingWriteRepository(mock_db),
         read_repo=ReadingReadRepository(mock_db),
+        user_tags_write_repo=UserTagsWriteRepository(mock_db),
     )
 
 
@@ -144,6 +150,53 @@ async def test_update_reading_tags_wrong_user(handler, valid_command, update_tag
                 reading_id=created.id, user_id=str(ObjectId()), tags=["career"]
             )
         )
+
+
+async def test_update_reading_tags_rewrites_user_tags_document(
+    handler, valid_command, update_tags_handler, mock_db
+):
+    """The per-user vocabulary is derived state: every tag edit rebuilds it from that
+    user's readings, so counts and order (most-used first, then name) always match."""
+    user_id = valid_command.user_id
+    first = await handler.handle(valid_command)
+    second = await handler.handle(valid_command)
+
+    await update_tags_handler.handle(
+        UpdateReadingTagsCommand(reading_id=first.id, user_id=user_id, tags=["love", "career"])
+    )
+    await update_tags_handler.handle(
+        UpdateReadingTagsCommand(reading_id=second.id, user_id=user_id, tags=["career"])
+    )
+
+    doc = await mock_db[USER_TAGS_COLLECTION].find_one({"user_id": ObjectId(user_id)})
+    assert doc["tags"] == [{"name": "career", "count": 2}, {"name": "love", "count": 1}]
+    assert doc["updated_at"] is not None
+
+    await update_tags_handler.handle(
+        UpdateReadingTagsCommand(reading_id=first.id, user_id=user_id, tags=[])
+    )
+
+    doc = await mock_db[USER_TAGS_COLLECTION].find_one({"user_id": ObjectId(user_id)})
+    assert doc["tags"] == [{"name": "career", "count": 1}]
+    assert await mock_db[USER_TAGS_COLLECTION].count_documents({}) == 1
+
+
+async def test_update_reading_tags_user_tags_scoped_to_owner(
+    handler, valid_command, update_tags_handler, mock_db
+):
+    other_user = str(ObjectId())
+    mine = await handler.handle(valid_command)
+    theirs = await handler.handle(valid_command.model_copy(update={"user_id": other_user}))
+
+    await update_tags_handler.handle(
+        UpdateReadingTagsCommand(reading_id=theirs.id, user_id=other_user, tags=["luck"])
+    )
+    await update_tags_handler.handle(
+        UpdateReadingTagsCommand(reading_id=mine.id, user_id=valid_command.user_id, tags=["career"])
+    )
+
+    doc = await mock_db[USER_TAGS_COLLECTION].find_one({"user_id": ObjectId(valid_command.user_id)})
+    assert doc["tags"] == [{"name": "career", "count": 1}]
 
 
 async def test_create_reading_without_position(handler, mock_db):

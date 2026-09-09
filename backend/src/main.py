@@ -43,7 +43,12 @@ from src.readings.commands.update_reading_tags import (
 )
 from src.readings.queries.get_reading_by_id import GetReadingByIdHandler, GetReadingByIdQuery
 from src.readings.queries.list_user_readings import ListUserReadingsHandler, ListUserReadingsQuery
-from src.readings.repository import ReadingReadRepository, ReadingWriteRepository
+from src.readings.repository import (
+    ReadingReadRepository,
+    ReadingWriteRepository,
+    UserTagsReadRepository,
+    UserTagsWriteRepository,
+)
 from src.readings.router import router as readings_router
 from src.users.queries.list_users import ListUsersHandler, ListUsersQuery
 from src.users.router import router as users_router
@@ -68,18 +73,22 @@ def _wire_mediator(mediator: Mediator, llm: LLMPort, db: AsyncIOMotorDatabase) -
 
     reading_write_repo = ReadingWriteRepository(db)
     reading_read_repo = ReadingReadRepository(db)
+    user_tags_write_repo = UserTagsWriteRepository(db)
+    user_tags_read_repo = UserTagsReadRepository(db)
     interpretation_write_repo = InterpretationWriteRepository(db)
     interpretation_read_repo = InterpretationReadRepository(db)
 
     mediator.register_command(CreateReadingCommand, CreateReadingHandler(reading_write_repo))
     mediator.register_command(
         UpdateReadingTagsCommand,
-        UpdateReadingTagsHandler(reading_write_repo, reading_read_repo),
+        UpdateReadingTagsHandler(reading_write_repo, reading_read_repo, user_tags_write_repo),
     )
     mediator.register_query(
         GetReadingByIdQuery, GetReadingByIdHandler(reading_read_repo, interpretation_read_repo)
     )
-    mediator.register_query(ListUserReadingsQuery, ListUserReadingsHandler(reading_read_repo))
+    mediator.register_query(
+        ListUserReadingsQuery, ListUserReadingsHandler(reading_read_repo, user_tags_read_repo)
+    )
     mediator.register_command(
         GenerateInterpretationCommand,
         GenerateInterpretationHandler(

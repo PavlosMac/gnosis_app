@@ -3,6 +3,7 @@ from datetime import date, datetime
 from pydantic import Field, field_validator
 
 from src.core.base_schema import AppSchema
+from src.core.pagination import PaginatedResponse
 from src.core.types import PyObjectId
 from src.interpretations.schemas import InterpretationReadModel
 from src.llm.schemas import CardInSpread, Orientation
@@ -75,3 +76,14 @@ class ReadingListItem(AppSchema):
     tags: list[str] = Field(default_factory=list)
     cards: list[CardReadModel]
     created_at: datetime
+
+
+class TagSummary(AppSchema):
+    name: str
+    count: int
+
+
+class ReadingListResponse(PaginatedResponse[ReadingListItem]):
+    # The user's whole tag vocabulary (most-used first), independent of the page and
+    # filters on this request — drives the front-end tag picker.
+    user_tags: list[TagSummary] = Field(default_factory=list)

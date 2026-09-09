@@ -77,6 +77,22 @@ Migration 008 collapsed the legacy per-card shape (`card_interpretations`, `synt
 `tokens_used`, `settings`) into one narrative document per reading — newest kept —
 and removed `settings` entirely.
 
+### user_tags
+Source: `src/readings/repository.py` (`UserTagsWriteRepository`). **One document per user**
+(unique `user_id` index) holding their whole tag vocabulary across readings — derived state,
+not user-edited. `UpdateReadingTagsHandler` rewrites it from that user's readings after every
+tag edit; migration 010 backfilled it. `GET /api/v1/readings` returns it as `user_tags`, so
+the front-end never has to page through readings to discover tags.
+
+| Field      | Type                  | Notes                                             |
+|------------|-----------------------|---------------------------------------------------|
+| _id        | ObjectId              | PK                                                |
+| user_id    | ObjectId              | FK→users, unique                                  |
+| tags       | [{name: str, count: int}] | readings carrying each tag; count desc, then name asc |
+| updated_at | datetime              | last rebuild                                      |
+
+Users who have never tagged a reading have no document (the API treats that as `[]`).
+
 ### _migrations
 Managed by `src/migrations/runner.py`. Fields: `version` (unique), `description`, `applied_at`.
 
@@ -85,11 +101,12 @@ Managed by `src/migrations/runner.py`. Fields: `version` (unique), `description`
 ```
 users ─1:N─→ refresh_tokens
 users ─1:N─→ readings ─1:N─→ interpretations
+users ─1:1─→ user_tags   (derived from that user's readings.tags)
 ```
 
 ## Indexes
 
-Owned by migrations. Current state after 001–009:
+Owned by migrations. Current state after 001–010:
 
 | Collection      | Index                                        | Options            | Migration |
 |-----------------|----------------------------------------------|--------------------|-----------|
@@ -104,6 +121,7 @@ Owned by migrations. Current state after 001–009:
 | readings        | `(user_id, spread_type, created_at desc)`    |                    | 003       |
 | readings        | `(user_id, spread_type, birth_date)`         |                    | 004       |
 | interpretations | `reading_id`                                 | unique             | 008 (superseded 005's `(reading_id, settings.lens)`) |
+| user_tags       | `user_id`                                    | unique             | 010       |
 | _migrations     | `version`                                    | unique             | runner    |
 
 ## Planned

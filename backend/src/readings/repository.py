@@ -1,11 +1,11 @@
-from datetime import date
+from datetime import UTC, date, datetime
 from typing import Any
 
 from bson import ObjectId
 from bson.errors import InvalidId
 
 from src.database.base_repository import BaseReadRepository, BaseWriteRepository
-from src.database.collections.constants import READINGS_COLLECTION
+from src.database.collections.constants import READINGS_COLLECTION, USER_TAGS_COLLECTION
 
 
 def _build_filter(
@@ -100,3 +100,45 @@ class ReadingReadRepository(BaseReadRepository):
             ]
         )
         return await cursor.to_list(length=limit)
+
+    async def count_tags_by_user_id(self, user_id: str) -> list[dict[str, Any]]:
+        """Every tag the user has applied with how many readings carry it — most-used
+        first, ties alphabetical. Readings created without tags omit the field, and
+        $unwind drops those, so no $exists guard is needed."""
+        cursor = self._collection.aggregate(
+            [
+                {"$match": {"user_id": ObjectId(user_id)}},
+                {"$unwind": "$tags"},
+                {"$group": {"_id": "$tags", "count": {"$sum": 1}}},
+                {"$sort": {"count": -1, "_id": 1}},
+                {"$project": {"_id": 0, "name": "$_id", "count": 1}},
+            ]
+        )
+        return await cursor.to_list(length=None)
+
+
+class UserTagsWriteRepository(BaseWriteRepository):
+    """One derived document per user: the tag vocabulary across all their readings.
+    Rewritten whole after every tag edit rather than maintained incrementally, so a
+    failed write can never leave the counts drifted from the readings."""
+
+    @property
+    def collection_name(self) -> str:
+        return USER_TAGS_COLLECTION
+
+    async def replace_for_user(self, user_id: str, tags: list[dict[str, Any]]) -> None:
+        oid = ObjectId(user_id)
+        await self._collection.replace_one(
+            {"user_id": oid},
+            {"user_id": oid, "tags": tags, "updated_at": datetime.now(UTC)},
+            upsert=True,
+        )
+
+
+class UserTagsReadRepository(BaseReadRepository):
+    @property
+    def collection_name(self) -> str:
+        return USER_TAGS_COLLECTION
+
+    async def find_by_user_id(self, user_id: str) -> dict[str, Any] | None:
+        return await self.find_one({"user_id": ObjectId(user_id)})
