@@ -10,9 +10,11 @@ phrased as "roughly N words" it overshot by ~20%.
 
 Spread variants are keyed off `spread_name`: `Significators` (a portrait chart, not a
 situational reading — no question axis, no reversal block: each card is a fixed facet
-of character) and `Tree of Life` (the three-pillar temporal structure baked in). For
-every variant the position meanings arrive per card from the frontend. Reversed
-guidance appears in both situational variants.
+of character), `Tree of Life` (the three-pillar temporal structure baked in) and
+`Relationship Reading` (3×3 pillar structure; no question axis — the template supplies
+the frame, and addressing is a prose conditional since any custom names arrive already
+substituted into the position strings). For every variant the position meanings arrive
+per card from the frontend. Reversed guidance appears in every situational variant.
 """
 
 import math
@@ -21,6 +23,7 @@ from typing import get_args
 
 from src.core.config import ReasoningEffort, settings
 from src.llm.schemas import (
+    RELATIONSHIP_SPREAD,
     SIGNIFICATORS_SPREAD,
     TREE_OF_LIFE_SPREAD,
     InterpretationRequest,
@@ -162,6 +165,53 @@ tensions between cards, and land on what the whole Tree resolves to for the ques
 )
 
 
+# Situational, but with no question axis by design (the frontend never sends one): the
+# template itself supplies the interpretive frame a question would. Custom names for the
+# two people are substituted by the frontend into the position strings and descriptions
+# and pass through the backend verbatim — so addressing is a prose conditional the model
+# resolves from the positions, not build-time logic.
+_RELATIONSHIP_TEMPLATE = (
+    """You are a master tarot reader working with the Rider–Waite deck, \
+drawing on your own deep knowledge of the cards — their imagery, traditional meanings and \
+correspondences. You may also draw on the allied mystical arts of numerology and astrology \
+where they aid the interpretation.
+
+This is a Relationship Reading: its subject is the relationship between two people. No question is \
+asked — the spread itself sets the agenda: the state of the relationship, what each person \
+brings to and wants from it, and how each of them — and the bond itself — is counselled to \
+proceed.
+
+"""
+    # The shared guidance, minus its reference to "the question" — this spread never
+    # has one. The .replace is pinned by a test, so it can't silently no-op if the
+    # shared wording changes.
+    + _REVERSAL_GUIDANCE.replace(
+        "whichever the question and position make apt",
+        "whichever the position and the state of the relationship make apt",
+    )
+    + """
+
+The spread is three pillars of three cards, and each position is tagged with whose it is: \
+the querent's pillar and the other person's pillar are the two people's sides, and the \
+middle pillar is the relationship itself — the common ground, where compromise and equal \
+ground can be found, and the counsel for the bond. The rows mirror across the pillars — \
+current behaviour, what is desired, how to proceed — so each row invites comparison: read \
+the correspondences and tensions between the two people's cards in the same row.
+
+If the positions carry personal names, the reading may concern people other than the one \
+requesting it: write of each person in the third person, referring to them by name \
+throughout. If the querent's positions carry no name, address the querent directly.
+
+Write the reading as one continuous, flowing narrative — not card-by-card sections. Move \
+through the spread naturally, naming each card explicitly as it arrives. Every card must be \
+woven in and do real work in the narrative with roughly a paragraph's weight, and land on \
+what the whole spread resolves to for the relationship.
+
+Write about {total_words} words — treat that as a ceiling, not a target to exceed. Every \
+sentence must earn its place: no textbook boilerplate, no hedging."""
+)
+
+
 @dataclass(frozen=True)
 class _SpreadVariant:
     """Everything that differs about how a spread variant is built. One entry per
@@ -183,6 +233,10 @@ _SPREAD_VARIANTS: dict[str, _SpreadVariant] = {
         has_question=False,
     ),
     TREE_OF_LIFE_SPREAD: _SpreadVariant(template=_TREE_OF_LIFE_TEMPLATE),
+    RELATIONSHIP_SPREAD: _SpreadVariant(
+        template=_RELATIONSHIP_TEMPLATE,
+        has_question=False,  # the frontend never sends a question for this spread
+    ),
 }
 _DEFAULT_VARIANT = _SpreadVariant(template=_STANDARD_TEMPLATE)
 

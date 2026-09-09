@@ -63,9 +63,7 @@ _SIGNIFICATORS_REQUEST = InterpretationRequest(
         CardInSpread(name="The Emperor", position="Day number", orientation=Orientation.upright),
         CardInSpread(name="Strength", position="Life number", orientation=Orientation.upright),
         CardInSpread(name="The Sun", position="Star sign", orientation=Orientation.upright),
-        CardInSpread(
-            name="Six of Pentacles", position="Decanate", orientation=Orientation.upright
-        ),
+        CardInSpread(name="Six of Pentacles", position="Decanate", orientation=Orientation.upright),
     ],
 )
 
@@ -80,13 +78,74 @@ _TREE_REQUEST = InterpretationRequest(
         CardInSpread(name="Five of Swords", position="Geburah", orientation=Orientation.upright),
         CardInSpread(name="The Sun", position="Tiphareth", orientation=Orientation.upright),
         CardInSpread(name="Two of Cups", position="Netzach", orientation=Orientation.reversed),
-        CardInSpread(
-            name="Eight of Pentacles", position="Hod", orientation=Orientation.upright
-        ),
+        CardInSpread(name="Eight of Pentacles", position="Hod", orientation=Orientation.upright),
         CardInSpread(name="The Moon", position="Yesod", orientation=Orientation.reversed),
         CardInSpread(name="The World", position="Malkuth", orientation=Orientation.upright),
+        CardInSpread(name="The High Priestess", position="Daath", orientation=Orientation.upright),
+    ],
+)
+
+
+# The full 9-card payload with both pillars personalized ("Pavlos"/"Maria") — the names
+# are substituted by the frontend into the position strings and pass through verbatim;
+# no question is ever sent for this spread.
+_RELATIONSHIP_REQUEST = InterpretationRequest(
+    spread_name="Relationship Reading",
+    cards=[
         CardInSpread(
-            name="The High Priestess", position="Daath", orientation=Orientation.upright
+            name="The Magician",
+            position="Current behaviour (Pavlos) - querent",
+            orientation=Orientation.upright,
+            position_description="What is Pavlos's current behaviour?",
+        ),
+        CardInSpread(
+            name="Two of Cups",
+            position="What is desired (Pavlos) - querent",
+            orientation=Orientation.upright,
+            position_description="What is desired by Pavlos?",
+        ),
+        CardInSpread(
+            name="The Hierophant",
+            position="How to proceed (Pavlos) - querent",
+            orientation=Orientation.reversed,
+            position_description="How should Pavlos proceed?",
+        ),
+        CardInSpread(
+            name="The Lovers",
+            position="Current situation - relationship",
+            orientation=Orientation.upright,
+            position_description="What is the current state of the relationship?",
+        ),
+        CardInSpread(
+            name="Temperance",
+            position="What is desired - relationship",
+            orientation=Orientation.upright,
+            position_description="What does the relationship need — where can compromise and "
+            "equal ground be found?",
+        ),
+        CardInSpread(
+            name="The Star",
+            position="How to proceed - relationship",
+            orientation=Orientation.upright,
+            position_description="How is the relationship advised to proceed?",
+        ),
+        CardInSpread(
+            name="Queen of Wands",
+            position="Current behaviour (Maria) - other",
+            orientation=Orientation.upright,
+            position_description="What is Maria's current behaviour?",
+        ),
+        CardInSpread(
+            name="Nine of Cups",
+            position="What is desired (Maria) - other",
+            orientation=Orientation.reversed,
+            position_description="What is desired by Maria?",
+        ),
+        CardInSpread(
+            name="Six of Swords",
+            position="How to proceed (Maria) - other",
+            orientation=Orientation.upright,
+            position_description="How should Maria proceed?",
         ),
     ],
 )
@@ -124,6 +183,7 @@ def render_blocks() -> str:
         ("Standard system prompt", SAMPLE_REQUEST),
         ("Significators variant (portrait chart)", _SIGNIFICATORS_REQUEST),
         ("Tree of Life variant (zones baked in)", _TREE_REQUEST),
+        ("Relationship Reading variant (3×3 pillars, no question)", _RELATIONSHIP_REQUEST),
     ]
     for label, request in variants:
         out += [f"#### {label}", "", _fence(build_system_prompt(request)), ""]

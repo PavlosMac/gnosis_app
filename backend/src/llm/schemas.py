@@ -3,9 +3,11 @@ from enum import StrEnum
 
 from pydantic import BaseModel, Field
 
-# The only two spread names the backend special-cases (system-prompt variants).
+# The only spread names the backend special-cases (system-prompt variants). Each value
+# must match the spread `name` in the frontend's readings-config.json.
 SIGNIFICATORS_SPREAD = "Significators"
 TREE_OF_LIFE_SPREAD = "Tree of Life"
+RELATIONSHIP_SPREAD = "Relationship Reading"
 
 
 class Orientation(StrEnum):

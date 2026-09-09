@@ -260,6 +260,96 @@ def test_tree_of_life_stays_situational():
     assert "reversal" in prompt.lower()
 
 
+# --- Relationship Reading variant ---
+
+
+def _relationship_request(question: str | None = None) -> InterpretationRequest:
+    """Three of the nine cards, one per pillar, with the frontend's personalized
+    position strings (names already substituted — the backend passes them verbatim)."""
+    return _make_request(
+        [
+            CardInSpread(
+                name="The Magician",
+                position="Current behaviour (Pavlos) - querent",
+                orientation=Orientation.upright,
+                position_description="What is Pavlos's current behaviour?",
+            ),
+            CardInSpread(
+                name="The Lovers",
+                position="Current situation - relationship",
+                orientation=Orientation.upright,
+                position_description="What is the current state of the relationship?",
+            ),
+            CardInSpread(
+                name="Queen of Wands",
+                position="Current behaviour (Maria) - other",
+                orientation=Orientation.upright,
+                position_description="What is Maria's current behaviour?",
+            ),
+        ],
+        question=question,
+        spread_name="Relationship Reading",
+    )
+
+
+def test_relationship_states_purpose_in_place_of_a_question():
+    """No question axis for this spread — the template itself supplies the
+    interpretive frame a question would."""
+    prompt = build_system_prompt(_relationship_request())
+    assert "what the question asks" not in prompt
+    assert "relationship between two people" in prompt
+    assert "the spread itself sets the agenda" in prompt
+
+
+def test_relationship_describes_the_pillar_structure():
+    prompt = build_system_prompt(_relationship_request())
+    assert "three pillars" in prompt
+    assert "middle pillar" in prompt.lower()
+    assert "querent" in prompt
+    assert "other person" in prompt
+
+
+def test_relationship_rows_mirror_for_comparison():
+    prompt = build_system_prompt(_relationship_request())
+    assert "current behaviour" in prompt
+    assert "what is desired" in prompt
+    assert "how to proceed" in prompt
+    assert "same row" in prompt
+
+
+def test_relationship_addressing_is_a_prose_conditional():
+    """Custom names ride inside the position strings; the template must carry both
+    branches — third person by name when named, direct address when not — because
+    the backend resolves nothing at build time."""
+    prompt = build_system_prompt(_relationship_request())
+    assert "third person" in prompt
+    assert "by name" in prompt
+    assert "address the querent directly" in prompt.lower()
+
+
+def test_relationship_keeps_reversal_guidance():
+    """The shared guidance, but with no reference to "the question" — this spread
+    never has one."""
+    prompt = build_system_prompt(_relationship_request())
+    assert "reversal" in prompt.lower()
+    assert "the question" not in prompt
+    assert "whichever the position and the state of the relationship make apt" in prompt
+
+
+def test_relationship_states_budget_as_ceiling():
+    req = _relationship_request()
+    prompt = build_system_prompt(req)
+    assert f"Write about {request_word_budget(req)} words" in prompt
+    assert "a ceiling, not a target to exceed" in prompt
+
+
+def test_relationship_user_prompt_has_no_question_line():
+    """The frontend never sends a question for this spread; one sent anyway by a raw
+    API caller is dropped — matching the Significators precedent."""
+    prompt = build_user_prompt(_relationship_request(question="Will it last?"))
+    assert "Will it last?" not in prompt
+    assert "No question was asked" not in prompt
+    assert prompt.startswith("Spread: Relationship Reading")
 
 
 # --- Word budget (server-owned, linear) ---

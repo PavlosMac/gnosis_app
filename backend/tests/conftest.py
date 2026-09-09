@@ -163,5 +163,3 @@ def make_reading(create_reading_handler, user_id):
         )
 
     return _make
-
-
