@@ -1,5 +1,6 @@
 import React, { useMemo } from "react";
 import { MANUAL_DECK_ORDER } from "@/lib/cards";
+import { displayPositionName } from "@/lib/relationship-spread";
 import type { SelectedCard } from "@/types/reading";
 
 interface FaceUpDeckProps {
@@ -32,7 +33,8 @@ const FaceUpDeck: React.FC<FaceUpDeckProps> = React.memo(({
   onCancel,
 }) => {
   const isComplete = selectedCards.length >= numCards;
-  const nextPosition = positions[selectedCards.length];
+  // Custom pillar names read as "… - Pavlos" rather than "… (Pavlos) - querent"
+  const nextPosition = positions[selectedCards.length] && displayPositionName(positions[selectedCards.length]);
   // idx → position slot, so the 78-card grid does one lookup per card instead of a scan
   const pickedAt = useMemo(
     () => new Map(selectedCards.map((c, i) => [c.idx, i])),
@@ -71,7 +73,7 @@ const FaceUpDeck: React.FC<FaceUpDeckProps> = React.memo(({
               />
               <div className="flex flex-col min-w-0">
                 <span className="text-xs sm:text-sm text-[#d4af37]/70 uppercase tracking-wider truncate" style={CINZEL}>
-                  {i + 1}. {positions[i]}
+                  {i + 1}. {displayPositionName(positions[i])}
                 </span>
                 <span className="text-sm sm:text-lg text-[#e6d5b8] truncate" style={CRIMSON}>
                   {card.name}{card.reversed ? ' (reversed)' : ''}
@@ -135,7 +137,7 @@ const FaceUpDeck: React.FC<FaceUpDeckProps> = React.memo(({
             const selected = slot === undefined ? undefined : selectedCards[slot];
             const disabled = !selected && isComplete;
             const label = selected
-              ? `${card.name} — selected for ${positions[slot!]}${selected.reversed ? ', reversed' : ''}`
+              ? `${card.name} — selected for ${displayPositionName(positions[slot!])}${selected.reversed ? ', reversed' : ''}`
               : card.name;
             return (
               <button

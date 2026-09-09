@@ -1,7 +1,13 @@
 import React from "react";
 import TarotCard from "./TarotCard";
 import type { SelectedCard } from "@/types/reading";
-import { RELATIONSHIP_PILLARS, CARDS_PER_PILLAR, groupByPillar } from "@/lib/relationship-spread";
+import {
+  RELATIONSHIP_PILLARS,
+  CARDS_PER_PILLAR,
+  groupByPillar,
+  extractPillarNames,
+  positionCaption,
+} from "@/lib/relationship-spread";
 
 interface RelationshipLayoutProps {
   selectedCards: SelectedCard[];
@@ -25,6 +31,9 @@ const RelationshipLayout: React.FC<RelationshipLayoutProps> = ({
   positions,
 }) => {
   const pillars = groupByPillar(positions);
+  // Custom querent/other names travel inside the position strings (live game
+  // and saved readings alike), so headers are derived rather than passed in
+  const pillarLabels = extractPillarNames(positions);
 
   return (
     <div className="grid grid-cols-3 items-start gap-x-1 gap-y-4 sm:gap-x-6 sm:gap-y-6 px-1 sm:px-4 max-w-4xl mx-auto">
@@ -34,7 +43,7 @@ const RelationshipLayout: React.FC<RelationshipLayoutProps> = ({
           className="text-[10px] sm:text-sm text-[#d4af37] tracking-[0.2em] sm:tracking-[0.3em] uppercase border-b border-[#d4af37]/30 pb-1 sm:pb-2 w-full text-center"
           style={{ fontFamily: "'Cinzel', serif" }}
         >
-          {label}
+          {(key !== "relationship" && pillarLabels?.[key]) || label}
         </h3>
       ))}
       {Array.from({ length: CARDS_PER_PILLAR }, (_, row) =>
@@ -54,7 +63,7 @@ const RelationshipLayout: React.FC<RelationshipLayoutProps> = ({
                   className="block text-[9px] sm:text-xs leading-tight text-[#d4af37]/70 tracking-wide sm:tracking-widest break-words"
                   style={{ fontFamily: "'Cinzel', serif" }}
                 >
-                  {positions[i].toUpperCase()}
+                  {positionCaption(positions[i], pillarLabels).toUpperCase()}
                 </span>
               </div>
               <TarotCard card={card} small={true} showMeaning={false} />

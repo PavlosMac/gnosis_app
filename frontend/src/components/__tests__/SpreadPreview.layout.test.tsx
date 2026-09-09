@@ -40,6 +40,20 @@ describe("SpreadPreview layout shapes", () => {
     expect(html).toContain("Current behaviour");
   });
 
+  it("renders custom pillar names as Relationship column headers", () => {
+    const html = renderToStaticMarkup(
+      <SpreadPreview
+        reading={readingOf("Relationship Reading")}
+        pillarLabels={{ querent: "Alice", other: "Maria" }}
+      />
+    );
+    expect(html).toContain("Alice");
+    expect(html).toContain("Maria");
+    expect(html).toContain("Relationship");
+    expect(html).not.toContain("Querent");
+    expect(html).not.toContain("Other");
+  });
+
   it("renders Tree of Life as 11 slots in Kabbalah row order", () => {
     const html = render("Tree of Life");
     expect(slotCount(html)).toBe(11);

@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import Reading, { isTreeOfLife, isRelationship } from "@/components/Reading";
+import Reading, { isRelationship } from "@/components/Reading";
 import ShuffledDeck from "@/components/ShuffledDeck";
 import FaceUpDeck from "@/components/FaceUpDeck";
 import ShuffleAnimation from "@/components/ShuffleAnimation";
@@ -9,6 +9,13 @@ import InterpretationModal from "@/components/InterpretationModal";
 import LoginToInterpretModal from "@/components/LoginToInterpretModal";
 import OrnateFrame from "@/components/OrnateFrame";
 import SpreadPreview from "@/components/SpreadPreview";
+import PillarNameInputs from "@/components/PillarNameInputs";
+import {
+  buildNamedRelationshipPositions,
+  autoTagNames,
+  type PillarNameOverrides,
+} from "@/lib/relationship-spread";
+import { updateReadingTags } from "@/app/user/readings/[id]/actions";
 import readingsConfig from "@/lib/readings-config.json";
 import { parseAndValidateDate } from "@/lib/dateValidation";
 
@@ -34,6 +41,8 @@ const DEFAULT_READING_NAME = readings[1].name;
 // Matches interpretRequestSchema.question max
 const QUESTION_MAX_LENGTH = 500;
 
+const DEFAULT_PILLAR_NAMES = { querent: "Querent", other: "Other" } as const;
+
 // Animation timing constants (in ms)
 const CARD_FLIP_DURATION = 600; // matches CSS .card-flip-inner transition
 const CARD_FLIP_BUFFER = 200;
@@ -56,12 +65,12 @@ export default function TarotGame({ user, mode = 'draw' }: TarotGameProps) {
       if (localStorage.getItem("tarot:spread-preview-open") === "true") setShowPreview(true);
     } catch { /* storage unavailable — keep default */ }
   }, []);
-  // After the (re)mounted card settles, bring whichever instance is visible fully into view
+  // After the (re)mounted card settles, bring it fully into view
   const scrollPreviewIntoView = useCallback(() => {
     setTimeout(() => {
-      const anchors = document.querySelectorAll<HTMLElement>("[data-spread-preview-anchor]");
-      const visible = Array.from(anchors).find((el) => el.offsetParent !== null);
-      visible?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      document
+        .querySelector<HTMLElement>("[data-spread-preview-anchor]")
+        ?.scrollIntoView({ behavior: "smooth", block: "nearest" });
     }, READING_SCROLL_DELAY);
   }, []);
 
@@ -72,6 +81,8 @@ export default function TarotGame({ user, mode = 'draw' }: TarotGameProps) {
     if (next) scrollPreviewIntoView();
   }, [showPreview, scrollPreviewIntoView]);
   const [userQuestion, setUserQuestion] = useState<string>("");
+  // Relationship spread only: who the two outer pillars are about (see PillarNameInputs)
+  const [pillarNames, setPillarNames] = useState<Record<"querent" | "other", string>>({ ...DEFAULT_PILLAR_NAMES });
   const [showOracleInfo, setShowOracleInfo] = useState(false);
   const [showInterpretModal, setShowInterpretModal] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
@@ -108,6 +119,46 @@ export default function TarotGame({ user, mode = 'draw' }: TarotGameProps) {
     [resolvedPositions]
   );
 
+  const isRelationshipSelected = useMemo(() => isRelationship(positionNames), [positionNames]);
+
+  // Custom pillar names, only when they differ from the defaults — undefined
+  // leaves the whole flow byte-identical to an unnamed reading. Reserved words
+  // and duplicate names are ignored: pillar identity of a saved reading is
+  // recovered from the name suffixes, so both would make the columns ambiguous
+  // (PillarNameInputs surfaces the same rules as an inline hint).
+  const pillarOverrides = useMemo<PillarNameOverrides | undefined>(() => {
+    if (!isRelationshipSelected) return undefined;
+    const reserved = new Set(["querent", "other", "relationship"]);
+    const overrides: PillarNameOverrides = {};
+    for (const key of ["querent", "other"] as const) {
+      // A literal " - " inside a name would split the suffix parsing
+      const name = pillarNames[key].trim().replace(/\s+-\s+/g, "-");
+      if (name && !reserved.has(name.toLowerCase())) overrides[key] = name;
+    }
+    if (overrides.querent?.toLowerCase() === overrides.other?.toLowerCase()) return undefined;
+    return overrides.querent || overrides.other ? overrides : undefined;
+  }, [isRelationshipSelected, pillarNames]);
+
+  // Named readings swap in template-built positions/descriptions that carry
+  // only the people's names — no querent/other keywords reach the reducer,
+  // the saved payload, or the LLM prompt (see relationship-spread.ts).
+  const effectiveResolvedPositions = useMemo(
+    () => (pillarOverrides ? buildNamedRelationshipPositions(resolvedPositions, pillarOverrides) : resolvedPositions),
+    [resolvedPositions, pillarOverrides]
+  );
+  const effectivePositions = useMemo(
+    () => effectiveResolvedPositions.map(p => p.name),
+    [effectiveResolvedPositions]
+  );
+  const effectiveDescriptions = useMemo(
+    () => Object.fromEntries(effectiveResolvedPositions.map(p => [p.name, p.description])),
+    [effectiveResolvedPositions]
+  );
+
+  const handlePillarNameChange = useCallback((key: "querent" | "other", value: string) => {
+    setPillarNames(prev => ({ ...prev, [key]: value }));
+  }, []);
+
   const startGame = () => {
     if (isManual) {
       dispatch({ type: 'START_MANUAL_ENTRY' });
@@ -127,12 +178,12 @@ export default function TarotGame({ user, mode = 'draw' }: TarotGameProps) {
       type: 'SELECT_CARD',
       card,
       numCards,
-      positions: positionNames,
+      positions: effectivePositions,
       readingName: selectedReading.name,
       question: selectedReading.showQuestion ? (userQuestion || undefined) : undefined,
-      positionDescriptions,
+      positionDescriptions: effectiveDescriptions,
     });
-  }, [numCards, positionNames, selectedReading.name, selectedReading.showQuestion, userQuestion, positionDescriptions]);
+  }, [numCards, effectivePositions, selectedReading.name, selectedReading.showQuestion, userQuestion, effectiveDescriptions]);
 
   const handleManualAdd = useCallback((card: SelectedCard) => {
     dispatch({ type: 'MANUAL_ADD_CARD', card, numCards });
@@ -149,12 +200,12 @@ export default function TarotGame({ user, mode = 'draw' }: TarotGameProps) {
   const handleManualComplete = useCallback(() => {
     dispatch({
       type: 'MANUAL_COMPLETE',
-      positions: positionNames,
+      positions: effectivePositions,
       readingName: selectedReading.name,
       question: selectedReading.showQuestion ? (userQuestion || undefined) : undefined,
-      positionDescriptions,
+      positionDescriptions: effectiveDescriptions,
     });
-  }, [positionNames, selectedReading.name, selectedReading.showQuestion, userQuestion, positionDescriptions]);
+  }, [effectivePositions, selectedReading.name, selectedReading.showQuestion, userQuestion, effectiveDescriptions]);
 
   const handleNewReading = useCallback(() => {
     saveGenerationRef.current += 1;
@@ -164,6 +215,7 @@ export default function TarotGame({ user, mode = 'draw' }: TarotGameProps) {
     setSavedReadingId(null);
     setSaveReadingError(null);
     setSavingReading(false);
+    setPillarNames({ ...DEFAULT_PILLAR_NAMES });
   }, []);
 
   const handleCloseModal = useCallback(() => setShowInterpretModal(false), []);
@@ -186,6 +238,18 @@ export default function TarotGame({ user, mode = 'draw' }: TarotGameProps) {
       if (generation !== saveGenerationRef.current) return;
       if (result.ok) {
         setSavedReadingId(result.readingId);
+        // Custom pillar names become journal tags so the readings list shows
+        // who the reading is about. Fire-and-forget: the reading itself saved,
+        // so a failed tag write must not surface as a save error.
+        const nameTags = autoTagNames(Object.keys(completedReading.positions));
+        if (nameTags.length) {
+          updateReadingTags(result.readingId, nameTags).catch((error) => {
+            console.log("[TAGS] Failed to auto-tag reading with pillar names", {
+              readingId: result.readingId,
+              error,
+            });
+          });
+        }
       } else {
         setSaveReadingError(result.error);
       }
@@ -293,9 +357,8 @@ export default function TarotGame({ user, mode = 'draw' }: TarotGameProps) {
   return (
     <>
     {/* During setup, the spread preview rides as a sibling card to the right of the oracle card */}
-    <div className="w-full flex flex-col lg:flex-row lg:items-stretch lg:justify-center gap-6 mt-16">
     {/* overflow-clip (not hidden) so the face-up deck's sticky tray can pin to the page scroll */}
-    <div className="relative w-full lg:flex-1 lg:min-w-0 max-w-6xl mx-auto lg:mx-0 overflow-clip rounded-xl border-2 border-[#d4af37]/30 shadow-2xl"
+    <div className="relative w-full max-w-6xl mx-auto mt-16 overflow-clip rounded-xl border-2 border-[#d4af37]/30 shadow-2xl"
          style={{
            background: 'linear-gradient(135deg, rgba(26,0,51,0.95) 0%, rgba(45,27,78,0.95) 100%)',
          }}>
@@ -341,6 +404,7 @@ export default function TarotGame({ user, mode = 'draw' }: TarotGameProps) {
                   if (reading) {
                     setSelectedReading(reading);
                     setUserQuestion("");
+                    setPillarNames({ ...DEFAULT_PILLAR_NAMES });
                     // The card re-mounts (possibly taller, or on the other side of the layout) — keep it in view
                     if (showPreview) scrollPreviewIntoView();
                   }
@@ -375,13 +439,18 @@ export default function TarotGame({ user, mode = 'draw' }: TarotGameProps) {
                         strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </button>
-              {/* Spread layout preview — mobile/tablet instance; desktop shows the aside or below-card instead */}
+              {/* Spread layout preview — inline in the oracle card at every breakpoint */}
               {showPreview && (
-                <div data-spread-preview-anchor className="lg:hidden w-full flex justify-center mt-5">
-                  <SpreadPreview reading={selectedReading} />
+                <div data-spread-preview-anchor className="w-full flex justify-center mt-5">
+                  <SpreadPreview reading={selectedReading} pillarLabels={pillarOverrides} />
                 </div>
               )}
             </div>
+
+            {/* Relationship spread: name the two outer pillars so the reading can concern other people */}
+            {isRelationshipSelected && (
+              <PillarNameInputs names={pillarNames} onChange={handlePillarNameChange} />
+            )}
 
             {/* Reversals segmented pill — manual mode sets orientation per card in the tray */}
             {!isManual && (
@@ -544,7 +613,7 @@ export default function TarotGame({ user, mode = 'draw' }: TarotGameProps) {
           <div ref={deckRef} className="animate-fadeIn">
             <FaceUpDeck
               numCards={numCards}
-              positions={positionNames}
+              positions={effectivePositions}
               selectedCards={selectedCards}
               onAddCard={handleManualAdd}
               onRemoveCard={handleManualRemove}
@@ -630,7 +699,7 @@ export default function TarotGame({ user, mode = 'draw' }: TarotGameProps) {
 
                   <Reading
                     selectedCards={selectedCards}
-                    positions={positionNames}
+                    positions={effectivePositions}
                     question={selectedReading.showQuestion ? userQuestion : undefined}
                     isComplete={isReadingComplete}
                     significatorResult={completedReading?.significatorResult}
@@ -669,20 +738,6 @@ export default function TarotGame({ user, mode = 'draw' }: TarotGameProps) {
       </div>
 
     </div>
-
-    {/* Tall spreads (Tree of Life, Relationship) earn the side panel; the rest go below */}
-    {game.phase === 'setup' && showPreview && (isTreeOfLife(positionNames) || isRelationship(positionNames)) && (
-      <aside data-spread-preview-anchor className="hidden lg:flex w-72 shrink-0">
-        <SpreadPreview reading={selectedReading} />
-      </aside>
-    )}
-    </div>
-
-    {game.phase === 'setup' && showPreview && !isTreeOfLife(positionNames) && !isRelationship(positionNames) && (
-      <div data-spread-preview-anchor className="hidden lg:flex w-full max-w-6xl mx-auto justify-center mt-6">
-        <SpreadPreview reading={selectedReading} variant="wide" />
-      </div>
-    )}
 
     {showOracleInfo && (
       <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4"

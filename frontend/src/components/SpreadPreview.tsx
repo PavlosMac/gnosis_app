@@ -6,6 +6,7 @@ import {
   groupByPillar,
   RELATIONSHIP_PILLARS,
   CARDS_PER_PILLAR,
+  type PillarNameOverrides,
 } from "@/lib/relationship-spread";
 import type { ReadingConfig } from "@/types/reading";
 
@@ -27,17 +28,15 @@ const TREE_ROWS: string[][] = [
 const stripPillarSuffix = (name: string) =>
   name.replace(/\s*-\s*(querent|relationship|other)\s*$/i, "");
 
-type SlotSize = "sm" | "md" | "lg";
+type SlotSize = "sm" | "md";
 
 const SLOT_W: Record<SlotSize, string> = {
   sm: "w-7 sm:w-8",
   md: "w-9 sm:w-11",
-  lg: "w-14 sm:w-20",
 };
 const LABEL_CLS: Record<SlotSize, string> = {
   sm: "max-w-[3.5rem] text-[8px]",
   md: "max-w-[5rem] text-[8px]",
-  lg: "max-w-[7rem] text-[10px]",
 };
 
 interface MiniSlotProps {
@@ -56,7 +55,7 @@ const MiniSlot: React.FC<MiniSlotProps> = ({ name, size = "md", index = 0 }) => 
                   border border-dashed border-[#d4af37]/50 bg-[#1a0033]/40
                   flex items-center justify-center`}
     >
-      <span className={`text-[#d4af37]/40 ${size === "lg" ? "text-sm" : "text-[10px]"}`} aria-hidden="true">✦</span>
+      <span className="text-[#d4af37]/40 text-[10px]" aria-hidden="true">✦</span>
     </div>
     <span
       className={`${LABEL_CLS[size]} text-center leading-tight
@@ -85,24 +84,27 @@ const TreeShape: React.FC<{ names: string[] }> = ({ names }) => {
   );
 };
 
-const RelationshipShape: React.FC<{ names: string[]; wide?: boolean }> = ({ names, wide = false }) => {
+const RelationshipShape: React.FC<{
+  names: string[];
+  pillarLabels?: PillarNameOverrides;
+}> = ({ names, pillarLabels }) => {
   const pillars = groupByPillar(names);
   return (
-    <div className={`grid grid-cols-3 ${wide ? "gap-x-10 gap-y-3" : "gap-x-2 sm:gap-x-3 gap-y-2 max-w-xs"}`}>
+    <div className="grid grid-cols-3 gap-x-2 sm:gap-x-3 gap-y-2 max-w-xs">
       {RELATIONSHIP_PILLARS.map((pillar, p) => (
-        <div key={pillar.key} className={`flex flex-col items-center ${wide ? "gap-3" : "gap-2"}`}>
+        <div key={pillar.key} className="flex flex-col items-center gap-2">
           <span
-            className={`${wide ? "text-[11px]" : "text-[9px]"} text-[#d4af37]/70 tracking-widest uppercase text-center`}
+            className="text-[9px] text-[#d4af37]/70 tracking-widest uppercase text-center"
             style={cinzel}
           >
-            {pillar.label}
+            {(pillar.key !== "relationship" && pillarLabels?.[pillar.key]) || pillar.label}
           </span>
           {pillars[p].map((idx, row) =>
             idx !== undefined ? (
               <MiniSlot
                 key={names[idx]}
                 name={stripPillarSuffix(names[idx])}
-                size={wide ? "md" : "sm"}
+                size="sm"
                 index={p * CARDS_PER_PILLAR + row}
               />
             ) : (
@@ -115,21 +117,18 @@ const RelationshipShape: React.FC<{ names: string[]; wide?: boolean }> = ({ name
   );
 };
 
-const DefaultShape: React.FC<{ names: string[]; wide?: boolean }> = ({ names, wide = false }) => (
-  <div className={`flex flex-wrap justify-center ${wide ? "gap-8" : "gap-3 max-w-[16rem]"}`}>
+const DefaultShape: React.FC<{ names: string[] }> = ({ names }) => (
+  <div className="flex flex-wrap justify-center gap-3 max-w-[16rem]">
     {names.map((name, i) => (
-      <MiniSlot key={name} name={name} size={wide ? "lg" : "md"} index={i} />
+      <MiniSlot key={name} name={name} index={i} />
     ))}
   </div>
 );
 
 interface SpreadPreviewProps {
   reading: ReadingConfig;
-  /**
-   * 'panel': narrow vertical card (side aside for Tree of Life, and the mobile inline instance).
-   * 'wide': horizontal card below the oracle card — roomier gaps, bigger slots.
-   */
-  variant?: "panel" | "wide";
+  /** Custom querent/other names for the Relationship spread's column headers */
+  pillarLabels?: PillarNameOverrides;
 }
 
 /**
@@ -137,21 +136,20 @@ interface SpreadPreviewProps {
  * position names, arranged in the same shape the real reading will use.
  * Shape detection reuses the dispatch logic from Reading/relationship-spread.
  */
-const SpreadPreview: React.FC<SpreadPreviewProps> = ({ reading, variant = "panel" }) => {
+const SpreadPreview: React.FC<SpreadPreviewProps> = ({ reading, pillarLabels }) => {
   const names = useMemo(
     () => resolvePositions(reading).map((p) => p.name),
     [reading]
   );
   const tree = isTreeOfLife(names);
   const relationship = isRelationship(names);
-  const wide = variant === "wide";
 
   return (
     // Keyed by spread so the panel re-mounts (and re-animates) on selection change
     <div
       key={reading.name}
-      className={`animate-fadeIn relative rounded-xl border-2 border-[#d4af37]/30 backdrop-blur-sm shadow-2xl
-                  ${wide ? "w-full px-8 py-6" : "w-full max-w-xs h-full px-4 py-5"}`}
+      className="animate-fadeIn relative rounded-xl border-2 border-[#d4af37]/30 backdrop-blur-sm shadow-2xl
+                 w-full max-w-xs h-full px-4 py-5"
       style={{ background: "linear-gradient(135deg, rgba(26,0,51,0.95), rgba(45,27,78,0.95))" }}
     >
       {/* Mystical glow, matching the oracle card */}
@@ -165,7 +163,7 @@ const SpreadPreview: React.FC<SpreadPreviewProps> = ({ reading, variant = "panel
       <span className="absolute bottom-1.5 left-2 text-[#d4af37]/40 text-[10px]" aria-hidden="true">✦</span>
       <span className="absolute bottom-1.5 right-2 text-[#d4af37]/40 text-[10px]" aria-hidden="true">✦</span>
 
-      <div className={`relative flex flex-col items-center h-full ${wide ? "gap-6" : "gap-4"}`}>
+      <div className="relative flex flex-col items-center h-full gap-4">
         <div className="flex items-center justify-center gap-2 w-full">
           <div className="h-px flex-1 bg-gradient-to-r from-transparent to-[#d4af37]/40" />
           <span
@@ -182,9 +180,9 @@ const SpreadPreview: React.FC<SpreadPreviewProps> = ({ reading, variant = "panel
           {tree ? (
             <TreeShape names={names} />
           ) : relationship ? (
-            <RelationshipShape names={names} wide={wide} />
+            <RelationshipShape names={names} pillarLabels={pillarLabels} />
           ) : (
-            <DefaultShape names={names} wide={wide} />
+            <DefaultShape names={names} />
           )}
 
           {reading.cards === 0 && (

@@ -69,6 +69,38 @@ describe("Reading layout selection", () => {
     expect(relDesired).toBeLessThan(querentProceed);
   });
 
+  it("derives custom pillar names from templated positions: named headers, bare captions", async () => {
+    const { buildNamedRelationshipPositions } = await import("@/lib/relationship-spread");
+    const config = cfg.readings.find((r) => r.name === "Relationship Reading")!.positions!;
+    const positions = buildNamedRelationshipPositions(config, {
+      querent: "Alice",
+      other: "Maria",
+    }).map((p) => p.name);
+    const html = renderToStaticMarkup(
+      <Reading selectedCards={fakeCards(9)} positions={positions} isComplete />
+    );
+    expect(html).toMatch(/<div class="grid grid-cols-3/);
+    expect(html.match(/<h3[^>]*>(Alice|Relationship|Maria)<\/h3>/g)).toHaveLength(3);
+    // captions drop the name — the header carries it — and no pillar keyword appears
+    expect(html).toContain("CURRENT BEHAVIOUR<");
+    expect(html).not.toMatch(/- ALICE/);
+    expect(html).not.toMatch(/- QUERENT/);
+  });
+
+  it("lays out legacy round-1/2 saved positions with named headers", () => {
+    const positions = positionsOf("Relationship Reading").map((p) =>
+      p.replace(/\s*-\s*(querent|other)\s*$/i, (m, key) =>
+        ` (${key === "querent" ? "Alice" : "Maria"}) - ${key}`
+      )
+    );
+    const html = renderToStaticMarkup(
+      <Reading selectedCards={fakeCards(9)} positions={positions} isComplete />
+    );
+    expect(html).toMatch(/<div class="grid grid-cols-3/);
+    expect(html.match(/<h3[^>]*>(Alice|Relationship|Maria)<\/h3>/g)).toHaveLength(3);
+    expect(html).not.toMatch(/\(ALICE\)/);
+  });
+
   it("keeps the default row for Career (5 inline)", () => {
     const positions = positionsOf("Career Reading");
     const html = renderToStaticMarkup(<Reading selectedCards={fakeCards(5)} positions={positions} isComplete />);

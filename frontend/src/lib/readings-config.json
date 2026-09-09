@@ -36,13 +36,9 @@
             ]
         },
         {
-            "name": "Open Question Reading",
-            "description": "Current situation | How to proceed?",
+            "name": "Two card Open Question Reading",
+            "description": "A two card open question reading",
             "cards": 2,
-            "positions": [
-                { "name": "Current Situation", "description": "The present circumstances surrounding the querent's question" },
-                { "name": "How to Proceed", "description": "Guidance on the best course of action moving forward" }
-            ],
             "showQuestion": true,
             "meta": {
                 "field": "input",
@@ -52,7 +48,7 @@
         },
         {
             "name": "Three Card Open Question",
-            "description": "A three card open question reading",
+            "description": "A three card Open Question Reading",
             "cards": 3,
             "showQuestion": true,
             "meta": {
@@ -63,7 +59,7 @@
         },
         {
             "name": "Relationship Reading",
-            "description": "A nine card spread — you or a person, the relationship, and the other person",
+            "description": "A nine card spread — querent, the relationship, and the other",
             "cards": 9,
             "positions": [
                 { "name": "Current behaviour - querent", "description": "What is the querent's current behaviour?" },

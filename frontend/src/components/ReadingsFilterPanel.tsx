@@ -28,6 +28,16 @@ const ReadingsFilterPanel = ({
 
   const isSignificators = spreadType === SIGNIFICATORS_SPREAD_TYPE;
 
+  // Saved readings can carry a spread_type that no longer matches any current
+  // config entry (e.g. a reading was renamed after being saved). Keep that
+  // legacy name selectable as a pill so old readings stay filterable instead
+  // of silently disappearing from the panel.
+  const spreadTypeNames = readingsConfig.readings.map((reading) => reading.name);
+  const pillNames =
+    currentSpreadType && !spreadTypeNames.includes(currentSpreadType)
+      ? [...spreadTypeNames, currentSpreadType]
+      : spreadTypeNames;
+
   const togglePill = (name: string) => {
     setSpreadType((prev) => {
       const next = prev === name ? "" : name;
@@ -73,19 +83,19 @@ const ReadingsFilterPanel = ({
               Spread Type
             </p>
             <div className="flex flex-wrap gap-2">
-              {readingsConfig.readings.map((reading) => (
+              {pillNames.map((name) => (
                 <button
-                  key={reading.name}
+                  key={name}
                   type="button"
-                  aria-pressed={spreadType === reading.name}
-                  onClick={() => togglePill(reading.name)}
+                  aria-pressed={spreadType === name}
+                  onClick={() => togglePill(name)}
                   className={`px-4 py-2 rounded-full border text-xs sm:text-sm tracking-wide transition-all duration-300
-                    ${spreadType === reading.name
+                    ${spreadType === name
                       ? 'bg-gradient-to-br from-[#d4af37] to-[#b8942f] text-[#1a0033] border-[#d4af37] font-bold'
                       : 'border-[#d4af37]/30 text-[#e6d5b8]/60 hover:border-[#d4af37]/60 hover:text-[#e6d5b8]/90'}`}
                   style={{ fontFamily: "'Cinzel', serif" }}
                 >
-                  {reading.name}
+                  {name}
                 </button>
               ))}
             </div>
