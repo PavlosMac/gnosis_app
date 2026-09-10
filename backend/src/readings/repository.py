@@ -3,6 +3,7 @@ from typing import Any
 
 from bson import ObjectId
 from bson.errors import InvalidId
+from pymongo.errors import DuplicateKeyError
 
 from src.database.base_repository import BaseReadRepository, BaseWriteRepository
 from src.database.collections.constants import READINGS_COLLECTION, USER_TAGS_COLLECTION
@@ -127,12 +128,18 @@ class UserTagsWriteRepository(BaseWriteRepository):
         return USER_TAGS_COLLECTION
 
     async def replace_for_user(self, user_id: str, tags: list[dict[str, Any]]) -> None:
+        # replace_one(upsert=True) against the unique user_id index can still raise
+        # E11000 when two requests race the same brand-new key — MongoDB's documented
+        # upsert-race caveat, not something the unique index alone rules out. Same
+        # accepted-race posture as InterpretationWriteRepository.upsert_by_reading_id:
+        # the loser retries as a plain update against the document the winner just
+        # created.
         oid = ObjectId(user_id)
-        await self._collection.replace_one(
-            {"user_id": oid},
-            {"user_id": oid, "tags": tags, "updated_at": datetime.now(UTC)},
-            upsert=True,
-        )
+        document = {"user_id": oid, "tags": tags, "updated_at": datetime.now(UTC)}
+        try:
+            await self._collection.replace_one({"user_id": oid}, document, upsert=True)
+        except DuplicateKeyError:
+            await self._collection.replace_one({"user_id": oid}, document)
 
 
 class UserTagsReadRepository(BaseReadRepository):

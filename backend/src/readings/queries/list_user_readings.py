@@ -28,10 +28,13 @@ class ListUserReadingsHandler(QueryHandler[ListUserReadingsQuery, ReadingListRes
 
     async def handle(self, query: ListUserReadingsQuery) -> ReadingListResponse:
         skip = (query.page - 1) * query.page_size
-        if query.tags:
+        # Truthy tags means "filter by tag" throughout — an empty list behaves like no
+        # filter, so this one check picks both the docs query and the count filter.
+        tags = query.tags if query.tags else None
+        if tags is not None:
             docs_coro = self._read_repo.find_by_user_id_ranked_by_tags(
                 query.user_id,
-                query.tags,
+                tags,
                 skip=skip,
                 limit=query.page_size,
                 spread_type=query.spread_type,
@@ -51,7 +54,7 @@ class ListUserReadingsHandler(QueryHandler[ListUserReadingsQuery, ReadingListRes
                 query.user_id,
                 spread_type=query.spread_type,
                 birth_date=query.birth_date,
-                tags=query.tags or None,
+                tags=tags,
             ),
             self._user_tags_read_repo.find_by_user_id(query.user_id),
         )

@@ -83,7 +83,7 @@ class TagSummary(AppSchema):
     count: int
 
 
-class ReadingListResponse(PaginatedResponse[ReadingListItem]):
+class ReadingListResponse(AppSchema, PaginatedResponse[ReadingListItem]):
     # The user's whole tag vocabulary (most-used first), independent of the page and
     # filters on this request — drives the front-end tag picker.
     user_tags: list[TagSummary] = Field(default_factory=list)
