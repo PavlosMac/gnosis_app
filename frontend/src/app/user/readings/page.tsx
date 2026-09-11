@@ -2,8 +2,12 @@ import Link from "next/link";
 import TarotPageLayout from "@/components/TarotPageLayout";
 import { getReadings } from "./actions";
 import ReadingsFilterPanel from "@/components/ReadingsFilterPanel";
-
-const PAGE_SIZE = 10;
+import {
+  READINGS_PAGE_SIZE,
+  parseListContext,
+  listHref,
+  readingHref,
+} from "@/lib/reading-list-context";
 
 const formatDate = (iso: string) => {
   const d = new Date(iso);
@@ -19,9 +23,6 @@ const truncate = (text: string | null, max: number) => {
   return text.length > max ? text.slice(0, max) + "…" : text;
 };
 
-const isValidIsoDate = (value: string): boolean =>
-  /^\d{4}-\d{2}-\d{2}$/.test(value) && !Number.isNaN(new Date(value).getTime());
-
 const ReadingsPage = async ({
   searchParams,
 }: {
@@ -32,34 +33,19 @@ const ReadingsPage = async ({
     birth_date?: string;
   }>;
 }) => {
-  const {
-    page: pageParam,
-    spread_type: spreadType,
-    tags,
-    birth_date: birthDateParam,
-  } = await searchParams;
-  const currentPage = Math.max(1, parseInt(pageParam ?? "1", 10) || 1);
-  const birthDate =
-    birthDateParam && isValidIsoDate(birthDateParam) ? birthDateParam : undefined;
-  const result = await getReadings(currentPage, PAGE_SIZE, {
+  const ctx = parseListContext(await searchParams) ?? { page: 1 };
+  const { page: currentPage, spreadType, tags, birthDate } = ctx;
+  const result = await getReadings(currentPage, READINGS_PAGE_SIZE, {
     spreadType,
     tags,
     birthDate,
   });
 
   const totalPages = result.ok
-    ? Math.max(1, Math.ceil(result.data.total / PAGE_SIZE))
+    ? Math.max(1, Math.ceil(result.data.total / READINGS_PAGE_SIZE))
     : 1;
 
-  const filterParams = new URLSearchParams();
-  if (spreadType) filterParams.set("spread_type", spreadType);
-  if (tags) filterParams.set("tags", tags);
-  if (birthDate) filterParams.set("birth_date", birthDate);
-  const pageHref = (targetPage: number) => {
-    const params = new URLSearchParams(filterParams);
-    params.set("page", String(targetPage));
-    return `/user/readings?${params.toString()}`;
-  };
+  const pageHref = (targetPage: number) => listHref({ ...ctx, page: targetPage });
 
   return (
     <TarotPageLayout backButtonHref="/user/profile" backButtonLabel="Profile">
@@ -98,6 +84,7 @@ const ReadingsPage = async ({
           currentSpreadType={spreadType}
           currentTags={tags}
           currentBirthDate={birthDate}
+          availableTags={result.ok ? result.data.user_tags ?? [] : []}
         />
 
         {!result.ok ? (
@@ -133,7 +120,7 @@ const ReadingsPage = async ({
               {result.data.items.map((reading) => (
                 <Link
                   key={reading._id}
-                  href={`/user/readings/${reading._id}`}
+                  href={readingHref(reading._id, ctx)}
                   className="group block rounded-xl border border-[#d4af37]/15 bg-gradient-to-b from-[#1a0033]/80 to-[#0a0015]/80
                              backdrop-blur-sm p-5 sm:p-6 transition-all duration-300
                              hover:border-[#d4af37]/40 hover:shadow-lg hover:shadow-[#d4af37]/5"

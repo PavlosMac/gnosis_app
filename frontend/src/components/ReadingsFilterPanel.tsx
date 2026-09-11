@@ -3,6 +3,10 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import readingsConfig from "@/lib/readings-config.json";
+import TagFilterCombobox from "@/components/TagFilterCombobox";
+import SpreadTypeDropdown from "@/components/SpreadTypeDropdown";
+import { parseTagsParam, serializeTags } from "@/lib/tag-suggestions";
+import type { TagSummary } from "@/types/reading";
 
 const SIGNIFICATORS_SPREAD_TYPE = "Significators";
 
@@ -10,18 +14,23 @@ interface ReadingsFilterPanelProps {
   currentSpreadType?: string;
   currentTags?: string;
   currentBirthDate?: string;
+  availableTags?: TagSummary[];
 }
 
 const ReadingsFilterPanel = ({
   currentSpreadType,
   currentTags,
   currentBirthDate,
+  availableTags = [],
 }: ReadingsFilterPanelProps) => {
   const router = useRouter();
   const hasActiveFilter = Boolean(currentSpreadType || currentTags || currentBirthDate);
   const [expanded, setExpanded] = useState(hasActiveFilter);
   const [spreadType, setSpreadType] = useState(currentSpreadType ?? "");
-  const [tags, setTags] = useState(currentTags ?? "");
+  const [selectedTags, setSelectedTags] = useState<string[]>(() =>
+    parseTagsParam(currentTags)
+  );
+  const [tagInput, setTagInput] = useState("");
   const [birthDate, setBirthDate] = useState(
     currentSpreadType === SIGNIFICATORS_SPREAD_TYPE ? currentBirthDate ?? "" : ""
   );
@@ -49,21 +58,31 @@ const ReadingsFilterPanel = ({
   const applyFilters = () => {
     const params = new URLSearchParams();
     if (spreadType) params.set("spread_type", spreadType);
-    if (tags.trim()) params.set("tags", tags.trim());
+    // Uncommitted input text counts too, matching the tag editor's save behavior
+    const pending = tagInput.trim().toLowerCase();
+    const allTags =
+      pending && !selectedTags.includes(pending)
+        ? [...selectedTags, pending]
+        : selectedTags;
+    if (allTags.length) params.set("tags", serializeTags(allTags));
     if (birthDate) params.set("birth_date", birthDate);
     router.push(`/user/readings?${params.toString()}`);
   };
 
   const clearFilters = () => {
     setSpreadType("");
-    setTags("");
+    setSelectedTags([]);
+    setTagInput("");
     setBirthDate("");
     setExpanded(false);
     router.push("/user/readings");
   };
 
   return (
-    <div className="mb-8">
+    // relative z-30 lifts the whole panel above the readings list; the blurred
+    // container below forms its own stacking context, so the dropdown's z-index
+    // alone can't win against later siblings.
+    <div className="relative z-30 mb-8">
       <button
         type="button"
         onClick={() => setExpanded((prev) => !prev)}
@@ -82,23 +101,11 @@ const ReadingsFilterPanel = ({
             >
               Spread Type
             </p>
-            <div className="flex flex-wrap gap-2">
-              {pillNames.map((name) => (
-                <button
-                  key={name}
-                  type="button"
-                  aria-pressed={spreadType === name}
-                  onClick={() => togglePill(name)}
-                  className={`px-4 py-2 rounded-full border text-xs sm:text-sm tracking-wide transition-all duration-300
-                    ${spreadType === name
-                      ? 'bg-gradient-to-br from-[#d4af37] to-[#b8942f] text-[#1a0033] border-[#d4af37] font-bold'
-                      : 'border-[#d4af37]/30 text-[#e6d5b8]/60 hover:border-[#d4af37]/60 hover:text-[#e6d5b8]/90'}`}
-                  style={{ fontFamily: "'Cinzel', serif" }}
-                >
-                  {name}
-                </button>
-              ))}
-            </div>
+            <SpreadTypeDropdown
+              names={pillNames}
+              selected={spreadType}
+              onToggle={togglePill}
+            />
           </div>
 
           <div>
@@ -109,17 +116,12 @@ const ReadingsFilterPanel = ({
             >
               Tags
             </label>
-            <input
-              id="tags-filter"
-              type="text"
-              value={tags}
-              onChange={(e) => setTags(e.target.value)}
-              placeholder="career, love"
-              className="w-full px-4 py-3 rounded-lg bg-[#0a0015]/60 border border-[#d4af37]/20
-                         text-[#e6d5b8] placeholder-[#e6d5b8]/20 text-sm
-                         focus:outline-none focus:border-[#d4af37]/60 focus:ring-1 focus:ring-[#d4af37]/20
-                         transition-all duration-300"
-              style={{ fontFamily: "'Crimson Pro', serif" }}
+            <TagFilterCombobox
+              availableTags={availableTags}
+              selectedTags={selectedTags}
+              input={tagInput}
+              onSelectedTagsChange={setSelectedTags}
+              onInputChange={setTagInput}
             />
           </div>
 

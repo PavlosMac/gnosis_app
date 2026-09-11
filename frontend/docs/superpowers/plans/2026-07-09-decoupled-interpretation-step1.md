@@ -713,7 +713,7 @@ const InterpretationModal: React.FC<InterpretationModalProps> = React.memo(({
                 className="text-[#d4af37]/80 text-lg tracking-wider"
                 style={{ fontFamily: "'Cinzel', serif" }}
               >
-                The Oracle consults the stars...
+                Consulting the oracle...
               </p>
             </div>
           )}

@@ -43,11 +43,20 @@ export type UpdateTagsResult =
   | { ok: true; data: ReadingDetail }
   | { ok: false; error: string };
 
+/** One entry in the user's tag vocabulary, as returned on the readings list payload */
+export interface TagSummary {
+  name: string;
+  count: number;
+}
+
 export interface PaginatedReadings {
   items: ReadingListItem[];
   total: number;
   page: number;
   page_size: number;
+  /** The user's whole tag vocabulary, most-used first — independent of page/filters.
+   *  Absent on backends that predate the tag vocabulary; callers must default to []. */
+  user_tags?: TagSummary[];
 }
 
 /** A single position in a spread, as declared in readings-config.json */

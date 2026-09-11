@@ -37,8 +37,9 @@ This spans two repos:
 
 ## Non-Goals
 
-- No tag autocomplete or a "manage my tags" screen — tags are freeform text, typed fresh
-  each time (though the input is pre-filled with a reading's current tags for editing).
+- ~~No tag autocomplete~~ — **superseded 2026-09-09**: the filter panel now has tag
+  autocomplete (see "Tag autocomplete" below). Still no "manage my tags" screen — tags
+  remain freeform text on the reading detail editor.
 - No per-tag network call (no dedicated add/remove-single-tag endpoint) — the UI lets
   you add/remove chips freely while editing, but Save commits the whole edited list as
   one `PATCH` (full replace), not one call per change.
@@ -358,6 +359,42 @@ Clear reuses the ghost/ text-button style of "Try Again" in
 `InterpretationModal.tsx:208-214` (bordered, transparent, visually secondary to Apply).
 
 ---
+
+## Tag autocomplete (added 2026-09-09)
+
+The list endpoint's response carries the user's tag vocabulary alongside the page:
+
+```
+GET /api/v1/readings?...
+→ { "items": [...], "total": 3, "page": 1, "page_size": 20,
+    "user_tags": [{"name": "career", "count": 2}, {"name": "love", "count": 1}] }
+```
+
+`user_tags` is the user's **whole** vocabulary, most-used first, independent of the
+page and filters on the request. Backend-side it is served from a derived `user_tags`
+collection (one document per user, migration 010) rebuilt on every
+`PATCH /readings/{id}/tags` — so it is a snapshot as of the page's server render;
+a tag edited elsewhere appears on the next render. Types: `TagSummary` /
+`PaginatedReadings.user_tags` in `src/types/reading.ts`.
+
+Frontend, on `/user/readings`:
+
+- `page.tsx` passes `user_tags` to `ReadingsFilterPanel` as `availableTags`
+  (defaulting to `[]` if the field is missing, e.g. an older backend).
+- The filter panel's tags field is a chip + autocomplete combobox
+  (`src/components/TagFilterCombobox.tsx`): suggestions render once the query is
+  at least 2 characters (`MIN_TAG_QUERY_LENGTH`) — most-used first, with counts,
+  prefix matches ranked before other substring matches (logic in
+  `src/lib/tag-suggestions.ts`, unit-tested, capped at 8), shown black-on-parchment
+  in a dropdown lifted above the readings list (`relative z-30` on the panel — the
+  blurred panel container is its own stacking context, so the dropdown's z-index
+  alone can't beat later siblings). ArrowUp/Down + Enter or click selects, Escape
+  closes, Backspace on an empty input removes the last chip. Free text is still allowed
+  (Enter/comma/paste commit, same mechanics as the detail-page `ReadingTags` editor);
+  the filter has no 5-tag/25-char limits — those are per-reading storage rules.
+- Apply serializes chips (plus any uncommitted input text) back into the same
+  comma-separated `tags` URL param, so the wire format and backend matching are
+  unchanged. An empty vocabulary simply never shows a dropdown.
 
 ## Data flow (end-to-end)
 

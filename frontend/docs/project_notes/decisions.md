@@ -107,3 +107,40 @@ Each decision should include:
 - The reading page and modal can never disagree about which interpretation to show — there is only one
 - A user who dislikes their interpretation cannot re-roll; that is backend policy ("this is what the reading gets, no more")
 - Charged-with-nothing-stored is impossible (backend reserves worst-case cost, persists, then settles — any failure releases the reservation)
+
+
+### ADR-006: Tag Autocomplete Fed by `user_tags` on the List Payload (2026-09-09)
+
+**Context:**
+- The tags filter on `/user/readings` was a bare comma-separated text input — tags had to be typed from memory
+- The backend already returns the user's whole tag vocabulary on `GET /api/v1/readings` as `user_tags: [{name, count}]` (most-used first, filter-independent, served from a derived `user_tags` collection rebuilt on every tag PATCH — migration 010), explicitly to drive a front-end tag picker
+- Supersedes the "no tag autocomplete" non-goal in `docs/search-and-tags.md`
+
+**Decision:**
+- No extra request: the vocabulary rides the existing list payload (`PaginatedReadings.user_tags`, new `TagSummary` type) and is passed to the filter panel as a prop, defaulting to `[]` when absent
+- Hand-rolled combobox (`TagFilterCombobox.tsx`) — no headless-UI dependency; chips + suggestion dropdown with keyboard nav (Arrows/Enter/Escape, Backspace-removes-last-chip), ARIA combobox/listbox roles, tarot-theme styling (purple gradient dropdown, gold accents, quick fadeIn)
+- Free-text tags remain allowed (the backend matches any string); no 5-tag/25-char limits on the filter — those are per-reading storage rules
+- Suggestions keep the backend's most-used-first order (prefix matches ranked before other substring matches), show counts, cap at 8; logic lives in pure functions (`src/lib/tag-suggestions.ts`) because the vitest setup has no jsdom — interactive component behavior is verified manually in real Chrome
+- Apply still serializes to the same comma-separated `tags` URL param — wire format and backend matching unchanged
+
+**Consequences:**
+- The vocabulary is a per-render snapshot: a tag added on the detail page appears in suggestions only after the readings page re-renders (accepted staleness)
+- Older backends without `user_tags` degrade to today's behavior (no dropdown, free text works)
+
+
+### ADR-007: Readings-List Context Threaded via URL Params (2026-09-10)
+
+**Context:**
+- Opening a reading from a filtered `/user/readings?tags=...` list and "going back" lost the filter. Genuine browser back was fine — the detail page's back button and footer link were hardcoded `<Link href="/user/readings">`, i.e. forward navigations to the unfiltered list. Item links carried no params and the detail page took no `searchParams`, so the context could not survive.
+- The user also wanted to step through the filtered results reading-by-reading without returning to the list.
+
+**Decision:**
+- The list context (page + filters) travels as URL params: item links always carry `page` (even `page=1`) plus active filters, via shared serializers in `src/lib/reading-list-context.ts` (`parseListContext`/`listHref`/`readingHref`) used by both pages so serialization can't drift. Presence of any context param = "came from the list" and gates the prev/next UI.
+- The detail page accepts `searchParams`; all back affordances (header back button, error branch, footer link) use `listHref(ctx)`.
+- Prev/next: `getAdjacentReadings(id, ctx)` in `readings/actions.ts` fetches the context page via the existing `getReadings`, computes neighbors via pure `planAdjacency` (`src/lib/reading-adjacency.ts`, unit-tested), and fetches at most one adjacent page when the reading sits at a page edge; a boundary-crossing link carries the neighbor's `page` so the chain stays consistent. UI: round gold arrow buttons flanking a "Reading N of M" indicator, directly under the interpretation card.
+- No context params (direct/deep link) → no prev/next, bare back links, zero extra fetches. Rejected alternative: defaulting to an all-readings newest-first sequence — extra fetch on every direct view and a surprising sequence for visitors arriving from elsewhere.
+- Any adjacency failure (fetch error, reading no longer in the filtered page because its tags changed / it was deleted / the list shifted, out-of-range page) silently hides prev/next; back keeps working. No error UI.
+
+**Consequences:**
+- The context is a per-render snapshot: adjacency is recomputed on every detail render, so list shifts self-correct as you navigate; a reading edited out of the filter loses prev/next but keeps its back link.
+- Known separate issue (follow-up, out of scope): `src/proxy.ts` login-redirect sets `from` to pathname only, so a session expiring on a filtered/contextual URL drops the params after re-login.

@@ -3,9 +3,50 @@ import { notFound } from "next/navigation";
 import TarotPageLayout from "@/components/TarotPageLayout";
 import InterpretationSection from "./InterpretationSection";
 import { getReading } from "./actions";
+import { getAdjacentReadings } from "../actions";
 import { findCardByNameSafe } from "@/services/cardLookup";
 import type { TarotCardData } from "@/types/models";
 import ReadingTags from "@/components/ReadingTags";
+import {
+  parseListContext,
+  listHref,
+  readingHref,
+} from "@/lib/reading-list-context";
+import type { AdjacentReading } from "@/lib/reading-adjacency";
+import type { ListContext } from "@/lib/reading-list-context";
+
+const adjacentButtonClasses =
+  "w-9 h-9 rounded-full border flex items-center justify-center text-lg leading-none transition-all duration-300";
+
+const AdjacentLink = ({
+  target,
+  ctx,
+  label,
+  glyph,
+}: {
+  target: AdjacentReading | null;
+  ctx: ListContext;
+  label: string;
+  glyph: string;
+}) =>
+  target ? (
+    <Link
+      href={readingHref(target.id, { ...ctx, page: target.page })}
+      aria-label={label}
+      className={`${adjacentButtonClasses} border-[#d4af37]/50 text-[#d4af37]/70
+                  hover:text-[#d4af37] hover:border-[#d4af37]
+                  hover:shadow-[0_0_10px_rgba(212,175,55,0.4)]`}
+    >
+      {glyph}
+    </Link>
+  ) : (
+    <span
+      aria-hidden="true"
+      className={`${adjacentButtonClasses} border-[#d4af37]/10 text-[#d4af37]/20 cursor-not-allowed`}
+    >
+      {glyph}
+    </span>
+  );
 
 const formatDateTime = (iso: string) => {
   const d = new Date(iso);
@@ -29,19 +70,23 @@ const formatDate = (iso: string) => {
 
 const ReadingDetailPage = async ({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) => {
   const { id } = await params;
-  const result = await getReading(id);
+  const ctx = parseListContext(await searchParams);
+  const backHref = listHref(ctx);
+  const [result, adj] = await Promise.all([
+    getReading(id),
+    ctx ? getAdjacentReadings(id, ctx) : Promise.resolve(null),
+  ]);
 
   if (!result.ok) {
     if (result.error === "Invalid reading ID.") notFound();
     return (
-      <TarotPageLayout
-        backButtonHref="/user/readings"
-        backButtonLabel="Readings"
-      >
+      <TarotPageLayout backButtonHref={backHref} backButtonLabel="Readings">
         <div className="w-full max-w-3xl mx-auto mt-16 px-4 text-center">
           <p
             className="text-red-400/80"
@@ -68,11 +113,11 @@ const ReadingDetailPage = async ({
       : null;
   }
 
+  const showAdjacentNav =
+    ctx && adj && (adj.prev || adj.next || adj.position);
+
   return (
-    <TarotPageLayout
-      backButtonHref="/user/readings"
-      backButtonLabel="Readings"
-    >
+    <TarotPageLayout backButtonHref={backHref} backButtonLabel="Readings">
       <div className="w-full max-w-3xl mx-auto mt-8 sm:mt-16 px-4 sm:px-0">
         {/* Header */}
         <div className="text-center mb-10">
@@ -118,10 +163,26 @@ const ReadingDetailPage = async ({
           interpretation={reading.interpretation}
         />
 
+        {/* Prev/next through the filtered sequence, directly under the card */}
+        {showAdjacentNav && (
+          <div className="mt-6 flex items-center justify-between">
+            <AdjacentLink target={adj.prev} ctx={ctx} label="Previous reading" glyph="‹" />
+            {adj.position && (
+              <span
+                className="text-[#e6d5b8]/40 text-xs"
+                style={{ fontFamily: "'Crimson Pro', serif" }}
+              >
+                Reading {adj.position.index} of {adj.position.total}
+              </span>
+            )}
+            <AdjacentLink target={adj.next} ctx={ctx} label="Next reading" glyph="›" />
+          </div>
+        )}
+
         {/* Footer nav */}
         <div className="mt-8 flex justify-center text-xs">
           <Link
-            href="/user/readings"
+            href={backHref}
             className="text-[#d4af37]/50 hover:text-[#d4af37] transition-colors tracking-wider"
             style={{ fontFamily: "'Cinzel', serif" }}
           >
