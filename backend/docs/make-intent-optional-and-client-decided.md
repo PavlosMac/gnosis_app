@@ -150,6 +150,8 @@ find_by_intent` need no changes — they already derive the slot key from
   intent-as-slot-key decision.
 - `docs/database/model_references.md` and `docs/interpretations/usage-and-budget-flow.md`:
   both describe `settings: {intent: str}` and the save URL shape — update both.
+  _(Done — both docs were updated/rewritten in the lean-interpretations work; this
+  section is a historical TODO list, not live obligations.)_
 
 ### 6. Tests
 

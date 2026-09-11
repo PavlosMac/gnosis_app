@@ -20,7 +20,9 @@ class Settings(BaseSettings):
     mongodb_database: str = "gnosis_esoterica"
 
     # JWT
-    jwt_secret_key: str = "840d6240860f87b5e3112f79253623b44746eb325352e0a6"
+    # No default on purpose: a fallback committed to the repo would let anyone forge
+    # tokens. Startup fails fast unless JWT_SECRET_KEY is set (env or .env).
+    jwt_secret_key: str
     jwt_access_token_expire_seconds: int = 86400
     jwt_refresh_token_expire_days: int = 30
     jwt_algorithm: str = "HS256"
@@ -69,4 +71,6 @@ class Settings(BaseSettings):
     log_json: bool = False
 
 
-settings = Settings()
+# pydantic-settings fills jwt_secret_key from the environment at runtime; pyright
+# can't see that and flags the missing argument.
+settings = Settings()  # pyright: ignore[reportCallIssue]

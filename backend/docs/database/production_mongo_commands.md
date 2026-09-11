@@ -4,8 +4,8 @@ How to get from the Mac into the MongoDB instance on the Pi in one command, and 
 ready-made queries. Auth details are in [configure_db.md](./configure_db.md).
 
 Nothing is exposed on the network: you SSH to the Pi and run `mongosh` **inside** the
-`gnosis-mongodb` container. Credentials are read from `~/gnosis-esoterica/.env.gnosis.prod` on
-the Pi — they never leave it.
+`gnosis-mongodb` container. Credentials are read from `~/projects/gnosis-esoterica/.env.gnosis.prod`
+on the Pi — they never leave it.
 
 ## 1. One-time setup
 
@@ -36,7 +36,7 @@ All from the Mac, in the repo (or with the alias, from anywhere):
 |---|---|
 | Interactive shell (db = `gnosis_esoterica`) | `pimongo` |
 | One expression | `pimongo 'db.users.countDocuments()'` |
-| Multi-statement | `pimongo 'db.readings.find({}, {spread_name:1}).limit(3).toArray()'` |
+| Multi-statement | `pimongo 'db.readings.find({}, {spread_type:1}).limit(3).toArray()'` |
 | Run a local `.js` file | `pimongo --file q.js` (streamed over ssh, no scp) |
 | Different db | `DB=admin pimongo 'db.getUsers()'` |
 | Different host / path | `PI_HOST=user@host PI_DIR=~/other pimongo` |
@@ -52,7 +52,7 @@ pimongo 'db.runCommand({ping:1})'
 pimongo 'db.getSiblingDB("admin").getUsers()'          # gnosis_admin
 pimongo 'db.getUsers()'                                # gnosis_app
 pimongo 'db.getCollectionNames()'
-pimongo 'db._migrations.find().sort({version:1}).toArray()'
+pimongo 'db.getCollection("_migrations").find().sort({version:1}).toArray()'
 pimongo 'db.stats().dataSize'
 ```
 
@@ -68,8 +68,10 @@ db.users.updateOne({email: "someone@example.com"}, {$set: {is_superadmin: true}}
 
 ### Readings / interpretations
 ```js
-db.readings.countDocuments({user_id: "<user_id>"})
-db.readings.find({}, {spread_name:1, created_at:1}).sort({created_at:-1}).limit(5).toArray()
+// user_id is stored as an ObjectId on readings/interpretations (but as a plain string
+// on refresh_tokens) — a string literal here silently matches nothing.
+db.readings.countDocuments({user_id: ObjectId("<user_id>")})
+db.readings.find({}, {spread_type:1, created_at:1}).sort({created_at:-1}).limit(5).toArray()
 db.interpretations.countDocuments()
 ```
 
@@ -104,14 +106,14 @@ Only when a shell is not enough. Requires the management override from
 [configure_db.md §2](./configure_db.md) that publishes `127.0.0.1:27017` on the Pi:
 
 ```bash
-ssh pi 'cd ~/gnosis-esoterica && docker compose -f docker-compose.prod.yml -f docker-compose.mgmt.yml up -d'
-ssh -N -L 27017:localhost:27017 pi        # keep open
+ssh pavlos-mk@pavspi.local 'cd ~/projects/gnosis-esoterica && docker compose -f docker-compose.prod.yml -f docker-compose.mgmt.yml up -d'
+ssh -N -L 27017:localhost:27017 pavlos-mk@pavspi.local        # keep open
 ```
 Compass URI: `mongodb://gnosis_admin:<root-pw>@localhost:27017/gnosis_esoterica?authSource=admin`.
 
 Afterwards remove the exposed port:
 ```bash
-ssh pi 'cd ~/gnosis-esoterica && docker compose -f docker-compose.prod.yml up -d'
+ssh pavlos-mk@pavspi.local 'cd ~/projects/gnosis-esoterica && docker compose -f docker-compose.prod.yml up -d'
 ```
 
 ## 6. Rules

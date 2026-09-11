@@ -1,15 +1,19 @@
 # MongoDB Backup — Design
 
+> **Status: Implemented** — `backup/backup-to-atlas.sh` and `backup/Dockerfile` shipped.
+> The planned `backup/.mongo-backup.env.example` and `backup/README.md` were never created,
+> so the run command, cron line, and restore-test procedure below **are** the runbook.
+
 ## Context
 
-- MongoDB (`gnosis-mongodb`) runs as a Docker container on the Raspberry Pi (Pi 5), on the `app-network` bridge, database `gnosis_esoterica`. No host port is published — only reachable from other containers on `app-network` (see `docs/deployment.md`).
-- Auth is enabled: root user `gnosis_admin` (authSource `admin`) + scoped app user `gnosis_app` (see `docs/configure_db.md`).
+- MongoDB (`gnosis-mongodb`) runs as a Docker container on the Raspberry Pi (Pi 5), on the `app-network` bridge, database `gnosis_esoterica`. No host port is published — only reachable from other containers on `app-network` (see [`deploy_instructions.md`](./deploy_instructions.md)).
+- Auth is enabled: root user `gnosis_admin` (authSource `admin`) + scoped app user `gnosis_app` (see [`../database/configure_db.md`](../database/configure_db.md)).
 - Dataset is small (< 1 GB), low write volume.
 - Goal: one scheduled job that (a) dumps the DB to a compressed local archive, (b) ships that archive off the Pi to an existing Backblaze B2 bucket, and (c) mirrors the data into an existing MongoDB Atlas M0 cluster as a warm standby.
 - Runs as a **one-shot Docker container** invoked by host cron (a task, not a daemon) — matches the existing `pi-pull-and-start.sh` / deploy pattern already used on this Pi.
 - On failure, post a message to a Discord webhook naming which step failed. Stay silent on success.
 
-This supersedes the earlier draft in `docs/data_backups.md`, which assumed DB name `gnosis` (actual: `gnosis_esoterica`), no auth, and `--network host` / `localhost:27017` (actual: `app-network` / `gnosis-mongodb:27017`), and had no failure notification.
+This supersedes an earlier draft (`data_backups.md`, since deleted), which assumed DB name `gnosis` (actual: `gnosis_esoterica`), no auth, and `--network host` / `localhost:27017` (actual: `app-network` / `gnosis-mongodb:27017`), and had no failure notification.
 
 ## Architecture
 
@@ -47,18 +51,19 @@ export DISCORD_WEBHOOK_URL="https://discord.com/api/webhooks/..."
 export BACKUP_DIR="/home/pi/mongo-backups"
 ```
 
-Run command (documented in README):
+Run command (includes the read-only rclone config mount the `rclone copy` step needs):
 ```bash
 docker run --rm \
   --network app-network \
   --env-file /home/pi/.mongo-backup.env \
   -v /home/pi/mongo-backups:/home/pi/mongo-backups \
+  -v /home/pi/.config/rclone:/root/.config/rclone:ro \
   gnosis-backup
 ```
 
-Cron line (documented in README):
+Cron line:
 ```
-0 3 * * * docker run --rm --network app-network --env-file /home/pi/.mongo-backup.env -v /home/pi/mongo-backups:/home/pi/mongo-backups gnosis-backup >> /home/pi/mongo-backups/backup.log 2>&1
+0 3 * * * docker run --rm --network app-network --env-file /home/pi/.mongo-backup.env -v /home/pi/mongo-backups:/home/pi/mongo-backups -v /home/pi/.config/rclone:/root/.config/rclone:ro gnosis-backup >> /home/pi/mongo-backups/backup.log 2>&1
 ```
 
 rclone config: one-time interactive `rclone config` on the Pi host to create the B2 remote; mount the host's `~/.config/rclone` read-only into the container rather than baking credentials into the image.
@@ -66,7 +71,7 @@ rclone config: one-time interactive `rclone config` on the Pi host to create the
 ## Error handling & verification
 
 - `set -Eeuo pipefail` + `ERR` trap posts exactly one Discord message per failing run, naming the step that failed. `-E` (`errtrace`) is required — without it, bash's `ERR` trap does not fire for failures inside shell functions.
-- Restore-test (manual, documented in README, not automated):
+- Restore-test (manual, not automated):
   ```bash
   mongorestore --archive=<file> --gzip --nsFrom='gnosis_esoterica.*' --nsTo='gnosis_esoterica_test.*' \
     --uri="mongodb://gnosis_admin:<root-password>@gnosis-mongodb:27017/?authSource=admin"
@@ -76,7 +81,7 @@ rclone config: one-time interactive `rclone config` on the Pi host to create the
 
 ## Acceptance criteria
 
-- `docker run --rm gnosis-backup mongodump --version` runs cleanly on the Pi 5 (no illegal-instruction crash).
+- `docker run --rm --entrypoint mongodump gnosis-backup --version` runs cleanly on the Pi 5 (no illegal-instruction crash). The `--entrypoint` override is required: the image's ENTRYPOINT is the backup script, which ignores arguments — without the override this command performs a full backup **and an Atlas `--drop` restore**.
 - A manual run produces `gnosis_esoterica-<stamp>.archive.gz` locally, uploads it to B2, and the Atlas cluster shows the current collections afterward.
 - Simulating a failure (e.g. temporarily breaking network access or pointing at an invalid webhook URL) confirms the Discord alert actually fires and names the right step.
 - `--drop` is present on the Atlas restore.

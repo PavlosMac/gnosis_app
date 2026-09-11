@@ -1,5 +1,10 @@
 # Password Reset Flow
 
+> **Status: Unimplemented plan (verified 2026-09-10).** Nothing described here exists in
+> the code — no `src/notifications/`, no reset endpoints, no token collections — on any
+> branch. Migration numbers below say "next free" because 008/009 were taken since this
+> was written.
+
 ## Context
 
 The auth domain (`src/auth/`) supports register/login/refresh/logout but has no way for a
@@ -44,10 +49,10 @@ infrastructure with no persistence/CQRS/router of its own, so it goes in a new
 - `console_adapter.py` — `ConsoleEmailAdapter(EmailPort)`: logs `to`/`reset_link` via structlog instead of sending; comment noting a real provider replaces this later
 - `mock_adapter.py` — `MockEmailAdapter(EmailPort)`: appends `{"to", "reset_link"}` to `self.sent_password_resets` for test assertions
 
-**`src/migrations/versions/008_password_reset_tokens_indexes.py`** — mirrors
-`001_initial_indexes.py`'s TTL pattern:
+**`src/migrations/versions/NNN_password_reset_tokens_indexes.py`** (NNN = next free
+number — 011 as of 2026-09) — mirrors `001_initial_indexes.py`'s TTL pattern:
 ```python
-version = "008"
+version = "NNN"  # match the filename prefix
 async def up(db):
     await db[PASSWORD_RESET_TOKENS_COLLECTION].create_index("token_hash", unique=True)
     await db[PASSWORD_RESET_TOKENS_COLLECTION].create_index("user_id")

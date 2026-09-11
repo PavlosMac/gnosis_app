@@ -1,5 +1,4 @@
 import asyncio
-from datetime import date
 
 import structlog
 
@@ -96,9 +95,6 @@ class GenerateInterpretationHandler(
         llm_request = InterpretationRequest(
             spread_name=reading["spread_type"],
             question=reading.get("question"),
-            birth_date=(
-                date.fromisoformat(reading["birth_date"]) if reading.get("birth_date") else None
-            ),
             cards=[
                 CardInSpread(
                     name=card["name"],

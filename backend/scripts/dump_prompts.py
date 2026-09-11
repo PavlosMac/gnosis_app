@@ -182,7 +182,7 @@ def render_blocks() -> str:
     variants = [
         ("Standard system prompt", SAMPLE_REQUEST),
         ("Significators variant (portrait chart)", _SIGNIFICATORS_REQUEST),
-        ("Tree of Life variant (zones baked in)", _TREE_REQUEST),
+        ("Tree of Life variant (zones supplied by the client)", _TREE_REQUEST),
         ("Relationship Reading variant (3×3 pillars, no question)", _RELATIONSHIP_REQUEST),
     ]
     for label, request in variants:

@@ -18,12 +18,16 @@ Tarot reading API backend with user signup and AI-powered interpretations. Built
 make install        # uv sync
 make dev            # uvicorn src.main:app --reload --port 8000
 make test           # pytest -v
-make lint           # ruff check src/ tests/
+make lint           # ruff check src/ tests/ scripts/
+make typecheck      # pyright src/ scripts/
 make format         # ruff format + ruff check --fix
-make docker-up      # docker compose up -d (MongoDB:27019 + API:8001)
+make docker-up      # docker compose up — foreground (MongoDB:27019 + API:8001, seeds dev superadmin)
 make docker-down    # docker compose down
-make prompt-doc     # regenerate the generated regions of docs/prompt_reference.md
-make prompt-doc-check  # exit 1 if docs/prompt_reference.md is stale
+make migrate        # run pending DB migrations
+make docker-prod-up    # docker compose -f docker-compose.prod.yml up -d
+make docker-prod-down  # docker compose -f docker-compose.prod.yml down
+make prompt-doc     # regenerate the generated regions of docs/prompts/prompt_reference.md
+make prompt-doc-check  # exit 1 if docs/prompts/prompt_reference.md is stale
 ```
 
 ## Architecture
@@ -45,7 +49,7 @@ src/<domain>/
 ├── commands/       # CQRS command + handler pairs (one file each)
 └── queries/        # CQRS query + handler pairs (one file each)
 ```
-Domain-specific dependencies go in `src/core/dependencies.py`. Domain-specific exceptions are co-located in `service.py`. Collection name constants go in `repository.py`.
+Domain-specific dependencies go in `src/core/dependencies.py`. Domain-specific exceptions are co-located in `service.py`. Collection name constants go in `src/database/collections/constants.py`.
 
 Example with CQRS directories expanded (auth is the reference domain):
 ```
@@ -69,7 +73,7 @@ src/auth/queries/get_user_by_id.py   # GetUserByIdQuery + GetUserByIdHandler in 
 - `security.py` — Password hashing, JWT creation/decode
 - `pagination.py` — `PaginationParams` + `PaginatedResponse[T]`
 - `types.py` — `PyObjectId` (BSON ObjectId ↔ str)
-- `middleware.py` — `RequestIDMiddleware`
+- `middleware.py` — `RequestIDMiddleware` + `AccessLogMiddleware`
 
 ### CQRS Pattern
 - **Commands**: `BaseCommand` (frozen Pydantic) → `CommandHandler` — return scalars

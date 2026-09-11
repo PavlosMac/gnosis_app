@@ -16,8 +16,8 @@ docker buildx inspect --bootstrap
 ### 1. Create project directory
 
 ```bash
-mkdir -p ~/gnosis-esoterica/mongo ~/gnosis-esoterica/scripts
-cd ~/gnosis-esoterica
+mkdir -p ~/projects/gnosis-esoterica/mongo ~/projects/gnosis-esoterica/scripts
+cd ~/projects/gnosis-esoterica
 ```
 
 ### 2. Copy files from dev machine
@@ -26,10 +26,10 @@ cd ~/gnosis-esoterica
 # From your dev machine:
 PI=pi@<pi-ip>
 
-scp docker-compose.prod.yml ${PI}:~/gnosis-esoterica/
-scp .env.gnosis.prod.example ${PI}:~/gnosis-esoterica/
-scp mongo/init-user.js ${PI}:~/gnosis-esoterica/mongo/
-scp scripts/pi-pull-and-start.sh scripts/seed_superadmin.sh scripts/seed_superadmin.py ${PI}:~/gnosis-esoterica/scripts/
+scp docker-compose.prod.yml ${PI}:~/projects/gnosis-esoterica/
+scp .env.gnosis.prod.example ${PI}:~/projects/gnosis-esoterica/
+scp mongo/init-user.js ${PI}:~/projects/gnosis-esoterica/mongo/
+scp scripts/pi-pull-and-start.sh scripts/seed_superadmin.sh scripts/seed_superadmin.py scripts/pi-mongo.sh ${PI}:~/projects/gnosis-esoterica/scripts/
 ```
 
 ### 3. Create `.env.gnosis.prod`
@@ -37,7 +37,7 @@ scp scripts/pi-pull-and-start.sh scripts/seed_superadmin.sh scripts/seed_superad
 On the Pi:
 
 ```bash
-cd ~/gnosis-esoterica
+cd ~/projects/gnosis-esoterica
 cp .env.gnosis.prod.example .env.gnosis.prod
 ```
 
@@ -100,7 +100,7 @@ On your dev machine:
 On the Pi:
 
 ```bash
-cd ~/gnosis-esoterica
+cd ~/projects/gnosis-esoterica
 ./scripts/pi-pull-and-start.sh
 ```
 

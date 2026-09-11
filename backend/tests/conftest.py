@@ -1,3 +1,11 @@
+# ruff: noqa: E402
+import os
+
+# Settings has no jwt_secret_key default (a committed fallback would let anyone forge
+# tokens), so supply one before any src import instantiates Settings. setdefault keeps
+# a real env var or .env value in charge when present.
+os.environ.setdefault("JWT_SECRET_KEY", "test-only-secret")
+
 import pytest
 from bson import ObjectId
 from httpx import ASGITransport, AsyncClient

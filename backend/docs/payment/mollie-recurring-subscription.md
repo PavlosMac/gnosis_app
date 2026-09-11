@@ -1,10 +1,16 @@
 # Mollie Recurring Subscription (€12 / month)
 
+> **Status: Design only — not implemented (verified 2026-09-10).** Of the sequencing below,
+> only part of step 1 landed: `mollie-api-py` and `python-multipart` are in `pyproject.toml`.
+> No `src/payments/`, `src/billing/`, `src/notifications/`, settings, or gate exist. Note
+> also that **402 is already in use**: `BudgetExceededError` (`src/auth/service.py`) returns
+> 402 on the interpretation path, so `PaymentRequiredError` needs a distinguishable response
+> body/code for the frontend.
+
 ## Context
 
 The API has no payment code today: `User.credits` and `User.stripe_customer_id` are stored but never
-written, and CLAUDE.md's "credit-based access, Stripe payments" line is aspirational. The product
-needs one €12/month subscription that gates reading/interpretation creation.
+written. The product needs one €12/month subscription that gates reading/interpretation creation.
 
 **Backend vs Next.js** — settled by Mollie's design: webhooks carry only `id=tr_xxx` with no
 signature, so the receiver **must** re-fetch the resource with the secret API key. All state and
@@ -16,7 +22,7 @@ Decisions confirmed with the user:
 - First checkout charges **€12** (`sequenceType: "first"`); on `paid` the backend creates the Mollie
   subscription with `startDate = paidAt + 1 month` → no double charge.
 - Registration unchanged (returns tokens). Unpaid accounts exist; **POST /readings** and
-  **POST /interpretations/generate** return **402** until active. **Superadmins bypass** the gate.
+  **POST /readings/{id}/interpretation** return **402** until active. **Superadmins bypass** the gate.
 - Official SDK **`mollie-api-py`** (httpx, `*_async` methods) behind a `PaymentPort`.
 - "Update payment method" = new `sequenceType: "first"` checkout for **€0.00** (card + PayPal
   only; iDEAL needs ≥ €0.01 — setting `mollie_mandate_update_amount` lets that change later) →
@@ -193,7 +199,7 @@ Everything the FE needs, in one place:
    active | past_due | canceled | expired` plus `has_active_access: bool` — **gate UI on
    `has_active_access`, not on status** (canceled/past_due users may retain access until
    `current_period_end`; no grace period beyond it).
-4. **Gated endpoints**: `POST /readings` and `POST /interpretations/generate` return
+4. **Gated endpoints**: `POST /readings` and `POST /readings/{id}/interpretation` return
    **402** without active access — render as "subscription required" with a checkout CTA,
    not a generic error. GET/list/save stay open (lapsed users keep their history).
 5. **Update payment method**: `POST /api/v1/billing/payment-method/checkout` → same
@@ -213,7 +219,7 @@ Everything the FE needs, in one place:
   (`0` → first renewal fires immediately in test mode). **Fail fast**: `app_env ==
   "production"` with an empty or `test_` `mollie_api_key` refuses to start — the mock
   payment adapter must be unreachable in production (same class of issue as the
-  hardcoded `jwt_secret_key` default).
+  formerly hardcoded `jwt_secret_key` default, removed 2026-09-10).
 - `.env.example`: add the above (also fix stale JWT/OpenAI keys while there); note ngrok for webhooks.
 - `src/core/dependencies.py`: `get_payments`/`PaymentsDep`, `get_email`/`EmailDep` (copy `get_llm`
   pattern, `app.state.payments` / `app.state.email`); `get_active_subscription(user: CurrentUser,
@@ -224,13 +230,13 @@ Everything the FE needs, in one place:
   plus `ConsoleEmailAdapter`; sets `app.state.payments/email`; closes both on shutdown; mounts
   `billing_router` at `/api/v1`.
 - Gate: add `_sub: RequireActiveSubscription` param to `create_reading`
-  (`src/readings/router.py:23`) and `generate_interpretation` (`src/interpretations/router.py:25`)
+  (`src/readings/router.py`) and `generate_interpretation` (`src/interpretations/router.py`)
   only — GET/list/tags/save stay open so lapsed users keep their history.
 - `src/database/collections/constants.py`: `SUBSCRIPTIONS_COLLECTION`, `PAYMENTS_COLLECTION`.
-- `src/migrations/versions/008_billing_indexes.py`: subscriptions — unique `user_id`, sparse unique
+- `src/migrations/versions/NNN_billing_indexes.py` (next free number — 011 as of 2026-09): subscriptions — unique `user_id`, sparse unique
   `mollie_subscription_id`, `mollie_customer_id`; payments — unique `mollie_payment_id`,
   `(user_id, created_at desc)`, `subscription_id`.
-- `pyproject.toml`: add `mollie-api-py` and `python-multipart` (for `Form()`) to runtime deps via `uv add`.
+- `pyproject.toml`: `mollie-api-py` and `python-multipart` (for `Form()`) — **already added** to runtime deps.
 
 ## Tests
 - `tests/conftest.py`: `app` fixture wires `MockPaymentAdapter`/`MockEmailAdapter` through
@@ -255,7 +261,7 @@ Everything the FE needs, in one place:
   asserts payload (amount dict, `sequenceType`, `interval`, ISO `startDate`); SDK error → 502.
 
 ## Docs
-- New `docs/mollie-subscriptions.md`: flow, state machine, endpoint table, webhook idempotency
+- New `docs/payment/mollie-subscriptions.md`: flow, state machine, endpoint table, webhook idempotency
   contract, frontend contract (redirect + poll), dev setup (`ngrok http 8000`, `PUBLIC_BASE_URL`,
   Mollie `test_` key, test-mode checkout picks paid/failed), known gaps (reactivate after cancel,
   no expiry cron, iDEAL excluded from mandate update, chargebacks logged but not acted on,
@@ -267,7 +273,8 @@ Everything the FE needs, in one place:
   `src/notifications/`, `src/billing/` to Key Files.
 - `docs/database/model_references.md`: replace Stripe `transactions`/`credit_ledger` with
   `subscriptions`/`payments`; mark `stripe_customer_id` deprecated.
-- `docs/auth/password-reset-flow.md`: bump its migration to `009`; note `EmailPort` now exists.
+- `docs/auth/password-reset-flow.md`: its migration also says "next free number" — whichever
+  plan lands second takes the next slot; note `EmailPort` now exists.
 
 ## Sequencing
 1. deps + settings + `PaymentRequiredError`

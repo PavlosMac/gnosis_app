@@ -2,7 +2,8 @@
 
 Current collections as written by the domain models (`src/<domain>/models.py`) and indexed by
 migrations (`src/migrations/versions/`). Collection names come from
-`src/database/collections/constants.py`.
+`src/database/collections/constants.py` — except `_migrations`, which is hardcoded in
+`src/migrations/runner.py`.
 
 Optional fields are **omitted** from the document when unset (never stored as `null`).
 
@@ -50,7 +51,7 @@ Source: `src/readings/models.py`
 | question    | str                               | optional                       |
 | birth_date  | str (ISO date)                    | optional                       |
 | tags        | [str]                             | optional (omitted when empty)  |
-| cards       | [{name, position?, orientation}]  | array                          |
+| cards       | [{name, position?, orientation, position_description?}] | array; optional keys omitted when unset |
 | created_at  | datetime                          |                                |
 
 Legacy documents may still carry embedded `card_interpretations`, `synthesis`, `tokens_used`,
@@ -100,7 +101,8 @@ Managed by `src/migrations/runner.py`. Fields: `version` (unique), `description`
 
 ```
 users ─1:N─→ refresh_tokens
-users ─1:N─→ readings ─1:N─→ interpretations
+users ─1:N─→ readings ─1:1─→ interpretations   (unique reading_id index)
+users ─1:N─→ interpretations                   (denormalized user_id for usage queries)
 users ─1:1─→ user_tags   (derived from that user's readings.tags)
 ```
 
@@ -126,8 +128,8 @@ Owned by migrations. Current state after 001–010:
 
 ## Planned
 
-- **Password reset** (`password-reset` branch): `password_reset_tokens` and
-  `password_reset_attempts` collections, next free migration number — see
+- **Password reset** (unimplemented plan, no branch carries it): `password_reset_tokens`
+  and `password_reset_attempts` collections, next free migration number — see
   `docs/auth/password-reset-flow.md`.
 - **Payments**: Mollie subscriptions, not Stripe — see `docs/payment/mollie-recurring-subscription.md`.
   `stripe_customer_id` on `users` is a leftover from the original plan.

@@ -9,7 +9,7 @@ this doc is the "how it actually works" reference for the code as built.
 
 Generating an interpretation is a single idempotent call:
 
-**`POST /readings/{reading_id}/interpretation`** — no request body. On the first call
+**`POST /api/v1/readings/{reading_id}/interpretation`** — no request body. On the first call
 for a reading it calls the LLM, charges the budget, **persists the interpretation**,
 and returns it (`{interpretation, remaining_budget_usd}` — the nested object is
 exactly what `GET /readings/{id}` embeds as its singular `interpretation` field). On
@@ -24,7 +24,7 @@ separate save endpoint; there are no interpretation settings.
 | `users.usage` | one per user | Running spend aggregate: `{prompt_tokens, completion_tokens, cost_usd, readings, updated_at}`. **Created lazily** — absent until a user's first reservation. |
 | `users.budget_usd` | one per user, optional | Per-user override of the default cap. Absent means "use the default." |
 | `Settings.user_budget_usd` | config, `$3.00` default | The fallback budget when a user has no override. |
-| `interpretations.usage` | one per saved interpretation | The audit trail: exact tokens and cost for *that one reading*, frozen at save time. |
+| `interpretations.usage` | one per saved interpretation | The audit trail: exact tokens and cost for *that one reading*, frozen at save time. Absent (`None` in the read model) on documents saved before the ledger existed. |
 
 The user aggregate answers "how much has this user spent, and can they spend more."
 The per-interpretation ledger answers "why did this specific reading cost what it
@@ -39,6 +39,9 @@ Everything below happens inside `GenerateInterpretationHandler.handle`
    (`asyncio.gather` — the three lookups don't depend on each other). 404s if the
    reading doesn't exist or isn't owned by the caller — ownership is checked *before*
    the idempotency return, so an existing interpretation never leaks to a non-owner.
+   A valid token whose user document no longer exists gets a **401** here, before any
+   budget work — deliberately, so a deleted account never sees a misleading
+   "budget exhausted."
 2. **Resolve the budget.** `user.budget_usd` if the field is present, else
    `Settings.user_budget_usd`. This is a `None` check, not a truthiness check — a user
    explicitly capped at `budget_usd: 0` must actually be blocked, not silently fall
@@ -57,8 +60,13 @@ Everything below happens inside `GenerateInterpretationHandler.handle`
    (a brand-new user) is treated as spend of `0`, not as "exempt from the check" — see
    [Need to know](#need-to-know) below. Refused reservations raise
    `BudgetExceededError` → **402**.
-6. **Call the LLM.** Whatever adapter is wired (`OpenAIAdapter` in production,
-   `MockLLMAdapter` in dev/tests — always `$0`, zero tokens).
+6. **Call the LLM.** Whatever adapter is wired. Selection is keyed on the presence of
+   `openai_api_key` (`src/main.py`), **not** on environment: with a key set you get
+   `OpenAIAdapter` and spend real money even on a dev machine; without one,
+   `MockLLMAdapter` (always `$0`, zero tokens). LLM failures surface as their own
+   statuses: **429** provider rate limit, **502** truncated/invalid response (wasted
+   spend is logged, the user is not charged), **503** all concurrency slots busy past
+   the acquire timeout, **504** call timeout (`src/llm/errors.py`).
 7. **Persist the interpretation** — `upsert_by_reading_id` keyed on `reading_id`
    alone, still inside the reserve window. Persist sits deliberately *before* settle:
    a persist failure releases the reservation (nothing stored, nothing charged), and
@@ -66,7 +74,10 @@ Everything below happens inside `GenerateInterpretationHandler.handle`
    is impossible.
 8. **Settle to actuals** — `AuthWriteRepository.settle_usage()` adjusts the reservation
    down (or up, if actuals somehow exceed the estimate) to the real cost, and records
-   the token split + increments the reading count on the user aggregate.
+   the token split + increments the reading count on the user aggregate. Note
+   `reasoning_tokens` is ledger-only: it's frozen on `interpretations.usage` but never
+   aggregated onto `users.usage` (its cost is already inside `completion_tokens`
+   pricing).
 9. **On any failure between reserve and settle** (LLM error, persist error, timeout,
    even task cancellation) — the reservation is released in full. The user is never
    charged for a reading they didn't receive; wasted provider spend is logged, not
@@ -90,9 +101,11 @@ floored at `0`).
 ## Pricing
 
 `src/llm/pricing.py` resolves `$/1M tokens` from `Settings.model_price_table`
-(`src/core/config.py`), matched by **longest prefix** against the model id the
-provider actually returns (e.g. `gpt-5.4-2026-01-15` matches the `gpt-5.4` entry, not
-some hypothetical `gpt-5` entry, and never the `gpt-5.4-mini` entry). Cost is priced at
+(`src/core/config.py`), matched against the model id the provider actually returns by
+**exact match or dated snapshot** — a table key matches only itself or `<key>-<digit…>`
+(e.g. `gpt-5.4-2026-01-15` matches the `gpt-5.4` entry). This is deliberately stricter
+than a prefix match, which would wrongly price a hypothetical `gpt-5.4-nano` off the
+`gpt-5.4` entry. Cost is priced at
 the moment of the call and stored — a later price-table edit never rewrites history for
 readings already saved.
 
@@ -125,8 +138,14 @@ never be the reason a user can't get their reading.
   warning on every single dev/test run.
 - **Two concurrent first-generates for the same reading can both charge.** Both pass
   the existence check before either persists; the `reading_id`-keyed upsert makes
-  storage last-write-wins (one document, no `E11000`). This is the same accepted race
-  posture as the gate itself, bounded by its at-most-one-reservation overshoot.
+  storage last-write-wins — one document survives. (Racing upserts on a not-yet-existing
+  key *can* still raise `E11000` against the unique index — a documented Mongo caveat —
+  so the repository catches `DuplicateKeyError` and retries as a plain update.) This is
+  the same accepted race posture as the gate itself, bounded by its
+  at-most-one-reservation overshoot.
+- **One path bypasses this doc entirely:** `POST /api/v1/llm/interpret`
+  (superadmin-only, `src/llm/router.py`) calls the adapter directly — no reservation,
+  no ledger, no persistence. Spend there shows up only in the adapter's usage logs.
 
 ## Quick file map
 

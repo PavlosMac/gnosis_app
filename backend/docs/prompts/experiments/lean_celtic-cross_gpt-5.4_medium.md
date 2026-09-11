@@ -1,5 +1,9 @@
 # Lean prompt test — Celtic Cross
 
+> Snapshot from the pre-production harness (2026-09-01). The intent/depth block shown
+> below no longer exists in the prompt code; re-running `scripts/lean_prompt_test.py`
+> **overwrites this file in place** and destroys the archived prompt text.
+
 _Generated 2026-09-01 08:30 UTC_
 
 - **Model:** gpt-5.4-2026-03-05 (reasoning effort: medium)

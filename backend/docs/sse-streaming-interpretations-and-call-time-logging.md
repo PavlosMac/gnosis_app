@@ -1,8 +1,11 @@
 # SSE Streaming for Interpretations + Call-Time Logging
 
+> **Status: Planned, not started (verified 2026-09-10).** None of the phases below exist in
+> code yet — no streaming, no `merge_contextvars`, no `duration_ms` on the access log.
+
 ## Context
 
-`POST /api/v1/readings/{reading_id}/interpretation` holds the HTTP connection ~30s for a 9-card reading. Investigation confirmed the cause: the prompt is tiny (~800 tokens — the lean architecture already fixed input size), but `gpt-5.4` at `reasoning_effort=medium` generates ~1,500–1,900 hidden reasoning tokens plus ~1,440 tokens of prose (900-word budget), non-streamed, awaited inline in the handler. The confirmed sample (`docs/prompts/experiments/lean_celtic-cross_gpt-5.4_medium.md`): 3,403 output tokens, 1,905 reasoning.
+`POST /api/v1/readings/{reading_id}/interpretation` holds the HTTP connection ~30s for a 9-card Relationship Reading. Investigation confirmed the cause: the prompt is tiny (~800 tokens — the lean architecture already fixed input size), but `gpt-5.4` at `reasoning_effort=medium` generates hidden reasoning tokens plus the prose (900-word ≈ 1,440-token budget for that spread), non-streamed, awaited inline in the handler. The checked-in sample (`docs/prompts/experiments/lean_celtic-cross_gpt-5.4_medium.md`, a 10-card Celtic Cross): 2,254 output tokens, of which 512 reasoning.
 
 The user chose (via AskUserQuestion) to keep model/effort/word-budget as-is and fix **perceived** latency with **SSE streaming**, plus add **call-time logging**. Total generation time is unchanged; the narrative streams to the client as it generates.
 
@@ -10,7 +13,7 @@ The user chose (via AskUserQuestion) to keep model/effort/word-budget as-is and 
 
 ## Verified SDK facts that shape the design (openai 2.30.0, checked in .venv)
 
-1. **`event.parsed` is useless here**: the stream helper parses accumulated content with `jiter.from_json(..., partial_mode=True)`, which drops incomplete trailing strings. `LeanReading` (`src/llm/schemas.py:43-52`) is one big `reading: str`, so `parsed` stays `{}` for the whole generation. **Fix**: on each `content.delta`, re-parse `event.snapshot` ourselves with `jiter.from_json(snapshot.encode(), partial_mode="trailing-strings")`, read `["reading"]`, emit the suffix beyond what was already emitted (decoded prefix is monotonic; JSON escapes decode correctly).
+1. **`event.parsed` is useless here**: the stream helper parses accumulated content with `jiter.from_json(..., partial_mode=True)`, which drops incomplete trailing strings. `LeanReading` (`src/llm/schemas.py`) is one big `reading: str`, so `parsed` stays `{}` for the whole generation. **Fix**: on each `content.delta`, re-parse `event.snapshot` ourselves with `jiter.from_json(snapshot.encode(), partial_mode="trailing-strings")`, read `["reading"]`, emit the suffix beyond what was already emitted (decoded prefix is monotonic; JSON escapes decode correctly).
 2. **Usage is silently zero** unless `stream_options={"include_usage": True}` is passed to `.stream()` — forgetting it means every streamed reading settles to $0 (undercharging). Pin with a test asserting the kwarg.
 3. `client.chat.completions.stream(...)` (non-beta, async CM) accepts `response_format=LeanReading`, `reasoning_effort`, `timeout`, `max_completion_tokens`. `LengthFinishReasonError`/`ContentFilterFinishReasonError` raise **during iteration** — the existing error mapping in `_call_openai` (`openai_adapter.py:151-178`) must wrap the iteration.
 4. Middleware order (`src/main.py:144-145`): `RequestIDMiddleware` is outermost → contextvars bound there are visible to the access-log line.

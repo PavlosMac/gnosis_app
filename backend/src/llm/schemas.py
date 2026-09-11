@@ -1,4 +1,3 @@
-from datetime import date
 from enum import StrEnum
 
 from pydantic import BaseModel, Field
@@ -38,7 +37,6 @@ class InterpretationRequest(BaseModel):
 
     spread_name: str = Field(..., min_length=1, max_length=100)
     question: str | None = Field(default=None, min_length=5, max_length=500)
-    birth_date: date | None = Field(default=None)
     cards: list[CardInSpread] = Field(..., min_length=1, max_length=12)
 
 

@@ -53,9 +53,9 @@ if set(REASONING_HEADROOM) != set(get_args(ReasoningEffort)):
     raise RuntimeError("REASONING_HEADROOM out of sync with config.ReasoningEffort")
 
 
-# Verbatim across every situational spread variant (Standard, Tree of Life — not
-# Significators, which has no question axis and reads each card as a fixed facet of
-# character rather than a passing energy).
+# Shared by the Standard and Tree of Life variants. Not Significators, which has no
+# question axis and reads each card as a fixed facet of character rather than a passing
+# energy — and not Relationship Reading, whose template opens with its own framing.
 _QUESTION_ANALYSIS = """First determine what the question asks: its subject, the people involved and how each relates \
 to the querent, and the kind of answer sought. Let that govern every interpretive choice. The \
 broader or more open the question — or when none is given — the more freedom you have to let \

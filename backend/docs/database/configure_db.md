@@ -1,6 +1,6 @@
 # MongoDB — Configuration & Management
 
-Self-hosted MongoDB on the Raspberry Pi, running as a Docker container on `app-network`. See [deployment.md](../deployment/deployment.md) for the full Pi architecture.
+Self-hosted MongoDB on the Raspberry Pi, running as a Docker container on `app-network`. See [deploy_instructions.md](../deployment/deploy_instructions.md) for the Pi deploy runbook.
 
 ## 1. Authentication
 
@@ -68,7 +68,9 @@ Note `authSource=gnosis_esoterica` — the app user is created in that database,
 
 ### Dev stays unchanged
 
-No auth in `docker-compose.yml` locally. The default `MONGODB_URI=mongodb://mongodb:27017` continues to work.
+No auth in `docker-compose.yml` locally. The compose file's `MONGODB_URI=mongodb://mongodb:27017`
+override continues to work (the code default in `src/core/config.py` is
+`mongodb://localhost:27017`, for running the API outside Docker).
 
 ### Important caveats
 
@@ -130,7 +132,7 @@ services:
 
 ```bash
 # Start with management access
-cd ~/gnosis-esoterica
+cd ~/projects/gnosis-esoterica
 docker compose -f docker-compose.prod.yml -f docker-compose.mgmt.yml up -d
 
 # When done, restart without the override

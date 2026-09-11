@@ -5,15 +5,17 @@ own knowledge of the Rider–Waite deck (plus numerology and astrology) — and 
 **one woven narrative** (`LeanReading.reading`), not per-card sections. Design and
 rationale: [`lean_prompt_architecture.md`](lean_prompt_architecture.md).
 
-Sections 4 and 5 are generated from the real prompt code by `make prompt-doc`
-(`scripts/dump_prompts.py`); `make prompt-doc-check` fails CI when they drift.
+Sections 3 and 4 are generated from the real prompt code by `make prompt-doc`
+(`scripts/dump_prompts.py`); drift fails `make test` (via
+`tests/scripts/test_dump_prompts.py`) and `make prompt-doc-check` in CI.
 
 ## 1. Pipeline
 
 One call per interpretation through `LLMPort` (`src/llm/openai_adapter.py`):
 
 ```
-system  = one template chosen by spread_name (standard | Significators | Tree of Life)
+system  = one template chosen by spread_name
+          (standard | Significators | Tree of Life | Relationship Reading)
           with the total word budget substituted in
 user    = question line (situational spreads only)
         + "Spread: <name> (<n> cards)"
@@ -21,16 +23,21 @@ user    = question line (situational spreads only)
 response_format = LeanReading { reading: str }
 ```
 
-- **Budget** is server-owned: `Settings.llm_words_per_card` (default 100) × cards —
-  distinct cards, ×`significator_budget_scale` (1.5) for `Significators`. Stated once
-  as a ceiling ("not a target to exceed"); the client sends no depth.
+- **Budget** is server-owned: `Settings.llm_words_per_card` (default 100) × cards as
+  dealt — except `Significators`, which counts distinct cards and scales by
+  `significator_budget_scale` (1.5). Stated once as a ceiling ("not a target to
+  exceed"); the client sends no depth.
 - **Completion cap** per request: `ceil(total_words × 1.6) + 40 +
   REASONING_HEADROOM[effort]`, clamped by `openai_max_tokens`.
 - **Spread variants** are keyed off the literal `spread_name`: `Significators` (a
   portrait chart — no question analysis, no reversal block; card-by-card sections with
-  a woven closing paragraph) and `Tree of Life` (the three-pillar temporal structure
-  baked in). Position/zone meanings arrive per card from the frontend for every
-  variant. Both situational variants carry reversed guidance.
+  a woven closing paragraph), `Tree of Life` (the three-pillar temporal structure
+  baked in), and `Relationship Reading` (3×3 pillars, no question — the spread sets
+  the agenda; reversal guidance reworded to "whichever the position and the state of
+  the relationship make apt"). Position/zone meanings arrive per card from the
+  frontend for every variant. All three situational templates (Standard, Tree of
+  Life, Relationship) carry reversed guidance; only Standard and Tree of Life carry
+  question analysis.
 - **Usage** returns as a prompt/completion/reasoning token split; the interpretation
   command handler prices it against `Settings.model_price_table` and charges the
   user's budget via an atomic reserve-then-settle gate (spec §5a).
@@ -42,7 +49,7 @@ response_format = LeanReading { reading: str }
 | Prompt wording (any template) | `src/llm/prompt_builder.py`, then `make prompt-doc` |
 | Words per card / significator scale | `Settings.llm_words_per_card`, `Settings.significator_budget_scale` (`.env`-overridable) |
 | Reasoning headroom / token math | `REASONING_HEADROOM`, `TOKENS_PER_WORD` in `src/llm/prompt_builder.py` |
-| Model, effort, timeouts, concurrency, retries | `Settings.openai_*` in `src/core/config.py` |
+| Model, effort, timeouts, concurrency, retries, slot-wait cap | `Settings.openai_*` in `src/core/config.py` (incl. `openai_acquire_timeout_seconds`) |
 | Price table / per-user budget | `Settings.model_price_table`, `Settings.user_budget_usd` |
 | Response schema | `LeanReading` in `src/llm/schemas.py` |
 
@@ -83,7 +90,7 @@ Write the portrait as card-by-card sections. Then at the end write one final par
 Write about 600 words — treat that as a ceiling, not a target to exceed.  Every sentence must earn its place: no textbook boilerplate, no hedging.
 ```
 
-#### Tree of Life variant (zones baked in)
+#### Tree of Life variant (zones supplied by the client)
 
 ```text
 You are a master tarot reader working with the Rider–Waite deck, drawing on your own deep knowledge of the cards — their imagery, traditional meanings and correspondences. You may also draw on the allied mystical arts of numerology, astrology and the Kabbalah, which matter especially here.

@@ -4,10 +4,12 @@ Design for the next prompt architecture: **no card data sent** — an advanced m
 from its own knowledge of tarot — and **one woven narrative** instead of per-card
 interpretations plus a synthesis.
 
-Status: validated as an experiment on 2026-09-01 via `scripts/lean_prompt_test.py`;
-sample readings in `docs/prompts/experiments/`. The current production pipeline is
-documented in [`prompt_reference.md`](prompt_reference.md); nothing there is replaced
-until this design is wired into `src/llm/`.
+Status: **implemented** — validated as an experiment on 2026-09-01
+(`scripts/lean_prompt_test.py`, sample readings in `docs/prompts/experiments/`) and
+wired into `src/llm/prompt_builder.py` on 2026-09-02/03. This doc is the design
+rationale; the current prompt wording and pipeline summary live in
+[`prompt_reference.md`](prompt_reference.md) (generated from the code). Where a draft
+below diverges from the shipped template, an amendment note says so — the code wins.
 
 ---
 
@@ -68,6 +70,10 @@ built purely from `CardInSpread` as the frontend sends it.
 
 ### System prompt (verbatim, from the experiment)
 
+*Amended (see §7): the `{INTENT}` slot and the INTENT blocks below were removed before
+production — the shipped template has no intent concept. Kept as the experiment record;
+current wording in `prompt_reference.md`.*
+
 ```
 You are a master tarot reader working with the Rider–Waite deck, drawing on your own
 deep knowledge of the cards — their imagery, traditional meanings and correspondences.
@@ -122,6 +128,12 @@ Spread: Past, Present, Future (3 cards)
 ```
 
 ### Significators variant — DRAFT for review
+
+*Amended: the shipped template (`prompt_builder.py`) diverges from this draft in three
+ways — it has **no reversal block** (reversing the "all spreads" decision below; see
+§7), it asks for **card-by-card sections** with a woven closing paragraph rather than
+one continuous narrative, and there is no fixed positions block: positions and their
+meanings arrive per card from the frontend like any other spread.*
 
 A significator chart is calculated from birth data, not drawn: a portrait of the
 querent, not a situational reading. The standard skeleton loses its QUESTION_ANALYSIS
@@ -280,8 +292,15 @@ Spread: Tree of Life (11 cards)
 ```
 
 Selection: like Significators today, the variant is keyed off `spread_name` — the
-literal `"Tree of Life"` joins `"Significators"` as the only two names the backend
-special-cases.
+literal `"Tree of Life"` joins `"Significators"` as a name the backend special-cases.
+
+*Added post-design (2026-09-08, commit `88c0a89`):* a third special-cased name,
+`"Relationship Reading"` — a 9-card 3×3-pillar spread (querent / relationship / other
+person, rows mirroring current behaviour → desire → counsel). No question is asked; the
+spread sets the agenda. It carries the reversal block with its wording adapted
+("whichever the position and the state of the relationship make apt") but no question
+analysis, and supports named third parties (third-person voice when positions carry
+names). Template in `prompt_builder.py`; rendered wording in `prompt_reference.md`.
 
 ---
 
@@ -310,20 +329,23 @@ the model lands within ±3% of it; phrased as "roughly N words" it overshot by ~
 
 ## 4. Measured cost (gpt-5.4, medium effort, 2026-09)
 
-| | 3-card, depth 60 | 10-card Celtic Cross, depth 70 |
-|---|---|---|
-| Budget / actual words | 330 / 321 | 1,200 / 1,237 |
-| Input tokens | 480 | 645 |
-| Input, current architecture (est.) | 2,526 | 4,105 |
-| Output tokens (of which reasoning) | 723 (329) | 3,403 (1,905) |
-| Cost @ $2.50 / $15.00 per 1M | **$0.012** | **$0.053** |
+Figures below are from the checked-in experiment outputs
+(`experiments/lean_lisbon_gpt-5.4_medium.md`, `experiments/lean_celtic-cross_gpt-5.4_medium.md`);
+the "depth" setting they used no longer exists (§7 — budget is now words-per-card only).
 
-≈ 0.4–0.5¢ per card. Cost is output-dominated (~95%), so the levers are model price,
-depth, and reasoning effort — the lean input saves only ~0.5–1¢ per reading versus the
-current architecture on the same model. `gpt-5.4-mini` ($0.75/$4.50) would run the same
-readings at ~3.3× less; whether the advanced model earns its price is a content
-judgment, not a token one. Note the reasoning spend grows with spread size (329 → 1,905
-tokens here) — large spreads at `high` effort would eat further into the margin.
+| | 3-card (Lisbon) | 10-card Celtic Cross |
+|---|---|---|
+| Word budget | ~330 | ~1,200 |
+| Input tokens | 532 | 697 |
+| Output tokens (of which reasoning) | 809 (426) | 2,254 (512) |
+| Cost @ $2.50 / $15.00 per 1M | **$0.0135** | **$0.0356** |
+
+≈ 0.4–0.5¢ per card. Cost is output-dominated (~90%+), so the levers are model price,
+word budget, and reasoning effort — the lean input saves only ~0.5–1¢ per reading versus
+the previous architecture on the same model. `gpt-5.4-mini` ($0.75/$4.50) would run the
+same readings at ~3.3× less; whether the advanced model earns its price is a content
+judgment, not a token one. Reasoning spend can grow with spread size and effort — large
+spreads at `high` effort would eat further into the margin.
 
 ---
 
@@ -334,13 +356,13 @@ tokens here) — large spreads at `high` effort would eat further into the margi
 | `src/llm/prompt_components.py` + `prompt_builder.py` | Superseded by one small builder (system template + card lines + budget) |
 | `src/llm/schemas.py` | `LLMInterpretationResult` → single `reading` field; `InterpretationResponse` and the interpretations API/domain lose `card_interpretations[]`; `InterpretationSettings` deleted outright (depth, lens, and finally intent — §7): requests carry no settings — **frontend-visible** |
 | `InterpretationSettings.lens` | Unused — drop from the API, or keep and reintroduce as a one-line register block |
-| `card_catalog` / `src/lib/cards/*.json` | Out of the interpretation path (no `CardNotFoundError`); still serves the `/cards` write-ups |
+| `card_catalog` / `src/lib/cards/*.json` | Out of the interpretation path (no `CardNotFoundError`). *(Update: no `/cards` route exists anymore — the JSON now feeds only the offline `scripts/card_meanings.py` generator.)* |
 | `OPENAI_MODEL` | **Decided: `gpt-5.4`** — the reading quality depends on the model thinking well; ~3.3× mini's output price, bounded by the word-budget ceiling |
 | Usage tracking / budget cap | Full design below (§5a) — exact actuals charged in the inbound call: per-interpretation usage ledger + per-user aggregate gated against a $3 default budget |
 | Significators / Tree of Life | Spread-keyed system-prompt variants — drafts in §2 (portrait chart; eleven-zone Tree) |
 | Tunables → `Settings` | Every set variable lives in `src/core/config.py` (pydantic-settings, `.env`-overridable), not as module constants: `llm_words_per_card` (100), `significator_budget_scale` (1.5), the model price table ($/1M in/out per model), the default per-user $ budget, the production controls `openai_timeout_seconds` (120), `openai_max_concurrent` (10) and `openai_max_retries` (2), plus the existing `openai_model` / `openai_reasoning_effort` / `openai_max_tokens`. Prompt *text* stays in code; numbers go to config |
-| `birth_date`, `observer` | Still accepted / defined, still never rendered — decide or delete |
-| Tests / docs | Prompt-phrase assertions in `tests/llm/test_prompt_builder.py` and the generated regions of `prompt_reference.md` (`make prompt-doc`) rebuild around the new builder |
+| `birth_date`, `observer` | *(Resolved 2026-09-10: both deleted from the LLM path — `observer` earlier, `birth_date` removed from `InterpretationRequest`. The readings domain still stores/filters `birth_date`; reintroduce it on the LLM request only when a template actually renders it.)* |
+| Tests / docs | Prompt-phrase assertions in `tests/llm/test_lean_prompt.py` and the generated regions of `prompt_reference.md` (`make prompt-doc`) rebuild around the new builder |
 
 ## 5a. Usage accounting & budget enforcement
 
@@ -472,9 +494,12 @@ prompt names are finally identical — no Thoth alias mismatch to guard against.
 - **Word budget is server-owned**: client `depth` is dropped from the API. With per-user
   $ budgets the reading length is the dominant cost lever, so the server holds it —
   `llm_words_per_card` (default 100) × cards, ×1.5 for significator charts.
-- **Reversed guidance in every spread**: the ORIENTATION block appears in all variants,
-  significator charts included (recast there as a facet of character turned inward) —
-  no spread assumes all-upright cards.
+- **Reversed guidance in every situational spread**: the ORIENTATION block appears in
+  Standard, Tree of Life and Relationship Reading (the latter with adapted wording).
+  *(Amended: this originally read "significator charts included", but the shipped
+  Significators template carries **no** reversal block — the portrait framing reads
+  each card as a fixed facet of character. If reversed significator cards should get
+  explicit guidance after all, that's a code change to `_SIGNIFICATORS_TEMPLATE`.)*
 - **Budget enforcement**: $3 default per-user cap (`Settings.user_budget_usd`).
   Exact actuals charged directly in the inbound call via an atomic reserve-then-settle
   gate; failed calls release the reservation — the user is never charged for a reading
@@ -496,3 +521,9 @@ prompt names are finally identical — no Thoth alias mismatch to guard against.
 
 - **Lens**: gone, or back as one sentence? The model's default register leans esoteric
   on its own. Decides the fate of the frontend lens picker (§6.2).
+- **`word_budget` in the API** (§6.3): the backend still doesn't expose the expected
+  reading length; the interpretation response carries only
+  `{interpretation, remaining_budget_usd}`.
+- **Significators and reversals**: the shipped template has no reversal block (see the
+  amended §7 bullet) — confirm that's the intended reading of a portrait chart, or add
+  recast guidance to `_SIGNIFICATORS_TEMPLATE`.

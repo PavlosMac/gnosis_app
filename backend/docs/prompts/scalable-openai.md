@@ -6,14 +6,15 @@
 > **Deltas applied in the fold** (the migration plan is authoritative):
 >
 > - Timeout default raised 60s → **120s** — the lean architecture's 11-card spreads on
->   `gpt-5.4` with reasoning (~3,400 output tokens) outgrew the "1–3 card reading"
->   rationale below.
+>   `gpt-5.4` with reasoning (output in the low thousands of tokens) outgrew the
+>   "1–3 card reading" rationale below.
 > - `except APITimeoutError` must precede `except APIConnectionError` — it *subclasses*
 >   it in the OpenAI SDK, so the order below would silently map timeouts to 502.
 > - Semaphore acquire gets a **bounded wait** → 503 instead of unbounded queueing; note
 >   the semaphore is per-process (effective cap × uvicorn workers).
-> - Item 4 was only partially implemented: success-path usage logging exists, but call
->   duration and failure-path logging are still outstanding and stay in scope.
+> - Item 4 is now fully implemented: success-path usage logging, call duration, and
+>   failure-path logging all exist (`src/llm/openai_adapter.py` — `duration_s` on both
+>   the success INFO line and the failure WARNING line).
 > - Item 5 (response caching) **dropped entirely** — it conflicts with the per-user
 >   budget ledger (a cache hit either double-charges or breaks the one-charge-per-
 >   interpretation-doc invariant), and cost is ~95% output-dominated anyway.

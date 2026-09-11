@@ -26,4 +26,6 @@ def test_replace_between_markers_raises_when_marker_missing():
 def test_prompt_reference_doc_is_current():
     """Drift protection: prompt code changed without `make prompt-doc`."""
     current = DOC_PATH.read_text(encoding="utf-8")
-    assert render_doc(current) == current, "docs/prompt_reference.md is stale — run make prompt-doc"
+    assert render_doc(current) == current, (
+        "docs/prompts/prompt_reference.md is stale — run make prompt-doc"
+    )

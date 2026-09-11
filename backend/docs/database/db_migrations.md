@@ -130,5 +130,11 @@ Use `$exists` guards or similar filters to make the operation idempotent.
 - **Idempotent** — `up()` must be safe to re-run even if the runner skips applied versions
 - **Self-contained** — no imports from application code (models, services, schemas); only `src.database.collections.constants`
 - **One concern per file** — don't mix unrelated schema changes in a single migration
-- **Collection constants** — always reference collections via `src/database/collections/constants.py`, never hardcode strings
+- **Collection constants** — always reference collections via `src/database/collections/constants.py`, never hardcode strings (the one exception is `_migrations` itself, hardcoded runner-internally in `src/migrations/runner.py`)
 - **Version match** — the `version` attribute must match the filename prefix (e.g. `002_foo.py` → `version = "002"`)
+
+Idempotency is not academic: the runner has **no failure recovery** — a migration that
+raises mid-`up()` aborts startup with nothing recorded in `_migrations`, so the whole
+`up()` re-runs from scratch on the next start. Write each step to survive a partial
+earlier run (see `008_lean_interpretations.py` for a migration written to do exactly
+that).
