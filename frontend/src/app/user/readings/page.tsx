@@ -8,20 +8,10 @@ import {
   listHref,
   readingHref,
 } from "@/lib/reading-list-context";
-
-const formatDate = (iso: string) => {
-  const d = new Date(iso);
-  return d.toLocaleDateString("en-GB", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
-};
-
-const truncate = (text: string | null, max: number) => {
-  if (!text) return null;
-  return text.length > max ? text.slice(0, max) + "…" : text;
-};
+import {
+  formatReadingDate as formatDate,
+  truncateQuestion as truncate,
+} from "@/lib/profile-dashboard";
 
 const ReadingsPage = async ({
   searchParams,

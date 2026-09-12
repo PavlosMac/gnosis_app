@@ -144,3 +144,22 @@ Each decision should include:
 **Consequences:**
 - The context is a per-render snapshot: adjacency is recomputed on every detail render, so list shifts self-correct as you navigate; a reading edited out of the filter loses prev/next but keeps its back link.
 - Known separate issue (follow-up, out of scope): `src/proxy.ts` login-redirect sets `from` to pathname only, so a session expiring on a filtered/contextual URL drops the params after re-login.
+
+
+### ADR-008: Profile Dashboard Fed by One Composed `GET /dashboard` Endpoint (2026-09-11)
+
+**Context:**
+- The profile page was a static card (name, email, links). Pavlos wanted a dashboard: account + remaining Oracle budget (as a chalice), readings count, last reading, tag chips, New/All Readings links.
+- Nothing user-facing exposed the budget: `remaining_budget_usd` only rode the interpretation-generate response, and `/auth/me` carries no budget, spend, readings or tag data. Subscription/plan does not exist yet (payments work pending).
+
+**Decision:**
+- One composed backend endpoint, `GET /api/v1/dashboard` → `{user, budget_usd, remaining_budget_usd, total_readings, last_reading (GET /readings/{id} shape, interpretation embedded), user_tags}`. Budget resolution stays server-owned (ADR-004): the endpoint reports through the same helper the generate endpoint uses, so the two figures cannot drift. Built in the backend repo's own session; this repo only consumes it.
+- Frontend fetches it through a `getDashboard()` server action (guarded by `getCurrentUser()` per the CLAUDE.md rule) in parallel with the page's own user lookup; a failed fetch degrades to account info + links, never a broken page.
+- The chalice shows **dollars only** ("$2.41 of $3.00 remains") — matches the interpretation modal; per-reading cost varies so an exact "readings left" count would be fiction. Subscription type is **omitted** until payments land.
+- `BudgetChalice` is a server component: SVG with a static clipPath, CSS-keyframe animation on nested `<g>`s (translate only, never a `transform` attribute and CSS transform on the same element — Safari-safe), `prefers-reduced-motion` honoured, `role="img"` + `<title>`. Pure level/label logic lives in `src/lib/profile-dashboard.ts` (unit-tested; vitest has no jsdom, the component has a `renderToStaticMarkup` test).
+- Links reuse the ADR-007 serializers (`readingHref(id, null)` for the last reading → no prev/next fetch; `listHref({page:1, tags})` for chips).
+
+**Consequences:**
+- One round trip renders the whole page; older backends without the endpoint still get a usable profile.
+- Layout-critical spacing on the new page uses inline styles / `tarot.css` classes rather than novel Tailwind utilities, because the dev server (even freshly started) served CSS lacking several of them.
+- When plans/subscriptions arrive, the account panel gains a row; the chalice semantics (remaining/budget) are unchanged.

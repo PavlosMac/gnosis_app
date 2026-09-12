@@ -38,7 +38,7 @@ This file stores project constants, configuration, and frequently-needed **non-s
 
 **CSS:**
 - Tailwind CSS 4
-- Custom animations in `src/app/tarot/tarot.css`
+- Custom animations in `src/app/tarot.css`
 
 ## Key Routes
 
@@ -47,6 +47,11 @@ This file stores project constants, configuration, and frequently-needed **non-s
 - `/significators` - Birth date-based card calculator
 - `/chart` - Tarot chart explanation
 - `/guide` - How to use the oracle
+- `/user/login`, `/user/register` - Auth pages (JWT via FastAPI backend)
+- `/user/profile` - "Your Sanctum" dashboard (account + budget chalice, readings summary; `GET /api/v1/dashboard`)
+- `/user/readings`, `/user/readings/[id]` - Readings journal list (filters via URL params) and detail
+- `/user/manual-reading` - Manual interpretation entry
+- `/superadmin` - User list (superadmin only)
 
 ## Key Components
 

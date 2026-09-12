@@ -1,56 +1,33 @@
 import { redirect } from "next/navigation";
-import Link from "next/link";
 import TarotPageLayout from "@/components/TarotPageLayout";
+import OrnateFrame from "@/components/OrnateFrame";
 import { getCurrentUser } from "@/lib/session";
-import LogoutButton from "@/components/LogoutButton";
-
-const ProfileRow = ({
-  label,
-  value,
-}: {
-  label: string;
-  value: string;
-}) => (
-  <div className="flex items-center justify-between">
-    <span
-      className="text-[#e6d5b8]/60 text-sm tracking-wider uppercase"
-      style={{ fontFamily: "'Cinzel', serif" }}
-    >
-      {label}
-    </span>
-    <span
-      className="text-[#e6d5b8] text-sm"
-      style={{ fontFamily: "'Crimson Pro', serif" }}
-    >
-      {value}
-    </span>
-  </div>
-);
-
-const ProfileLinkRow = ({ href, label }: { href: string; label: string }) => (
-  <div className="pt-4 border-t border-[#d4af37]/10">
-    <Link href={href} className="flex items-center justify-between group">
-      <span
-        className="text-[#e6d5b8]/60 text-sm tracking-wider uppercase group-hover:text-[#d4af37] transition-colors"
-        style={{ fontFamily: "'Cinzel', serif" }}
-      >
-        {label}
-      </span>
-      <span className="text-[#d4af37]/40 group-hover:text-[#d4af37] transition-colors">
-        &#8594;
-      </span>
-    </Link>
-  </div>
-);
+import { getDashboard } from "./actions";
+import AccountPanel from "./AccountPanel";
+import ReadingsPanel from "./ReadingsPanel";
+import type { ReadingsSummary } from "./ReadingsPanel";
 
 const ProfilePage = async () => {
-  const user = await getCurrentUser();
+  // getCurrentUser is request-cached, so the guard inside getDashboard reuses it
+  const [user, dash] = await Promise.all([getCurrentUser(), getDashboard()]);
 
   if (!user) redirect("/user/login");
 
+  const budget = dash.ok
+    ? { remainingUsd: dash.data.remainingBudgetUsd, budgetUsd: dash.data.budgetUsd }
+    : null;
+
+  const summary: ReadingsSummary | null = dash.ok
+    ? {
+        total: dash.data.totalReadings,
+        lastReading: dash.data.lastReading,
+        tags: dash.data.userTags,
+      }
+    : null;
+
   return (
-    <TarotPageLayout backButtonHref="/" backButtonLabel="Portal">
-      <div className="w-full max-w-lg mx-auto mt-8 sm:mt-16 px-4 sm:px-0">
+    <TarotPageLayout backButtonHref="/" backButtonLabel="Portal" scrollable>
+      <div className="w-full max-w-4xl mx-auto mt-8 sm:mt-16 px-4 sm:px-0">
         {/* Header */}
         <div className="text-center mb-10">
           <span className="text-4xl text-[#d4af37]/80">&#9737;</span>
@@ -61,7 +38,7 @@ const ProfilePage = async () => {
               textShadow: "0 0 30px rgba(212,175,55,0.4)",
             }}
           >
-            Your Sanctum
+            The Sanctum
           </h1>
           <div className="flex items-center justify-center gap-3 mt-3">
             <div className="w-12 h-px bg-gradient-to-r from-transparent to-[#d4af37]/40" />
@@ -70,20 +47,54 @@ const ProfilePage = async () => {
           </div>
         </div>
 
-        {/* Profile card */}
-        <div className="rounded-2xl border border-[#d4af37]/20 bg-gradient-to-b from-[#1a0033]/80 to-[#0a0015]/80 backdrop-blur-sm p-5 sm:p-8 space-y-6">
-          {/* Identity */}
-          <ProfileRow label="Name" value={user.displayName || "Seeker"} />
-          <ProfileRow label="Email" value={user.email} />
-          <ProfileLinkRow href="/reading" label="New Reading" />
-          <ProfileLinkRow href="/user/readings" label="Readings Journal" />
-          <ProfileLinkRow href="/user/manual-reading" label="Manual Interpretation" />
+        {/* Dashboard card */}
+        <div className="relative overflow-hidden rounded-2xl border border-[#d4af37]/20 bg-gradient-to-b from-[#1a0033]/80 to-[#0a0015]/80 backdrop-blur-sm">
+          <OrnateFrame size="sm" />
+          <div className="relative grid grid-cols-1 md:grid-cols-2">
+            {/* Vertical divider (≥ md) */}
+            <div
+              className="sanctum-divider absolute pointer-events-none"
+              aria-hidden="true"
+              style={{
+                left: "50%",
+                top: "2rem",
+                bottom: "2rem",
+                width: 1,
+                background:
+                  "linear-gradient(to bottom, transparent, rgba(212,175,55,0.35), transparent)",
+              }}
+            />
 
-          {/* Logout */}
-          <div className="pt-4 border-t border-[#d4af37]/10">
-            <LogoutButton />
+            <AccountPanel
+              displayName={user.displayName}
+              email={user.email}
+              budget={budget}
+            />
+
+            {/* Horizontal divider (< md) */}
+            <div
+              className="sanctum-divider--mobile"
+              aria-hidden="true"
+              style={{
+                height: 1,
+                margin: "0 1.25rem",
+                background:
+                  "linear-gradient(to right, transparent, rgba(212,175,55,0.35), transparent)",
+              }}
+            />
+
+            <ReadingsPanel summary={summary} />
           </div>
         </div>
+
+        {!dash.ok && (
+          <p
+            className="text-center text-[#e6d5b8]/30 text-xs mt-4"
+            style={{ fontFamily: "'Crimson Pro', serif" }}
+          >
+            {dash.error}
+          </p>
+        )}
 
         {/* Footer decoration */}
         <div className="mt-12 text-center">

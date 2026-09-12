@@ -1,3 +1,5 @@
+import type { ReadingDetail, TagSummary } from "@/types/reading";
+
 export interface User {
   id: string;
   email: string;
@@ -65,6 +67,66 @@ export const mapMeResponseToUser = (me: MeResponse): User => ({
   isSuperadmin: me.is_superadmin,
   createdAt: me.created_at,
   updatedAt: me.updated_at,
+});
+
+// --- Profile dashboard: GET /api/v1/dashboard ---
+
+/** The account slice the dashboard endpoint embeds (no credits/updated_at) */
+export interface DashboardUserResponse {
+  _id: string;
+  email: string;
+  display_name: string | null;
+  is_superadmin: boolean;
+  created_at: string;
+}
+
+export interface DashboardResponse {
+  user: DashboardUserResponse;
+  /** The user's spend cap (per-user override or the server default) */
+  budget_usd: number;
+  remaining_budget_usd: number;
+  total_readings: number;
+  /** Same shape as GET /readings/{id}, interpretation embedded; null before the first reading */
+  last_reading: ReadingDetail | null;
+  /** The user's tag vocabulary, most-used first — same as the readings list payload */
+  user_tags: TagSummary[];
+}
+
+export interface DashboardUser {
+  id: string;
+  email: string;
+  displayName: string | null;
+  isSuperadmin: boolean;
+  createdAt: string;
+}
+
+export interface Dashboard {
+  user: DashboardUser;
+  budgetUsd: number;
+  remainingBudgetUsd: number;
+  totalReadings: number;
+  lastReading: ReadingDetail | null;
+  userTags: TagSummary[];
+}
+
+export const mapDashboardResponse = (d: DashboardResponse): Dashboard => ({
+  // Tolerate a backend that omits/nulls the user rather than crash the page —
+  // this mapped field isn't currently read (callers use getCurrentUser() instead)
+  user: d.user
+    ? {
+        id: d.user._id,
+        email: d.user.email,
+        displayName: d.user.display_name,
+        isSuperadmin: d.user.is_superadmin,
+        createdAt: d.user.created_at,
+      }
+    : { id: "", email: "", displayName: null, isSuperadmin: false, createdAt: "" },
+  budgetUsd: d.budget_usd,
+  remainingBudgetUsd: d.remaining_budget_usd,
+  totalReadings: d.total_readings,
+  lastReading: d.last_reading,
+  // Tolerate a backend that omits the vocabulary rather than crash the page
+  userTags: Array.isArray(d.user_tags) ? d.user_tags : [],
 });
 
 export const mapUserResponseToUser = (u: UserResponse): User => ({

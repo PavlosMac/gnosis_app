@@ -293,3 +293,103 @@
     background: rgba(212, 175, 55, 0.5);
   }
 }
+
+/* --- Profile dashboard: budget chalice + layout helpers ---------------------- */
+/* Plain CSS (not Tailwind utilities) so a long-running dev server can't miss it. */
+
+@keyframes chaliceWave {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-120px); }
+}
+
+@keyframes chaliceWaveR {
+  from { transform: translateX(-120px); }
+  to   { transform: translateX(0); }
+}
+
+@keyframes chaliceShimmer {
+  0%   { transform: translateX(-40px); opacity: 0; }
+  15%  { opacity: 1; }
+  85%  { opacity: 1; }
+  100% { transform: translateX(160px); opacity: 0; }
+}
+
+@keyframes chaliceGlow {
+  0%, 100% { opacity: 0.45; }
+  50%      { opacity: 0.9; }
+}
+
+@keyframes chaliceRise {
+  from { transform: translateY(60px); }
+  to   { transform: translateY(0); }
+}
+
+.chalice-wave       { animation: chaliceWave 6s linear infinite; }
+.chalice-wave--slow { animation: chaliceWaveR 9s linear infinite; }
+.chalice-shimmer    { animation: chaliceShimmer 5s ease-in-out infinite; }
+.chalice-glow       { animation: chaliceGlow 4s ease-in-out infinite; }
+.chalice-rise       { animation: chaliceRise 1.4s ease-out both; }
+
+@media (prefers-reduced-motion: reduce) {
+  .chalice-wave,
+  .chalice-wave--slow,
+  .chalice-shimmer,
+  .chalice-glow,
+  .chalice-rise {
+    animation: none !important;
+  }
+}
+
+/* Two-panel sanctum card: vertical divider ≥ md, horizontal hairline below */
+.sanctum-divider { display: none; }
+.sanctum-divider--mobile { display: block; }
+@media (min-width: 768px) {
+  .sanctum-divider { display: block; }
+  .sanctum-divider--mobile { display: none; }
+}
+
+.sanctum-actions { display: flex; flex-direction: column; gap: 0.75rem; }
+@media (min-width: 640px) {
+  .sanctum-actions { flex-direction: row; }
+}
+
+/* Themed tooltip for icon-only controls: a real child element (.sanctum-tip__label),
+   shown on hover and keyboard focus, positioned above the control. A real element
+   rather than ::after + attr() so WebKit and Blink behave identically. */
+.sanctum-tip { position: relative; }
+.sanctum-tip__label {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 10px);
+  transform: translate(-50%, 4px);
+  -webkit-transform: translate(-50%, 4px);
+  padding: 0.35rem 0.75rem;
+  border-radius: 0.375rem;
+  border: 1px solid rgba(212, 175, 55, 0.4);
+  background: linear-gradient(135deg, rgba(26, 0, 51, 0.97), rgba(45, 27, 78, 0.97));
+  color: #e6d5b8;
+  font-family: 'Cinzel', serif;
+  font-weight: 400;
+  font-size: 0.7rem;
+  line-height: 1.2;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  box-shadow: 0 0 14px rgba(212, 175, 55, 0.25);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.2s ease-out, transform 0.2s ease-out, visibility 0s linear 0.2s;
+  z-index: 20;
+}
+.sanctum-tip:hover .sanctum-tip__label,
+.sanctum-tip:focus-visible .sanctum-tip__label {
+  opacity: 1;
+  visibility: visible;
+  transform: translate(-50%, 0);
+  -webkit-transform: translate(-50%, 0);
+  transition-delay: 0s;
+}
+@media (prefers-reduced-motion: reduce) {
+  .sanctum-tip__label { transition: none; }
+}

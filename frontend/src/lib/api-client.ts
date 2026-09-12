@@ -139,14 +139,26 @@ export const authenticatedFetch = async <T>(
       },
     });
 
-  const res = await makeRequest(accessToken);
+  let res: Response;
+  try {
+    res = await makeRequest(accessToken);
+  } catch (e) {
+    console.log("[AUTH:FETCH] Network error", { endpoint, error: e });
+    return { ok: false, status: 0, message: "Could not reach the server. Please try again." };
+  }
 
   // 401 — token expired but cookie not yet deleted; try refresh once
   if (res.status === 401) {
     console.log("[AUTH:FETCH] Got 401 — attempting refresh");
     const newToken = await refreshAccessToken();
     if (newToken) {
-      const retryRes = await makeRequest(newToken);
+      let retryRes: Response;
+      try {
+        retryRes = await makeRequest(newToken);
+      } catch (e) {
+        console.log("[AUTH:FETCH] Network error on retry", { endpoint, error: e });
+        return { ok: false, status: 0, message: "Could not reach the server. Please try again." };
+      }
       if (retryRes.ok) {
         console.log("[AUTH:FETCH] Retry after refresh succeeded", { endpoint });
         const data: T = await retryRes.json();
