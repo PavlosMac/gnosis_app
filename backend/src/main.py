@@ -21,6 +21,11 @@ from src.core.exceptions import (
 from src.core.logging import configure_logging
 from src.core.middleware import AccessLogMiddleware, RequestIDMiddleware
 from src.cqrs.mediator import Mediator
+from src.dashboard.queries.get_dashboard_by_user_id import (
+    GetDashboardByUserIdHandler,
+    GetDashboardByUserIdQuery,
+)
+from src.dashboard.router import router as dashboard_router
 from src.database.mongodb import close_mongo_connection, connect_to_mongo, get_database
 from src.health.router import router as health_router
 from src.interpretations.commands.generate_interpretation import (
@@ -88,6 +93,12 @@ def _wire_mediator(mediator: Mediator, llm: LLMPort, db: AsyncIOMotorDatabase) -
     )
     mediator.register_query(
         ListUserReadingsQuery, ListUserReadingsHandler(reading_read_repo, user_tags_read_repo)
+    )
+    mediator.register_query(
+        GetDashboardByUserIdQuery,
+        GetDashboardByUserIdHandler(
+            user_read_repo, reading_read_repo, user_tags_read_repo, interpretation_read_repo
+        ),
     )
     mediator.register_command(
         GenerateInterpretationCommand,
@@ -162,3 +173,4 @@ app.include_router(users_router, prefix="/api/v1")
 app.include_router(llm_router, prefix="/api/v1")
 app.include_router(readings_router, prefix="/api/v1")
 app.include_router(interpretations_router, prefix="/api/v1")
+app.include_router(dashboard_router, prefix="/api/v1")

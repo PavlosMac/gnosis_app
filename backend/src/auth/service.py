@@ -1,12 +1,14 @@
 import uuid
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from typing import Any
 
 import jwt
 
 from src.auth.models import User
 from src.auth.repository import AuthReadRepository, AuthWriteRepository, RefreshTokenRepository
 from src.auth.schemas import TokenResponse
+from src.core.config import settings as app_settings
 from src.core.exceptions import AppError, ConflictError, UnauthorizedError
 from src.core.security import (
     create_access_token,
@@ -32,6 +34,25 @@ class BudgetExceededError(AppError):
             status_code=402,
             detail="Usage budget exhausted",
         )
+
+
+def effective_budget_usd(user: dict[str, Any]) -> float:
+    """The cap this user is charged against: their per-user override if the field is
+    present, else the app default. `or` would treat an explicit override of 0 as unset
+    and fall through to the default — a user budget-capped to $0 must actually be
+    blocked."""
+    user_budget = user.get("budget_usd")
+    return user_budget if user_budget is not None else app_settings.user_budget_usd
+
+
+def remaining_budget_usd(user: dict[str, Any], budget_usd: float | None = None) -> float:
+    """Effective budget minus spend so far, floored at 0. The usage aggregate is created
+    lazily, so a user with no `usage.cost_usd` yet has spent nothing. Callers that have
+    already resolved the budget via effective_budget_usd pass it as `budget_usd`, so both
+    figures are guaranteed to derive from the same resolution."""
+    spent = (user.get("usage") or {}).get("cost_usd", 0.0)
+    budget = budget_usd if budget_usd is not None else effective_budget_usd(user)
+    return max(budget - spent, 0.0)
 
 
 @asynccontextmanager

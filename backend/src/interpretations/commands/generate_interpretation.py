@@ -3,8 +3,7 @@ import asyncio
 import structlog
 
 from src.auth.repository import AuthReadRepository, AuthWriteRepository
-from src.auth.service import reserve_budget
-from src.core.config import settings as app_settings
+from src.auth.service import effective_budget_usd, remaining_budget_usd, reserve_budget
 from src.core.exceptions import UnauthorizedError
 from src.cqrs.commands import BaseCommand, CommandHandler
 from src.interpretations.models import Interpretation
@@ -76,20 +75,16 @@ class GenerateInterpretationHandler(
         if user is None:
             raise UnauthorizedError("User not found")
 
-        user_budget = user.get("budget_usd")
-        # `or` would treat an explicit override of 0 as unset and fall through to the
-        # default — a user budget-capped to $0 must actually be blocked.
-        budget = user_budget if user_budget is not None else app_settings.user_budget_usd
+        budget = effective_budget_usd(user)
 
         if existing is not None:
             logger.debug(
                 "interpretation already exists — returning stored, no charge",
                 reading_id=command.reading_id,
             )
-            spent = user.get("usage", {}).get("cost_usd", 0.0)
             return GeneratedInterpretationResponse(
                 interpretation=InterpretationReadModel.model_validate(existing),
-                remaining_budget_usd=max(budget - spent, 0.0),
+                remaining_budget_usd=remaining_budget_usd(user, budget),
             )
 
         llm_request = InterpretationRequest(

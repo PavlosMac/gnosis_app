@@ -75,6 +75,22 @@ class AuthReadRepository(BaseReadRepository):
     async def find_by_email(self, email: str) -> dict[str, Any] | None:
         return await self.find_one({"email": email})
 
+    async def find_dashboard_fields(self, user_id: str) -> dict[str, Any] | None:
+        """The user document projected to what the dashboard renders plus what the
+        remaining-budget calculation needs — never the password hash. Malformed-id
+        handling comes from find_by_id."""
+        return await self.find_by_id(
+            user_id,
+            projection={
+                "email": 1,
+                "display_name": 1,
+                "is_superadmin": 1,
+                "created_at": 1,
+                "budget_usd": 1,
+                "usage.cost_usd": 1,
+            },
+        )
+
 
 class RefreshTokenRepository:
     def __init__(self, db) -> None:

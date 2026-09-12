@@ -90,3 +90,35 @@ async def test_release_gives_back_the_full_reservation(mock_db):
 
     doc = await mock_db["users"].find_one({"_id": ObjectId(user_id)})
     assert doc["usage"]["cost_usd"] == 0.0
+
+
+# --- find_dashboard_fields: the projected read the dashboard uses ---
+
+
+async def test_find_dashboard_fields_omits_password_hash(mock_db):
+    from src.auth.repository import AuthReadRepository
+
+    user_id = await _insert_user(
+        mock_db,
+        password_hash="argon2$secret",
+        display_name="Pav",
+        budget_usd=2.0,
+        usage={"cost_usd": 0.5, "prompt_tokens": 10},
+    )
+
+    doc = await AuthReadRepository(mock_db).find_dashboard_fields(user_id)
+
+    assert doc is not None
+    assert "password_hash" not in doc
+    assert doc["email"] == f"{user_id}@example.com"
+    assert doc["display_name"] == "Pav"
+    assert doc["budget_usd"] == 2.0
+    assert doc["usage"]["cost_usd"] == 0.5
+
+
+async def test_find_dashboard_fields_returns_none_for_missing_or_malformed_id(mock_db):
+    from src.auth.repository import AuthReadRepository
+
+    repo = AuthReadRepository(mock_db)
+    assert await repo.find_dashboard_fields(str(ObjectId())) is None
+    assert await repo.find_dashboard_fields("not-an-object-id") is None

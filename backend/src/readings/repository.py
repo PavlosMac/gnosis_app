@@ -70,6 +70,11 @@ class ReadingReadRepository(BaseReadRepository):
     ) -> int:
         return await self.count(_build_filter(user_id, spread_type, birth_date, tags))
 
+    async def find_latest_by_user_id(self, user_id: str) -> dict[str, Any] | None:
+        """The user's newest reading, served by the (user_id, created_at desc) index."""
+        docs = await self.find_by_user_id(user_id, limit=1)
+        return docs[0] if docs else None
+
     async def find_by_user_id_ranked_by_tags(
         self,
         user_id: str,

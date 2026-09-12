@@ -1,5 +1,6 @@
 # ruff: noqa: E402
 import os
+from datetime import UTC, datetime
 
 # Settings has no jwt_secret_key default (a committed fallback would let anyone forge
 # tokens), so supply one before any src import instantiates Settings. setdefault keeps
@@ -103,7 +104,9 @@ async def user_id(mock_db):
     """A user that exists in the database — the budget gate's reserve matches on the
     user document, so handler-level tests need a real one."""
     oid = ObjectId()
-    await mock_db["users"].insert_one({"_id": oid, "email": f"{oid}@example.com"})
+    await mock_db["users"].insert_one(
+        {"_id": oid, "email": f"{oid}@example.com", "created_at": datetime.now(UTC)}
+    )
     return str(oid)
 
 

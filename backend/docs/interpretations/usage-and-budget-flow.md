@@ -42,10 +42,12 @@ Everything below happens inside `GenerateInterpretationHandler.handle`
    A valid token whose user document no longer exists gets a **401** here, before any
    budget work — deliberately, so a deleted account never sees a misleading
    "budget exhausted."
-2. **Resolve the budget.** `user.budget_usd` if the field is present, else
-   `Settings.user_budget_usd`. This is a `None` check, not a truthiness check — a user
-   explicitly capped at `budget_usd: 0` must actually be blocked, not silently fall
-   back to the $3 default.
+2. **Resolve the budget** — `effective_budget_usd(user)` in `src/auth/service.py`:
+   `user.budget_usd` if the field is present, else `Settings.user_budget_usd`. This is
+   a `None` check, not a truthiness check — a user explicitly capped at `budget_usd: 0`
+   must actually be blocked, not silently fall back to the $3 default. Its sibling
+   `remaining_budget_usd(user)` (budget minus `usage.cost_usd`, floored at 0) is the
+   single source of the figure both this endpoint and `GET /api/v1/dashboard` report.
 3. **Idempotency short-circuit.** If the reading already has its interpretation,
    return it with `remaining_budget_usd` computed live from the user aggregate —
    no reservation, no LLM call, no charge.

@@ -49,12 +49,19 @@ class AdminUserResponse(AppSchema):
     updated_at: datetime
 
 
-class UserReadModel(AppSchema):
+class UserIdentity(AppSchema):
+    """The identity fields every user-facing read of the users collection shares —
+    consumers that need only these (e.g. the dashboard) render this model directly, so
+    a field change here propagates everywhere at once."""
+
     id: PyObjectId = Field(alias="_id")
     email: str
     display_name: str | None = None
-    credits: int = 0
     is_superadmin: bool = False
-    stripe_customer_id: str | None = None
     created_at: datetime
+
+
+class UserReadModel(UserIdentity):
+    credits: int = 0
+    stripe_customer_id: str | None = None
     updated_at: datetime

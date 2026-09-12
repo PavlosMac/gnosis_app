@@ -35,11 +35,16 @@ class BaseReadRepository(ABC):
     @abstractmethod
     def collection_name(self) -> str: ...
 
-    async def find_by_id(self, id: str) -> dict[str, Any] | None:
+    async def find_by_id(
+        self, id: str, projection: dict[str, Any] | None = None
+    ) -> dict[str, Any] | None:
+        """A malformed id is indistinguishable from not-found — the single owner of that
+        convention for by-id reads."""
         try:
-            return await self._collection.find_one({"_id": ObjectId(id)})
+            oid = ObjectId(id)
         except InvalidId:
             return None
+        return await self._collection.find_one({"_id": oid}, projection=projection)
 
     async def find_one(self, filter: dict[str, Any]) -> dict[str, Any] | None:
         return await self._collection.find_one(filter)

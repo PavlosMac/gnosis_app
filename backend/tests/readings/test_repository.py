@@ -44,3 +44,61 @@ async def test_replace_for_user_retries_as_plain_update_on_duplicate_key_race(mo
     doc = await read_repo.find_by_user_id(user_id)
     assert doc["tags"] == [{"name": "career", "count": 2}]
     assert await mock_db["user_tags"].count_documents({}) == 1
+
+
+# --- find_latest_by_user_id: the dashboard's "last reading" seek ---
+
+
+async def _insert_reading(mock_db, user_id: str, created_at, question: str) -> ObjectId:
+    oid = ObjectId()
+    await mock_db["readings"].insert_one(
+        {
+            "_id": oid,
+            "user_id": ObjectId(user_id),
+            "spread_type": "Celtic Cross",
+            "question": question,
+            "cards": [{"name": "The Fool", "orientation": "upright"}],
+            "created_at": created_at,
+        }
+    )
+    return oid
+
+
+async def test_find_latest_by_user_id_returns_newest(mock_db):
+    from datetime import UTC, datetime, timedelta
+
+    from src.readings.repository import ReadingReadRepository
+
+    user_id = str(ObjectId())
+    now = datetime.now(UTC)
+    await _insert_reading(mock_db, user_id, now - timedelta(days=1), "older")
+    newest = await _insert_reading(mock_db, user_id, now, "newest")
+
+    doc = await ReadingReadRepository(mock_db).find_latest_by_user_id(user_id)
+
+    assert doc is not None
+    assert doc["_id"] == newest
+    assert doc["question"] == "newest"
+
+
+async def test_find_latest_by_user_id_is_none_when_no_readings(mock_db):
+    from src.readings.repository import ReadingReadRepository
+
+    repo = ReadingReadRepository(mock_db)
+
+    assert await repo.find_latest_by_user_id(str(ObjectId())) is None
+
+
+async def test_find_latest_by_user_id_ignores_other_users(mock_db):
+    from datetime import UTC, datetime, timedelta
+
+    from src.readings.repository import ReadingReadRepository
+
+    mine, theirs = str(ObjectId()), str(ObjectId())
+    now = datetime.now(UTC)
+    await _insert_reading(mock_db, theirs, now, "theirs-newer")
+    mine_oid = await _insert_reading(mock_db, mine, now - timedelta(hours=1), "mine")
+
+    doc = await ReadingReadRepository(mock_db).find_latest_by_user_id(mine)
+
+    assert doc is not None and doc["_id"] == mine_oid
