@@ -47,6 +47,20 @@ class Settings(BaseSettings):
     # Bounded wait for a semaphore slot; waiting longer returns 503 instead of queueing.
     openai_acquire_timeout_seconds: float = 30.0
 
+    # Email (Resend). Adapter selection mirrors openai_api_key: key set -> Resend,
+    # unset -> console adapter that logs the link.
+    resend_api_key: str = ""
+    email_from: str = "Tarot Divinations <noreply@tarotdivinations.com>"
+
+    # Frontend (reset links are {frontend_base_url}/reset-password?token=...)
+    frontend_base_url: str = "http://localhost:3000"
+
+    # Password reset. If the TTL changes, update the expiry wording in
+    # src/notifications/templates.py to match.
+    password_reset_token_ttl_minutes: int = 30
+    password_reset_rate_limit_window_seconds: int = 3600
+    password_reset_rate_limit_max_attempts: int = 5
+
     # Lean prompt word budget (server-owned; reading length is a product decision)
     llm_words_per_card: int = 100
     # A significator-chart card carries a whole facet of character, not one moment in a
