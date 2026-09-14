@@ -36,6 +36,24 @@ class BudgetExceededError(AppError):
         )
 
 
+class InvalidPasswordResetTokenError(AppError):
+    def __init__(self) -> None:
+        super().__init__(status_code=400, detail="Invalid or already used reset token")
+
+
+class ExpiredPasswordResetTokenError(AppError):
+    def __init__(self) -> None:
+        super().__init__(status_code=410, detail="Reset link has expired")
+
+
+class TooManyPasswordResetRequestsError(AppError):
+    def __init__(self) -> None:
+        super().__init__(
+            status_code=429,
+            detail="Too many password reset requests, please try again later",
+        )
+
+
 def effective_budget_usd(user: dict[str, Any]) -> float:
     """The cap this user is charged against: their per-user override if the field is
     present, else the app default. `or` would treat an explicit override of 0 as unset

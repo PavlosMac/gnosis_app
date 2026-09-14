@@ -65,3 +65,20 @@ class UserReadModel(UserIdentity):
     credits: int = 0
     stripe_customer_id: str | None = None
     updated_at: datetime
+
+
+class PasswordResetRequestRequest(AppSchema):
+    email: EmailStr
+
+
+class PasswordResetRequestResponse(AppSchema):
+    detail: str = "If an account exists for this email, a password reset link has been sent."
+
+
+class PasswordResetConfirmRequest(AppSchema):
+    token: str = Field(min_length=1)
+    new_password: str = Field(min_length=8, max_length=128)
+
+
+class PasswordResetConfirmResponse(AppSchema):
+    detail: str = "Password has been reset successfully."
