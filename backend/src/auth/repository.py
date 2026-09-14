@@ -5,7 +5,12 @@ from bson import ObjectId
 from pymongo import ReturnDocument
 
 from src.database.base_repository import BaseReadRepository, BaseWriteRepository
-from src.database.collections.constants import REFRESH_TOKENS_COLLECTION, USERS_COLLECTION
+from src.database.collections.constants import (
+    PASSWORD_RESET_ATTEMPTS_COLLECTION,
+    PASSWORD_RESET_TOKENS_COLLECTION,
+    REFRESH_TOKENS_COLLECTION,
+    USERS_COLLECTION,
+)
 
 
 class AuthWriteRepository(BaseWriteRepository):
@@ -116,3 +121,52 @@ class RefreshTokenRepository:
 
     async def revoke_family(self, family_id: str) -> None:
         await self._collection.delete_many({"family_id": family_id})
+
+    async def revoke_all_for_user(self, user_id: str) -> None:
+        """Password reset kills every session — all families, all devices."""
+        await self._collection.delete_many({"user_id": user_id})
+
+
+class PasswordResetTokenRepository:
+    def __init__(self, db) -> None:
+        self._collection = db[PASSWORD_RESET_TOKENS_COLLECTION]
+
+    async def store(self, token_hash: str, user_id: str, expires_at: datetime) -> None:
+        await self._collection.insert_one(
+            {
+                "token_hash": token_hash,
+                "user_id": user_id,
+                "used": False,
+                "expires_at": expires_at,
+            }
+        )
+
+    async def consume(self, token_hash: str) -> dict[str, Any] | None:
+        """Atomically mark an unused token used. Deliberately no expires_at filter —
+        the handler distinguishes invalid (None) from expired (stale doc) for the
+        400-vs-410 split."""
+        return await self._collection.find_one_and_update(
+            {"token_hash": token_hash, "used": False},
+            {"$set": {"used": True}},
+        )
+
+    async def invalidate_all_for_user(self, user_id: str) -> None:
+        await self._collection.delete_many({"user_id": user_id, "used": False})
+
+
+class PasswordResetThrottleRepository:
+    """Mongo-backed per-key request throttle; `key` is generic (currently the email)
+    so a per-IP variant can reuse the collection via a prefix later."""
+
+    def __init__(self, db) -> None:
+        self._collection = db[PASSWORD_RESET_ATTEMPTS_COLLECTION]
+
+    async def record_attempt(self, key: str, expires_at: datetime) -> None:
+        await self._collection.insert_one(
+            {"key": key, "created_at": datetime.now(UTC), "expires_at": expires_at}
+        )
+
+    async def count_recent(self, key: str, since: datetime) -> int:
+        return await self._collection.count_documents(
+            {"key": key, "created_at": {"$gte": since}}
+        )
