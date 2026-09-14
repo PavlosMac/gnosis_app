@@ -1,8 +1,14 @@
 from fastapi import APIRouter, Request
 
+from src.auth.commands.confirm_password_reset import ConfirmPasswordResetCommand
 from src.auth.commands.register_user import RegisterUserCommand
+from src.auth.commands.request_password_reset import RequestPasswordResetCommand
 from src.auth.schemas import (
     LoginRequest,
+    PasswordResetConfirmRequest,
+    PasswordResetConfirmResponse,
+    PasswordResetRequestRequest,
+    PasswordResetRequestResponse,
     RefreshTokenRequest,
     RegisterRequest,
     TokenResponse,
@@ -55,3 +61,21 @@ async def logout(
 @router.get("/me", response_model=UserResponse)
 async def get_me(current_user: CurrentUser) -> UserResponse:
     return UserResponse.model_validate(current_user.model_dump(by_alias=True))
+
+
+@router.post("/forgot-password", response_model=PasswordResetRequestResponse)
+async def forgot_password(
+    body: PasswordResetRequestRequest, mediator: MediatorDep
+) -> PasswordResetRequestResponse:
+    await mediator.send(RequestPasswordResetCommand(email=body.email))
+    return PasswordResetRequestResponse()
+
+
+@router.post("/reset-password", response_model=PasswordResetConfirmResponse)
+async def reset_password(
+    body: PasswordResetConfirmRequest, mediator: MediatorDep
+) -> PasswordResetConfirmResponse:
+    await mediator.send(
+        ConfirmPasswordResetCommand(token=body.token, new_password=body.new_password)
+    )
+    return PasswordResetConfirmResponse()
