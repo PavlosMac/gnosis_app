@@ -1,20 +1,31 @@
 import hashlib
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 
 import pytest
 from bson import ObjectId
 
+from src.auth.commands.confirm_password_reset import (
+    ConfirmPasswordResetCommand,
+    ConfirmPasswordResetHandler,
+)
 from src.auth.commands.request_password_reset import (
     RequestPasswordResetCommand,
     RequestPasswordResetHandler,
 )
 from src.auth.repository import (
     AuthReadRepository,
+    AuthWriteRepository,
     PasswordResetThrottleRepository,
     PasswordResetTokenRepository,
+    RefreshTokenRepository,
 )
-from src.auth.service import TooManyPasswordResetRequestsError
+from src.auth.service import (
+    ExpiredPasswordResetTokenError,
+    InvalidPasswordResetTokenError,
+    TooManyPasswordResetRequestsError,
+)
 from src.core.config import settings
+from src.core.security import verify_password
 from src.notifications.errors import EmailDeliveryError
 from src.notifications.mock_adapter import MockEmailAdapter
 from src.notifications.port import EmailPort
@@ -110,3 +121,70 @@ async def test_email_delivery_failure_is_swallowed(mock_db, known_user):
     # existing accounts, so the endpoint answers 200 either way
     await handler.handle(RequestPasswordResetCommand(email="known@example.com"))
     assert await mock_db["password_reset_tokens"].count_documents({"user_id": known_user}) == 1
+
+
+@pytest.fixture
+def confirm_handler(mock_db):
+    return ConfirmPasswordResetHandler(
+        write_repo=AuthWriteRepository(mock_db),
+        reset_token_repo=PasswordResetTokenRepository(mock_db),
+        refresh_token_repo=RefreshTokenRepository(mock_db),
+    )
+
+
+async def _issue_token(request_handler, mock_email_adapter) -> str:
+    """Run the request flow and return the raw token from the captured link."""
+    await request_handler.handle(RequestPasswordResetCommand(email="known@example.com"))
+    link = mock_email_adapter.sent_password_resets[-1]["reset_link"]
+    return link.split("token=", 1)[1]
+
+
+async def test_confirm_updates_password_and_revokes_sessions(
+    request_handler, confirm_handler, mock_email_adapter, mock_db, known_user
+):
+    refresh_repo = RefreshTokenRepository(mock_db)
+    await refresh_repo.store(
+        "jti1", "fam1", known_user, datetime.now(UTC) + timedelta(days=1)
+    )
+    raw_token = await _issue_token(request_handler, mock_email_adapter)
+
+    await confirm_handler.handle(
+        ConfirmPasswordResetCommand(token=raw_token, new_password="new-password-123")
+    )
+
+    user = await mock_db["users"].find_one({"_id": ObjectId(known_user)})
+    assert verify_password("new-password-123", user["password_hash"])
+    assert await refresh_repo.consume("jti1") is None  # all sessions revoked
+
+
+async def test_confirm_garbage_token_raises_invalid(confirm_handler):
+    with pytest.raises(InvalidPasswordResetTokenError):
+        await confirm_handler.handle(
+            ConfirmPasswordResetCommand(token="garbage", new_password="new-password-123")
+        )
+
+
+async def test_confirm_same_token_twice_raises_invalid(
+    request_handler, confirm_handler, mock_email_adapter, known_user
+):
+    raw_token = await _issue_token(request_handler, mock_email_adapter)
+    await confirm_handler.handle(
+        ConfirmPasswordResetCommand(token=raw_token, new_password="new-password-123")
+    )
+    with pytest.raises(InvalidPasswordResetTokenError):
+        await confirm_handler.handle(
+            ConfirmPasswordResetCommand(token=raw_token, new_password="other-password-123")
+        )
+
+
+async def test_confirm_expired_token_raises_expired(
+    request_handler, confirm_handler, mock_email_adapter, mock_db, known_user
+):
+    raw_token = await _issue_token(request_handler, mock_email_adapter)
+    await mock_db["password_reset_tokens"].update_many(
+        {}, {"$set": {"expires_at": datetime.now(UTC) - timedelta(minutes=1)}}
+    )
+    with pytest.raises(ExpiredPasswordResetTokenError):
+        await confirm_handler.handle(
+            ConfirmPasswordResetCommand(token=raw_token, new_password="new-password-123")
+        )
