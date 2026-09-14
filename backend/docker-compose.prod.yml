@@ -3,7 +3,18 @@ services:
     image: mongo:7
     container_name: gnosis-mongodb
     command: ["mongod", "--auth", "--quiet", "--wiredTigerCacheSizeGB", "0.25"]
-    # NO ports: — not accessible from host
+    ports:
+      # ⚠️ SECURITY: the "127.0.0.1:" prefix is load-bearing — it binds Mongo to the
+      # Pi's loopback only, reachable solely via SSH (Compass tunnel / pi-mongo.sh).
+      #
+      # NEVER shorten this to "27017:27017": that binds 0.0.0.0 and Docker inserts
+      # its own iptables rules AHEAD of any host firewall (ufw), exposing the DB to
+      # the whole LAN — and to the internet if the router ever port-forwards here.
+      # Exposed MongoDBs are scanner-found and ransomed within hours.
+      #
+      # If this mapping is ever changed or removed, update
+      # docs/database/configure_db.md §2 and production_mongo_commands.md §5.
+      - "127.0.0.1:27017:27017"
     environment:
       MONGO_INITDB_ROOT_USERNAME: gnosis_admin
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD}

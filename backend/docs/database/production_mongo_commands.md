@@ -3,9 +3,9 @@
 How to get from the Mac into the MongoDB instance on the Pi in one command, and a set of
 ready-made queries. Auth details are in [configure_db.md](./configure_db.md).
 
-Nothing is exposed on the network: you SSH to the Pi and run `mongosh` **inside** the
-`gnosis-mongodb` container. Credentials are read from `~/projects/gnosis-esoterica/.env.gnosis.prod`
-on the Pi — they never leave it.
+Nothing is exposed on the LAN (Mongo listens only on the Pi's loopback): you SSH to the Pi
+and run `mongosh` **inside** the `gnosis-mongodb` container. Credentials are read from
+`~/projects/gnosis-esoterica/.env.gnosis.prod` on the Pi — they never leave it.
 
 ## 1. One-time setup
 
@@ -102,18 +102,20 @@ db.users.getIndexes()
 
 ## 5. GUI (Compass) — optional
 
-Only when a shell is not enough. Requires the management override from
-[configure_db.md §2](./configure_db.md) that publishes `127.0.0.1:27017` on the Pi:
+`docker-compose.prod.yml` publishes Mongo on the Pi's loopback (`127.0.0.1:27017` — never
+the LAN), so no override or manual tunnel setup is needed. Compass builds the SSH tunnel
+itself; configure a connection once and reuse it:
 
+- **General**: hostname `localhost`, port `27017`
+- **Authentication**: Username/Password — `gnosis_admin`, password from `.env.gnosis.prod`
+  on the Pi, authentication database `admin`
+- **Proxy/SSH**: SSH with Identity File — hostname `pavspi.local`, port `22`,
+  username `pavlos-mk`, your default key
+
+For `mongosh` from the Mac instead, open a tunnel and connect through it:
 ```bash
-ssh pavlos-mk@pavspi.local 'cd ~/projects/gnosis-esoterica && docker compose -f docker-compose.prod.yml -f docker-compose.mgmt.yml up -d'
 ssh -N -L 27017:localhost:27017 pavlos-mk@pavspi.local        # keep open
-```
-Compass URI: `mongodb://gnosis_admin:<root-pw>@localhost:27017/gnosis_esoterica?authSource=admin`.
-
-Afterwards remove the exposed port:
-```bash
-ssh pavlos-mk@pavspi.local 'cd ~/projects/gnosis-esoterica && docker compose -f docker-compose.prod.yml up -d'
+mongosh "mongodb://gnosis_admin:<root-pw>@localhost:27017/gnosis_esoterica?authSource=admin"
 ```
 
 ## 6. Rules

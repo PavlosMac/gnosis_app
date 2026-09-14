@@ -36,7 +36,8 @@ services:
     image: mongo:7
     container_name: gnosis-mongodb
     command: ["mongod", "--auth", "--quiet", "--wiredTigerCacheSizeGB", "0.25"]
-    # no ports: — only reachable on app-network
+    ports:
+      - "127.0.0.1:27017:27017"  # Pi loopback only — never remove the 127.0.0.1: prefix
     environment:
       MONGO_INITDB_ROOT_USERNAME: gnosis_admin
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD}
@@ -112,45 +113,19 @@ docker exec gnosis-mongodb mongodump --archive --gzip \
 
 ## 2. Remote Access (SSH Tunnel)
 
-MongoDB is not exposed to the host or LAN.
+MongoDB is published on the Pi's **loopback only** (`127.0.0.1:27017` in
+`docker-compose.prod.yml`) — reachable from the Pi itself and via SSH, never from the LAN.
 
-**Preferred:** `scripts/pi-mongo.sh` — runs `mongosh` inside the container over SSH, no port exposure. See [production_mongo_commands.md](./production_mongo_commands.md).
+**Preferred for queries:** `scripts/pi-mongo.sh` — runs `mongosh` inside the container over SSH. See [production_mongo_commands.md](./production_mongo_commands.md).
 
-**GUI (Compass) only:** temporarily publish the port on the Pi and tunnel, as below.
+**GUI:** MongoDB Compass connects through its built-in SSH tunnel — connection settings in
+[production_mongo_commands.md §5](./production_mongo_commands.md).
 
-### Step 1 — Temporary port exposure on the Pi
-
-Create a compose override on the Pi:
-
-**`~/gnosis-esoterica/docker-compose.mgmt.yml`**
-```yaml
-services:
-  mongodb:
-    ports:
-      - "127.0.0.1:27017:27017"  # Pi localhost only
-```
+**mongosh from the Mac** (when the container shell isn't enough):
 
 ```bash
-# Start with management access
-cd ~/projects/gnosis-esoterica
-docker compose -f docker-compose.prod.yml -f docker-compose.mgmt.yml up -d
-
-# When done, restart without the override
-docker compose -f docker-compose.prod.yml up -d
-```
-
-### Step 2 — SSH tunnel from Mac
-
-```bash
-ssh -N -L 27017:localhost:27017 pi@<pi-ip>
-```
-
-Now on your Mac:
-```bash
-# mongosh
-mongosh "mongodb://localhost:27017/gnosis_esoterica"
-
-# Or open MongoDB Compass → connect to localhost:27017
+ssh -N -L 27017:localhost:27017 pavlos-mk@pavspi.local        # keep open
+mongosh "mongodb://gnosis_admin:<root-password>@localhost:27017/gnosis_esoterica?authSource=admin"
 ```
 
 ---
