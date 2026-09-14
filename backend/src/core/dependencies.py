@@ -6,6 +6,7 @@ from motor.motor_asyncio import AsyncIOMotorDatabase
 
 if TYPE_CHECKING:
     from src.llm.port import LLMPort
+    from src.notifications.port import EmailPort
 
 from src.auth.queries.get_user_by_id import GetUserByIdQuery
 from src.auth.repository import AuthReadRepository, RefreshTokenRepository
@@ -89,3 +90,10 @@ def get_llm(request: Request) -> "LLMPort":
 
 
 LLMDep = Annotated["LLMPort", Depends(get_llm)]
+
+
+def get_email(request: Request) -> "EmailPort":
+    return request.app.state.email
+
+
+EmailDep = Annotated["EmailPort", Depends(get_email)]

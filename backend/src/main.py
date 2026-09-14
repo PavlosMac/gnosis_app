@@ -6,10 +6,24 @@ from fastapi.exceptions import RequestValidationError
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from openai import AsyncOpenAI
 
+from src.auth.commands.confirm_password_reset import (
+    ConfirmPasswordResetCommand,
+    ConfirmPasswordResetHandler,
+)
 from src.auth.commands.register_user import RegisterUserCommand, RegisterUserHandler
+from src.auth.commands.request_password_reset import (
+    RequestPasswordResetCommand,
+    RequestPasswordResetHandler,
+)
 from src.auth.queries.get_user_by_email import GetUserByEmailHandler, GetUserByEmailQuery
 from src.auth.queries.get_user_by_id import GetUserByIdHandler, GetUserByIdQuery
-from src.auth.repository import AuthReadRepository, AuthWriteRepository, RefreshTokenRepository
+from src.auth.repository import (
+    AuthReadRepository,
+    AuthWriteRepository,
+    PasswordResetThrottleRepository,
+    PasswordResetTokenRepository,
+    RefreshTokenRepository,
+)
 from src.auth.router import router as auth_router
 from src.core.config import settings
 from src.core.exceptions import (
@@ -41,6 +55,8 @@ from src.llm.openai_adapter import OpenAIAdapter
 from src.llm.port import LLMPort
 from src.llm.router import router as llm_router
 from src.migrations.runner import run_migrations
+from src.notifications.port import EmailPort
+from src.notifications.resend_adapter import ResendEmailAdapter
 from src.readings.commands.create_reading import CreateReadingCommand, CreateReadingHandler
 from src.readings.commands.update_reading_tags import (
     UpdateReadingTagsCommand,
@@ -63,7 +79,9 @@ configure_logging()
 logger = structlog.stdlib.get_logger(__name__)
 
 
-def _wire_mediator(mediator: Mediator, llm: LLMPort, db: AsyncIOMotorDatabase) -> None:
+def _wire_mediator(
+    mediator: Mediator, llm: LLMPort, email: EmailPort, db: AsyncIOMotorDatabase
+) -> None:
     """Single owner of all handler registrations — tests wire their mediator through
     this too, so a handler registered here is registered everywhere."""
     user_write_repo = AuthWriteRepository(db)
@@ -75,6 +93,20 @@ def _wire_mediator(mediator: Mediator, llm: LLMPort, db: AsyncIOMotorDatabase) -
     mediator.register_query(GetUserByIdQuery, GetUserByIdHandler(user_read_repo))
     mediator.register_query(GetUserByEmailQuery, GetUserByEmailHandler(user_read_repo))
     mediator.register_query(ListUsersQuery, ListUsersHandler(user_read_repo))
+
+    reset_token_repo = PasswordResetTokenRepository(db)
+    reset_throttle_repo = PasswordResetThrottleRepository(db)
+    # Fresh instance is fine — a stateless wrapper around db[collection], same as the
+    # one lifespan() puts on app.state.
+    refresh_token_repo = RefreshTokenRepository(db)
+    mediator.register_command(
+        RequestPasswordResetCommand,
+        RequestPasswordResetHandler(user_read_repo, reset_token_repo, reset_throttle_repo, email),
+    )
+    mediator.register_command(
+        ConfirmPasswordResetCommand,
+        ConfirmPasswordResetHandler(user_write_repo, reset_token_repo, refresh_token_repo),
+    )
 
     reading_write_repo = ReadingWriteRepository(db)
     reading_read_repo = ReadingReadRepository(db)
@@ -142,8 +174,20 @@ async def lifespan(app: FastAPI):
         logger.info("llm adapter initialised", adapter="mock")
     app.state.llm = llm_adapter
 
+    if settings.resend_api_key:
+        email_adapter: EmailPort = ResendEmailAdapter(
+            api_key=settings.resend_api_key, from_address=settings.email_from
+        )
+        logger.info("email adapter initialised", adapter="resend")
+    else:
+        from src.notifications.console_adapter import ConsoleEmailAdapter
+
+        email_adapter = ConsoleEmailAdapter()
+        logger.info("email adapter initialised", adapter="console")
+    app.state.email = email_adapter
+
     mediator = Mediator()
-    _wire_mediator(mediator, llm_adapter, get_database())
+    _wire_mediator(mediator, llm_adapter, email_adapter, get_database())
     app.state.mediator = mediator
 
     logger.info("startup complete")
@@ -152,6 +196,7 @@ async def lifespan(app: FastAPI):
 
     logger.info("shutting down")
     await llm_adapter.close()
+    await email_adapter.close()
     await close_mongo_connection()
 
 

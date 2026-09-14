@@ -46,16 +46,19 @@ async def app(mock_db):
     from src.cqrs.mediator import Mediator
     from src.llm.mock_adapter import MockLLMAdapter
     from src.main import _wire_mediator, app
+    from src.notifications.mock_adapter import MockEmailAdapter
 
     # Same wiring as production (main._wire_mediator is the single owner of handler
     # registrations), just against the mock db and mock LLM.
     mediator = Mediator()
     mock_llm = MockLLMAdapter()
-    _wire_mediator(mediator, mock_llm, mock_db)
+    mock_email = MockEmailAdapter()
+    _wire_mediator(mediator, mock_llm, mock_email, mock_db)
 
     app.state.mediator = mediator
     app.state.refresh_token_repo = RefreshTokenRepository(mock_db)
     app.state.llm = mock_llm
+    app.state.email = mock_email
     return app
 
 
@@ -94,6 +97,11 @@ async def client(app):
         base_url="http://test",
     ) as ac:
         yield ac
+
+
+@pytest.fixture
+async def mock_email(app):
+    return app.state.email
 
 
 # --- Handler fixtures for unit tests that drive CQRS handlers directly ---
