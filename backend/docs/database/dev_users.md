@@ -4,7 +4,7 @@
 
 ```
 dev@gnosisesoterica.dev
-devpassword123
+devpassword12345
 ```
 
 - **Superadmin** (`is_superadmin: true`) — needed for the gated endpoints
