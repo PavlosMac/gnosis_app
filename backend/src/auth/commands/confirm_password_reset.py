@@ -41,9 +41,13 @@ class ConfirmPasswordResetHandler(CommandHandler[ConfirmPasswordResetCommand, No
             raise ExpiredPasswordResetTokenError()
 
         user_id: str = doc["user_id"]
-        await self._write_repo.update(
+        updated = await self._write_repo.update(
             user_id, {"password_hash": hash_password(command.new_password)}
         )
+        if not updated:
+            # Token was valid but the user it points to is gone (e.g. deleted between
+            # request and confirm) — don't report success for a password that was never set.
+            raise InvalidPasswordResetTokenError()
         # Kill every existing session — a reset must lock out whoever held the old
         # password — and clear any remaining reset tokens as defense-in-depth.
         await self._refresh_token_repo.revoke_all_for_user(user_id)

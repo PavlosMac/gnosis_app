@@ -38,13 +38,23 @@ class RequestPasswordResetHandler(CommandHandler[RequestPasswordResetCommand, No
     async def handle(self, command: RequestPasswordResetCommand) -> None:
         now = datetime.now(UTC)
         window = timedelta(seconds=settings.password_reset_rate_limit_window_seconds)
+        # Case-fold the throttle key — email lookups elsewhere treat casing as
+        # significant, but the limit must apply per-account regardless of how the
+        # caller cases the address, or varying case bypasses it entirely.
+        throttle_key = command.email.strip().lower()
 
         # Throttle before the existence check, and record every call (throttled or
         # unknown email alike) — identical behavior for known and unknown emails is
         # what keeps the 429 from leaking account existence.
-        recent = await self._throttle_repo.count_recent(command.email, since=now - window)
-        await self._throttle_repo.record_attempt(command.email, expires_at=now + window)
-        if recent >= settings.password_reset_rate_limit_max_attempts:
+        #
+        # Record before counting: count_recent then includes this call's own attempt,
+        # so a burst of concurrent requests can only ever over-throttle (everyone's
+        # count includes everyone else's just-inserted attempt) rather than
+        # under-throttle (which a count-then-record order would allow, since
+        # concurrent callers could all read the same pre-insert count).
+        await self._throttle_repo.record_attempt(throttle_key, expires_at=now + window)
+        recent = await self._throttle_repo.count_recent(throttle_key, since=now - window)
+        if recent > settings.password_reset_rate_limit_max_attempts:
             raise TooManyPasswordResetRequestsError()
 
         user_doc = await self._read_repo.find_by_email(command.email)

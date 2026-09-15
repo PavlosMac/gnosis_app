@@ -28,15 +28,18 @@ class ResendEmailAdapter(EmailPort):
         }
         try:
             response = await resend.Emails.send_async(params)
+            message_id = response["id"]
         except Exception as exc:
             # Broad on purpose: the port contract is "succeeds or raises
             # EmailDeliveryError". The SDK raises a ResendError tree but also
-            # NoContentError (bare Exception) and transport-level errors.
+            # NoContentError (bare Exception), transport-level errors, and a
+            # malformed/missing "id" in the response (KeyError) — all map to the
+            # same failure so callers never see anything but the port contract.
             logger.warning(
                 "resend send failed", error=type(exc).__name__, detail=str(exc), to=to
             )
             raise EmailDeliveryError() from exc
-        logger.info("password reset email sent", to=to, message_id=response["id"])
+        logger.info("password reset email sent", to=to, message_id=message_id)
 
     async def close(self) -> None:
         return None
