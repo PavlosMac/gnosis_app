@@ -36,6 +36,18 @@ export interface AuthFormState {
 
 export interface LoginFormState extends AuthFormState {}
 export interface RegisterFormState extends AuthFormState {}
+export interface ForgotPasswordFormState extends AuthFormState {}
+
+export interface ResetPasswordFormState extends AuthFormState {
+  /** Set when the reset token itself was rejected (400/410) — the page renders
+      a dead-link panel with a /forgot-password link instead of field errors */
+  tokenProblem?: "invalid" | "expired";
+}
+
+/** Generic `{"message": "..."}` body returned by forgot/reset-password */
+export interface MessageResponse {
+  message: string;
+}
 
 export interface AuthContextValue {
   user: User | null;

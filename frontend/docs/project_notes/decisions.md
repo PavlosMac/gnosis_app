@@ -163,3 +163,27 @@ Each decision should include:
 - One round trip renders the whole page; older backends without the endpoint still get a usable profile.
 - Layout-critical spacing on the new page uses inline styles / `tarot.css` classes rather than novel Tailwind utilities, because the dev server (even freshly started) served CSS lacking several of them.
 - When plans/subscriptions arrive, the account panel gains a row; the chalice semantics (remaining/budget) are unchanged.
+
+
+### ADR-009: Transactional Email via Resend, Sent Exclusively by the FastAPI Backend (2026-09-15)
+
+**Context:**
+- The apps need to send email (first consumer: the password-reset flow shipped 2026-09-14, which requires the backend to email `{FRONTEND_BASE_URL}/reset-password?token=...` links)
+- Everything runs on a Raspberry Pi behind a Cloudflare tunnel on a residential connection — self-hosted SMTP is ruled out (ISP blocks outbound port 25, residential IPs have no deliverability; see `docs/implmentations/email.md`)
+- The domain `tarotdivinations.com` is on Cloudflare DNS and already uses Cloudflare Email Routing for inbound mail
+
+**Decision:**
+- Provider: **Resend** (permanent free tier: 3,000 emails/mo, 100/day; API over HTTPS works fine from behind NAT)
+- All sending centralized in the FastAPI backend behind a single internal `send_email()`; the frontend never holds a mail key and triggers emails only through backend endpoints (same shape as ADR-005/ADR-008: backend owns policy and third-party keys)
+- Verify the **apex** domain in Resend; From address is `Tarot Divinations <noreply@tarotdivinations.com>`. Resend's SPF/MX live on the `send.` subdomain (return-path) and DKIM on `resend._domainkey.`, so Cloudflare Email Routing's apex MX/SPF are untouched and inbound forwarding keeps working
+- Contract spec for the backend session: `docs/backend-contracts/email-service.md`
+
+**Alternatives Considered:**
+- Brevo (300/day free) -> bigger free ceiling but weaker SDK/DX; volume makes the difference irrelevant
+- Amazon SES ($0.10/1k) -> cheapest at scale, but no free tier for new AWS accounts anymore and heavy setup ceremony (sandbox exit, IAM)
+- Self-hosted SMTP on the Pi -> rejected outright (port 25 blocked, deliverability)
+
+**Consequences:**
+- Backend gains `RESEND_API_KEY` + `EMAIL_FROM` env vars and a superadmin smoke-test endpoint; frontend needs no code changes for the infrastructure itself
+- Replies to `noreply@` vanish unless a Cloudflare Email Routing rule or `reply_to` is added later
+- 100/day free-tier cap is far above current volume; forgot-password keeps its own rate limit regardless

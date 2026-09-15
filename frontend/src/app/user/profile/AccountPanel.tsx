@@ -1,7 +1,7 @@
 import Link from "next/link";
-import { ClipboardPlus, DoorOpen } from "lucide-react";
+import { ClipboardPlus } from "lucide-react";
 import BudgetChalice from "@/components/BudgetChalice";
-import LogoutButton from "@/components/LogoutButton";
+import ResetPasswordRequestButton from "./ResetPasswordRequestButton";
 import { budgetCaption, chaliceFill } from "@/lib/profile-dashboard";
 
 const ProfileRow = ({ label, value }: { label: string; value: string }) => (
@@ -121,10 +121,7 @@ const AccountPanel = ({ displayName, email, budget }: AccountPanelProps) => {
           icon={<ClipboardPlus size={18} strokeWidth={1.75} />}
         />
         <div className="pt-4 mt-4 border-t border-[#d4af37]/10">
-          <LogoutButton aria-label="Depart the Sanctum">
-            <DoorOpen size={16} strokeWidth={1.75} aria-hidden="true" />
-            Depart
-          </LogoutButton>
+          <ResetPasswordRequestButton />
         </div>
       </div>
     </div>

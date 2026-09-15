@@ -9,9 +9,12 @@ const SAFE_MESSAGES: Record<number, string> = {
   402: "Your Oracle budget is exhausted.",
   403: "You do not have permission for this action.",
   404: "The requested resource was not found.",
+  410: "This link has expired.",
   422: "The request contained invalid data.",
   429: "Too many requests. Please wait and try again.",
 };
+
+const NETWORK_ERROR_MESSAGE = "Could not reach the server. Please try again.";
 
 const safeErrorMessage = (status: number, fallback: string): string =>
   SAFE_MESSAGES[status] ?? fallback;
@@ -144,7 +147,7 @@ export const authenticatedFetch = async <T>(
     res = await makeRequest(accessToken);
   } catch (e) {
     console.log("[AUTH:FETCH] Network error", { endpoint, error: e });
-    return { ok: false, status: 0, message: "Could not reach the server. Please try again." };
+    return { ok: false, status: 0, message: NETWORK_ERROR_MESSAGE };
   }
 
   // 401 — token expired but cookie not yet deleted; try refresh once
@@ -157,7 +160,7 @@ export const authenticatedFetch = async <T>(
         retryRes = await makeRequest(newToken);
       } catch (e) {
         console.log("[AUTH:FETCH] Network error on retry", { endpoint, error: e });
-        return { ok: false, status: 0, message: "Could not reach the server. Please try again." };
+        return { ok: false, status: 0, message: NETWORK_ERROR_MESSAGE };
       }
       if (retryRes.ok) {
         console.log("[AUTH:FETCH] Retry after refresh succeeded", { endpoint });
@@ -194,13 +197,23 @@ export const publicFetch = async <T>(
   options: RequestInit = {}
 ): Promise<ApiResult<T>> => {
   console.log("[AUTH:PUBLIC_FETCH] publicFetch →", endpoint);
-  const res = await fetch(`${GNOSIS_API_BASE_URL()}${endpoint}`, {
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...options.headers,
-    },
-  });
+
+  // Same contract as authenticatedFetch: a network failure (or a missing base
+  // URL) is a status-0 result, not a throw that escapes the calling server
+  // action and replaces the form with Next's error boundary
+  let res: Response;
+  try {
+    res = await fetch(`${GNOSIS_API_BASE_URL()}${endpoint}`, {
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
+    });
+  } catch (e) {
+    console.log("[AUTH:PUBLIC_FETCH] Network error", { endpoint, error: e });
+    return { ok: false, status: 0, message: NETWORK_ERROR_MESSAGE };
+  }
 
   if (!res.ok) {
     console.log("[AUTH:PUBLIC_FETCH] Request failed", { endpoint, status: res.status });

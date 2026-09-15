@@ -16,7 +16,9 @@ JWT authentication via an external FastAPI backend. Tokens are stored in httpOnl
 | `src/app/user/login/actions.ts` | Login server action |
 | `src/app/user/register/actions.ts` | Register server action |
 | `src/app/user/logout/actions.ts` | Logout server action |
-| `src/lib/validation/auth-schemas.ts` | Zod schemas for login/register |
+| `src/app/forgot-password/actions.ts` | Forgot-password server action (public) |
+| `src/app/reset-password/actions.ts` | Reset-password server action (public) |
+| `src/lib/validation/auth-schemas.ts` | Zod schemas for login/register/forgot/reset |
 | `src/types/auth.ts` | User, TokenResponse, form state types |
 
 ## Cookies
@@ -208,6 +210,85 @@ JWT authentication via an external FastAPI backend. Tokens are stored in httpOnl
     |  302 /user/login        |                          |
     |<------------------------|                          |
 ```
+
+### 8. Forgot Password
+
+Public pages at root level (`/forgot-password`, `/reset-password`) — outside the
+proxy matcher (`/user/*`, `/superadmin/*`), so no guard changes and they work
+logged-in or logged-out. Also reachable one-click from the profile dashboard
+("Renew the Seal"), where the email comes from the server-side session
+(`requestPasswordResetForCurrentUser` in `src/app/user/profile/actions.ts`).
+
+```
+  Browser                 Next.js Server              FastAPI
+    |                         |                          |
+    |  POST /forgot-password  |                          |
+    |  (form submit, email)   |                          |
+    |------------------------>|                          |
+    |                         |  Zod validation          |
+    |                         |  (forgotPasswordSchema)  |
+    |                         |                          |
+    |                         |  publicFetch POST        |
+    |                         |  /api/v1/auth/forgot-password
+    |                         |------------------------->|
+    |                         |                          |
+    |                         |  200 { message }         |
+    |                         |  (ALWAYS 200 — never     |
+    |                         |   reveals whether the    |
+    |                         |   account exists)        |
+    |                         |<-------------------------|
+    |                         |                          |
+    |  Generic confirmation   |                          |
+    |  ("If an account exists...")                       |
+    |<------------------------|                          |
+```
+
+Only error state: **429** (rate-limited) → "Too many requests" copy. The
+backend emails a link to `{FRONTEND_BASE_URL}/reset-password?token=...`
+(30-minute TTL) — `FRONTEND_BASE_URL` must be the real frontend origin in prod
+(defaults to `http://localhost:3000`).
+
+### 9. Reset Password
+
+```
+  Browser                 Next.js Server              FastAPI
+    |                         |                          |
+    |  GET /reset-password?token=...                     |
+    |  (emailed link; no token → dead-link panel,        |
+    |   nothing is ever POSTed)|                          |
+    |------------------------>|                          |
+    |  form (new password + confirm, token hidden input) |
+    |<------------------------|                          |
+    |                         |                          |
+    |  POST (form submit)     |                          |
+    |------------------------>|                          |
+    |                         |  Zod validation          |
+    |                         |  (resetPasswordSchema,   |
+    |                         |   password 8-128)        |
+    |                         |                          |
+    |                         |  publicFetch POST        |
+    |                         |  /api/v1/auth/reset-password
+    |                         |  { token, new_password } |
+    |                         |------------------------->|
+    |                         |                          |
+    |                         |  200 — backend revokes   |
+    |                         |  ALL refresh tokens,     |
+    |                         |  issues nothing new      |
+    |                         |  400 — token invalid/used|
+    |                         |  410 — token expired     |
+    |                         |<-------------------------|
+    |                         |                          |
+    |                         |  on 200:                 |
+    |                         |  clearAuthCookies()      |
+    |                         |                          |
+    |  Success panel + link to /user/login               |
+    |  (400/410: dead-link panel + /forgot-password link)|
+    |<------------------------|                          |
+```
+
+After a successful reset the user signs in again with the new password. Any
+other open tab's next refresh call 401s (all refresh tokens revoked), so the
+existing "refresh failed → logout" middleware path (diagram 5) cleans it up.
 
 ## Lessons Learned
 

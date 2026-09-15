@@ -67,3 +67,12 @@ This file stores project constants, configuration, and frequently-needed **non-s
 
 <!-- Add new facts below this line -->
 
+## Domain & Email
+
+- Public domain: `tarotdivinations.com` (DNS on Cloudflare; apps served via Cloudflare tunnel)
+- Inbound mail: Cloudflare Email Routing → Gmail (apex MX/SPF owned by Cloudflare)
+- Transactional email: **Resend** (free tier 3,000/mo, 100/day), sent by the FastAPI backend only (ADR-009)
+- From address: `Tarot Divinations <noreply@tarotdivinations.com>`
+- Resend DNS: DKIM at `resend._domainkey.tarotdivinations.com`; SPF+MX at `send.tarotdivinations.com` (return-path) — coexists with Email Routing
+- `RESEND_API_KEY` + `EMAIL_FROM` live in the backend env only; contract: `docs/backend-contracts/email-service.md`
+

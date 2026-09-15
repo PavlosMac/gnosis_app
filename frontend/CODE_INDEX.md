@@ -7,6 +7,14 @@
 - `AuthField` — component *default*
 - `AuthFieldProps` — interface
 
+### src/components/AuthPageShell.tsx
+- `AuthPageShell` — component *default*
+- `AuthErrorBanner` — component
+- `AuthFootnote` — component
+- `AuthLink` — component
+- `AuthSubmitButton` — component
+- `AuthPageShellProps` — interface
+
 ### src/components/InterpretationDisplay.tsx
 - `InterpretationDisplay` — function *default*
 - `InterpretationDisplayProps` — interface
@@ -21,9 +29,6 @@
 - `CardSlot` — component
 - `CardSlotProps` — interface
 - `KabbalahLayoutProps` — interface
-
-### src/components/LogoutButton.tsx
-- `LogoutButton` — component *default*
 
 ### src/components/OrnateFrame.tsx
 - `OrnateFrame` — function *default*
@@ -87,6 +92,13 @@
 - `TarotPageLayoutProps` — interface
 
 ## Pages & Layouts
+
+### src/app/forgot-password/page.tsx `(client)`
+- `ForgotPasswordPage` — component *default*
+
+### src/app/reset-password/page.tsx
+- `ResetPasswordPage` — component *default*
+- `ResetPasswordPageProps` — interface
 
 ### src/app/chart/page.tsx `(client)`
 - `ChartPage` — function *default*
@@ -152,6 +164,12 @@
 
 ## Server Actions
 
+### src/app/forgot-password/actions.ts `(server)`
+- `requestPasswordReset` — function
+
+### src/app/reset-password/actions.ts `(server)`
+- `resetPassword` — function
+
 ### src/app/superadmin/actions.ts `(server)`
 - `getUsers` — function
 
@@ -169,6 +187,11 @@
 
 ### src/app/user/readings/actions.ts `(server)`
 - `getReadings` — function
+
+### src/app/user/profile/actions.ts `(server)`
+- `getDashboard` — function
+- `requestPasswordResetForCurrentUser` — function
+- `DashboardResult` — type
 
 ### src/app/user/register/actions.ts `(server)`
 - `register` — function
@@ -226,11 +249,18 @@
 - `SignificatorResult` — interface
 - `calculateSignificators` — function
 
+### src/lib/password-reset.ts
+- `requestPasswordResetEmail` — function
+
 ### src/lib/validation/auth-schemas.ts
 - `loginSchema` — function
 - `registerSchema` — function
+- `forgotPasswordSchema` — function
+- `resetPasswordSchema` — function
 - `LoginInput` — type
 - `RegisterInput` — type
+- `ForgotPasswordInput` — type
+- `ResetPasswordInput` — type
 
 ### src/lib/validation/interpret-schemas.ts
 - `interpretCardSchema` — function
@@ -267,6 +297,9 @@
 - `AuthFormState` — interface
 - `LoginFormState` — interface
 - `RegisterFormState` — interface
+- `ForgotPasswordFormState` — interface
+- `ResetPasswordFormState` — interface
+- `MessageResponse` — interface
 - `AuthContextValue` — interface
 - `UserResponse` — interface
 - `PaginatedResponse` — interface
@@ -311,6 +344,13 @@
 ### src/app/user/login/login-form.tsx `(client)`
 - `LoginForm` — component *default*
 - `LoginFormProps` — interface
+
+### src/app/reset-password/reset-password-form.tsx `(client)`
+- `ResetPasswordForm` — component *default*
+- `ResetPasswordFormProps` — interface
+
+### src/app/user/profile/ResetPasswordRequestButton.tsx `(client)`
+- `ResetPasswordRequestButton` — component *default*
 
 ### src/hooks/useGameReducer.ts
 - `GamePhase` — type
