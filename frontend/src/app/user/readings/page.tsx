@@ -13,6 +13,22 @@ import {
   truncateQuestion as truncate,
 } from "@/lib/profile-dashboard";
 
+/** Entry point for readings done with a physical deck — wording over iconography */
+const ManualReadingHint = ({ className = "" }: { className?: string }) => (
+  <p
+    className={`${className} text-center text-[#e6d5b8]/50 text-sm`}
+    style={{ fontFamily: "'Crimson Pro', serif" }}
+  >
+    Read with your own deck?{" "}
+    <Link
+      href="/user/manual-reading"
+      className="text-[#d4af37]/70 hover:text-[#d4af37] transition-colors underline-offset-4 hover:underline"
+    >
+      Record that reading here
+    </Link>
+  </p>
+);
+
 const ReadingsPage = async ({
   searchParams,
 }: {
@@ -102,6 +118,7 @@ const ReadingsPage = async ({
             >
               ✦ Begin a Reading ✦
             </Link>
+            <ManualReadingHint />
           </div>
         ) : (
           <>
@@ -235,6 +252,8 @@ const ReadingsPage = async ({
                 )}
               </div>
             )}
+
+            <ManualReadingHint className="mt-8" />
           </>
         )}
 

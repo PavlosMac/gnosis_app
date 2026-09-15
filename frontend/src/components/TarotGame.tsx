@@ -380,7 +380,7 @@ export default function TarotGame({ user, mode = 'draw' }: TarotGameProps) {
 
         <p className={`text-center text-[#d4af37]/70 mb-8 text-sm sm:text-base tracking-wide ${isCompact ? 'hidden sm:block' : ''}`}
            style={{ fontFamily: "'Crimson Pro', serif" }}>
-          {isManual ? '✦ Lay Out the Cards You Have Drawn ✦' : '✦ Unveil the Mysteries ✦'}
+          {isManual ? '✦ Save a reading from elsewhere ✦' : '✦ Unveil the Mysteries ✦'}
         </p>
 
         {/* Pre-game selection screen */}

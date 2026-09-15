@@ -1,6 +1,5 @@
-import Link from "next/link";
-import { ClipboardPlus } from "lucide-react";
 import BudgetChalice from "@/components/BudgetChalice";
+import ContactSupportRow from "./ContactSupportRow";
 import ResetPasswordRequestButton from "./ResetPasswordRequestButton";
 import { budgetCaption, chaliceFill } from "@/lib/profile-dashboard";
 
@@ -20,33 +19,6 @@ const ProfileRow = ({ label, value }: { label: string; value: string }) => (
     >
       {value}
     </span>
-  </div>
-);
-
-const ProfileLinkRow = ({
-  href,
-  label,
-  icon,
-}: {
-  href: string;
-  label: string;
-  icon: React.ReactNode;
-}) => (
-  <div className="pt-4 border-t border-[#d4af37]/10">
-    <Link href={href} className="flex items-center justify-between group">
-      <span
-        className="text-[#e6d5b8]/60 text-sm tracking-wider uppercase group-hover:text-[#d4af37] transition-colors"
-        style={{ fontFamily: "'Cinzel', serif" }}
-      >
-        {label}
-      </span>
-      <span
-        className="text-[#d4af37]/40 group-hover:text-[#d4af37] transition-colors"
-        aria-hidden="true"
-      >
-        {icon}
-      </span>
-    </Link>
   </div>
 );
 
@@ -115,11 +87,7 @@ const AccountPanel = ({ displayName, email, budget }: AccountPanelProps) => {
       </div>
 
       <div style={{ marginTop: "auto" }}>
-        <ProfileLinkRow
-          href="/user/manual-reading"
-          label="Get manual interpretation"
-          icon={<ClipboardPlus size={18} strokeWidth={1.75} />}
-        />
+        <ContactSupportRow />
         <div className="pt-4 mt-4 border-t border-[#d4af37]/10">
           <ResetPasswordRequestButton />
         </div>

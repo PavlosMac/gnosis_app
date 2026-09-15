@@ -3,7 +3,14 @@
 import { authenticatedFetch } from "@/lib/api-client";
 import { requestPasswordResetEmail } from "@/lib/password-reset";
 import { getCurrentUser } from "@/lib/session";
-import type { Dashboard, DashboardResponse, ForgotPasswordFormState } from "@/types/auth";
+import { contactSupportSchema } from "@/lib/validation/support-schemas";
+import type {
+  ContactSupportFormState,
+  Dashboard,
+  DashboardResponse,
+  ForgotPasswordFormState,
+  MessageResponse,
+} from "@/types/auth";
 import { mapDashboardResponse } from "@/types/auth";
 
 export type DashboardResult =
@@ -50,4 +57,42 @@ export const requestPasswordResetForCurrentUser = async (
 
   console.log("[AUTH:FORGOT] Dashboard reset-link request", { email: user.email });
   return requestPasswordResetEmail(user.email);
+};
+
+/**
+ * Contact-support ticket: only {subject, message} crosses the wire — the
+ * backend resolves the requester's email and user_id from the JWT itself,
+ * for the same reason the reset action above never trusts a submitted email.
+ */
+export const contactSupport = async (
+  _prevState: ContactSupportFormState,
+  formData: FormData
+): Promise<ContactSupportFormState> => {
+  // Echoed back on any failure so the re-rendered form keeps what was typed
+  const values = {
+    subject: String(formData.get("subject") ?? ""),
+    message: String(formData.get("message") ?? ""),
+  };
+
+  const user = await getCurrentUser();
+  if (!user) {
+    return { success: false, error: "Session expired. Please log in again.", values };
+  }
+
+  const parsed = contactSupportSchema.safeParse(values);
+  if (!parsed.success) {
+    return {
+      success: false,
+      fieldErrors: parsed.error.flatten().fieldErrors,
+      values,
+    };
+  }
+
+  console.log("[SUPPORT] Contact request", { userId: user.id });
+  const result = await authenticatedFetch<MessageResponse>("/api/v1/support/contact", {
+    method: "POST",
+    body: JSON.stringify(parsed.data),
+  });
+  if (!result.ok) return { success: false, error: result.message, values };
+  return { success: true };
 };

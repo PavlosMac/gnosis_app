@@ -1,4 +1,5 @@
 import type { ReadingDetail, TagSummary } from "@/types/reading";
+import type { ContactSupportInput } from "@/lib/validation/support-schemas";
 
 export interface User {
   id: string;
@@ -28,15 +29,20 @@ export interface MeResponse {
   updated_at: string;
 }
 
-export interface AuthFormState {
+export interface AuthFormState<TValues = never> {
   success: boolean;
   error?: string;
   fieldErrors?: Record<string, string[]>;
+  /** Submitted values echoed back on failure so the form re-renders with what
+      was typed — React 19 resets uncontrolled inputs to their defaultValue after
+      an action. Never echo secrets (passwords). */
+  values?: TValues;
 }
 
 export interface LoginFormState extends AuthFormState {}
 export interface RegisterFormState extends AuthFormState {}
 export interface ForgotPasswordFormState extends AuthFormState {}
+export interface ContactSupportFormState extends AuthFormState<ContactSupportInput> {}
 
 export interface ResetPasswordFormState extends AuthFormState {
   /** Set when the reset token itself was rejected (400/410) — the page renders

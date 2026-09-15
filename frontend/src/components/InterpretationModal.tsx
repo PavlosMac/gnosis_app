@@ -1,9 +1,8 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { createPortal } from "react-dom";
 import Link from "next/link";
-import OrnateFrame from "@/components/OrnateFrame";
+import SanctumModal from "@/components/SanctumModal";
 import InterpretationDisplay from "@/components/InterpretationDisplay";
 import { generateInterpretation } from "@/app/user/interpret/actions";
 import { loginHrefFor } from "@/lib/auth-return-path";
@@ -71,21 +70,6 @@ const InterpretationModal: React.FC<InterpretationModalProps> = React.memo(({
     onClose();
   }, [interpretation, onComplete, onClose]);
 
-  // Lock body scroll and handle Escape key
-  useEffect(() => {
-    document.body.style.overflow = "hidden";
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") handleClose();
-    };
-    window.addEventListener("keydown", handleKeyDown);
-
-    return () => {
-      document.body.style.overflow = "";
-      window.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [handleClose]);
-
   const runGenerate = useCallback(async () => {
     if (isFetchingRef.current) return;
     isFetchingRef.current = true;
@@ -145,153 +129,93 @@ const InterpretationModal: React.FC<InterpretationModalProps> = React.memo(({
       </button>
     );
 
-  return createPortal(
-    <div
-      className="fixed inset-0 z-[10000] flex items-start justify-center isolate"
-      role="dialog"
-      aria-modal="true"
-    >
-      {/* Backdrop */}
-      <div
-        className="absolute inset-0 bg-black/80 backdrop-blur-sm z-0"
-        onClick={handleClose}
-      />
+  const subtitle = birthDate ? `${spreadName} · ${formatBirthDate(birthDate)}` : spreadName;
 
-      {/* Modal panel */}
-      <div
-        className="relative z-10 w-full mx-4 my-8 max-w-3xl max-h-[calc(100vh-4rem)] overflow-y-auto rounded-xl border-2 border-[#d4af37]/40 shadow-2xl"
-        style={{
-          background:
-            "linear-gradient(135deg, rgba(26,0,51,0.97) 0%, rgba(45,27,78,0.97) 100%)",
-        }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Ornate corner decorations */}
-        <OrnateFrame size="sm" corners="top" />
-
-        {/* Sticky header */}
-        <div
-          className="sticky top-0 z-20 flex items-center justify-between px-6 py-4 border-b border-[#d4af37]/20"
-          style={{
-            background:
-              "linear-gradient(135deg, rgba(26,0,51,0.98) 0%, rgba(45,27,78,0.98) 100%)",
-          }}
-        >
-          <div className="flex flex-col gap-1 min-w-0">
-            <h2
-              className="text-xl sm:text-2xl font-bold text-[#d4af37] tracking-wider"
-              style={{
-                fontFamily: "'Cinzel', serif",
-                textShadow: "0 0 15px rgba(212,175,55,0.4)",
-              }}
-            >
-              ✦ Interpretation ✦
-            </h2>
-            <p
-              className="text-xs sm:text-sm text-[#d4af37]/70 tracking-wide truncate"
-              style={{ fontFamily: "'Cinzel', serif" }}
-            >
-              {spreadName}
-              {birthDate && ` · ${formatBirthDate(birthDate)}`}
-            </p>
-          </div>
-          <button
-            onClick={handleClose}
-            className="shrink-0 text-[#d4af37]/60 hover:text-[#d4af37] transition-colors text-2xl leading-none px-2"
-            aria-label="Close"
+  return (
+    <SanctumModal title="Interpretation" subtitle={subtitle} size="lg" onClose={handleClose}>
+      {/* GENERATING STATE */}
+      {modalState === "generating" && (
+        <div className="flex flex-col items-center gap-6 py-16">
+          <div className="w-16 h-16 border-4 border-[#d4af37]/20 border-t-[#d4af37] rounded-full animate-spin" />
+          <p
+            className="text-[#d4af37]/80 text-lg tracking-wider"
+            style={{ fontFamily: "'Cinzel', serif" }}
           >
-            ×
-          </button>
+            The Oracle consults the stars...
+          </p>
         </div>
+      )}
 
-        {/* Body */}
-        <div className="p-6">
-          {/* GENERATING STATE */}
-          {modalState === "generating" && (
-            <div className="flex flex-col items-center gap-6 py-16">
-              <div className="w-16 h-16 border-4 border-[#d4af37]/20 border-t-[#d4af37] rounded-full animate-spin" />
-              <p
-                className="text-[#d4af37]/80 text-lg tracking-wider"
-                style={{ fontFamily: "'Cinzel', serif" }}
-              >
-                The Oracle consults the stars...
-              </p>
-            </div>
-          )}
-
-          {/* ERROR STATE (generate failed) */}
-          {modalState === "error" && (
-            <div className="flex flex-col items-center gap-6 py-8">
-              <p
-                className="text-red-400 text-center text-base"
-                style={{ fontFamily: "'Crimson Pro', serif" }}
-              >
-                {errorMessage || "The oracle could not be reached."}
-              </p>
-              {primaryAction(
-                "Try Again",
-                "Log In",
-                runGenerate,
-                "px-8 py-3 border border-[#d4af37]/40 text-[#d4af37] hover:bg-[#d4af37]/10 rounded-lg transition-all text-sm"
-              )}
-            </div>
-          )}
-
-          {/* RESULT STATE — the interpretation is already saved */}
-          {modalState === "result" && interpretation && (
-            <div className="flex flex-col gap-8">
-              <InterpretationDisplay
-                question={question}
-                narrative={interpretation.reading}
-                cardVisuals={cardVisuals}
-              />
-
-              <div className="flex flex-col items-center gap-3">
-                <button
-                  onClick={handleClose}
-                  className={`px-10 py-3 ${GOLD_BUTTON} shadow-lg hover:shadow-[#d4af37]/50 transition-all text-sm tracking-[0.1em]`}
-                  style={CINZEL}
-                >
-                  ✦ Done ✦
-                </button>
-                {remainingBudget !== null && (
-                  <p
-                    className="text-xs text-[#e6d5b8]/40"
-                    style={{ fontFamily: "'Crimson Pro', serif" }}
-                  >
-                    Saved to your journal · Remaining Oracle budget ${remainingBudget.toFixed(2)}
-                  </p>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* CONFIRM STATE */}
-          {modalState === "confirm" && (
-            <div className="flex flex-col gap-8">
-              <p
-                className="text-center text-sm text-[#e6d5b8]/60"
-                style={{ fontFamily: "'Crimson Pro', serif" }}
-              >
-                Ready to consult the Oracle for this reading?
-              </p>
-
-              <div className="flex justify-center">
-                <button
-                  onClick={runGenerate}
-                  className="px-10 py-3 bg-gradient-to-br from-[#8a2be2]/80 to-[#5a1a9e]/80 text-[#e6d5b8] rounded-lg
-                             font-bold shadow-lg hover:shadow-[#8a2be2]/40 transition-all text-sm border border-[#8a2be2]/40"
-                  style={{ fontFamily: "'Cinzel', serif", letterSpacing: "0.1em" }}
-                >
-                  ✦ Consult the Oracle ✦
-                </button>
-              </div>
-            </div>
+      {/* ERROR STATE (generate failed) */}
+      {modalState === "error" && (
+        <div className="flex flex-col items-center gap-6 py-8">
+          <p
+            className="text-red-400 text-center text-base"
+            style={{ fontFamily: "'Crimson Pro', serif" }}
+          >
+            {errorMessage || "The oracle could not be reached."}
+          </p>
+          {primaryAction(
+            "Try Again",
+            "Log In",
+            runGenerate,
+            "px-8 py-3 border border-[#d4af37]/40 text-[#d4af37] hover:bg-[#d4af37]/10 rounded-lg transition-all text-sm"
           )}
         </div>
-      </div>
-    </div>,
-    document.body
+      )}
+
+      {/* RESULT STATE — the interpretation is already saved */}
+      {modalState === "result" && interpretation && (
+        <div className="flex flex-col gap-8">
+          <InterpretationDisplay
+            question={question}
+            narrative={interpretation.reading}
+            cardVisuals={cardVisuals}
+          />
+
+          <div className="flex flex-col items-center gap-3">
+            <button
+              onClick={handleClose}
+              className={`px-10 py-3 ${GOLD_BUTTON} shadow-lg hover:shadow-[#d4af37]/50 transition-all text-sm tracking-[0.1em]`}
+              style={CINZEL}
+            >
+              ✦ Done ✦
+            </button>
+            {remainingBudget !== null && (
+              <p
+                className="text-xs text-[#e6d5b8]/40"
+                style={{ fontFamily: "'Crimson Pro', serif" }}
+              >
+                Saved to your journal · Remaining Oracle budget ${remainingBudget.toFixed(2)}
+              </p>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* CONFIRM STATE */}
+      {modalState === "confirm" && (
+        <div className="flex flex-col gap-8">
+          <p
+            className="text-center text-sm text-[#e6d5b8]/60"
+            style={{ fontFamily: "'Crimson Pro', serif" }}
+          >
+            Ready to consult the Oracle for this reading?
+          </p>
+
+          <div className="flex justify-center">
+            <button
+              onClick={runGenerate}
+              className="px-10 py-3 bg-gradient-to-br from-[#8a2be2]/80 to-[#5a1a9e]/80 text-[#e6d5b8] rounded-lg
+                         font-bold shadow-lg hover:shadow-[#8a2be2]/40 transition-all text-sm border border-[#8a2be2]/40"
+              style={{ fontFamily: "'Cinzel', serif", letterSpacing: "0.1em" }}
+            >
+              ✦ Consult the Oracle ✦
+            </button>
+          </div>
+        </div>
+      )}
+    </SanctumModal>
   );
 });
 

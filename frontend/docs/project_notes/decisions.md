@@ -187,3 +187,24 @@ Each decision should include:
 - Backend gains `RESEND_API_KEY` + `EMAIL_FROM` env vars and a superadmin smoke-test endpoint; frontend needs no code changes for the infrastructure itself
 - Replies to `noreply@` vanish unless a Cloudflare Email Routing rule or `reply_to` is added later
 - 100/day free-tier cap is far above current volume; forgot-password keeps its own rate limit regardless
+
+
+### ADR-010: Support Tickets as Backend Email Relay (2026-09-15)
+
+**Context:**
+- Need a support channel for logged-in users; a helpdesk product is overkill at this scale
+- ADR-009 already gives the backend a `send_email()` module; the owner's inbox is reachable via Cloudflare Email Routing
+
+**Decision:**
+- New `POST /api/v1/support/contact` (auth required) relays `{subject, message}` to `SUPPORT_EMAIL` via `send_email()`, extended with `reply_to` set to the requester so an inbox Reply reaches the user directly (From stays `noreply@` for DKIM/DMARC alignment)
+- Identity (email + user_id) is always resolved from the JWT server-side — the frontend never sends it, mirroring the 2026-09-14 rule that user email never comes from client input
+- Frontend: "Contact support" modal on the profile page (subject + message, zod 3–200/10–5000 — limits pinned by test to `docs/backend-contracts/support-tickets.md`); the AccountPanel's manual-interpretation row was replaced by it, and manual entry moved to a plain text link ("Read with your own deck? Record that reading here") at the foot of the readings list and in its empty state — an icon-only button with a tooltip was tried first and judged too cryptic for the feature
+- No ticket persistence or threading — email relay only
+
+**Alternatives Considered:**
+- Third-party helpdesk / ticket storage in the DB -> Rejected: no volume to justify it; revisit if support traffic grows
+- mailto: link -> Rejected: leaks the support address to scrapers, no structure, no auth context
+
+**Consequences:**
+- Tickets live only in the owner's inbox; per-user rate limit (~5/hour, backend) guards the on-demand email relay
+- Against a backend without the endpoint, the modal degrades to the mapped 404 message — copy improves automatically once the backend ships

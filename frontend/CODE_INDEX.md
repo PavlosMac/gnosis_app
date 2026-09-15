@@ -5,7 +5,15 @@
 
 ### src/components/AuthField.tsx `(client)`
 - `AuthField` — component *default*
+- `AuthFieldFrame` — component
+- `AUTH_CONTROL_CLASS` — const
+- `AUTH_CONTROL_STYLE` — const
 - `AuthFieldProps` — interface
+- `AuthFieldFrameProps` — interface
+
+### src/components/AuthTextArea.tsx `(client)`
+- `AuthTextArea` — component *default*
+- `AuthTextAreaProps` — interface
 
 ### src/components/AuthPageShell.tsx
 - `AuthPageShell` — component *default*
@@ -42,6 +50,10 @@
 - `ReadingProps` — interface
 - `SIGNIFICATOR_POSITIONS` — constant
 - `TREE_OF_LIFE_POSITIONS` — constant
+
+### src/components/SanctumModal.tsx `(client)`
+- `SanctumModal` — component *default*
+- `SanctumModalProps` — interface
 
 ### src/components/ShuffleAnimation.tsx `(client)`
 - `ShuffleAnimation` — component *default*
@@ -191,6 +203,7 @@
 ### src/app/user/profile/actions.ts `(server)`
 - `getDashboard` — function
 - `requestPasswordResetForCurrentUser` — function
+- `contactSupport` — function
 - `DashboardResult` — type
 
 ### src/app/user/register/actions.ts `(server)`
@@ -266,6 +279,12 @@
 - `interpretCardSchema` — function
 - `interpretRequestSchema` — function
 
+### src/lib/validation/support-schemas.ts
+- `contactSupportSchema` — function
+- `SUPPORT_SUBJECT_MAX` — constant
+- `SUPPORT_MESSAGE_MAX` — constant
+- `ContactSupportInput` — type
+
 ### src/lib/zodiac.ts
 - `zodiacSigns` — function
 - `ZodiacSign` — interface
@@ -298,6 +317,7 @@
 - `LoginFormState` — interface
 - `RegisterFormState` — interface
 - `ForgotPasswordFormState` — interface
+- `ContactSupportFormState` — interface
 - `ResetPasswordFormState` — interface
 - `MessageResponse` — interface
 - `AuthContextValue` — interface
@@ -351,6 +371,13 @@
 
 ### src/app/user/profile/ResetPasswordRequestButton.tsx `(client)`
 - `ResetPasswordRequestButton` — component *default*
+
+### src/app/user/profile/ContactSupportRow.tsx `(client)`
+- `ContactSupportRow` — component *default*
+
+### src/app/user/profile/ContactSupportModal.tsx `(client)`
+- `ContactSupportModal` — component *default*
+- `ContactSupportModalProps` — interface
 
 ### src/hooks/useGameReducer.ts
 - `GamePhase` — type
