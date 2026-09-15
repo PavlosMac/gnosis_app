@@ -14,7 +14,7 @@ history · **Snapshot** — generated output frozen in time.
 | [`database/production_mongo_commands.md`](database/production_mongo_commands.md) | Shell access to prod Mongo + ready-made queries |
 | [`database/dev-users.md`](database/dev-users.md) | Seeded local dev superadmin |
 | [`deployment/deploy_instructions.md`](deployment/deploy_instructions.md) | Build/push and Pi deploy runbook |
-| [`email/email_service.md`](email/email_service.md) | `EmailPort` + adapters, Resend setup, password-reset flow end to end |
+| [`email/email_service.md`](email/email_service.md) | `EmailPort` + adapters, Resend setup, password-reset and support-contact flows end to end |
 | [`interpretations/usage-and-budget-flow.md`](interpretations/usage-and-budget-flow.md) | Generate flow, usage ledger, budget gate |
 | [`prompts/prompt_reference.md`](prompts/prompt_reference.md) | Current prompts (partly generated — `make prompt-doc`) |
 | [`prompts/lean_prompt_architecture.md`](prompts/lean_prompt_architecture.md) | Design rationale for the lean prompt architecture (implemented) |

@@ -71,6 +71,8 @@ from src.readings.repository import (
     UserTagsWriteRepository,
 )
 from src.readings.router import router as readings_router
+from src.support.commands.contact_support import ContactSupportCommand, ContactSupportHandler
+from src.support.router import router as support_router
 from src.users.queries.list_users import ListUsersHandler, ListUsersQuery
 from src.users.router import router as users_router
 
@@ -142,6 +144,10 @@ def _wire_mediator(
             interpretation_write_repo,
             llm,
         ),
+    )
+    # Support relay shares the password-reset throttle collection (key prefix "support:").
+    mediator.register_command(
+        ContactSupportCommand, ContactSupportHandler(reset_throttle_repo, email)
     )
 
 
@@ -219,3 +225,4 @@ app.include_router(llm_router, prefix="/api/v1")
 app.include_router(readings_router, prefix="/api/v1")
 app.include_router(interpretations_router, prefix="/api/v1")
 app.include_router(dashboard_router, prefix="/api/v1")
+app.include_router(support_router, prefix="/api/v1")

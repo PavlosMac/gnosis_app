@@ -14,12 +14,12 @@ and a test mock:
 
 | Piece | File | Job |
 |---|---|---|
-| `EmailPort` | `src/notifications/port.py` | The contract: `send_password_reset(to, reset_link)` and `close()`. Adapters either succeed or raise `EmailDeliveryError` — nothing else escapes. |
+| `EmailPort` | `src/notifications/port.py` | The contract: `send_password_reset(to, reset_link)`, `send_support_request(to, reply_to, subject, message, user_id, submitted_at)` and `close()`. Adapters either succeed or raise `EmailDeliveryError` — nothing else escapes. |
 | `ResendEmailAdapter` | `src/notifications/resend_adapter.py` | Real delivery via the Resend SDK (`resend.Emails.send_async`). |
-| `ConsoleEmailAdapter` | `src/notifications/console_adapter.py` | Dev fallback — logs the recipient and the raw reset link instead of sending. |
-| `MockEmailAdapter` | `src/notifications/mock_adapter.py` | Tests — appends `{to, reset_link}` to `sent_password_resets` so a test can pull the token straight out. |
+| `ConsoleEmailAdapter` | `src/notifications/console_adapter.py` | Dev fallback — logs the recipient and the raw reset link (or the support message) instead of sending. |
+| `MockEmailAdapter` | `src/notifications/mock_adapter.py` | Tests — appends `{to, reset_link}` to `sent_password_resets` so a test can pull the token straight out; support relays land in `sent_support_requests`. |
 | `EmailDeliveryError` | `src/notifications/errors.py` | The single error at the port boundary (`AppError`, 502). |
-| Templates | `src/notifications/templates.py` | Subject, plain-text and HTML bodies for the reset email. |
+| Templates | `src/notifications/templates.py` | Subject, plain-text and HTML bodies for the reset and support emails. |
 
 ## Adapter selection
 
@@ -45,6 +45,9 @@ with a `MockEmailAdapter` and exposes it as the `mock_email` fixture.
 | `password_reset_token_ttl_minutes` | `PASSWORD_RESET_TOKEN_TTL_MINUTES` | `30` | Token lifetime. The email wording is hardcoded to match — see [Need to know](#need-to-know). |
 | `password_reset_rate_limit_window_seconds` | `PASSWORD_RESET_RATE_LIMIT_WINDOW_SECONDS` | `3600` | Throttle window per email. |
 | `password_reset_rate_limit_max_attempts` | `PASSWORD_RESET_RATE_LIMIT_MAX_ATTEMPTS` | `5` | Requests allowed per email per window. |
+| `support_email` | `SUPPORT_EMAIL` | `""` | Destination inbox for support relays (not the From identity). Empty → the endpoint answers 503. |
+| `support_contact_rate_limit_window_seconds` | `SUPPORT_CONTACT_RATE_LIMIT_WINDOW_SECONDS` | `3600` | Throttle window per user. |
+| `support_contact_rate_limit_max_attempts` | `SUPPORT_CONTACT_RATE_LIMIT_MAX_ATTEMPTS` | `5` | Support messages allowed per user per window. |
 
 ## The password-reset flow, step by step
 
@@ -96,6 +99,34 @@ builds a command and the handler does everything.
 
 Success → **200** `Password has been reset successfully.`
 
+## The support contact flow
+
+`POST /api/v1/support/contact` — `{subject (3–200), message (10–5000)}`, **auth required**
+(`src/support/router.py`). The limits mirror the frontend's `contactSupportSchema`; the
+frontend pins them in a test, so change both together.
+
+`ContactSupportHandler` (`src/support/commands/contact_support.py`):
+
+1. **Refuse if `support_email` is empty** → **503** `Support is not available right now`.
+2. **Throttle per user**, reusing `PasswordResetThrottleRepository` with key
+   `support:<user_id>` (the prefix keeps it apart from the email-keyed reset limit).
+   Same record-then-count ordering; over the limit → **429**.
+3. **Relay** via `send_support_request(to=support_email, reply_to=user.email, …)`. The
+   body is the message verbatim (HTML-escaped in the HTML part) plus a metadata block:
+   user email, user id, submission time.
+
+Two deliberate differences from forgot-password:
+
+- **Identity comes from the JWT**, never the body. The router uses `CurrentUser`, so
+  `reply_to` and the metadata are always the authenticated account — tickets cannot be
+  forged, and extra identity fields in the body are ignored.
+- **`EmailDeliveryError` propagates as 502.** There is no enumeration concern here, and
+  the user must know the message did not go through.
+
+Why `Reply-To` rather than putting the user in `From`: From stays `EMAIL_FROM` so the
+DKIM `d=` stays aligned with the From domain. A user's address in From would fail DMARC
+at the receiving inbox. Reply-To gives the same one-click reply with no extra setup.
+
 ## Storage
 
 Both collections are created and indexed by migration `011_password_reset_tokens_indexes`
@@ -105,7 +136,7 @@ nothing in application code deletes rows by age.
 | Collection | Fields | Indexes |
 |---|---|---|
 | `password_reset_tokens` | `token_hash`, `user_id`, `used`, `expires_at` | `token_hash` unique · `user_id` · TTL on `expires_at` |
-| `password_reset_attempts` | `key` (case-folded email), `created_at`, `expires_at` | `key` · `created_at` desc · TTL on `expires_at` |
+| `password_reset_attempts` | `key` (case-folded email, or `support:<user_id>` for the support relay), `created_at`, `expires_at` | `key` · `created_at` desc · TTL on `expires_at` |
 
 Attempt rows expire one window after they're written, so the throttle collection prunes
 itself. Token rows outlive their expiry briefly (Mongo's TTL monitor runs roughly once a
@@ -193,6 +224,7 @@ The port is deliberately narrow — one method per email the product sends, not 
 | Token, throttle, refresh-token repositories | `src/auth/repository.py` |
 | Reset-flow errors (400 / 410 / 429) | `src/auth/service.py` |
 | Collections + TTL indexes | `src/migrations/versions/011_password_reset_tokens_indexes.py` |
+| Support endpoint, schemas, handler, errors (429 / 503) | `src/support/router.py`, `src/support/schemas.py`, `src/support/commands/contact_support.py`, `src/support/service.py` |
 
 ## Tests to read first
 
@@ -207,3 +239,6 @@ The port is deliberately narrow — one method per email the product sends, not 
   `test_full_reset_flow` (pulls the token out of `mock_email.sent_password_resets`).
 - `tests/auth/test_password_reset_repos.py` — atomic consume, `count_recent` windowing,
   and `revoke_all_for_user` scoping.
+- `tests/support/test_commands.py` / `tests/support/test_router.py` — the support relay:
+  JWT identity wins over body fields, per-user throttle keyed apart from password reset,
+  502 on delivery failure, 503 when `SUPPORT_EMAIL` is unset.

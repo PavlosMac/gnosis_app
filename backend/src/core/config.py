@@ -61,6 +61,12 @@ class Settings(BaseSettings):
     password_reset_rate_limit_window_seconds: int = 3600
     password_reset_rate_limit_max_attempts: int = 5
 
+    # Support contact form — messages are relayed to this inbox through the email
+    # adapter (Reply-To = the user). Empty means the endpoint answers 503.
+    support_email: str = ""
+    support_contact_rate_limit_window_seconds: int = 3600
+    support_contact_rate_limit_max_attempts: int = 5
+
     # Lean prompt word budget (server-owned; reading length is a product decision)
     llm_words_per_card: int = 100
     # A significator-chart card carries a whole facet of character, not one moment in a

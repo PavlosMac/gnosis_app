@@ -108,6 +108,17 @@ async def test_email_delivery_failure_is_swallowed(mock_db, known_user):
         async def send_password_reset(self, to: str, reset_link: str) -> None:
             raise EmailDeliveryError()
 
+        async def send_support_request(
+            self,
+            to: str,
+            reply_to: str,
+            subject: str,
+            message: str,
+            user_id: str,
+            submitted_at: datetime,
+        ) -> None:
+            raise EmailDeliveryError()
+
         async def close(self) -> None:
             return None
 
@@ -143,9 +154,7 @@ async def test_confirm_updates_password_and_revokes_sessions(
     request_handler, confirm_handler, mock_email_adapter, mock_db, known_user
 ):
     refresh_repo = RefreshTokenRepository(mock_db)
-    await refresh_repo.store(
-        "jti1", "fam1", known_user, datetime.now(UTC) + timedelta(days=1)
-    )
+    await refresh_repo.store("jti1", "fam1", known_user, datetime.now(UTC) + timedelta(days=1))
     raw_token = await _issue_token(request_handler, mock_email_adapter)
 
     await confirm_handler.handle(

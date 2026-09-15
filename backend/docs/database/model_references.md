@@ -128,8 +128,10 @@ Owned by migrations. Current state after 001–010:
 
 ## Planned
 
-- **Password reset** (unimplemented plan, no branch carries it): `password_reset_tokens`
-  and `password_reset_attempts` collections, next free migration number — see
-  `docs/auth/password-reset-flow.md`.
+- **Password reset** — implemented: `password_reset_tokens` and `password_reset_attempts`
+  collections, created by migration `011_password_reset_tokens_indexes`. The attempts
+  collection is a generic per-key throttle: `key` is the case-folded email for
+  forgot-password and `support:<user_id>` for the support contact relay. See
+  `docs/email/email_service.md` → Storage.
 - **Payments**: Mollie subscriptions, not Stripe — see `docs/payment/mollie-recurring-subscription.md`.
   `stripe_customer_id` on `users` is a leftover from the original plan.
