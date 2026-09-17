@@ -1,0 +1,25 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    env:
+      # Settings requires a JWT secret at import time (no committed default); any
+      # step that imports src.core.config needs this.
+      JWT_SECRET_KEY: ci-only-secret
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - run: uv sync
+      - run: make lint
+      # make typecheck has pre-existing failures (main.py, middleware.py,
+      # auth/service.py, scripts/card_meanings.py) — add it here once those are fixed.
+      - run: make prompt-doc-check
+      - run: make test

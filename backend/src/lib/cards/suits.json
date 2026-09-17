@@ -1,0 +1,28 @@
+{
+  "suits": {
+    "wands": {
+      "name": "Suit of Wands",
+      "description": "Wands represent energy and our innate Will-to-Power. They symbolize the means by which we formulate plans of action, accomplish tasks and get things done. Wands represent our libido and its level; the temperature of the furnace of available bioenergy. Each of the ten cards denote the stage we are presently at during a cycle of creation or endeavor. An individual card indicates successes and failures, as well as the nature of external obstacles and challenges besetting us. It indicates what a particular situation, enterprise, interaction or relationship is likely to require or demand in the way of energy, commitment and resources, and whether we are right to invest energy. Wands indicate zest, competence, confidence and temperament. Temporally, they usually represent periods of days.",
+      "element": "Fire",
+      "temporal": "Days"
+    },
+    "cups": {
+      "name": "Suit of Cups",
+      "description": "Cups provide us with information about how a client is feeling. They reveal their emotional temperament and undercurrents they may or may not be consciously aware of. They reveal one's emotional and psychological state, and commonly help us discern what lies beneath the surface and facade. Cups indicate the nature and progress of creative endeavors, as well as the nature and depth of emotional, romantic and spiritual experiences. They connote our intimate connections with other people; our attachments and sexual interests. They provide warnings and alert us to possible deception. Reversed Cup cards inform us about the traits and proclivities we need to strengthen or release for overall emotional and spiritual wellbeing. Temporally, Cups represent periods of weeks.",
+      "element": "Water",
+      "temporal": "Weeks"
+    },
+    "swords": {
+      "name": "Suit of Swords",
+      "description": "Swords denote mental temperament. They reveal the nature of our thoughts and intentions, as well as communications with others. They indicate whether our thinking patterns are logical or illogical, healthy or unhealthy. They indicate the strength or weakness of our agreements with others and let us know whether we are likely to experience deception, fraud or other challenges. They advise on how we solve problems created by ourselves or other people. They suggest ways of resolving arguments and areas and means of compromise. Swords represent speed, skill, acuity, clarity and honesty. They denote intellectual interests and projects and whether the time is right to reveal ideas to the world. Swords provide insight into desires, hopes and expectations, and whether they are realistic or not. They convey how other people perceive us on a day-to-day basis, and shed light on the agendas of people with whom we come into contact.",
+      "element": "Air",
+      "temporal": "Days (speed and acuity implied)"
+    },
+    "disks": {
+      "name": "Suit of Disks",
+      "description": "Disks convey information about our day-to-day existence and work life. They denote the condition of our material resources and physical projects and intentions. They deal with professional aspirations, material plans, physical creations, private purse, purchases, investments and overall welfare and fortune. They denote the condition and status of our properties and assets, and indicate whether we are to prosper or endure losses and setbacks. They represent our natural skills, talents and aptitudes; our responsibilities toward other people, and levels of consistency, endurance and patience. Disks provide information about our physical health and general wellbeing. Temporally, Disks represent longer periods of time, denoting gradual progress and distant outcomes.",
+      "element": "Earth",
+      "temporal": "Longer periods of time"
+    }
+  }
+}
