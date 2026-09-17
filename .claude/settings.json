@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "deny": [
+      "Read(~/.ssh/**)", "Edit(~/.ssh/**)",
+      "Read(.env)", "Edit(.env)",
+      "Read(.env.local)", "Edit(.env.local)",
+      "Read(.env.gnosis.prod)", "Edit(.env.gnosis.prod)"
+    ]
+  }
+}
