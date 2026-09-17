@@ -25,7 +25,7 @@ ssh pavlos-mk@pavspi.local chmod +x ~/projects/gnosis-esoterica/scripts/pi-mongo
 
 Optional shortcut in `~/.zshrc` so it works from any directory:
 ```bash
-alias pimongo=~/projects/gnosis-esoterica-api/scripts/pi-mongo.sh
+alias pimongo=~/projects/gnosis_application/backend/scripts/pi-mongo.sh
 ```
 
 ## 2. Daily workflow

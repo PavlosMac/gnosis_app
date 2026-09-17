@@ -7,12 +7,12 @@
 `/user/profile` today is a small card: Name, Email, three link rows, logout. Pavlos wants it to become a dashboard: one large card split vertically — **left = account** (name, email, remaining Oracle budget drawn as a filled chalice whose liquid drains as the budget is spent), **right = readings** (total readings, last reading with link, tag chips linking into the filtered readings list, plus "New Reading" / "All Readings" links).
 
 Decisions made in this session:
-- **Data source:** one new composed backend endpoint (gnosis-esoterica-api). Pavlos supplied the response shape (below).
+- **Data source:** one new composed backend endpoint (`backend/`). Pavlos supplied the response shape (below).
 - **Chalice label:** dollars only — `$2.41 of $3.00 remains` — matching what `InterpretationModal` already shows.
 - **Subscription type:** omitted until the Mollie/payments work exists.
 - Design language: the project `tarot` skill (Cinzel/Crimson Pro, gold `#d4af37`, purples, ornate corners, glows, purposeful animation).
 
-Two repos: backend `~/projects/gnosis-esoterica-api` (new endpoint) and frontend `~/projects/tarot-divinations` (page rebuild). The frontend degrades gracefully against an older backend (endpoint 404 ⇒ account info + links still render; chalice and readings stats hidden).
+One monorepo: `backend/` (new endpoint) and `frontend/` (page rebuild). The frontend degrades gracefully against an older backend (endpoint 404 ⇒ account info + links still render; chalice and readings stats hidden).
 
 ---
 

@@ -1,1 +1,0 @@
-Use git status to see the current changes and status of an implementation. Report on this.

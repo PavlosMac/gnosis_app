@@ -1,5 +1,5 @@
 ---
-name: pre-mr-review
+name: review
 description: >
   Pre-MR self-review skill. Run this before opening a pull request or merge request to catch
   issues before colleagues see them. Trigger on: "pre-flight check", "ready to open MR",
