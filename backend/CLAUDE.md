@@ -143,6 +143,20 @@ src/auth/queries/get_user_by_id.py   # GetUserByIdQuery + GetUserByIdHandler in 
 - Infrastructure types (`BaseCommand`, `BaseQuery`, `PaginationParams`) extend `BaseModel` directly
 - `Field(...)` for constraints, `model_validate()` for deserialization
 
+### Logging
+- `structlog` via `structlog.stdlib.get_logger(__name__)`; JSON in prod (`LOG_JSON`), console in dev
+- Event name is a short lowercase phrase; all data goes in keyword fields — never f-strings or `%` formatting in the message, never `extra=`
+- No PII in log fields: no emails, names, tokens, or raw request bodies. `user_id` is acceptable
+- Levels: `info` for business events, `warning` for handled `AppError`s and validation failures, `error` only with `exc_info` for unhandled failures, `debug` for payloads
+
+### Change Checklist
+Before opening a PR, if the diff touches any of these:
+- **New field on an existing collection** → migration to backfill, or every reader tolerates its absence
+- **New index** → migration; ships before the code that relies on it
+- **New setting** → add to `Settings` in `src/core/config.py` with a default, to `.env.example`, and to `.env.gnosis.prod` on the Pi
+- **New dependency** → `uv add` (pinned in `uv.lock`); Docker image needs a rebuild
+- **Changed request/response schema** → this API is the contract; check `frontend/` callers and the shared types before merging
+
 ### Testing
 - `asyncio_mode = "auto"` — no `@pytest.mark.asyncio` needed
 - `mongomock-motor` via `set_database()` — autouse fixture, collections dropped after each test
@@ -151,11 +165,39 @@ src/auth/queries/get_user_by_id.py   # GetUserByIdQuery + GetUserByIdHandler in 
 - All fixtures in `tests/conftest.py`
 
 ## Key Files
-- `src/main.py` — App factory, lifespan, router + mediator wiring
+Read these before searching. Grep/Glob for anything not listed here.
+
+### Wiring & infrastructure
+- `src/main.py` — App factory, lifespan (runs migrations), router + mediator wiring, picks real vs mock LLM/email adapters from settings
+- `src/core/config.py` — All settings (pydantic-settings); env var names live here
+- `src/core/dependencies.py` — All injectable FastAPI deps, incl. `LLMDep`, `EmailDep`, `IsSuperAdmin`
+- `src/core/exceptions.py` — Error hierarchy + global handler
 - `src/cqrs/mediator.py` — Central command/query dispatcher
 - `src/database/base_repository.py` — Repository ABCs
-- `src/core/dependencies.py` — All injectable FastAPI deps
-- `src/core/exceptions.py` — Error hierarchy + global handler
-- `src/auth/` — Reference domain implementation (users + JWT auth)
+- `src/database/mongodb.py` — Connection lifecycle; `set_database()` is the test seam
+- `src/database/collections/constants.py` — Every collection name; add new ones here
+- `src/migrations/runner.py` — Auto-discovers `versions/NNN_*.py`, tracks applied in `_migrations`
+
+### Ports & adapters
+- `src/llm/port.py` — `LLMPort` ABC; `openai_adapter.py` (prod) / `mock_adapter.py` (when `OPENAI_API_KEY` is unset)
+- `src/llm/prompt_builder.py` — Prompt templates + token budgeting; regenerate `docs/prompts/prompt_reference.md` (`make prompt-doc`) after editing
+- `src/llm/pricing.py` — Per-model price table, `cost_usd()` / `worst_case_cost_usd()`
+- `src/notifications/port.py` — `EmailPort` ABC; `resend_adapter.py` (prod) / `console_adapter.py` (when `RESEND_API_KEY` is unset) / `mock_adapter.py` (tests)
+- `src/notifications/templates.py` — Password-reset and support-request email copy
+
+### Domains (each follows the folder layout above)
+- `src/auth/` — Reference domain: register, login/refresh JWT, password reset
+- `src/users/` — Superadmin user listing
+- `src/readings/` — Saved readings + user tags
+- `src/interpretations/` — AI interpretations of readings; `commands/generate_interpretation.py` is the LLM call site and usage accounting
+- `src/dashboard/` — Per-user aggregate read model
+- `src/support/` — Contact-support form → email, rate-limited
+- `src/health/` — Liveness endpoint
+- `src/llm/router.py` — Superadmin-only raw `/llm/interpret` endpoint for prompt testing
+
+### Tests, scripts, docs
 - `tests/conftest.py` — Test fixture strategy
+- `scripts/seed_superadmin.py` — Seeds the dev superadmin (run by `make docker-up`)
+- `scripts/dump_prompts.py` — Backs `make prompt-doc`
+- `docs/README.md` — Docs index with Live/Plan/Historical status per doc
 - `docs/database/model_references.md` — Current collections, fields, and indexes

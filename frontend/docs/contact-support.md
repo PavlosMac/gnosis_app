@@ -64,7 +64,6 @@ Pure schema tests (vitest, no jsdom): valid input accepted + trimmed; rejects 2-
 ### 11. Docs/memory
 - `decisions.md`: **ADR-010 — Support Tickets as Backend Email Relay** (context, decision incl. JWT-only identity + reply_to, no-persistence trade-off).
 - `issues.md`: dated entry (status: FE complete; submit path pending backend).
-- `CODE_INDEX.md`: hand-update (never run `npm run code-index` — BSD ctags empties it): add the new files/exports, remove `ProfileLinkRow`.
 
 ## Verification
 

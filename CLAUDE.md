@@ -8,6 +8,13 @@ Tarot reading platform: FastAPI backend + Next.js frontend, one repo.
   read under that directory, but not just from `cd`ing into it in a Bash
   call.
 
+## Claude config
+
+All Claude Code config lives in the root `.claude/` (settings, skills, agents,
+commands). Nested `backend/.claude/` and `frontend/.claude/` hold only plain
+planning docs that nothing auto-loads. Use the native `/code-review` for
+reviews; there are no custom review skills.
+
 ## Env contract
 
 The frontend reaches the backend via `GNOSIS_API_BASE_URL`.

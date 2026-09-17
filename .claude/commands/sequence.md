@@ -1,1 +1,2 @@
- Show me sequence diagrams of how we need to interact with $ARGS. Be specific about what essential data has to be shared between us and $ARGS for the solution currently being discussed. At the end include the data objects/classes involved from our systems side.
+ Show me sequence a diagram of the data flow between systems being discussed. Show most important model changes at vital points of interaction or change.
+ Consider additional information given as $ARGS.

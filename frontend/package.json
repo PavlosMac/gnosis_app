@@ -7,8 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test": "vitest run",
-    "code-index": "./scripts/generate-code-index.sh"
+    "test": "vitest run"
   },
   "dependencies": {
     "framer-motion": "^12.6.2",
