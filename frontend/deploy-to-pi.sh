@@ -1,4 +1,5 @@
 #!/bin/bash
+set -euo pipefail
 
 # Deploy script for Raspberry Pi
 # Usage: ./deploy-to-pi.sh [docker-hub-username]
