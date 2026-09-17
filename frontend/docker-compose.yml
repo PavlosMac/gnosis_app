@@ -1,0 +1,13 @@
+services:
+  tarot-nextjs:
+    image: pavlos888/tarot-nextjs:latest
+    container_name: tarot-next-app
+    environment:
+      - NODE_ENV=${NODE_ENV:-production}
+    restart: unless-stopped
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    external: true

@@ -1,0 +1,131 @@
+{
+    "readings": [
+        {
+            "name": "Single Card",
+            "description": "A single card reading for an open question",
+            "cards": 1,
+            "positions": [
+                { "name": "Answer", "description": "The single card drawn to directly answer the querent's question" }
+            ],
+            "showQuestion": true,
+            "meta": {
+                "field": "input",
+                "placeholder": "What question would you like answered?",
+                "button": "submit"
+            }
+        },
+        {
+            "name": "Past, Present, Future",
+            "description": "A three card reading",
+            "cards": 3,
+            "positions": [
+                { "name": "Past", "description": "Influences from the past that have shaped the current situation" },
+                { "name": "Present", "description": "The current energies and circumstances at play" },
+                { "name": "Future", "description": "The likely outcome if the current path continues" }
+            ]
+        },
+        {
+            "name": "Fire, Water, Air, Earth Reading",
+            "description": "A four card reading",
+            "cards": 4,
+            "positions": [
+                { "name": "Fire", "description": "Passion, drive, and the energy fuelling the situation" },
+                { "name": "Water", "description": "Emotions, intuition, and the undercurrents beneath the surface" },
+                { "name": "Air", "description": "Thoughts, communication, and the mental landscape surrounding the situation" },
+                { "name": "Earth", "description": "Material concerns, practical matters, and the tangible reality at hand" }
+            ]
+        },
+        {
+            "name": "Two card Open Question Reading",
+            "description": "A two card open question reading",
+            "cards": 2,
+            "showQuestion": true,
+            "meta": {
+                "field": "input",
+                "placeholder": "What is your question to the Living Oracle?",
+                "button": "submit"
+            }
+        },
+        {
+            "name": "Three Card Open Question",
+            "description": "A three card Open Question Reading",
+            "cards": 3,
+            "showQuestion": true,
+            "meta": {
+                "field": "input",
+                "placeholder": "What is your question to the Living Oracle?",
+                "button": "submit"
+            }
+        },
+        {
+            "name": "Relationship Reading",
+            "description": "A nine card spread — querent, the relationship, and the other",
+            "cards": 9,
+            "positions": [
+                { "name": "Current behaviour - querent", "description": "What is the querent's current behaviour?" },
+                { "name": "What is desired - querent", "description": "What is desired by the querent?" },
+                { "name": "How to proceed - querent", "description": "How should the querent proceed?" },
+                { "name": "Current situation - relationship", "description": "What is the current state of the relationship?" },
+                { "name": "What is desired - relationship", "description": "What does the relationship need — where can compromise and equal ground be found?" },
+                { "name": "How to proceed - relationship", "description": "How is the relationship advised to proceed?" },
+                { "name": "Current behaviour - other", "description": "What is the other's current behaviour?" },
+                { "name": "What is desired - other", "description": "What is desired by the other?" },
+                { "name": "How to proceed - other", "description": "How should the other proceed?" }
+            ],
+            "showQuestion": false
+        },
+        {
+            "name": "Career Reading",
+            "description": "A five card career spread",
+            "cards": 5,
+            "positions": [
+                { "name": "Current status", "description": "What does the querent's current work life look like?" },
+                { "name": "Current challenges", "description": "What are the current challenges faced by the querent?" },
+                { "name": "Future opportunities", "description": "What are potential opportunities in the near future?" },
+                { "name": "Future outcomes", "description": "What outcomes are possible if the querent takes positive action?" },
+                { "name": "Action steps", "description": "What actions should the querent take for the best development in their career?" }
+            ],
+            "showQuestion": false
+        },
+        {
+            "name": "Tree of Life",
+            "description": "An 11 card Kabbalah card reading",
+            "cards": 11,
+            "positions": [
+                { "name": "Kether", "description": "The fruit of the life so far. Karmic situation. The source perspective. The card that falls here represents the nature of the experience you have led so far." },
+                { "name": "Chokmah", "description": "The complexion of current energies. Male figures. Present involvements. This zone connotes current events in our lives and the energy needed to accomplish them. Immediate future, 1–3 weeks." },
+                { "name": "Binah", "description": "Material circumstances. Burdens, tests. Energy from women, toward women. The mother. The past. This zone relates to the Taurean aspects of our life — the physical comforts around us, responsibilities and our material situation. Also the mother or female relationships." },
+                { "name": "Chesed", "description": "Future. Male figures. Opportunities, strengths, allies. This zone covers a longer period of up to 3 months." },
+                { "name": "Geburah", "description": "The recent past. Obstacles. Where energy has been wasted. Weaknesses. Rivals. Opponents. Conflict. Warnings." },
+                { "name": "Tiphereth", "description": "The present situation. Current state of energy and constitution. Pressing needs and concerns. Children. Present achievements. This zone can connote a kind of coming together of extremes, as it is centered in the middle of the tree, reflecting neither future nor past." },
+                { "name": "Netzach", "description": "Emotion. Creativity. Domestic situation. Emotional needs." },
+                { "name": "Hod", "description": "The external world (influences from or toward it). Mental life. Thinking processes. Daily goings on. Friends. Siblings. Informal meetings and contacts." },
+                { "name": "Yesod", "description": "Subconscious temperament. The dominant psychic complex. What is hidden. Secret desires. Fears. Worries. Self-image." },
+                { "name": "Malkuth", "description": "The seed of the next life period (six months ahead). Where we may sabotage ourselves during the coming period. The \"homework\" card." },
+                { "name": "Daath", "description": "The viewpoint of the Higher Intelligence. Perspective of the Guides. Messages from the Source. Relationships. Partner's life. Desires. Objectives. Future expectations. Legalities." }
+            ]
+        },
+        {
+            "name": "Significators",
+            "description": "A reading based on the querant's personal significators. A personal Tarot Chart.",
+            "cards": 0,
+            "positions": [{
+                "name": "star sign",
+                "description": "The querant's astrological card, based on birth month. This is essentially the astrological sun sign."
+            },
+            {
+                "name": "life number",
+                "description": "The querant's life number and is at the heart of the science of numerology. Birthdate is added together and reduced to a single digit. Relate the Life Number to the card in the Major Arcana bearing the same number. Should convert and evaluate both the double and single digit numbers to Major Arcana for additional insights."
+            },
+            {
+                "name": "day number",
+                "description": "The querant's birth day. Everyone is born on a numbered day. Perhaps this has important information about life and destiny. Convert it to a Major Arcana card and find out."
+            },
+            {
+                "name": "decanate",
+                "description": "The Decanate divides each zodiac sign into three ten-degree segments, each ruled by a different planetary influence and connected to specific Minor Arcana cards. Represents more granular information about the querant."
+            }
+        ]
+    }
+]
+}
