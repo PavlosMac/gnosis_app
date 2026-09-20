@@ -3,9 +3,11 @@ import os
 from datetime import UTC, datetime
 
 # Settings has no jwt_secret_key default (a committed fallback would let anyone forge
-# tokens), so supply one before any src import instantiates Settings. setdefault keeps
-# a real env var or .env value in charge when present.
+# tokens) and no mongodb_uri default, so supply both before any src import instantiates
+# Settings. setdefault keeps a real env var in charge when present. The URI is never
+# dialled: tests swap in mongomock via set_database().
 os.environ.setdefault("JWT_SECRET_KEY", "test-only-secret")
+os.environ.setdefault("MONGODB_URI", "mongodb://test-only-unused:27017")
 
 import pytest
 from bson import ObjectId

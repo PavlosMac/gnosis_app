@@ -16,7 +16,10 @@ class Settings(BaseSettings):
     debug: bool = False
 
     # MongoDB
-    mongodb_uri: str = "mongodb://localhost:27017"
+    # No default on purpose: the address differs per environment and the prod URI
+    # embeds credentials, so it must come from the environment (.env, the dev compose
+    # `environment:` block, or .env.gnosis.prod). Startup fails fast if it is missing.
+    mongodb_uri: str
     mongodb_database: str = "gnosis_esoterica"
 
     # JWT
@@ -91,6 +94,6 @@ class Settings(BaseSettings):
     log_json: bool = False
 
 
-# pydantic-settings fills jwt_secret_key from the environment at runtime; pyright
+# pydantic-settings fills mongodb_uri and jwt_secret_key from the environment at runtime; pyright
 # can't see that and flags the missing argument.
 settings = Settings()  # pyright: ignore[reportCallIssue]

@@ -1,3 +1,9 @@
+# Dev stack: Mongo + API. Normal entry point is root `make dev` (which also
+# starts the native Next.js dev server); `make docker-up` here runs just this.
+# `name:` pins the compose project so container/volume names don't depend on
+# the directory name (it was `gnosis-esoterica-api` before the monorepo merge).
+name: gnosis
+
 services:
   mongodb:
     image: mongo:7
@@ -10,9 +16,9 @@ services:
       - mongo_data:/data/db
     healthcheck:
       test: ["CMD", "bash", "-c", "</dev/tcp/127.0.0.1/27017"]
-      interval: 20s
+      interval: 5s
       timeout: 5s
-      retries: 3
+      retries: 6
 
   api:
     stdin_open: true # docker run -i
@@ -30,8 +36,16 @@ services:
     environment:
       - MONGODB_URI=mongodb://mongodb:27017
     command: >
-      sh -c ".venv/bin/python -m scripts.seed_superadmin dev@gnosisesoterica.dev devpassword123 &&
+      sh -c ".venv/bin/python -m scripts.seed_superadmin dev@gnosisesoterica.de devpassword12345 &&
              .venv/bin/uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/v1/health')"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
 
 volumes:
+  # Pinned to the pre-monorepo dev volume name so existing dev data is reused.
   mongo_data:
+    name: gnosis-esoterica-api_mongo_data

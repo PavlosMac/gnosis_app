@@ -70,8 +70,9 @@ Note `authSource=gnosis_esoterica` — the app user is created in that database,
 ### Dev stays unchanged
 
 No auth in `docker-compose.yml` locally. The compose file's `MONGODB_URI=mongodb://mongodb:27017`
-override continues to work (the code default in `src/core/config.py` is
-`mongodb://localhost:27017`, for running the API outside Docker).
+override continues to work. `MONGODB_URI` has no code default in
+`src/core/config.py`; for running the API outside Docker, `.env` sets
+`mongodb://localhost:27019`, the dev compose Mongo's host port.
 
 ### Important caveats
 

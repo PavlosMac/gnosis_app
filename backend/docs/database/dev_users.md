@@ -3,7 +3,7 @@
 ## Superadmin (local dev only)
 
 ```
-dev@gnosisesoterica.dev
+dev@gnosisesoterica.de
 devpassword12345
 ```
 

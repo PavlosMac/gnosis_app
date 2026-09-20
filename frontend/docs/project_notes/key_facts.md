@@ -23,9 +23,12 @@ This file stores project constants, configuration, and frequently-needed **non-s
 
 **Ports:**
 - Next.js Dev Server: `3000`
+- Backend API (compose container, project `gnosis`): `8001`
+- MongoDB (compose container): `27019`
 
 **Commands:**
-- Start dev: `npm run dev`
+- Start everything: `make dev` from the repo root (compose Mongo + API, native Next.js)
+- Frontend only: `npm run dev` (needs `.env.local`, see `.env.example`)
 - Build: `npm run build`
 - Lint: `npm run lint`
 

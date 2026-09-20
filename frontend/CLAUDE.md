@@ -9,7 +9,9 @@ Tarot Divinations is a Next.js 16.1 application that provides tarot card reading
 ## Development Commands
 
 ```bash
-# Start development server with Turbopack
+# Normal path: from the repo root, `make dev` starts Mongo + API in compose
+# and this dev server natively with GNOSIS_API_BASE_URL already exported.
+# Bare `npm run dev` needs .env.local (copy .env.example).
 npm run dev
 
 # Build for production

@@ -16,12 +16,12 @@ Tarot reading API backend with user signup and AI-powered interpretations. Built
 ## Development Commands
 ```bash
 make install        # uv sync
-make dev            # uvicorn src.main:app --reload --port 8000
+make dev            # native fallback: uvicorn --reload on :8000, needs compose Mongo up (localhost:27019). Normal path is root `make dev`
 make test           # pytest -v
 make lint           # ruff check src/ tests/ scripts/
 make typecheck      # pyright src/ scripts/
 make format         # ruff format + ruff check --fix
-make docker-up      # docker compose up — foreground (MongoDB:27019 + API:8001, seeds dev superadmin)
+make docker-up      # docker compose up — foreground (project `gnosis`: MongoDB:27019 + API:8001, seeds dev superadmin)
 make docker-down    # docker compose down
 make migrate        # run pending DB migrations
 make docker-prod-up    # docker compose -f docker-compose.prod.yml up -d
