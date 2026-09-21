@@ -1,6 +1,7 @@
 import React from "react";
 import SpreadCards from "@/components/SpreadCards";
 import type { CardVisuals } from "@/components/SpreadCards";
+import { parseNarrative, splitBold } from "@/lib/narrative-blocks";
 
 interface InterpretationDisplayProps {
   question?: string | null;
@@ -52,12 +53,37 @@ export default function InterpretationDisplay({
         >
           ✦ Reading Interpretation ✦
         </h3>
-        <p
-          className="text-[#e6d5b8]/90 text-sm sm:text-base leading-relaxed whitespace-pre-wrap"
-          style={{ fontFamily: "'Crimson Pro', serif" }}
-        >
-          {narrative}
-        </p>
+        <div className="flex flex-col gap-6">
+          {parseNarrative(narrative).map((block, i) => (
+            <section key={i} className="flex flex-col gap-2">
+              {block.heading && (
+                <h4
+                  className="text-[#d4af37] text-base sm:text-lg tracking-wide"
+                  style={{ fontFamily: "'Cinzel', serif" }}
+                >
+                  {block.heading}
+                </h4>
+              )}
+              {block.paragraphs.map((paragraph, j) => (
+                <p
+                  key={j}
+                  className="text-[#e6d5b8]/90 text-sm sm:text-base leading-relaxed"
+                  style={{ fontFamily: "'Crimson Pro', serif" }}
+                >
+                  {splitBold(paragraph).map((run, k) =>
+                    run.bold ? (
+                      <strong key={k} className="text-[#e6d5b8] font-semibold">
+                        {run.text}
+                      </strong>
+                    ) : (
+                      <React.Fragment key={k}>{run.text}</React.Fragment>
+                    )
+                  )}
+                </p>
+              ))}
+            </section>
+          ))}
+        </div>
       </div>
     </div>
   );
