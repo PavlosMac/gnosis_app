@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback, useRef, useTransition } from "react";
 import Link from "next/link";
 import SanctumModal from "@/components/SanctumModal";
 import InterpretationDisplay from "@/components/InterpretationDisplay";
@@ -25,6 +25,8 @@ const formatBirthDate = (iso: string): string => {
   return `${day} ${SHORT_MONTHS[month - 1]} ${year}`;
 };
 
+const NAVIGATION_TIMEOUT_MS = 8000;
+
 const CINZEL = { fontFamily: "'Cinzel', serif" } as const;
 const GOLD_BUTTON = "bg-gradient-to-br from-[#d4af37] to-[#b8942f] text-[#1a0033] rounded-lg font-bold";
 
@@ -35,8 +37,10 @@ interface InterpretationModalProps {
   birthDate?: string;
   cardVisuals: CardVisuals;
   onClose: () => void;
-  // Fired when the modal closes after an interpretation was generated (it is
-  // already persisted) so the parent can refresh or navigate to the journal
+  // Fired on dismissal after an interpretation was generated (it is already
+  // persisted) so the parent can refresh or navigate to the journal. It runs
+  // inside a transition and the modal stays up until that navigation commits —
+  // onClose follows only then, so the view underneath never flashes through.
   onComplete: () => void;
   autoGenerate?: boolean;
 }
@@ -63,12 +67,39 @@ const InterpretationModal: React.FC<InterpretationModalProps> = React.memo(({
 
   const isFetchingRef = useRef(false);
 
+  // Dismissing after a result hands over to the parent's navigation (router.push to
+  // the journal entry, or router.refresh on it). Both resolve asynchronously, so
+  // closing at once would expose the stale view underneath — the game's reading, or
+  // the saved reading still without its interpretation — until the new one arrives.
+  const [leaving, setLeaving] = useState(false);
+  const [isNavigating, startNavigation] = useTransition();
+
   // The interpretation (if any) is already persisted, so closing is always
   // safe — but the parent still needs to know one now exists
   const handleClose = useCallback(() => {
-    if (interpretation) onComplete();
-    onClose();
-  }, [interpretation, onComplete, onClose]);
+    if (leaving) return;
+    if (!interpretation) {
+      onClose();
+      return;
+    }
+    setLeaving(true);
+    startNavigation(() => onComplete());
+  }, [leaving, interpretation, onComplete, onClose]);
+
+  // The transition has committed (or the parent's onComplete navigated nowhere):
+  // the view underneath is now current. A router.push unmounts the modal with its
+  // page before this ever runs.
+  useEffect(() => {
+    if (leaving && !isNavigating) onClose();
+  }, [leaving, isNavigating, onClose]);
+
+  // A navigation that hangs or errors must not trap the user behind a disabled
+  // Done button: give up waiting and close anyway
+  useEffect(() => {
+    if (!leaving) return;
+    const timer = setTimeout(onClose, NAVIGATION_TIMEOUT_MS);
+    return () => clearTimeout(timer);
+  }, [leaving, onClose]);
 
   const runGenerate = useCallback(async () => {
     if (isFetchingRef.current) return;
@@ -176,8 +207,10 @@ const InterpretationModal: React.FC<InterpretationModalProps> = React.memo(({
           <div className="flex flex-col items-center gap-3">
             <button
               onClick={handleClose}
+              disabled={leaving}
+              aria-busy={leaving}
               className={`px-10 py-3 ${GOLD_BUTTON} shadow-lg hover:shadow-[#d4af37]/50 transition-all text-sm tracking-[0.1em]`}
-              style={CINZEL}
+              style={leaving ? { ...CINZEL, opacity: 0.6, cursor: "wait" } : CINZEL}
             >
               ✦ Done ✦
             </button>
