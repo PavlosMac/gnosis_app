@@ -382,13 +382,31 @@
   transition: opacity 0.2s ease-out, transform 0.2s ease-out, visibility 0s linear 0.2s;
   z-index: 20;
 }
-.sanctum-tip:hover .sanctum-tip__label,
-.sanctum-tip:focus-visible .sanctum-tip__label {
-  opacity: 1;
-  visibility: visible;
-  transform: translate(-50%, 0);
-  -webkit-transform: translate(-50%, 0);
-  transition-delay: 0s;
+/* Right-aligned variant for controls at the right edge: anchors to the control's right
+   side and slides on Y only, so the label can't clip off a narrow viewport. */
+.sanctum-tip__label--end {
+  left: auto;
+  right: 0;
+  transform: translateY(4px);
+  -webkit-transform: translateY(4px);
+}
+/* Shown only where the primary input can really hover (mouse/trackpad). On phones and
+   tablets a tap leaves :hover stuck, so the label would linger over the page after the
+   tap — there the control's aria-label carries the name and no tooltip appears. */
+@media (hover: hover) and (pointer: fine) {
+  .sanctum-tip:hover .sanctum-tip__label,
+  .sanctum-tip:focus-visible .sanctum-tip__label {
+    opacity: 1;
+    visibility: visible;
+    transform: translate(-50%, 0);
+    -webkit-transform: translate(-50%, 0);
+    transition-delay: 0s;
+  }
+  .sanctum-tip:hover .sanctum-tip__label--end,
+  .sanctum-tip:focus-visible .sanctum-tip__label--end {
+    transform: translateY(0);
+    -webkit-transform: translateY(0);
+  }
 }
 @media (prefers-reduced-motion: reduce) {
   .sanctum-tip__label { transition: none; }
