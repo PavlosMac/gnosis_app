@@ -199,6 +199,7 @@ Each decision should include:
 - New `POST /api/v1/support/contact` (auth required) relays `{subject, message}` to `SUPPORT_EMAIL` via `send_email()`, extended with `reply_to` set to the requester so an inbox Reply reaches the user directly (From stays `noreply@` for DKIM/DMARC alignment)
 - Identity (email + user_id) is always resolved from the JWT server-side — the frontend never sends it, mirroring the 2026-09-14 rule that user email never comes from client input
 - Frontend: "Contact support" modal on the profile page (subject + message, zod 3–200/10–5000 — limits pinned by test to `docs/backend-contracts/support-tickets.md`); the AccountPanel's manual-interpretation row was replaced by it, and manual entry moved to a plain text link ("Read with your own deck? Record that reading here") at the foot of the readings list and in its empty state — an icon-only button with a tooltip was tried first and judged too cryptic for the feature
+- Amended 2026-09-21: the spot right of the "Filter Readings" toggle now holds an icon-only "New reading" button (`PlayingCards`, same as the profile page). This does not reverse the point above: the cryptic part was manual entry, which keeps its text hint
 - No ticket persistence or threading — email relay only
 
 **Alternatives Considered:**
@@ -208,3 +209,23 @@ Each decision should include:
 **Consequences:**
 - Tickets live only in the owner's inbox; per-user rate limit (~5/hour, backend) guards the on-demand email relay
 - Against a backend without the endpoint, the modal degrades to the mapped 404 message — copy improves automatically once the backend ships
+
+### ADR-011: Court Royal Significator via Golden Dawn Decans; Un-numbered Life Numbers on the Wire (2026-09-20)
+
+**Context:**
+- The Significators chart lacked the court royal that the Taroscopic copy promises. Life number cards travelled as `life number 1`, `life number 2`, which leaked ordinals to the saved view and the LLM, and the spread config carried `cards: 0` as a sentinel.
+
+**Decision:**
+- The royal is derived from the decanate pip using Golden Dawn Book T: each Knight, Queen and King rules the last decan of one sign plus the first two of the next. Rank by pip (2, 3, 10 = Queen; 4, 5, 6 = King; 7, 8, 9 = Knight); suit is the pip's own, except third-decan pips (4, 7, 10) which take the next sign's suit (Wands → Pentacles → Swords → Cups). Pages rule no decans and never appear. The King is the Golden Dawn Prince, matching `backend/src/lib/cards/court_royals.json`. The table lives in `lib/court-royals.ts`; a test states the rule independently and checks all 36 pips.
+- Life numbers stay `life number 1..N` as internal Record keys; the payload sends every one as `life number` (Significators only, anchored regex, so generated `Card 1..N` keys are untouched). The backend has no uniqueness rule on positions, so no backend change.
+- Saved readings re-key repeated positions with `uniquePositionKeys`, so new (repeated) and legacy (numbered) rows render identically under one "Life Numbers" banner.
+- `ReadingConfig.cards` is optional; a spread without it is birth-date based (`isBirthdateSpread`).
+
+**Alternatives Considered:**
+- Change only the display and keep numbered strings on the wire -> Rejected: the LLM would keep reading the life numbers as an ordinal sequence
+- Compute the royal by the birth-sign element instead of the decan -> Rejected: not the Golden Dawn attribution and it would not follow the existing decanate card
+
+**Consequences:**
+- Court royal is frontend-computed like the rest of the chart; existing readings and their interpretations have none
+- Each chart carries one more distinct card, so the server-owned word budget rises by one card's share
+- If a different King/Knight convention is wanted, only the table in `lib/court-royals.ts` changes
