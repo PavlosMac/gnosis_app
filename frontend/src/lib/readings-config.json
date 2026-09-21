@@ -107,8 +107,8 @@
         },
         {
             "name": "Significators",
+            "birthDate": true,
             "description": "A reading based on the querant's personal significators. A personal Tarot Chart.",
-            "cards": 0,
             "positions": [{
                 "name": "star sign",
                 "description": "The querant's astrological card, based on birth month. This is essentially the astrological sun sign."
@@ -124,6 +124,10 @@
             {
                 "name": "decanate",
                 "description": "The Decanate divides each zodiac sign into three ten-degree segments, each ruled by a different planetary influence and connected to specific Minor Arcana cards. Represents more granular information about the querant."
+            },
+            {
+                "name": "court royal",
+                "description": "The Golden Dawn court card (Knight, Queen or King) ruling the decan of the querant's birth date. Each rules 20 degrees of one sign to 20 degrees of the next. It shows the querant's personality type and the character through which the other significators are lived out."
             }
         ]
     }

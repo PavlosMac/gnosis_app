@@ -87,7 +87,7 @@ A card may appear in more than one position. Read each appearance through its ow
 
 Write the portrait as card-by-card sections. Then at the end write one final paragraph  which sums up the chart giving a woven final elegant interpretation and land on a cohesive picture of the persons character and life themes.
 
-Write about 600 words — treat that as a ceiling, not a target to exceed.  Every sentence must earn its place: no textbook boilerplate, no hedging.
+Write about 750 words — treat that as a ceiling, not a target to exceed.  Every sentence must earn its place: no textbook boilerplate, no hedging.
 ```
 
 #### Tree of Life variant (zones supplied by the client)

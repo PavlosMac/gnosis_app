@@ -232,7 +232,10 @@ export default function GuidePage() {
                 <span className="text-[#d4af37]">Life Number cards</span>{" "}
                 (sharing your numerological root), and your{" "}
                 <span className="text-[#d4af37]">Decanate card</span> (a Minor
-                Arcana card linked to the 10-day period of your birth).
+                Arcana card linked to the 10-day period of your birth), and your{" "}
+                <span className="text-[#d4af37]">Court Royal</span> (the Knight,
+                Queen or King the 'Golden Dawn' tradition assigns to that stretch of the
+                zodiac).
               </p>
               <p className="text-lg sm:text-xl">
                 When one of your significators appears in a spread, pay close

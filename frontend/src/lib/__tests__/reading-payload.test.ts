@@ -48,4 +48,26 @@ describe("buildReadingPayload", () => {
     ).toBe("1990-03-12");
     expect(buildReadingPayload(baseReading)).not.toHaveProperty("birth_date");
   });
+
+  it("strips life number suffixes for Significators only", () => {
+    const sig: ReadingResult = {
+      readingType: "Significators",
+      positions: {
+        "life number 1": card("The Empress"),
+        "life number 2": card("The Emperor"),
+        "court royal": card("Queen of Wands"),
+      },
+      positionDescriptions: { "life number 1": "d1", "life number 2": "d2" },
+    };
+    expect(buildReadingPayload(sig).cards.map((c) => c.position)).toEqual([
+      "life number", "life number", "court royal",
+    ]);
+    expect(buildReadingPayload(sig).cards.map((c) => c.position_description)).toEqual(["d1", "d2", undefined]);
+
+    const unnamed: ReadingResult = {
+      readingType: "Three Card Open Question",
+      positions: { "Card 1": card("The Fool"), "Card 2": card("The Magician") },
+    };
+    expect(buildReadingPayload(unnamed).cards.map((c) => c.position)).toEqual(["Card 1", "Card 2"]);
+  });
 });

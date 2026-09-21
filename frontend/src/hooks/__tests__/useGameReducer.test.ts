@@ -99,3 +99,18 @@ describe("gameReducer — SELECT_CARD regression", () => {
     });
   });
 });
+
+describe("gameReducer — birth date", () => {
+  it("BIRTHDATE_SUBMIT yields the chart including a court royal position", () => {
+    const s = gameReducer(
+      { phase: "birthdate-input", readingName: "Significators" } as GamePhase,
+      { type: "BIRTHDATE_SUBMIT", day: 1, month: 5, year: 1990 }
+    );
+    expect(s.phase).toBe("reading");
+    if (s.phase !== "reading") return;
+    const keys = Object.keys(s.reading.positions);
+    expect(keys).toContain("court royal");
+    expect(s.reading.positions["court royal"].name).toBe("King of Pentacles");
+    expect(s.selectedCards).toHaveLength(keys.length);
+  });
+});

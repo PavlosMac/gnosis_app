@@ -69,7 +69,10 @@ export interface PositionConfig {
 export interface ReadingConfig {
   name: string;
   description?: string;
-  cards: number;
+  /** Cards drawn from the deck. Omitted for birth-date spreads (Significators) */
+  cards?: number;
+  /** Explicit marker for spreads computed from a birth date — see isBirthdateSpread() */
+  birthDate?: boolean;
   /** Omitted for spreads without named positions — see resolvePositions() */
   positions?: PositionConfig[];
   showQuestion?: boolean;

@@ -53,8 +53,8 @@ SAMPLE_REQUEST = InterpretationRequest(
     ],
 )
 
-# Realistic card counts so the rendered word budgets are representative: a 4-position
-# chart (4 × 100 × 1.5 = 600 words) and a full 11-zone Tree (11 × 100 = 1,100 words).
+# Realistic card counts so the rendered word budgets are representative: a 5-position
+# chart (5 × 100 × 1.5 = 750 words) and a full 11-zone Tree (11 × 100 = 1,100 words).
 # Position meanings arrive from the frontend as position/position_description — the
 # system prompts rendered below carry none of them.
 _SIGNIFICATORS_REQUEST = InterpretationRequest(
@@ -64,6 +64,9 @@ _SIGNIFICATORS_REQUEST = InterpretationRequest(
         CardInSpread(name="Strength", position="Life number", orientation=Orientation.upright),
         CardInSpread(name="The Sun", position="Star sign", orientation=Orientation.upright),
         CardInSpread(name="Six of Pentacles", position="Decanate", orientation=Orientation.upright),
+        CardInSpread(
+            name="King of Pentacles", position="Court royal", orientation=Orientation.upright
+        ),
     ],
 )
 

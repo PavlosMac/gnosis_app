@@ -1,5 +1,5 @@
 import React, { useMemo } from "react";
-import { resolvePositions } from "@/lib/reading-positions";
+import { resolvePositions, isBirthdateSpread } from "@/lib/reading-positions";
 import { isTreeOfLife } from "@/components/Reading";
 import {
   isRelationship,
@@ -185,7 +185,7 @@ const SpreadPreview: React.FC<SpreadPreviewProps> = ({ reading, pillarLabels }) 
             <DefaultShape names={names} />
           )}
 
-          {reading.cards === 0 && (
+          {isBirthdateSpread(reading) && (
             <p
               className="text-[#e6d5b8]/40 text-[10px] italic text-center"
               style={{ fontFamily: "'Crimson Pro', serif" }}

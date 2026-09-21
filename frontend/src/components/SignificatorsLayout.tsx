@@ -77,7 +77,7 @@ const SignificatorsLayout: React.FC<SignificatorsLayoutProps> = ({
       {/* Life Number - Full width */}
       <div className="mb-12">
         <SignificatorSection
-          title="Life Number"
+          title="Life Numbers"
           symbol="∞"
           description={`Your life number is ${result.lifeNumber.number}. These cards share the same numerological attributes.`}
         >
@@ -103,6 +103,27 @@ const SignificatorsLayout: React.FC<SignificatorsLayoutProps> = ({
               <div className="flex flex-col items-center">
                 <TarotCard
                   card={result.decanate.card}
+                  small={false}
+                  showMeaning={true}
+                />
+              </div>
+            </div>
+          </SignificatorSection>
+        </div>
+      )}
+
+      {/* Court Royal - Full width */}
+      {result.courtRoyal && (
+        <div className="mb-8">
+          <SignificatorSection
+            title="Court Royal"
+            symbol="♛"
+            description={`Your court royal is ${result.courtRoyal.card.name}, ruling ${result.courtRoyal.rules}.`}
+          >
+            <div className="flex justify-center">
+              <div className="flex flex-col items-center">
+                <TarotCard
+                  card={result.courtRoyal.card}
                   small={false}
                   showMeaning={true}
                 />

@@ -24,7 +24,7 @@ import { createReading } from "@/app/user/interpret/actions";
 import { buildReadingPayload } from "@/lib/reading-payload";
 import type { User } from "@/types/auth";
 import type { SelectedCard, ReadingConfig } from "@/types/reading";
-import { resolvePositions } from "@/lib/reading-positions";
+import { resolvePositions, isBirthdateSpread } from "@/lib/reading-positions";
 import type { TarotCardData } from "@/types/models";
 
 interface TarotGameProps {
@@ -35,7 +35,7 @@ interface TarotGameProps {
 
 const readings = readingsConfig.readings as ReadingConfig[];
 // Significators are birthdate-computed — nothing to enter by hand
-const manualReadings = readings.filter((r) => r.cards > 0);
+const manualReadings = readings.filter((r) => !isBirthdateSpread(r));
 const DEFAULT_READING_NAME = readings[1].name;
 
 // Matches interpretRequestSchema.question max
@@ -101,7 +101,7 @@ export default function TarotGame({ user, mode = 'draw' }: TarotGameProps) {
   const [year, setYear] = useState<string>("");
   const [birthdateError, setBirthdateError] = useState<string | null>(null);
 
-  const numCards = selectedReading.cards;
+  const numCards = selectedReading.cards ?? 0;
   const selectedCards = getSelectedCards(game);
   const completedReading = getReading(game);
   const isSelecting = isPostDeal(game);
@@ -162,7 +162,7 @@ export default function TarotGame({ user, mode = 'draw' }: TarotGameProps) {
   const startGame = () => {
     if (isManual) {
       dispatch({ type: 'START_MANUAL_ENTRY' });
-    } else if (selectedReading.cards === 0) {
+    } else if (isBirthdateSpread(selectedReading)) {
       dispatch({ type: 'START_BIRTHDATE_INPUT', readingName: selectedReading.name });
     } else {
       dispatch({ type: 'START_SHUFFLE' });
@@ -412,7 +412,7 @@ export default function TarotGame({ user, mode = 'draw' }: TarotGameProps) {
               >
                 {spreadOptions.map((reading) => (
                   <option key={reading.name} value={reading.name} className="bg-[#1a0033]">
-                    {reading.name} ({reading.cards} {reading.cards === 1 ? 'Card' : 'Cards'})
+                    {reading.name} ({isBirthdateSpread(reading) ? 'Birth Date' : `${reading.cards} ${reading.cards === 1 ? 'Card' : 'Cards'}`})
                   </option>
                 ))}
               </select>

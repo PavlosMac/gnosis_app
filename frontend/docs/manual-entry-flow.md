@@ -56,7 +56,7 @@ Same visual layout as `ShuffledDeck` (flex-wrap grid, same `max-w-[400px] sm:max
 ### TarotGame changes (Feature 1)
 
 - New prop `mode?: 'draw' | 'manual'` (default `'draw'`).
-- Setup screen in manual mode: same spread picker + question input; **hide the reversals pill** (orientation is per-card in the tray); **exclude Significators** (`cards === 0`) from the spread options — it's birthdate-computed, manual entry is meaningless.
+- Setup screen in manual mode: same spread picker + question input; **hide the reversals pill** (orientation is per-card in the tray); **exclude Significators** (`isBirthdateSpread` — its config entry has no `cards` count) from the spread options — it's birthdate-computed, manual entry is meaningless.
 - `startGame`: `mode === 'manual'` → `START_MANUAL_ENTRY` (no shuffle animation).
 - Fix `isSelecting` to exclude `'manual-select'` — otherwise the new phase would render `ShuffledDeck`.
 - New `game.phase === 'manual-select'` render branch mounting `FaceUpDeck` with memoized callbacks; complete dispatches `MANUAL_COMPLETE` with `positionNames`, `selectedReading.name`, question (same `showQuestion` guard), `positionDescriptions`.
@@ -73,7 +73,7 @@ Portal modal (shell styling borrowed from `InterpretationModal`: backdrop blur, 
 
 - Top-right button "◈ Reading Style" rendered by TarotGame (`absolute top-4 right-4 z-50`, text-button idiom of the Portal back link on the reading page) so it appears on both `/reading` and, later, `/user/manual-reading`, in every phase. Opens `ReadingStyleModal`.
 - Settings state: `useState(DEFAULT_SETTINGS)` + mount `useEffect` seeding from `readDefaultSettings()` — **not** a lazy initializer (setup screen server-renders; a lazy localStorage read risks hydration mismatch). Persist-on-change `useEffect` calling `writeDefaultSettings` (skip first run via ref) — keeps the game, the game's interpretation modal, and the journal modal in agreement via the existing sticky-default mechanism (`src/lib/interpretation-defaults.ts`).
-- `cardCount` for the style modal: `selectedReading.cards || selectedReading.positions.length` (Significators → 4).
+- `cardCount` for the style modal: `selectedReading.cards || selectedReading.positions.length` (Significators → 5).
 
 ### `src/components/InterpretationModal.tsx` — two optional props
 

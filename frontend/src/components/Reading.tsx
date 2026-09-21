@@ -5,6 +5,7 @@ import KabbalahLayout from "./KabbalahLayout";
 import SignificatorsLayout from "./SignificatorsLayout";
 import RelationshipLayout from "./RelationshipLayout";
 import { isRelationship } from "@/lib/relationship-spread";
+import { isSignificators } from "@/lib/significator-positions";
 
 export { isRelationship };
 import type { SelectedCard } from "@/types/reading";
@@ -32,19 +33,10 @@ const TREE_OF_LIFE_POSITIONS = [
   "daath",
 ];
 
-const SIGNIFICATOR_POSITIONS = ["day number", "life number", "star sign", "decanate"];
-
 const normalize = (positions: string[]) => positions.map((p) => p.trim().toLowerCase());
 
 export const isTreeOfLife = (positions: string[]) =>
   TREE_OF_LIFE_POSITIONS.every((pos) => normalize(positions).includes(pos));
-
-const isSignificators = (positions: string[]) => {
-  const normalized = normalize(positions);
-  return SIGNIFICATOR_POSITIONS.some((pos) =>
-    normalized.some((np) => np === pos || np.startsWith(`${pos} `))
-  );
-};
 
 const Reading: React.FC<ReadingProps> = React.memo(({
   selectedCards,

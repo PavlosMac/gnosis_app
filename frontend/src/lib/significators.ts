@@ -1,6 +1,7 @@
 import { TarotCardData } from "@/types/models";
 import { zodiacSigns } from "@/lib/zodiac";
 import { decanatesByMonth } from "@/lib/decanates";
+import { getCourtRoyalEntry, describeRoyalSpan } from "@/lib/court-royals";
 import {
   MAJOR_ARCANA_THRESHOLD,
   SINGLE_DIGIT_MAX,
@@ -151,12 +152,28 @@ export const getDecanate = (
   return null;
 };
 
+/**
+ * Court Royal: the Golden Dawn Knight/Queen/King ruling the decan the birth date falls in.
+ * Derived from the decanate pip (see lib/court-royals.ts).
+ */
+export const getCourtRoyal = (
+  day: number,
+  month: number
+): { card: TarotCardData; rules: string } | null => {
+  const decanate = getDecanate(day, month);
+  if (!decanate) return null;
+  const entry = getCourtRoyalEntry(decanate.decanateCard);
+  if (!entry) return null;
+  return { card: findCardByName(entry.royal), rules: describeRoyalSpan(entry) };
+};
+
 // Type definitions for results
 export interface SignificatorResult {
   dayNumber: { number: number; card: TarotCardData };
   zodiacSign: { sign: string; card: TarotCardData } | null;
   lifeNumber: { number: number; cards: TarotCardData[] };
   decanate: { sign: string; card: TarotCardData; decanateCard: string } | null;
+  courtRoyal: { card: TarotCardData; rules: string } | null;
 }
 
 /**
@@ -172,5 +189,6 @@ export const calculateSignificators = (
     zodiacSign: getZodiacSign(day, month),
     lifeNumber: getLifeNumber(year, month, day),
     decanate: getDecanate(day, month),
+    courtRoyal: getCourtRoyal(day, month),
   };
 };

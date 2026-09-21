@@ -107,4 +107,18 @@ describe("Reading layout selection", () => {
     expect(html).toMatch(/md:flex-row/);
     expect(html).not.toMatch(/grid-cols-3/);
   });
+
+  it("dispatches the Significators layout with Life Numbers and Court Royal banners", async () => {
+    const { calculateSignificators } = await import("@/lib/significators");
+    const html = renderToStaticMarkup(
+      <Reading
+        selectedCards={fakeCards(6)}
+        positions={positionsOf("Significators")}
+        isComplete
+        significatorResult={calculateSignificators(1990, 5, 1)}
+      />
+    );
+    expect(html).toContain("Life Numbers");
+    expect(html).toContain("Court Royal");
+  });
 });

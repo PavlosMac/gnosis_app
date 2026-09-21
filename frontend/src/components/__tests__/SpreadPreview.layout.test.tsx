@@ -72,9 +72,10 @@ describe("SpreadPreview layout shapes", () => {
     }
   });
 
-  it("renders the 4 Significator slots with the birth-date note", () => {
+  it("renders the 5 Significator slots with the birth-date note", () => {
     const html = render("Significators");
-    expect(slotCount(html)).toBe(4);
+    expect(slotCount(html)).toBe(5);
+    expect(html).toContain("court royal");
     expect(html).toContain("star sign");
     expect(html).toContain("decanate");
     expect(html).toContain("Derived from your birth date");

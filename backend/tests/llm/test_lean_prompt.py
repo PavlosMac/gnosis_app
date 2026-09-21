@@ -200,7 +200,7 @@ def test_significators_positions_come_from_the_frontend():
     """The chart's position semantics arrive per card (position/position_description)
     from the frontend — the template no longer bakes in the position list."""
     prompt = build_system_prompt(_make_system_request("Significators"))
-    for position in ("Day number", "Life number", "Star sign", "Decanate"):
+    for position in ("Day number", "Life number", "Star sign", "Decanate", "Court royal"):
         assert position not in prompt
     assert "given with the cards" in prompt
 
@@ -373,10 +373,10 @@ def test_budget_reads_config_not_module_constants(monkeypatch):
 
 def _repeated_card_request(spread_name: str) -> InterpretationRequest:
     card = CardInSpread(
-        name="The Empress", position="life number 1", orientation=Orientation.upright
+        name="The Empress", position="life number", orientation=Orientation.upright
     )
     same = CardInSpread(
-        name="The Empress", position="life number 2", orientation=Orientation.upright
+        name="The Empress", position="life number", orientation=Orientation.upright
     )
     return _make_request([card, same], question=None, spread_name=spread_name)
 

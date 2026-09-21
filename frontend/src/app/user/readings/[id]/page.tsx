@@ -14,6 +14,7 @@ import {
 } from "@/lib/reading-list-context";
 import type { AdjacentReading } from "@/lib/reading-adjacency";
 import type { ListContext } from "@/lib/reading-list-context";
+import { SIGNIFICATORS_SPREAD, uniquePositionKeys } from "@/lib/significator-positions";
 
 const adjacentButtonClasses =
   "w-9 h-9 rounded-full border flex items-center justify-center text-lg leading-none transition-all duration-300";
@@ -106,9 +107,10 @@ const ReadingDetailPage = async ({
     string,
     { card: TarotCardData; reversed: boolean } | null
   > = {};
-  for (const saved of reading.cards) {
+  const visualKeys = uniquePositionKeys(reading.cards.map((c) => c.position));
+  for (const [i, saved] of reading.cards.entries()) {
     const card = findCardByNameSafe(saved.name);
-    cardVisuals[saved.position] = card
+    cardVisuals[visualKeys[i]] = card
       ? { card, reversed: saved.orientation === "reversed" }
       : null;
   }
@@ -138,14 +140,14 @@ const ReadingDetailPage = async ({
           </div>
           <time
             dateTime={
-              reading.spread_type === "Significators" && reading.birth_date
+              reading.spread_type === SIGNIFICATORS_SPREAD && reading.birth_date
                 ? reading.birth_date
                 : reading.created_at
             }
             className="text-[#e6d5b8]/40 text-base sm:text-lg mt-3 block"
             style={{ fontFamily: "'Crimson Pro', serif" }}
           >
-            {reading.spread_type === "Significators" && reading.birth_date
+            {reading.spread_type === SIGNIFICATORS_SPREAD && reading.birth_date
               ? formatDate(reading.birth_date)
               : formatDateTime(reading.created_at)}
           </time>
