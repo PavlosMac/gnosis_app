@@ -50,3 +50,26 @@ export const planAdjacency = (
     needsNextPage: index === ids.length - 1 && page * pageSize < total,
   };
 };
+
+/** A single-item API request: which backend page (at page_size=1) lands on a
+ * given 0-based overall index, avoiding a full page fetch to read one id. */
+export interface EdgeFetch {
+  page: number;
+  pageSize: 1;
+}
+
+/**
+ * The previous page is always full when the current page needs it (only the
+ * very last page can be short), so its last item sits at overall index
+ * `(currentPage - 1) * pageSize - 1`.
+ */
+export const prevPageEdgeFetch = (currentPage: number, pageSize: number): EdgeFetch => ({
+  page: (currentPage - 1) * pageSize,
+  pageSize: 1,
+});
+
+/** The next page's first item sits at overall index `currentPage * pageSize`. */
+export const nextPageEdgeFetch = (currentPage: number, pageSize: number): EdgeFetch => ({
+  page: currentPage * pageSize + 1,
+  pageSize: 1,
+});

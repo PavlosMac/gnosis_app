@@ -53,12 +53,18 @@ class ReadingReadRepository(BaseReadRepository):
         limit: int = 20,
         spread_type: str | None = None,
         birth_date: date | None = None,
+        tags: list[str] | None = None,
+        sort: list[tuple[str, int]] | None = None,
     ) -> list[dict[str, Any]]:
+        """The user's readings, newest first unless a sort is given. The sort field
+        is whitelisted at the API (ReadingSortField); the default and its reverse ride
+        the (user_id, created_at desc) index, and with a tag filter the
+        (user_id, tags, created_at desc) index serves the filter and the sort together."""
         return await self.find_many(
-            _build_filter(user_id, spread_type, birth_date),
+            _build_filter(user_id, spread_type, birth_date, tags),
             skip=skip,
             limit=limit,
-            sort=[("created_at", -1)],
+            sort=sort or [("created_at", -1)],
         )
 
     async def count_by_user_id(
@@ -74,38 +80,6 @@ class ReadingReadRepository(BaseReadRepository):
         """The user's newest reading, served by the (user_id, created_at desc) index."""
         docs = await self.find_by_user_id(user_id, limit=1)
         return docs[0] if docs else None
-
-    async def find_by_user_id_ranked_by_tags(
-        self,
-        user_id: str,
-        tags: list[str],
-        skip: int = 0,
-        limit: int = 20,
-        spread_type: str | None = None,
-        birth_date: date | None = None,
-    ) -> list[dict[str, Any]]:
-        match_filter = _build_filter(user_id, spread_type, birth_date, tags)
-        cursor = self._collection.aggregate(
-            [
-                {"$match": match_filter},
-                {
-                    "$addFields": {
-                        "matched_tag_count": {
-                            "$size": {
-                                "$filter": {
-                                    "input": "$tags",
-                                    "cond": {"$in": ["$$this", tags]},
-                                }
-                            }
-                        }
-                    }
-                },
-                {"$sort": {"matched_tag_count": -1, "created_at": -1}},
-                {"$skip": skip},
-                {"$limit": limit},
-            ]
-        )
-        return await cursor.to_list(length=limit)
 
     async def count_tags_by_user_id(self, user_id: str) -> list[dict[str, Any]]:
         """Every tag the user has applied with how many readings carry it — most-used

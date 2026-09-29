@@ -1,17 +1,13 @@
 from typing import Generic, TypeVar
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 T = TypeVar("T")
 
-
-class PaginationParams(BaseModel):
-    page: int = Field(default=1, ge=1)
-    page_size: int = Field(default=20, ge=1, le=100)
-
-    @property
-    def skip(self) -> int:
-        return (self.page - 1) * self.page_size
+# Upper bound on page numbers: page and page_size come straight off the query string,
+# and an unbounded skip overflows BSON's int64 (a 500) long before any real list gets
+# there. 10k pages × 100 per page covers a million items.
+MAX_PAGE = 10_000
 
 
 class PaginatedResponse(BaseModel, Generic[T]):

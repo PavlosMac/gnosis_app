@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { planAdjacency } from "@/lib/reading-adjacency";
+import { planAdjacency, prevPageEdgeFetch, nextPageEdgeFetch } from "@/lib/reading-adjacency";
 
 const ids = ["a", "b", "c", "d", "e"];
 
@@ -60,5 +60,23 @@ describe("planAdjacency", () => {
     // page 3, index 4, pageSize 10 → 25th of the whole set
     const page3 = [...Array(10)].map((_, i) => `p3-${i}`);
     expect(planAdjacency(page3, "p3-4", 3, 10, 40)!.position).toBe(25);
+  });
+});
+
+describe("prevPageEdgeFetch", () => {
+  it("targets the last item of the previous page with a single-item fetch", () => {
+    // page 2, pageSize 10 → previous page's last item is overall index 9 →
+    // page_size=1 needs backend page 10 to land skip=9
+    expect(prevPageEdgeFetch(2, 10)).toEqual({ page: 10, pageSize: 1 });
+    expect(prevPageEdgeFetch(3, 20)).toEqual({ page: 40, pageSize: 1 });
+  });
+});
+
+describe("nextPageEdgeFetch", () => {
+  it("targets the first item of the next page with a single-item fetch", () => {
+    // page 2, pageSize 10 → next page's first item is overall index 20 →
+    // page_size=1 needs backend page 21 to land skip=20
+    expect(nextPageEdgeFetch(2, 10)).toEqual({ page: 21, pageSize: 1 });
+    expect(nextPageEdgeFetch(1, 50)).toEqual({ page: 51, pageSize: 1 });
   });
 });

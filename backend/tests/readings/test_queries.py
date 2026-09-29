@@ -1,8 +1,9 @@
-from datetime import date
+from datetime import UTC, date, datetime, timedelta
 
 import pytest
 from bson import ObjectId
 
+from src.database.collections.constants import READINGS_COLLECTION
 from src.interpretations.models import Interpretation
 from src.interpretations.repository import (
     InterpretationReadRepository,
@@ -203,29 +204,104 @@ async def test_list_user_readings_filter_by_birth_date_excludes_non_matching(
     assert result.total == 0
 
 
-async def test_list_user_readings_ranks_by_tag_overlap(
-    create_handler, list_handler, update_tags_handler, user_id
-):
-    one_match = await create_handler.handle(_make_command(user_id, spread="One Match"))
-    two_match = await create_handler.handle(_make_command(user_id, spread="Two Match"))
-    no_match = await create_handler.handle(_make_command(user_id, spread="No Match"))
+async def _create_dated_readings(create_handler, mock_db, user_id, spreads):
+    """Create one reading per spread name, each a day newer than the last — readings
+    made back to back can share a created_at, so order tests pin the dates themselves."""
+    base = datetime(2026, 1, 1, tzinfo=UTC)
+    created = []
+    for offset, spread in enumerate(spreads):
+        reading = await create_handler.handle(_make_command(user_id, spread=spread))
+        await mock_db[READINGS_COLLECTION].update_one(
+            {"_id": ObjectId(reading.id)},
+            {"$set": {"created_at": base + timedelta(days=offset)}},
+        )
+        created.append(reading)
+    return created
 
+
+async def test_list_user_readings_defaults_to_newest_first(
+    create_handler, list_handler, mock_db, user_id
+):
+    await _create_dated_readings(create_handler, mock_db, user_id, ["First", "Second", "Third"])
+
+    default = await list_handler.handle(ListUserReadingsQuery(user_id=user_id))
+    newest = await list_handler.handle(ListUserReadingsQuery(user_id=user_id, sort="created_at"))
+
+    assert [item.spread_type for item in default.items] == ["Third", "Second", "First"]
+    assert [item.spread_type for item in newest.items] == ["Third", "Second", "First"]
+
+
+async def test_list_user_readings_sort_oldest_first(create_handler, list_handler, mock_db, user_id):
+    await _create_dated_readings(create_handler, mock_db, user_id, ["First", "Second", "Third"])
+
+    page1 = await list_handler.handle(
+        ListUserReadingsQuery(user_id=user_id, sort="created_at", order="asc", page=1, page_size=2)
+    )
+    page2 = await list_handler.handle(
+        ListUserReadingsQuery(user_id=user_id, sort="created_at", order="asc", page=2, page_size=2)
+    )
+
+    assert [item.spread_type for item in page1.items] == ["First", "Second"]
+    assert [item.spread_type for item in page2.items] == ["Third"]
+
+
+async def test_list_user_readings_ignores_order_without_sort(
+    create_handler, list_handler, update_tags_handler, mock_db, user_id
+):
+    """`order` is a direction for `sort`; on its own it must not flip the newest-first
+    default, with or without a tag filter."""
+    first, second, third = await _create_dated_readings(
+        create_handler, mock_db, user_id, ["First", "Second", "Third"]
+    )
     await update_tags_handler.handle(
-        UpdateReadingTagsCommand(reading_id=one_match.id, user_id=user_id, tags=["career"])
+        UpdateReadingTagsCommand(reading_id=first.id, user_id=user_id, tags=["career", "love"])
+    )
+    await update_tags_handler.handle(
+        UpdateReadingTagsCommand(reading_id=third.id, user_id=user_id, tags=["career"])
+    )
+
+    plain = await list_handler.handle(ListUserReadingsQuery(user_id=user_id, order="asc"))
+    tagged = await list_handler.handle(
+        ListUserReadingsQuery(user_id=user_id, tags=["career", "love"], order="asc")
+    )
+
+    assert [item.spread_type for item in plain.items] == ["Third", "Second", "First"]
+    assert [item.spread_type for item in tagged.items] == ["Third", "First"]
+
+
+async def test_list_user_readings_filter_by_tags_keeps_date_order(
+    create_handler, list_handler, update_tags_handler, mock_db, user_id
+):
+    """A tag filter narrows the list but never reorders it: matches come newest first
+    like everything else, and an explicit sort applies within the filter."""
+    two_match, one_match, no_match = await _create_dated_readings(
+        create_handler, mock_db, user_id, ["Two Match", "One Match", "No Match"]
     )
     await update_tags_handler.handle(
         UpdateReadingTagsCommand(reading_id=two_match.id, user_id=user_id, tags=["career", "love"])
     )
     await update_tags_handler.handle(
+        UpdateReadingTagsCommand(reading_id=one_match.id, user_id=user_id, tags=["career"])
+    )
+    await update_tags_handler.handle(
         UpdateReadingTagsCommand(reading_id=no_match.id, user_id=user_id, tags=["luck"])
     )
 
-    result = await list_handler.handle(
+    default = await list_handler.handle(
         ListUserReadingsQuery(user_id=user_id, tags=["career", "love"])
     )
+    oldest = await list_handler.handle(
+        ListUserReadingsQuery(
+            user_id=user_id, tags=["career", "love"], sort="created_at", order="asc"
+        )
+    )
 
-    assert [item.spread_type for item in result.items] == ["Two Match", "One Match"]
-    assert result.total == 2
+    # One Match is the newer of the two matches; the number of matching tags is
+    # irrelevant to the order, and No Match stays out
+    assert [item.spread_type for item in default.items] == ["One Match", "Two Match"]
+    assert [item.spread_type for item in oldest.items] == ["Two Match", "One Match"]
+    assert default.total == 2
+    assert oldest.total == 2
 
 
 async def test_list_user_readings_user_tags_empty_without_document(

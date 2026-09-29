@@ -108,7 +108,7 @@ users ─1:1─→ user_tags   (derived from that user's readings.tags)
 
 ## Indexes
 
-Owned by migrations. Current state after 001–010:
+Owned by migrations. Current state after 001–012:
 
 | Collection      | Index                                        | Options            | Migration |
 |-----------------|----------------------------------------------|--------------------|-----------|
@@ -119,12 +119,24 @@ Owned by migrations. Current state after 001–010:
 | refresh_tokens  | `family_id`                                  |                    | 001       |
 | refresh_tokens  | `expires_at`                                 | TTL (0s)           | 001       |
 | readings        | `(user_id, created_at desc)`                 |                    | 002       |
-| readings        | `(user_id, tags)`                            |                    | 003       |
 | readings        | `(user_id, spread_type, created_at desc)`    |                    | 003       |
 | readings        | `(user_id, spread_type, birth_date)`         |                    | 004       |
+| readings        | `(user_id, tags, created_at desc)`           |                    | 012 (superseded 003's `(user_id, tags)`) |
 | interpretations | `reading_id`                                 | unique             | 008 (superseded 005's `(reading_id, settings.lens)`) |
 | user_tags       | `user_id`                                    | unique             | 010       |
+| password_reset_tokens   | `token_hash`                         | unique             | 011       |
+| password_reset_tokens   | `user_id`                            |                    | 011       |
+| password_reset_tokens   | `expires_at`                         | TTL (0s)           | 011       |
+| password_reset_attempts | `key`                                |                    | 011       |
+| password_reset_attempts | `created_at` desc                    |                    | 011       |
+| password_reset_attempts | `expires_at`                         | TTL (0s)           | 011       |
 | _migrations     | `version`                                    | unique             | runner    |
+
+A tag filter with a date sort (`tags=…&sort=created_at`) is served entirely by the 012
+index: one tag is a plain scan in date order, several tags are a `SORT_MERGE` of one
+scan per tag (Mongo 7.0, checked with `explain()`). Adding `spread_type` to that
+combination still ends in an in-memory `SORT` — the planner has no index carrying
+both `spread_type` and `tags` ahead of `created_at`.
 
 ## Planned
 

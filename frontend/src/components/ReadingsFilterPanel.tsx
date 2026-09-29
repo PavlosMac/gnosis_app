@@ -9,6 +9,8 @@ import readingsConfig from "@/lib/readings-config.json";
 import TagFilterCombobox from "@/components/TagFilterCombobox";
 import SpreadTypeDropdown from "@/components/SpreadTypeDropdown";
 import { parseTagsParam, serializeTags } from "@/lib/tag-suggestions";
+import { listHref } from "@/lib/reading-list-context";
+import type { ListSort } from "@/lib/reading-list-context";
 import type { TagSummary } from "@/types/reading";
 
 
@@ -16,6 +18,9 @@ interface ReadingsFilterPanelProps {
   currentSpreadType?: string;
   currentTags?: string;
   currentBirthDate?: string;
+  /** View settings, not filters: Apply and Clear both carry them over */
+  currentSort?: ListSort;
+  currentPageSize?: number;
   availableTags?: TagSummary[];
 }
 
@@ -23,6 +28,8 @@ const ReadingsFilterPanel = ({
   currentSpreadType,
   currentTags,
   currentBirthDate,
+  currentSort,
+  currentPageSize,
   availableTags = [],
 }: ReadingsFilterPanelProps) => {
   const router = useRouter();
@@ -58,17 +65,22 @@ const ReadingsFilterPanel = ({
   };
 
   const applyFilters = () => {
-    const params = new URLSearchParams();
-    if (spreadType) params.set("spread_type", spreadType);
     // Uncommitted input text counts too, matching the tag editor's save behavior
     const pending = tagInput.trim().toLowerCase();
     const allTags =
       pending && !selectedTags.includes(pending)
         ? [...selectedTags, pending]
         : selectedTags;
-    if (allTags.length) params.set("tags", serializeTags(allTags));
-    if (birthDate) params.set("birth_date", birthDate);
-    router.push(`/user/readings?${params.toString()}`);
+    router.push(
+      listHref({
+        page: 1,
+        spreadType: spreadType || undefined,
+        tags: allTags.length ? serializeTags(allTags) : undefined,
+        birthDate: birthDate || undefined,
+        sort: currentSort,
+        pageSize: currentPageSize,
+      })
+    );
   };
 
   const clearFilters = () => {
@@ -77,7 +89,11 @@ const ReadingsFilterPanel = ({
     setTagInput("");
     setBirthDate("");
     setExpanded(false);
-    router.push("/user/readings");
+    router.push(
+      currentSort || currentPageSize
+        ? listHref({ page: 1, sort: currentSort, pageSize: currentPageSize })
+        : "/user/readings"
+    );
   };
 
   return (

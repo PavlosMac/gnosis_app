@@ -1,4 +1,5 @@
 from datetime import date, datetime
+from typing import Literal
 
 from pydantic import Field, field_validator
 
@@ -10,6 +11,18 @@ from src.llm.schemas import CardInSpread, Orientation
 
 MAX_TAGS_PER_READING = 5
 MAX_TAG_LENGTH = 25
+# The list's `tags` filter is a comma-separated query param: bound the raw string so
+# an $in filter can't be fed thousands of entries. Room for 20 tags at full length.
+MAX_TAG_FILTER_LENGTH = 20 * (MAX_TAG_LENGTH + 1)
+# A reading's spread_name is stored as spread_type, and the list's spread_type filter
+# matches it exactly — one bound for both, so every stored name stays filterable.
+MAX_SPREAD_TYPE_LENGTH = 100
+
+# Fields the readings list can be sorted on — the whitelist between the API and Mongo.
+# Omitting the sort means newest first. Add a field here (with an index that serves
+# it) to extend.
+ReadingSortField = Literal["created_at"]
+SortOrder = Literal["asc", "desc"]
 
 
 def parse_comma_separated_tags(raw: str) -> list[str]:
@@ -25,7 +38,7 @@ def parse_comma_separated_tags(raw: str) -> list[str]:
 
 
 class CreateReadingRequest(AppSchema):
-    spread_name: str = Field(..., min_length=1, max_length=100)
+    spread_name: str = Field(..., min_length=1, max_length=MAX_SPREAD_TYPE_LENGTH)
     question: str | None = Field(default=None, min_length=5, max_length=500)
     birth_date: date | None = Field(default=None)
     cards: list[CardInSpread] = Field(..., min_length=1, max_length=12)

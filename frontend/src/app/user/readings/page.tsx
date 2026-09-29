@@ -2,11 +2,16 @@ import Link from "next/link";
 import TarotPageLayout from "@/components/TarotPageLayout";
 import { getReadings } from "./actions";
 import ReadingsFilterPanel from "@/components/ReadingsFilterPanel";
+import ReadingsSortToggle from "@/components/ReadingsSortToggle";
+import PageSizeSelect from "@/components/PageSizeSelect";
+import { parseTagsParam } from "@/lib/tag-suggestions";
 import {
-  READINGS_PAGE_SIZE,
+  PAGE_SIZE_OPTIONS,
+  pageSizeOf,
   parseListContext,
   listHref,
   readingHref,
+  readingsViewState,
 } from "@/lib/reading-list-context";
 import {
   formatReadingDate as formatDate,
@@ -37,21 +42,39 @@ const ReadingsPage = async ({
     spread_type?: string;
     tags?: string;
     birth_date?: string;
+    sort?: string;
+    order?: string;
+    page_size?: string;
   }>;
 }) => {
   const ctx = parseListContext(await searchParams) ?? { page: 1 };
-  const { page: currentPage, spreadType, tags, birthDate } = ctx;
-  const result = await getReadings(currentPage, READINGS_PAGE_SIZE, {
+  const { page: currentPage, spreadType, tags, birthDate, sort } = ctx;
+  const pageSize = pageSizeOf(ctx);
+  // With a tag filter, mark the tags that matched on each card — that is what
+  // put the reading in the list, and how strongly it matches
+  const activeTags = parseTagsParam(tags);
+  const result = await getReadings(currentPage, pageSize, {
     spreadType,
     tags,
     birthDate,
+    sort,
   });
 
   const totalPages = result.ok
-    ? Math.max(1, Math.ceil(result.data.total / READINGS_PAGE_SIZE))
+    ? Math.max(1, Math.ceil(result.data.total / pageSize))
     : 1;
 
+  // Pointless while everything fits the smallest page — unless a larger size is
+  // what made it fit, in which case it is the only way back.
+  const showPageSize =
+    result.ok &&
+    (result.data.total > PAGE_SIZE_OPTIONS[0] || ctx.pageSize !== undefined);
+
   const pageHref = (targetPage: number) => listHref({ ...ctx, page: targetPage });
+
+  const viewState = result.ok
+    ? readingsViewState(result.data.items.length, result.data.total)
+    : "results";
 
   return (
     <TarotPageLayout backButtonHref="/user/profile" backButtonLabel="Profile">
@@ -80,7 +103,6 @@ const ReadingsPage = async ({
             >
               {result.data.total} reading{result.data.total !== 1 ? "s" : ""} in
               the archive
-              {tags && " (sorted by relevance)"}
             </p>
           )}
         </div>
@@ -90,6 +112,8 @@ const ReadingsPage = async ({
           currentSpreadType={spreadType}
           currentTags={tags}
           currentBirthDate={birthDate}
+          currentSort={sort}
+          currentPageSize={ctx.pageSize}
           availableTags={result.ok ? result.data.user_tags ?? [] : []}
         />
 
@@ -99,8 +123,8 @@ const ReadingsPage = async ({
               {result.error}
             </p>
           </div>
-        ) : result.data.items.length === 0 ? (
-          /* Empty state */
+        ) : viewState === "empty" ? (
+          /* Empty state: nothing in the archive yet */
           <div className="flex flex-col items-center gap-6 py-16">
             <div className="text-6xl text-[#d4af37]/20">&#9734;</div>
             <p
@@ -120,8 +144,28 @@ const ReadingsPage = async ({
             </Link>
             <ManualReadingHint />
           </div>
+        ) : viewState === "no-matches-on-page" ? (
+          /* Matches exist elsewhere — the page/page_size in the URL overshot them */
+          <div className="flex flex-col items-center gap-6 py-16">
+            <div className="text-6xl text-[#d4af37]/20">&#9734;</div>
+            <p
+              className="text-[#e6d5b8]/50 text-lg text-center"
+              style={{ fontFamily: "'Crimson Pro', serif" }}
+            >
+              No readings on this page.
+            </p>
+            <Link
+              href={pageHref(1)}
+              className="px-4 py-2 rounded-lg border border-[#d4af37]/30 text-[#d4af37] text-sm tracking-[0.1em] hover:bg-[#d4af37]/10 transition-colors"
+              style={{ fontFamily: "'Cinzel', serif" }}
+            >
+              &#9664; Back to page 1
+            </Link>
+          </div>
         ) : (
           <>
+            {result.data.total > 1 && <ReadingsSortToggle ctx={ctx} />}
+
             {/* Readings list */}
             <div className="flex flex-col gap-4">
               {result.data.items.map((reading) => (
@@ -178,8 +222,10 @@ const ReadingsPage = async ({
                       {reading.tags.map((tag) => (
                         <span
                           key={tag}
-                          className="px-3 sm:px-4 py-1 sm:py-1.5 rounded-full border border-[#d4af37]/30 bg-[#1a0033]/60
-                                     text-[#e6d5b8]/80 text-xs sm:text-sm tracking-wide"
+                          className={`px-3 sm:px-4 py-1 sm:py-1.5 rounded-full border bg-[#1a0033]/60 text-xs sm:text-sm tracking-wide
+                            ${activeTags.includes(tag)
+                              ? "border-[#d4af37]/70 text-[#d4af37]"
+                              : "border-[#d4af37]/30 text-[#e6d5b8]/80"}`}
                           style={{ fontFamily: "'Crimson Pro', serif" }}
                         >
                           {tag}
@@ -207,49 +253,61 @@ const ReadingsPage = async ({
               ))}
             </div>
 
-            {/* Pagination */}
-            {totalPages > 1 && (
-              <div className="flex items-center justify-center gap-4 mt-8">
-                {currentPage > 1 ? (
-                  <Link
-                    href={pageHref(currentPage - 1)}
-                    className="px-4 py-2 rounded-lg border border-[#d4af37]/30 text-[#d4af37] text-sm tracking-[0.1em] hover:bg-[#d4af37]/10 transition-colors"
-                    style={{ fontFamily: "'Cinzel', serif" }}
-                  >
-                    &#9664; Prev
-                  </Link>
-                ) : (
-                  <span
-                    className="px-4 py-2 rounded-lg border border-[#d4af37]/10 text-[#d4af37]/30 text-sm tracking-[0.1em] cursor-not-allowed"
-                    style={{ fontFamily: "'Cinzel', serif" }}
-                  >
-                    &#9664; Prev
-                  </span>
-                )}
+            {/* Pagination — buttons stay centred; the page-size picker sits far right
+                (right-aligned underneath on mobile). The picker also shows without
+                buttons when a larger size is what collapsed the list to one page. */}
+            {(totalPages > 1 || showPageSize) && (
+              <div className="mt-8 flex flex-col gap-3 sm:grid sm:grid-cols-[1fr_auto_1fr] sm:items-center">
+                <div className="hidden sm:block" />
+                {totalPages > 1 ? (
+                  <div className="flex items-center justify-center gap-4">
+                    {currentPage > 1 ? (
+                      <Link
+                        href={pageHref(currentPage - 1)}
+                        className="px-4 py-2 rounded-lg border border-[#d4af37]/30 text-[#d4af37] text-sm tracking-[0.1em] hover:bg-[#d4af37]/10 transition-colors"
+                        style={{ fontFamily: "'Cinzel', serif" }}
+                      >
+                        &#9664; Prev
+                      </Link>
+                    ) : (
+                      <span
+                        className="px-4 py-2 rounded-lg border border-[#d4af37]/10 text-[#d4af37]/30 text-sm tracking-[0.1em] cursor-not-allowed"
+                        style={{ fontFamily: "'Cinzel', serif" }}
+                      >
+                        &#9664; Prev
+                      </span>
+                    )}
 
-                <span
-                  className="text-[#e6d5b8]/60 text-sm"
-                  style={{ fontFamily: "'Crimson Pro', serif" }}
-                >
-                  Page {currentPage} of {totalPages}
-                </span>
+                    <span
+                      className="text-[#e6d5b8]/60 text-sm"
+                      style={{ fontFamily: "'Crimson Pro', serif" }}
+                    >
+                      Page {currentPage} of {totalPages}
+                    </span>
 
-                {currentPage < totalPages ? (
-                  <Link
-                    href={pageHref(currentPage + 1)}
-                    className="px-4 py-2 rounded-lg border border-[#d4af37]/30 text-[#d4af37] text-sm tracking-[0.1em] hover:bg-[#d4af37]/10 transition-colors"
-                    style={{ fontFamily: "'Cinzel', serif" }}
-                  >
-                    Next &#9654;
-                  </Link>
+                    {currentPage < totalPages ? (
+                      <Link
+                        href={pageHref(currentPage + 1)}
+                        className="px-4 py-2 rounded-lg border border-[#d4af37]/30 text-[#d4af37] text-sm tracking-[0.1em] hover:bg-[#d4af37]/10 transition-colors"
+                        style={{ fontFamily: "'Cinzel', serif" }}
+                      >
+                        Next &#9654;
+                      </Link>
+                    ) : (
+                      <span
+                        className="px-4 py-2 rounded-lg border border-[#d4af37]/10 text-[#d4af37]/30 text-sm tracking-[0.1em] cursor-not-allowed"
+                        style={{ fontFamily: "'Cinzel', serif" }}
+                      >
+                        Next &#9654;
+                      </span>
+                    )}
+                  </div>
                 ) : (
-                  <span
-                    className="px-4 py-2 rounded-lg border border-[#d4af37]/10 text-[#d4af37]/30 text-sm tracking-[0.1em] cursor-not-allowed"
-                    style={{ fontFamily: "'Cinzel', serif" }}
-                  >
-                    Next &#9654;
-                  </span>
+                  <div />
                 )}
+                <div className="self-end sm:justify-self-end">
+                  {showPageSize && <PageSizeSelect ctx={ctx} />}
+                </div>
               </div>
             )}
 

@@ -12,8 +12,7 @@ significator reading.
 1. Let a user attach up to 5 freeform tags to a reading, edited from the reading detail
    page.
 2. Add a collapsible filter panel on `/user/readings` to narrow the list by spread type
-   (single, exact), tags (comma-separated, any-match, overlap-ranked), and birth date
-   (exact match).
+   (single, exact), tags (comma-separated, any-match), and birth date (exact match).
 
 ## Scope
 
@@ -118,44 +117,57 @@ Authoritative contract (final, confirmed against the backend):
 |---|---|---|---|
 | `spread_type` | string | `spread_type=Celtic Cross` | exact |
 | `birth_date` | date | `birth_date=1990-05-01` | exact |
-| `tags` | comma-separated string | `tags=career,love` | ANY match, ranked by overlap count desc (most matching tags first), then newest first |
+| `tags` | comma-separated string | `tags=career,love` | ANY match; the list order is unaffected (date order like every other list). Matched tags are highlighted on the cards |
+| `sort` | whitelisted field, currently only `created_at` | `sort=created_at` | explicit sort. Omitted = newest first. Unknown field → 422. (An earlier version ranked tag matches by overlap count; removed 2026-09-29 as unintuitive) |
+| `order` | `asc` \| `desc` (default `desc`) | `sort=created_at&order=asc` | direction for `sort`; ignored without it. Other values → 422 |
 
-All optional, combine with existing `page`/`page_size`. `tags` here uses the same
+All optional, combine with existing `page`/`page_size`. The list UI offers page sizes
+10 (default), 20 and 50; `sort`/`order` and a non-default `page_size` travel in the list URL and
+on to the reading detail URL (`ListContext` in `src/lib/reading-list-context.ts`) so
+prev/next walks the same order and pages as the list. `tags` here uses the same
 comma-separated wire format as the `PATCH .../tags` body (not repeated query params) —
 the backend reuses the same split/trim/lowercase parsing helper for both, so a filter
 value like `Career` still matches a stored `career` tag.
 
-- `ListUserReadingsQuery` (lines 11-14) gains three optional fields: `spread_type: str |
-  None`, `tags: list[str] | None` (already parsed from the comma string by the router
-  layer), `birth_date: date | None`.
-- **Two query paths in `ListUserReadingsHandler.handle`** (lines 23-34), depending on
-  whether `tags` is present, since only the tags case needs relevance ranking:
-  - **No `tags` filter** (today's path, extended): plain `find`/`count` via
-    `repository.py`'s `find_by_user_id`/`count_by_user_id` (lines 20-34), with
-    `spread_type`/`birth_date` merged into the existing `{"user_id": ...}` filter dict
-    when present (`{"user_id": ..., **({"spread_type": spread_type} if spread_type else
-    {}), **({"birth_date": birth_date.isoformat()} if birth_date else {})}`), sort
-    unchanged (`created_at` desc).
-  - **`tags` filter present**: the required ranking (overlap count desc, then
-    `created_at` desc) can't be expressed by a plain filter+sort — it needs a derived
-    per-document value. New repository method,
-    `find_by_user_id_ranked_by_tag_overlap(user_id, tags, extra_filter, skip, limit)` on
-    `ReadingReadRepository` (`repository.py`), using the Mongo aggregation framework
-    directly (bypassing the generic `find_many` helper, which only supports plain
-    filter+sort — this is a genuinely different query shape, not a duplicate of it):
-    ```
-    $match:    { user_id, tags: { $in: tags }, ...spread_type/birth_date if present }
-    $addFields: { overlap: { $size: { $setIntersection: ["$tags", tags] } } }
-    $sort:     { overlap: -1, created_at: -1 }
-    $skip / $limit  for the page; a parallel $count (or $facet) for the total
-    ```
-- **Router** (`router.py:29-38`): `list_readings` gains `spread_type: str | None =
+- `ListUserReadingsQuery` (`list_user_readings.py`) gains `spread_type: str | None`,
+  `tags: list[str] | None` (already parsed from the comma string by the router layer),
+  `birth_date: date | None`, plus the later `sort`/`order` fields (see the contract
+  table above).
+- **One query path in `ListUserReadingsHandler.handle`**: plain `find`/`count` via
+  `repository.py`'s `find_by_user_id`/`count_by_user_id`, with `spread_type`/
+  `birth_date`/`tags` (`$in` match) merged into the existing `{"user_id": ...}` filter
+  dict when present. Sort is `created_at` desc by default, or the explicit whitelisted
+  `sort`/`order` from the contract table when given — `_sort_spec()` builds the Mongo
+  sort tuple for it.
+  ~~Two query paths, with a `tags` filter taking a separate ranked-aggregation
+  path~~ — **superseded 2026-09-29**: the originally-planned overlap-count ranking
+  (below) was replaced with the same plain filter+sort every other query uses, so
+  `tags` no longer needs a distinct code path or a dedicated repository method.
+- **Router** (`router.py`): `list_readings` gains `spread_type: str | None =
   Query(default=None)`, `tags: str | None = Query(default=None)` (split into a list by
   the same normalize helper used in the `PATCH` schema before building the query),
   `birth_date: date | None = Query(default=None)`.
-- Note for the frontend: when a `tags` filter is active, result order is relevance
-  (overlap, then newest) rather than pure newest-first — worth a small "(sorted by
-  relevance)" hint in the UI so the order doesn't look arbitrary, though not required.
+- ~~Note for the frontend: when a `tags` filter is active, result order is relevance
+  (overlap, then newest) rather than pure newest-first~~ — **superseded 2026-09-29**:
+  no longer true; a `tags` filter no longer changes result order.
+
+<details>
+<summary>Original plan (superseded 2026-09-29): rank <code>tags</code> matches by overlap count</summary>
+
+The original design ranked `tags`-filtered results by overlap count (most matched tags
+first), which a plain filter+sort can't express — it needs a derived per-document
+value. The plan was a dedicated repository method,
+`find_by_user_id_ranked_by_tag_overlap(user_id, tags, extra_filter, skip, limit)`, using
+the Mongo aggregation framework directly:
+```
+$match:    { user_id, tags: { $in: tags }, ...spread_type/birth_date if present }
+$addFields: { overlap: { $size: { $setIntersection: ["$tags", tags] } } }
+$sort:     { overlap: -1, created_at: -1 }
+$skip / $limit  for the page; a parallel $count (or $facet) for the total
+```
+Removed 2026-09-29 as unintuitive (see the contract table above) — plain filter+sort,
+same as every other query, is what actually shipped.
+</details>
 
 ### 4. Migration
 
@@ -168,9 +180,8 @@ Follow the existing 3-tier pattern in `tests/readings/`:
 - `tests/readings/test_commands.py` — new case for `UpdateReadingTagsCommandHandler`
   (found-and-owned, not-found, wrong-owner → `ReadingNotFoundError`).
 - `tests/readings/test_queries.py` — extend `ListUserReadingsQuery` tests for each new
-  filter field individually and combined, plus the overlap-ranking order specifically
-  (a reading matching 2 of 2 requested tags should rank above one matching 1 of 2, and
-  ties should fall back to `created_at` desc).
+  filter field individually and combined, plus explicit `sort`/`order` (whitelisted
+  field accepted, unknown field rejected, ties fall back to `created_at` desc).
 - `tests/readings/test_router.py` — HTTP-level cases for the new `PATCH .../tags`
   endpoint (success returns full `ReadingReadModel`, >5 tags → 422, tag too long → 422,
   wrong owner → 404) and the new list query params (exact `spread_type`, exact
@@ -414,12 +425,11 @@ keep the server-rendered page data consistent.
 types `career` in Tags, picks a birth date → clicks Apply → `router.push('/user/readings?
 spread_type=Significators&tags=career&birth_date=1990-05-02')` → `page.tsx` re-runs
 server-side with the new `searchParams` → `getReadings` appends the params to the `GET
-/api/v1/readings` call → backend `ListUserReadingsHandler` parses `tags` into `["career"]`,
-matches via `$in` against each reading's `tags` array, and (because a `tags` filter is
-present) ranks results via the aggregation pipeline (overlap count desc, then `created_at`
-desc) rather than the plain `find`/sort path used when no `tags` filter is given →
-paginated, filtered, ranked results render; Prev/Next links keep the same three params
-attached.
+/api/v1/readings` call → backend `ListUserReadingsHandler` parses `tags` into `["career"]`
+and matches via `$in` against each reading's `tags` array, using the same plain
+filter+sort path as every other query (`created_at` desc, or the explicit `sort`/`order`
+from the URL) → paginated, filtered results render; Prev/Next links keep the same three
+params attached.
 
 ## Error handling
 
@@ -486,8 +496,9 @@ attached.
   filter UI is single-select pills, not independently-toggleable checkboxes/pills.
   `tags` on both the `PATCH` body and the `GET` list filter is a comma-separated string
   (not a JSON array, and not repeated query params) — the frontend never needs to
-  split/rejoin between the two. The list filter's `tags` match is ANY-overlap, ranked by
-  overlap count desc then newest first, which needs a new aggregation-based repository
-  method (not the existing plain `find`/sort path) whenever a `tags` filter is present.
-  The `PATCH` endpoint returns the full `ReadingReadModel`, not a minimal `{id, tags}`
-  shape.
+  split/rejoin between the two. The list filter's `tags` match is ANY-overlap via the
+  same plain `find`/sort path as every other query — no ranking, no aggregation-based
+  repository method. ~~ranked by overlap count desc then newest first~~ —
+  **superseded 2026-09-29**: overlap-count ranking was removed as unintuitive; see the
+  List filters contract table above. The `PATCH` endpoint returns the full
+  `ReadingReadModel`, not a minimal `{id, tags}` shape.

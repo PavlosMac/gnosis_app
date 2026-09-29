@@ -167,6 +167,4 @@ class PasswordResetThrottleRepository:
         )
 
     async def count_recent(self, key: str, since: datetime) -> int:
-        return await self._collection.count_documents(
-            {"key": key, "created_at": {"$gte": since}}
-        )
+        return await self._collection.count_documents({"key": key, "created_at": {"$gte": since}})
