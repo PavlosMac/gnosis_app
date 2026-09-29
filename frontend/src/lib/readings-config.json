@@ -25,7 +25,7 @@
             ]
         },
         {
-            "name": "Fire, Water, Air, Earth Reading",
+            "name": "Fire, Water, Air, Earth",
             "description": "A four card reading",
             "cards": 4,
             "positions": [
@@ -36,7 +36,7 @@
             ]
         },
         {
-            "name": "Two card Open Question Reading",
+            "name": "Two Card",
             "description": "A two card open question reading",
             "cards": 2,
             "showQuestion": true,
@@ -47,7 +47,7 @@
             }
         },
         {
-            "name": "Three Card Open Question",
+            "name": "Three Card",
             "description": "A three card Open Question Reading",
             "cards": 3,
             "showQuestion": true,
