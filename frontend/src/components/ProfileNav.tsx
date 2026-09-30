@@ -21,8 +21,12 @@ export default function ProfileNav() {
     return () => document.removeEventListener('mousedown', handler);
   }, [open]);
 
+  // absolute below lg: the page's card grids (max-w-[856px], see FaceUpDeck/ShuffledDeck)
+  // don't gain side margins wide enough to clear this button until ~968px viewport width,
+  // so a pinned button would sit over cards there; scrolling with the page (like the
+  // Portal link) keeps it clear until the grid margin is safely wider than the button.
   return (
-    <div ref={ref} className="fixed top-4 right-4 z-[9999]">
+    <div ref={ref} className="absolute lg:fixed top-4 right-4 z-[9999]">
       <button
         onClick={() => setOpen(o => !o)}
         aria-label="Profile menu"
