@@ -34,8 +34,6 @@ history · **Snapshot** — generated output frozen in time.
 | [`lean-prompt-migration-plan.md`](lean-prompt-migration-plan.md) | Implemented through Phase 4; Phase 5 (frontend) pending |
 | [`deployment/mongodb-backup-design.md`](deployment/mongodb-backup-design.md) | Implemented; doubles as the backup runbook |
 | [`database/migration-strategy.md`](database/migration-strategy.md) | Archived — fully implemented |
-| [`prompts/prompt_architecture.md`](prompts/prompt_architecture.md) | Historical (superseded 2026-08-25) |
-| [`prompts/scalable-openai.md`](prompts/scalable-openai.md) | Superseded — folded into the migration plan |
 | [`make-intent-optional-and-client-decided.md`](make-intent-optional-and-client-decided.md) | Superseded same-day by full intent removal |
 
 ## Snapshots

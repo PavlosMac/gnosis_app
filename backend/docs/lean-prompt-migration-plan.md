@@ -84,7 +84,7 @@ Tests: `tests/llm/test_lean_prompt.py` against spec §2–§3.
   usage split captured
 - Mock adapter updated to the new shape
 - Default `openai_model` → `gpt-5.4`
-- Production controls folded in from `docs/prompts/scalable-openai.md` (now
+- Production controls folded in from the earlier scalable-openai plan (deleted,
   superseded):
   - `asyncio.Semaphore` capping in-flight calls (`openai_max_concurrent=10`), with a
     bounded acquire wait → 503 rather than unbounded queueing; per-process, so the

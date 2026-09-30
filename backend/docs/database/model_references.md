@@ -94,6 +94,37 @@ the front-end never has to page through readings to discover tags.
 
 Users who have never tagged a reading have no document (the API treats that as `[]`).
 
+### password_reset_tokens
+Source: `src/auth/repository.py` (`PasswordResetTokenRepository`) — no domain model, written
+directly. Created by `POST /auth/forgot-password`; the raw token goes in the email link and only
+its hash is stored. Consumed by an atomic find-and-update on `(token_hash, used=false)`; the
+handler tells an expired token from an invalid one by inspecting `expires_at` on the matched
+document (410 vs 400), so the TTL index only cleans up. Requesting a new token first deletes
+the user's other unused tokens, so at most one is live per user.
+
+| Field      | Type     | Notes                                                   |
+|------------|----------|---------------------------------------------------------|
+| _id        | ObjectId | PK                                                      |
+| token_hash | str      | unique                                                  |
+| user_id    | str      | FK→users, stored as a string (like `refresh_tokens`)    |
+| used       | bool     | set true on consume                                     |
+| expires_at | datetime | TTL index; `Settings.password_reset_token_ttl_minutes` (30) after issue |
+
+### password_reset_attempts
+Source: `src/auth/repository.py` (`PasswordResetThrottleRepository`). A generic per-key
+request throttle, one document per attempt: `key` is the case-folded email for
+forgot-password and `support:<user_id>` for the support contact relay. A handler records the
+attempt first, then counts documents with that key inside the window
+(`Settings.password_reset_rate_limit_window_seconds`, 3600s, max 5), so concurrent bursts can
+only over-throttle, never under-throttle.
+
+| Field      | Type     | Notes                                              |
+|------------|----------|----------------------------------------------------|
+| _id        | ObjectId | PK                                                 |
+| key        | str      | throttle scope                                     |
+| created_at | datetime | attempt time; window counts are `>=` this          |
+| expires_at | datetime | TTL index; `created_at` + window                   |
+
 ### _migrations
 Managed by `src/migrations/runner.py`. Fields: `version` (unique), `description`, `applied_at`.
 
@@ -104,6 +135,8 @@ users ─1:N─→ refresh_tokens
 users ─1:N─→ readings ─1:1─→ interpretations   (unique reading_id index)
 users ─1:N─→ interpretations                   (denormalized user_id for usage queries)
 users ─1:1─→ user_tags   (derived from that user's readings.tags)
+users ─1:N─→ password_reset_tokens   (user_id as string)
+password_reset_attempts is keyed by email or `support:<user_id>`, not by FK
 ```
 
 ## Indexes
@@ -138,12 +171,8 @@ scan per tag (Mongo 7.0, checked with `explain()`). Adding `spread_type` to that
 combination still ends in an in-memory `SORT` — the planner has no index carrying
 both `spread_type` and `tags` ahead of `created_at`.
 
-## Planned
+## Leftovers
 
-- **Password reset** — implemented: `password_reset_tokens` and `password_reset_attempts`
-  collections, created by migration `011_password_reset_tokens_indexes`. The attempts
-  collection is a generic per-key throttle: `key` is the case-folded email for
-  forgot-password and `support:<user_id>` for the support contact relay. See
-  `docs/email/email_service.md` → Storage.
-- **Payments**: Mollie subscriptions, not Stripe — see `docs/payment/mollie-recurring-subscription.md`.
-  `stripe_customer_id` on `users` is a leftover from the original plan.
+- `stripe_customer_id` on `users` (and its unique sparse index) is a leftover from the
+  original Stripe plan; payments are not built. The current payment design is in
+  `docs/payment/`.
