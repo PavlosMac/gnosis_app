@@ -35,7 +35,9 @@ from src.llm.schemas import (
     Orientation,
 )
 
-OUT_DIR = Path("docs/prompts/experiments")
+# Scratch output (gitignored). Copy a run into docs/reference/prompts/experiments/ by hand to
+# freeze it as a cited sample.
+OUT_DIR = Path(__file__).resolve().parent / "output"
 
 
 # ---------------------------------------------------------------------------
@@ -43,7 +45,7 @@ OUT_DIR = Path("docs/prompts/experiments")
 # ---------------------------------------------------------------------------
 
 SPREADS: dict[str, InterpretationRequest] = {
-    # Mirrors the SAMPLE_REQUEST in docs/prompts/prompt_reference.md for a direct
+    # Mirrors the SAMPLE_REQUEST in docs/reference/prompts/prompt-reference.md for a direct
     # comparison on content and tokens.
     "lisbon": InterpretationRequest(
         spread_name="Past, Present, Future",
@@ -218,7 +220,7 @@ async def run_spread(
     ]
 
     OUT_DIR.mkdir(parents=True, exist_ok=True)
-    out_path = OUT_DIR / f"lean_{slug}_{model}_{effort}.md"
+    out_path = OUT_DIR / f"lean-{slug}-{model}-{effort}.md"
     out_path.write_text("\n".join(md))
     return out_path
 

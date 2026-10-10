@@ -1,5 +1,7 @@
 # Gnosis Esoterica Backend
 
+@../docs/reference/database/model-references.md
+
 ## Overview
 Tarot reading API backend with user signup and AI-powered interpretations. Built with FastAPI, async MongoDB (Motor), and a CQRS/Mediator architecture.
 
@@ -7,7 +9,7 @@ Tarot reading API backend with user signup and AI-powered interpretations. Built
 ## Tech Stack
 - **Language**: Python 3.12 (uv package manager)
 - **Framework**: FastAPI + Uvicorn
-- **Database**: MongoDB via Motor (async driver) @model_references
+- **Database**: MongoDB via Motor (async driver); schema in `../docs/reference/database/model-references.md`
 - **Auth**: PyJWT (HS256) + pwdlib[argon2]
 - **Validation**: Pydantic v2 + pydantic-settings
 - **Testing**: pytest-asyncio + httpx + mongomock-motor
@@ -26,8 +28,8 @@ make docker-down    # docker compose down
 make migrate        # run pending DB migrations
 make docker-prod-up    # docker compose -f docker-compose.prod.yml up -d
 make docker-prod-down  # docker compose -f docker-compose.prod.yml down
-make prompt-doc     # regenerate the generated regions of docs/prompts/prompt_reference.md
-make prompt-doc-check  # exit 1 if docs/prompts/prompt_reference.md is stale
+make prompt-doc     # regenerate the generated regions of ../docs/reference/prompts/prompt-reference.md
+make prompt-doc-check  # exit 1 if ../docs/reference/prompts/prompt-reference.md is stale
 ```
 
 ## Architecture
@@ -104,7 +106,7 @@ src/auth/queries/get_user_by_id.py   # GetUserByIdQuery + GetUserByIdHandler in 
 - No application imports (models, services, schemas) — migrations must be self-contained
 - One logical concern per migration file
 - Runner auto-discovers and sorts by filename; tracked in `_migrations` collection
-- See [`docs/database/db_migrations.md`](docs/database/db_migrations.md) for examples and runner details
+- See [`../docs/reference/database/db-migrations.md`](../docs/reference/database/db-migrations.md) for examples and runner details
 
 ## Conventions
 
@@ -181,13 +183,13 @@ Read these before searching. Grep/Glob for anything not listed here.
 
 ### Ports & adapters
 - `src/llm/port.py` — `LLMPort` ABC; `openai_adapter.py` (prod) / `mock_adapter.py` (when `OPENAI_API_KEY` is unset)
-- `src/llm/prompt_builder.py` — Prompt templates + token budgeting; regenerate `docs/prompts/prompt_reference.md` (`make prompt-doc`) after editing
+- `src/llm/prompt_builder.py` — Prompt templates + token budgeting; regenerate `../docs/reference/prompts/prompt-reference.md` (`make prompt-doc`) after editing
 - `src/llm/pricing.py` — Per-model price table, `cost_usd()` / `worst_case_cost_usd()`
 - `src/notifications/port.py` — `EmailPort` ABC; `resend_adapter.py` (prod) / `console_adapter.py` (when `RESEND_API_KEY` is unset) / `mock_adapter.py` (tests)
 - `src/notifications/templates.py` — Password-reset, email-verification and support-request email copy
 
 ### Domains (each follows the folder layout above)
-- `src/auth/` — Reference domain: register (names + consent), email verification gate (`UserStatus`, `SESSION_STATUSES`), login/refresh JWT, password reset, consent, account deletion. See `docs/auth/registration-verification-and-consent.md`
+- `src/auth/` — Reference domain: register (names + consent), email verification gate (`UserStatus`, `SESSION_STATUSES`), login/refresh JWT, password reset, consent, account deletion. See `../docs/reference/auth/registration-verification-and-consent.md`
 - `src/users/` — Superadmin user listing
 - `src/readings/` — Saved readings + user tags
 - `src/interpretations/` — AI interpretations of readings; `commands/generate_interpretation.py` is the LLM call site and usage accounting
@@ -200,5 +202,5 @@ Read these before searching. Grep/Glob for anything not listed here.
 - `tests/conftest.py` — Test fixture strategy
 - `scripts/seed_superadmin.py` — Seeds the dev superadmin (run by `make docker-up`)
 - `scripts/dump_prompts.py` — Backs `make prompt-doc`
-- `docs/README.md` — Docs index with Live/Plan/Historical status per doc
-- `docs/database/model_references.md` — Current collections, fields, and indexes
+- `../docs/README.md` — Docs index (reference / plans / notes). The root `CLAUDE.md` has a "Working on → read first" table; all docs live in the root `docs/`, there is no `backend/docs/`
+- `../docs/reference/database/model-references.md` — Current collections, fields, and indexes

@@ -71,7 +71,7 @@ const nextConfig: NextConfig = {
   // Aggressive caching headers for static assets — PRODUCTION ONLY.
   // Dev (Turbopack) chunk filenames are stable across code changes, so
   // immutable/1-year headers make the browser keep stale chunks and new
-  // code silently never renders (see docs/project_notes/bugs.md 2026-08-27).
+  // code silently never renders (see docs/notes/bugs.md 2026-08-27).
   // Prod chunk names are content-hashed, so long-lived caching is safe there.
   async headers() {
     const security = {

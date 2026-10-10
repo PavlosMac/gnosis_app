@@ -13,7 +13,7 @@ services:
       # Exposed MongoDBs are scanner-found and ransomed within hours.
       #
       # If this mapping is ever changed or removed, update
-      # docs/database/configure_db.md §2 and production_mongo_commands.md §5.
+      # docs/reference/database/configure-db.md §2 and production-mongo-commands.md §5.
       - "127.0.0.1:27017:27017"
     environment:
       MONGO_INITDB_ROOT_USERNAME: gnosis_admin

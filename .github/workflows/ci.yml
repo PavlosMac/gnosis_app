@@ -2,11 +2,16 @@ name: CI
 on:
   push:
     branches: [main]
-    paths: ["backend/**", ".github/workflows/ci.yml"]
+    paths: ["backend/**", "docs/**", "CLAUDE.md", "*/CLAUDE.md", "frontend/src/content/legal/README.md", ".github/workflows/ci.yml"]
   pull_request:
-    paths: ["backend/**", ".github/workflows/ci.yml"]
+    paths: ["backend/**", "docs/**", "CLAUDE.md", "*/CLAUDE.md", "frontend/src/content/legal/README.md", ".github/workflows/ci.yml"]
 
 jobs:
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 backend/scripts/check_docs_links.py
   backend:
     runs-on: ubuntu-latest
     defaults:

@@ -23,9 +23,10 @@ def test_replace_between_markers_raises_when_marker_missing():
         replace_between_markers(_DOC, "sample", "body")
 
 
+@pytest.mark.skipif(not DOC_PATH.exists(), reason="monorepo docs/ absent")
 def test_prompt_reference_doc_is_current():
     """Drift protection: prompt code changed without `make prompt-doc`."""
     current = DOC_PATH.read_text(encoding="utf-8")
     assert render_doc(current) == current, (
-        "docs/prompts/prompt_reference.md is stale — run make prompt-doc"
+        "docs/reference/prompts/prompt-reference.md is stale — run make prompt-doc"
     )

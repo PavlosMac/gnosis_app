@@ -123,39 +123,16 @@ const result = await authenticatedFetch<MyType>('/api/v1/endpoint', { method: 'P
 if (!result.ok) { /* handle error */ }
 ```
 
-## Project Memory System
+## Docs
 
-This project maintains institutional knowledge in `docs/project_notes/` for consistency across sessions.
+All documentation lives in the monorepo root `docs/` (there is no `frontend/docs/`). The root
+`CLAUDE.md` has a "Working on → read first" table; the full index is `../docs/README.md`.
+Frontend-side reference docs:
 
-### Memory Files
+- `../docs/reference/auth/frontend-auth-flow.md` — cookies, proxy, onboarding gate, server actions
+- `../docs/reference/readings/search-and-tags.md` — tag editor and filter panel
+- `../docs/reference/support/contact-support.md` — the support modal and its backend contract
+- `src/content/legal/README.md` — how legal documents are versioned
 
-- **bugs.md** - Bug log with dates, solutions, and prevention notes
-- **decisions.md** - Architectural Decision Records (ADRs) with context and trade-offs
-- **key_facts.md** - Project configuration, ports, important URLs
-- **issues.md** - Work log with descriptions and status
-
-### Memory-Aware Protocols
-
-**Before proposing architectural changes:**
-- Check `docs/project_notes/decisions.md` for existing decisions
-- Verify the proposed approach doesn't conflict with past choices
-- If it does conflict, acknowledge the existing decision and explain why a change is warranted
-
-**When encountering errors or bugs:**
-- Search `docs/project_notes/bugs.md` for similar issues
-- Apply known solutions if found
-- Document new bugs and solutions when resolved
-
-**When looking up project configuration:**
-- Check `docs/project_notes/key_facts.md` for ports, URLs, service accounts
-- Prefer documented facts over assumptions
-
-**When completing work:**
-- Log completed work in `docs/project_notes/issues.md`
-- Include date, brief description, and status
-
-**When user requests memory updates:**
-- Update the appropriate memory file (bugs, decisions, key_facts, or issues)
-- Follow the established format and style (bullet lists, dates, concise entries)
-
-
+The project notes (`../docs/notes/`: decisions, bugs, issues, key-facts, known-risks) are
+repo-wide; the protocol for consulting and updating them is in the root `CLAUDE.md`.

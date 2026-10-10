@@ -1,4 +1,4 @@
-.PHONY: dev test lint format typecheck install docker-up docker-down migrate docker-prod-up docker-prod-down prompt-doc prompt-doc-check
+.PHONY: dev test lint format typecheck install docker-up docker-down migrate docker-prod-up docker-prod-down prompt-doc prompt-doc-check docs-check
 
 install:
 	uv sync
@@ -39,3 +39,6 @@ prompt-doc:
 
 prompt-doc-check:
 	uv run python -m scripts.dump_prompts --check
+
+docs-check:
+	uv run python -m scripts.check_docs_links

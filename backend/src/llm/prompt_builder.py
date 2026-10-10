@@ -2,7 +2,7 @@
 
 No card data is sent: the model reads from its own knowledge of the Rider–Waite deck
 (plus numerology and astrology), and returns one woven narrative (`LeanReading`).
-Design: docs/prompts/lean_prompt_architecture.md.
+Design: docs/reference/prompts/lean-prompt-architecture.md (repo root).
 
 The word budget is server-owned (`Settings.llm_words_per_card` × cards — no client
 input) and stated once as a ceiling: phrased that way the model lands within ±3%;

@@ -26,3 +26,8 @@ venv/
 
 .DS_Store
 Thumbs.db
+
+# scratch output of scripts/card_meanings.py
+scripts/output/
+
+# scratch output of scripts/lean_prompt_test.py (same dir)

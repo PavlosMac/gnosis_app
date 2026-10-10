@@ -32,7 +32,7 @@ class Settings(BaseSettings):
 
     # OpenAI
     openai_api_key: str = ""
-    # Decided in docs/prompts/lean_prompt_architecture.md (Tunables): gpt-5.4 over mini —
+    # Decided in docs/reference/prompts/lean-prompt-architecture.md (Tunables): gpt-5.4 over mini —
     # reading quality depends on the model thinking well; cost is bounded by the
     # word-budget ceiling. (Supersedes the earlier gpt-5.4-mini default.)
     openai_model: str = "gpt-5.4"

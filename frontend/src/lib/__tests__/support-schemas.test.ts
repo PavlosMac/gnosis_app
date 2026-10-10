@@ -67,7 +67,7 @@ describe("contactSupportSchema", () => {
     }
   });
 
-  it("pins the limits to the backend contract (docs/backend-contracts/support-tickets.md)", () => {
+  it("pins the limits to the backend contract (docs/reference/support/contact-support.md)", () => {
     // A change here must land in the contract doc too — the backend validates
     // the same bounds
     expect(SUPPORT_SUBJECT_MAX).toBe(200);

@@ -11,9 +11,58 @@ Tarot reading platform: FastAPI backend + Next.js frontend, one repo.
 ## Claude config
 
 All Claude Code config lives in the root `.claude/` (settings, skills, agents,
-commands). Nested `backend/.claude/` and `frontend/.claude/` hold only plain
-planning docs that nothing auto-loads. Use the native `/code-review` for
-reviews; there are no custom review skills.
+commands). There are no nested `.claude/` folders. Use the native `/code-review`
+for reviews; there are no custom review skills.
+
+## Docs
+
+One tree, `docs/`, sorted by status first. Full index with one line per doc:
+[`docs/README.md`](docs/README.md).
+
+- `docs/reference/` — **how it works**. Must match the code; change it in the same PR
+  as the code it describes.
+- `docs/plans/` — **not built yet**. `YYYY-MM-DD-<topic>.md`, `Status:` on the first
+  lines. When a plan ships: update or create the reference doc, then delete the plan.
+  Specs and plans from the brainstorming / writing-plans skills go here, never to
+  `docs/superpowers/`.
+- `docs/notes/` — **living logs**: decisions (ADRs), bugs, issues (work log), key facts,
+  known risks.
+
+Filenames and folders are kebab-case (`README.md` is the only exception). Nothing else
+under `backend/` or `frontend/` is documentation except `frontend/src/content/legal/README.md`
+and the two side `CLAUDE.md` files. `make docs-check` verifies every relative link in
+`docs/` and the three `CLAUDE.md` files; CI runs it.
+
+### Working on → read first
+
+| Working on | Read first |
+|---|---|
+| Registration, login, verification, consent, deletion | [`registration-verification-and-consent.md`](docs/reference/auth/registration-verification-and-consent.md) (backend), [`frontend-auth-flow.md`](docs/reference/auth/frontend-auth-flow.md) (frontend), QA script [`registration-qa-checklist.md`](docs/reference/auth/registration-qa-checklist.md) |
+| Collections, fields, indexes, migrations | [`model-references.md`](docs/reference/database/model-references.md), [`db-migrations.md`](docs/reference/database/db-migrations.md) |
+| Interpretations, LLM calls, usage and budget | [`usage-and-budget-flow.md`](docs/reference/interpretations/usage-and-budget-flow.md), [`user-accounting.md`](docs/reference/interpretations/user-accounting.md) |
+| Prompts | [`lean-prompt-architecture.md`](docs/reference/prompts/lean-prompt-architecture.md), [`prompt-reference.md`](docs/reference/prompts/prompt-reference.md) (generated: `make -C backend prompt-doc`) |
+| Readings, tags, search | [`search-and-tags.md`](docs/reference/readings/search-and-tags.md) |
+| Email: reset, verification, support relay | [`email-service.md`](docs/reference/email/email-service.md) |
+| Contact support | [`contact-support.md`](docs/reference/support/contact-support.md) |
+| Legal pages, consent versions | [`frontend/src/content/legal/README.md`](frontend/src/content/legal/README.md) |
+| Local Mongo, dev superadmin | [`configure-db.md`](docs/reference/database/configure-db.md), [`dev-users.md`](docs/reference/database/dev-users.md) |
+| Deploying, prod Mongo, backups | [`deploy-instructions.md`](docs/reference/deployment/deploy-instructions.md), [`production-mongo-commands.md`](docs/reference/database/production-mongo-commands.md), [`mongodb-backup.md`](docs/reference/deployment/mongodb-backup.md) |
+| Why something is the way it is | [`decisions.md`](docs/notes/decisions.md) (ADRs) |
+| Ports, URLs, env flags, accounts | [`key-facts.md`](docs/notes/key-facts.md) |
+| Known bugs and open risks | [`bugs.md`](docs/notes/bugs.md), [`known-risks.md`](docs/notes/known-risks.md) |
+| What is planned but not built | [`docs/plans/`](docs/plans/) — one file per plan, status at the top |
+
+### Project notes protocol
+
+- **Before proposing architectural changes**: check `docs/notes/decisions.md`. If the
+  proposal conflicts with an ADR, say so and explain why a change is warranted.
+- **When hitting a bug**: search `docs/notes/bugs.md` first; log new bugs and their fix
+  there when resolved (symptom, cause, fix, prevention).
+- **When looking up configuration**: prefer `docs/notes/key-facts.md` over assumptions.
+- **When completing work**: add a dated line to `docs/notes/issues.md` (what, status).
+- **When shipping a plan**: update or create the reference doc, delete the plan, update
+  `docs/README.md` and, if a new area, the table above.
+- Follow the existing format of each file: bullet lists, dates, concise entries.
 
 ## Env contract
 

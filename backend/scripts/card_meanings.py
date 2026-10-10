@@ -8,8 +8,8 @@ Usage:
 
 Reads ANTHROPIC_API_KEY from the environment / .env. Each card is written to
 src/lib/cards/card_meanings/<tier file>.json (the production artifact) and mirrored as
-docs/cards/<tier>/<slug>.md. Cards already present in the JSON are skipped, so a re-run
-resumes where it left off.
+scripts/output/cards/<tier>/<slug>.md (gitignored). Cards already present in the JSON are
+skipped, so a re-run resumes where it left off.
 """
 
 from __future__ import annotations
@@ -29,7 +29,7 @@ from dotenv import load_dotenv
 ROOT = Path(__file__).resolve().parent.parent
 CARDS_DIR = ROOT / "src" / "lib" / "cards"
 MEANINGS_DIR = CARDS_DIR / "card_meanings"
-OUT_DIR = ROOT / "docs" / "cards"
+OUT_DIR = ROOT / "scripts" / "output" / "cards"  # gitignored scratch output, not docs
 
 MEANINGS_FILES = {
     "major": "major_arcana.json",
@@ -43,8 +43,9 @@ MODEL = "claude-opus-5"
 INPUT_PRICE = 5.00 / 1_000_000
 OUTPUT_PRICE = 25.00 / 1_000_000
 
-# Comparison experiment: same prompt against Gemini. Writes docs/cards/<tier>/<slug>.gemini.md
-# only — never the production JSON in src/lib/cards/card_meanings/.
+# Comparison experiment: same prompt against Gemini. Writes
+# scripts/output/cards/<tier>/<slug>.gemini.md only — never the production JSON in
+# src/lib/cards/card_meanings/.
 GEMINI_MODEL = "gemini-3.1-pro-preview"
 GEMINI_INPUT_PRICE = 2.00 / 1_000_000
 GEMINI_OUTPUT_PRICE = 12.00 / 1_000_000  # thinking tokens bill as output

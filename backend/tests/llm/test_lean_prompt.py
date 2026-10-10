@@ -1,4 +1,4 @@
-"""Lean prompt builder — spec: docs/prompts/lean_prompt_architecture.md §2–§3.
+"""Lean prompt builder — spec: docs/reference/prompts/lean-prompt-architecture.md §2–§3.
 
 Carried forward from the legacy builder tests: spread structure in the user prompt,
 the significators fork, distinct-card counting, and the completion-token cap. New

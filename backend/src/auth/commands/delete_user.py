@@ -24,7 +24,7 @@ class DeleteUserCommand(BaseCommand):
 class DeleteUserHandler(CommandHandler[DeleteUserCommand, None]):
     """Self-service erasure: removes the account and everything that references it.
 
-    The collection list mirrors docs/database/model_references.md — a new collection
+    The collection list mirrors docs/reference/database/model-references.md — a new collection
     that stores a user_id must be added here. The caller (DELETE /auth/me) has already
     re-verified the password; this handler only deletes.
     """
@@ -59,7 +59,7 @@ class DeleteUserHandler(CommandHandler[DeleteUserCommand, None]):
 
         # Refresh tokens first, so no new access token can be minted. An access token
         # already issued stays valid until it expires on endpoints that only decode
-        # the JWT (see docs/auth/registration-verification-and-consent.md, Need to
+        # the JWT (see docs/reference/auth/registration-verification-and-consent.md, Need to
         # know). The user document goes last: if a step fails midway the account still
         # exists and the delete can simply be repeated. Everything between those two is
         # independent and idempotent, so it runs concurrently rather than 5 round trips.

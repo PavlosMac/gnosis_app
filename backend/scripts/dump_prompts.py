@@ -1,5 +1,5 @@
-"""Regenerate the generated regions of docs/prompts/prompt_reference.md from the real
-prompt code.
+"""Regenerate the generated regions of docs/reference/prompts/prompt-reference.md (repo root)
+from the real prompt code.
 
 The doc has two marker-delimited regions:
 
@@ -31,7 +31,14 @@ from src.llm.schemas import (
     Orientation,
 )
 
-DOC_PATH = Path(__file__).resolve().parent.parent / "docs" / "prompts" / "prompt_reference.md"
+# Docs live in the monorepo root: <repo>/docs/reference/prompts/prompt-reference.md
+DOC_PATH = (
+    Path(__file__).resolve().parent.parent.parent
+    / "docs"
+    / "reference"
+    / "prompts"
+    / "prompt-reference.md"
+)
 
 SAMPLE_REQUEST = InterpretationRequest(
     spread_name="Past-Present-Future",

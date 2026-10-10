@@ -2,7 +2,7 @@ COMPOSE := docker compose -f backend/docker-compose.yml
 API_URL := http://localhost:8001
 REGISTRATION_ENABLED ?= true
 
-.PHONY: install dev dev-down dev-logs test lint deploy
+.PHONY: install dev dev-down dev-logs test lint deploy docs-check
 
 install:
 	$(MAKE) -C backend install
@@ -30,9 +30,12 @@ test:
 	$(MAKE) -C backend test
 	cd frontend && npm test
 
-lint:
+lint: docs-check
 	$(MAKE) -C backend lint
 	cd frontend && npm run lint
+
+docs-check:
+	$(MAKE) -C backend docs-check
 
 deploy:
 	cd backend && ./deploy-to-pi.sh

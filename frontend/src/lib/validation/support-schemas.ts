@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 // These limits are a contract with the backend — keep in sync with
-// docs/backend-contracts/support-tickets.md (the endpoint validates the same bounds)
+// docs/reference/support/contact-support.md (the endpoint validates the same bounds)
 export const SUPPORT_SUBJECT_MAX = 200;
 export const SUPPORT_MESSAGE_MAX = 5000;
 
