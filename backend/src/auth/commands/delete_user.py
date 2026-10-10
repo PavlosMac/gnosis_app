@@ -1,3 +1,5 @@
+import asyncio
+
 import structlog
 
 from src.auth.repository import (
@@ -59,13 +61,16 @@ class DeleteUserHandler(CommandHandler[DeleteUserCommand, None]):
         # already issued stays valid until it expires on endpoints that only decode
         # the JWT (see docs/auth/registration-verification-and-consent.md, Need to
         # know). The user document goes last: if a step fails midway the account still
-        # exists and the delete can simply be repeated.
+        # exists and the delete can simply be repeated. Everything between those two is
+        # independent and idempotent, so it runs concurrently rather than 5 round trips.
         await self._refresh_token_repo.revoke_all_for_user(user_id)
-        await self._interpretation_write_repo.delete_all_for_user(user_id)
-        await self._reading_write_repo.delete_all_for_user(user_id)
-        await self._user_tags_write_repo.delete_all_for_user(user_id)
-        await self._reset_token_repo.delete_all_for_user(user_id)
-        await self._verification_token_repo.delete_all_for_user(user_id)
-        await self._throttle_repo.delete_for_account(doc["email"], user_id)
+        await asyncio.gather(
+            self._interpretation_write_repo.delete_all_for_user(user_id),
+            self._reading_write_repo.delete_all_for_user(user_id),
+            self._user_tags_write_repo.delete_all_for_user(user_id),
+            self._reset_token_repo.delete_all_for_user(user_id),
+            self._verification_token_repo.delete_all_for_user(user_id),
+            self._throttle_repo.delete_for_account(doc["email"], user_id),
+        )
         await self._write_repo.delete(user_id)
         logger.info("account deleted", user_id=user_id)

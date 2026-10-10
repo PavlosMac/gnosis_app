@@ -146,7 +146,7 @@ src/auth/queries/get_user_by_id.py   # GetUserByIdQuery + GetUserByIdHandler in 
 ### Logging
 - `structlog` via `structlog.stdlib.get_logger(__name__)`; JSON in prod (`LOG_JSON`), console in dev
 - Event name is a short lowercase phrase; all data goes in keyword fields — never f-strings or `%` formatting in the message, never `extra=`
-- No PII in log fields: no emails, names, tokens, links, or raw request bodies. `user_id` is acceptable
+- No PII in log fields: no emails, names, tokens, links, or raw request bodies. `user_id` is acceptable. The sole exception is `ConsoleEmailAdapter`, which logs the verification/reset link only when `reveal_links=True` (`main.py` sets this for `APP_ENV=development` only) — a deliberate, narrowly-gated dev convenience; nothing else may log a link or token
 - Levels: `info` for business events, `warning` for handled `AppError`s and validation failures, `error` only with `exc_info` for unhandled failures, `debug` for payloads
 
 ### Change Checklist

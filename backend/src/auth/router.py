@@ -40,11 +40,16 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 
 @router.post("/register", response_model=RegisterResponse, status_code=201)
 async def register(
-    body: RegisterRequest, mediator: MediatorDep, client_ip: ClientIp
+    body: RegisterRequest,
+    mediator: MediatorDep,
+    client_ip: ClientIp,
+    background_tasks: BackgroundTasks,
 ) -> RegisterResponse:
     """Creates a pending account and mails the verification link. No tokens: a
-    session only exists after the address is confirmed and the user logs in."""
-    await mediator.send(
+    session only exists after the address is confirmed and the user logs in.
+    The email is sent after the response (see resend_verification below) so a
+    slow or down provider never blocks account creation."""
+    user_id = await mediator.send(
         RegisterUserCommand(
             email=body.email,
             password=body.password,
@@ -55,6 +60,7 @@ async def register(
             client_ip=client_ip,
         )
     )
+    background_tasks.add_task(mediator.send, SendVerificationEmailCommand(user_id=user_id))
     return RegisterResponse()
 
 

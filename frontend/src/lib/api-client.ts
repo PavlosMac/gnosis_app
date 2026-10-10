@@ -166,20 +166,21 @@ export const authenticatedFetch = async <T>(
         console.log("[AUTH:FETCH] Retry after refresh succeeded", { endpoint });
         return { ok: true, data: await parseBody<T>(retryRes) };
       }
-      const { code } = await readFailure(retryRes);
+      const { code, detail } = await readFailure(retryRes);
       return {
         ok: false,
         status: retryRes.status,
         message: safeErrorMessage(retryRes.status, "Session expired. Please log in again."),
         unauthenticated: retryRes.status === 401,
         ...(code && { code }),
+        ...(detail && { detail }),
       };
     }
     return { ok: false, status: 401, message: "Session expired. Please log in again.", unauthenticated: true };
   }
 
   if (!res.ok) {
-    const { code, bodyText } = await readFailure(res);
+    const { code, detail, bodyText } = await readFailure(res);
     console.log("[AUTH:FETCH] Request failed", {
       endpoint,
       status: res.status,
@@ -191,6 +192,7 @@ export const authenticatedFetch = async <T>(
       status: res.status,
       message: safeErrorMessage(res.status, "An unexpected error occurred."),
       ...(code && { code }),
+      ...(detail && { detail }),
     };
   }
 

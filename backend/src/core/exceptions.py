@@ -17,23 +17,23 @@ class AppError(Exception):
 
 
 class NotFoundError(AppError):
-    def __init__(self, detail: str = "Resource not found"):
-        super().__init__(status_code=404, detail=detail)
+    def __init__(self, detail: str = "Resource not found", code: str | None = None):
+        super().__init__(status_code=404, detail=detail, code=code)
 
 
 class ConflictError(AppError):
-    def __init__(self, detail: str = "Resource already exists"):
-        super().__init__(status_code=409, detail=detail)
+    def __init__(self, detail: str = "Resource already exists", code: str | None = None):
+        super().__init__(status_code=409, detail=detail, code=code)
 
 
 class UnauthorizedError(AppError):
-    def __init__(self, detail: str = "Not authenticated"):
-        super().__init__(status_code=401, detail=detail)
+    def __init__(self, detail: str = "Not authenticated", code: str | None = None):
+        super().__init__(status_code=401, detail=detail, code=code)
 
 
 class ForbiddenError(AppError):
-    def __init__(self, detail: str = "Forbidden"):
-        super().__init__(status_code=403, detail=detail)
+    def __init__(self, detail: str = "Forbidden", code: str | None = None):
+        super().__init__(status_code=403, detail=detail, code=code)
 
 
 class WeakPasswordError(AppError):

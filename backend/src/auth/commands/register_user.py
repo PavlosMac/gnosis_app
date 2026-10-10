@@ -5,19 +5,13 @@ from src.auth.models import User, UserStatus
 from src.auth.repository import (
     AuthReadRepository,
     AuthWriteRepository,
-    EmailVerificationTokenRepository,
     ThrottleRepository,
 )
-from src.auth.service import (
-    EmailAlreadyExistsError,
-    TooManyRegistrationsError,
-    issue_verification_email,
-)
+from src.auth.service import EmailAlreadyExistsError, TooManyRegistrationsError
 from src.core.config import settings
 from src.core.password_policy import validate_new_password
 from src.core.security import hash_password
 from src.cqrs.commands import BaseCommand, CommandHandler
-from src.notifications.port import EmailPort
 
 
 class RegisterUserCommand(BaseCommand):
@@ -37,14 +31,10 @@ class RegisterUserHandler(CommandHandler[RegisterUserCommand, str]):
         self,
         write_repo: AuthWriteRepository,
         read_repo: AuthReadRepository,
-        verification_token_repo: EmailVerificationTokenRepository,
-        email: EmailPort,
         throttle_repo: ThrottleRepository,
     ) -> None:
         self._write_repo = write_repo
         self._read_repo = read_repo
-        self._verification_token_repo = verification_token_repo
-        self._email = email
         self._throttle_repo = throttle_repo
 
     async def handle(self, command: RegisterUserCommand) -> str:
@@ -88,10 +78,6 @@ class RegisterUserHandler(CommandHandler[RegisterUserCommand, str]):
         )
         user_id = await self._write_repo.insert(user.to_document())
 
-        await issue_verification_email(
-            user_id=user_id,
-            email=email,
-            token_repo=self._verification_token_repo,
-            email_port=self._email,
-        )
+        # The verification email is sent as a background task by the router (see
+        # register()) so a slow or down provider never blocks the response.
         return user_id

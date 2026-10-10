@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { currentVersion, listVersions, loadDocument } from "@/lib/legal-documents";
-import { DOCUMENT_TITLES, type LegalDocumentId } from "@/lib/legal-versions";
-import { formatReadingDate } from "@/lib/profile-dashboard";
+import { DOCUMENT_TITLES, formatVersionDate, type LegalDocumentId } from "@/lib/legal-versions";
 
 interface LegalDocumentProps {
   id: LegalDocumentId;
@@ -44,7 +43,7 @@ const LegalDocument = async ({ id, version, variant = "embedded" }: LegalDocumen
         className={`text-[#e6d5b8]/50 text-sm ${variant === "page" ? "text-center" : ""}`}
         style={{ ...MUTED, marginTop: variant === "page" ? "0.75rem" : 0, marginBottom: "1.5rem" }}
       >
-        Version {shown} &middot; effective {formatReadingDate(shown)}
+        Version {shown} &middot; effective {formatVersionDate(shown)}
         {shown !== current && (
           <>
             {" "}

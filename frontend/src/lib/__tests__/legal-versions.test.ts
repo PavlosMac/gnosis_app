@@ -1,5 +1,6 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 import {
+  formatVersionDate,
   isLegalDocumentId,
   isVersionString,
   newestVersion,
@@ -51,5 +52,23 @@ describe("newestVersion / sortVersions", () => {
 
   it("is undefined for an empty list", () => {
     expect(newestVersion([])).toBeUndefined();
+  });
+});
+
+describe("formatVersionDate", () => {
+  const originalTz = process.env.TZ;
+  afterEach(() => {
+    process.env.TZ = originalTz;
+  });
+
+  it("formats a version as a calendar date", () => {
+    expect(formatVersionDate("2026-10-04")).toBe("4 Oct 2026");
+  });
+
+  it("does not shift a day behind on a negative-UTC-offset server", () => {
+    // A version parses as UTC midnight; without forcing UTC on render, a
+    // negative-offset zone would print it as the previous evening/day.
+    process.env.TZ = "Pacific/Honolulu"; // UTC-10, no DST
+    expect(formatVersionDate("2026-10-04")).toBe("4 Oct 2026");
   });
 });

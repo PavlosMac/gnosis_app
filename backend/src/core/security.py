@@ -52,3 +52,9 @@ def generate_url_token() -> str:
 def hash_token(raw_token: str) -> str:
     """One-time tokens are stored hashed, so a database read never yields a usable link."""
     return hashlib.sha256(raw_token.encode()).hexdigest()
+
+
+def ensure_utc(dt: datetime) -> datetime:
+    """PyMongo returns naive UTC datetimes by default; normalise before comparing
+    (e.g. a one-time token's `expires_at` against `datetime.now(UTC)`)."""
+    return dt.replace(tzinfo=UTC) if dt.tzinfo is None else dt

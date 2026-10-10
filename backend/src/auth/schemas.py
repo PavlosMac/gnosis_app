@@ -21,7 +21,18 @@ NormalizedEmail = Annotated[EmailStr, AfterValidator(_normalize_email)]
 # The backend stores whatever string it receives — no version validation here, so a
 # document edit needs no backend deploy.
 ConsentVersion = Annotated[str, Field(min_length=1, max_length=32)]
-PersonName = Annotated[str, Field(min_length=1, max_length=100)]
+
+
+def _strip_person_name(value: str) -> str:
+    # min_length checks the raw string, so a whitespace-only name ("   ") would
+    # otherwise pass and leave the account with a blank display_name.
+    stripped = value.strip()
+    if not stripped:
+        raise ValueError("must not be blank")
+    return stripped
+
+
+PersonName = Annotated[str, Field(max_length=100), AfterValidator(_strip_person_name)]
 
 
 class ConsentVersions(AppSchema):

@@ -41,3 +41,15 @@ export const CONSENT_FIELDS: Record<LegalDocumentId, string> = {
   terms: "acceptTerms",
   privacy: "acceptPrivacy",
 };
+
+/** A version for display, e.g. "4 Oct 2026". The version is a calendar date, not a
+    moment in time, so this renders in UTC — a local-timezone render (the default
+    for `toLocaleDateString`) would shift the displayed day near midnight on a server
+    with a non-UTC offset, even though the version string itself never changes. */
+export const formatVersionDate = (version: string): string =>
+  new Date(version).toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    timeZone: "UTC",
+  });

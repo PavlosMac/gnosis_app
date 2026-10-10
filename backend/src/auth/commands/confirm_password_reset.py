@@ -11,7 +11,7 @@ from src.core.password_policy import (
     validate_password_is_not_personal,
     validate_password_strength,
 )
-from src.core.security import hash_password, hash_token
+from src.core.security import ensure_utc, hash_password, hash_token
 from src.cqrs.commands import BaseCommand, CommandHandler
 
 
@@ -55,11 +55,7 @@ class ConfirmPasswordResetHandler(CommandHandler[ConfirmPasswordResetCommand, No
         if doc is None:
             raise InvalidPasswordResetTokenError()
 
-        # PyMongo returns naive UTC datetimes by default; normalise before comparing.
-        expires_at: datetime = doc["expires_at"]
-        if expires_at.tzinfo is None:
-            expires_at = expires_at.replace(tzinfo=UTC)
-        if expires_at < datetime.now(UTC):
+        if ensure_utc(doc["expires_at"]) < datetime.now(UTC):
             raise ExpiredPasswordResetTokenError()
 
         user_id: str = doc["user_id"]

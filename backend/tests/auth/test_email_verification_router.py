@@ -56,6 +56,23 @@ async def test_register_missing_names_or_consents_is_422(client):
         assert resp.status_code == 422, missing
 
 
+async def test_register_whitespace_only_name_is_422(client):
+    for field in ("first_name", "last_name"):
+        resp = await client.post(REGISTER, json=make_register_body(**{field: "   "}))
+        assert resp.status_code == 422, field
+
+
+async def test_register_strips_padded_names(client, mock_db):
+    await client.post(
+        REGISTER, json=make_register_body(first_name="  Ada  ", last_name=" Lovelace ")
+    )
+
+    doc = await mock_db["users"].find_one({"email": "user@example.com"})
+    assert doc["first_name"] == "Ada"
+    assert doc["last_name"] == "Lovelace"
+    assert doc["display_name"] == "Ada Lovelace"
+
+
 async def test_register_stores_no_refresh_token(client, mock_db):
     await _register(client)
     assert await mock_db["refresh_tokens"].count_documents({}) == 0

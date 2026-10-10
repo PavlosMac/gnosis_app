@@ -110,8 +110,6 @@ def _wire_mediator(
         RegisterUserHandler(
             user_write_repo,
             user_read_repo,
-            verification_token_repo,
-            email,
             ThrottleRepository(db, key_prefix="register:"),
         ),
     )

@@ -2,7 +2,7 @@ from datetime import UTC, datetime
 
 from src.auth.repository import AuthWriteRepository, EmailVerificationTokenRepository
 from src.auth.service import ExpiredVerificationTokenError, InvalidVerificationTokenError
-from src.core.security import hash_token
+from src.core.security import ensure_utc, hash_token
 from src.cqrs.commands import BaseCommand, CommandHandler
 
 
@@ -27,12 +27,8 @@ class VerifyEmailHandler(CommandHandler[VerifyEmailCommand, None]):
         if doc is None:
             raise InvalidVerificationTokenError()
 
-        # PyMongo returns naive UTC datetimes by default; normalise before comparing.
-        expires_at: datetime = doc["expires_at"]
-        if expires_at.tzinfo is None:
-            expires_at = expires_at.replace(tzinfo=UTC)
         now = datetime.now(UTC)
-        if expires_at < now:
+        if ensure_utc(doc["expires_at"]) < now:
             raise ExpiredVerificationTokenError()
 
         user_id: str = doc["user_id"]

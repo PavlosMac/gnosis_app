@@ -70,8 +70,10 @@ class TooManyPasswordResetRequestsError(AppError):
 
 class EmailNotVerifiedError(ForbiddenError):
     def __init__(self) -> None:
-        super().__init__(detail="Please confirm your email address before signing in")
-        self.code = "email_not_verified"
+        super().__init__(
+            detail="Please confirm your email address before signing in",
+            code="email_not_verified",
+        )
 
 
 class InvalidVerificationTokenError(AppError):
@@ -97,8 +99,7 @@ class InvalidPasswordError(ForbiddenError):
     authenticated, and clients treat a 401 as an expired session to refresh and retry."""
 
     def __init__(self) -> None:
-        super().__init__(detail="Incorrect password")
-        self.code = "invalid_password"
+        super().__init__(detail="Incorrect password", code="invalid_password")
 
 
 class TooManyLoginAttemptsError(AppError):

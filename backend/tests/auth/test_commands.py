@@ -10,15 +10,12 @@ from src.auth.repository import (
     ThrottleRepository,
 )
 from src.auth.service import EmailAlreadyExistsError
-from src.notifications.mock_adapter import MockEmailAdapter
 
 
 def _handler(mock_db) -> RegisterUserHandler:
     return RegisterUserHandler(
         AuthWriteRepository(mock_db),
         AuthReadRepository(mock_db),
-        EmailVerificationTokenRepository(mock_db),
-        MockEmailAdapter(),
         ThrottleRepository(mock_db, key_prefix="register:"),
     )
 
@@ -112,6 +109,7 @@ async def test_delete_user_cascades_across_every_collection(mock_db):
         await mock_db["user_tags"].insert_one({"user_id": oid, "tags": []})
         await RefreshTokenRepository(mock_db).store(f"jti-{uid}", "family", uid, expires)
         await PasswordResetTokenRepository(mock_db).store(f"reset-{uid}", uid, expires)
+        await EmailVerificationTokenRepository(mock_db).store(f"verify-{uid}", uid, expires)
     throttle = PasswordResetThrottleRepository(mock_db)
     for key in (
         "gone@example.com",
