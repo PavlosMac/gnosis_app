@@ -49,7 +49,6 @@ or in the three `CLAUDE.md` files, and CI runs it.
 | [`2026-09-29-readings-sort-index.md`](plans/2026-09-29-readings-sort-index.md) | Deferred. Compound index for spread + tags + date sort; trigger inside. |
 | [`2026-10-10-about-page.md`](plans/2026-10-10-about-page.md) | Draft copy, no route yet. |
 | [`2026-10-10-reading-limit-cta.md`](plans/2026-10-10-reading-limit-cta.md) | Spec, not started. Sign-up nudge after three free shuffles. |
-| [`2026-10-10-significators-heading-suffixes.md`](plans/2026-10-10-significators-heading-suffixes.md) | Agreed, not started. Stop "Root/Itself/Echo" suffixes in significators headings. |
 
 ## Notes
 

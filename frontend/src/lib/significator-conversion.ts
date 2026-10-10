@@ -9,17 +9,19 @@ const lifeNumberKey = (index: number) => `life number ${index + 1}`;
 
 // Every life number card shares one position name, so each description states why
 // that particular card is in the chart — otherwise the LLM has to improvise a distinction.
+// Keep these as plain numeric sentences: role words ("root", "itself") and dashes were
+// copied by the LLM into section headings ("The Empress — Life Number Root").
 export const lifeNumberCardNote = (card: TarotCardData, lifeNumber: number): string => {
   // The Fool is unnumbered on the card but counts as 22
   const cardNumber = card.idx === FOOL_INDEX ? FOOL_NUMEROLOGY_VALUE : card.idx;
   const root = getRoot(lifeNumber);
   if (cardNumber === lifeNumber) {
-    return `This card, number ${cardNumber}, bears your life number itself.`;
+    return `Card number ${cardNumber} is your life number.`;
   }
   if (cardNumber === root) {
-    return `This card is number ${cardNumber}, the single-digit root your life number reduces to.`;
+    return `Card number ${cardNumber} is your life number reduced to a single digit.`;
   }
-  return `This card is number ${cardNumber}, which reduces to the same root, ${root}.`;
+  return `Card number ${cardNumber} also reduces to ${root}.`;
 };
 
 const compose = (base: string | undefined, suffix: string): string =>

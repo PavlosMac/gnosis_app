@@ -133,7 +133,11 @@ Spread: Past, Present, Future (3 cards)
 ways — it has **no reversal block** (reversing the "all spreads" decision below; see
 §7), it asks for **card-by-card sections** with a woven closing paragraph rather than
 one continuous narrative, and there is no fixed positions block: positions and their
-meanings arrive per card from the frontend like any other spread.*
+meanings arrive per card from the frontend like any other spread. Since 2026-10-10 it
+also pins each section heading to the card name and position exactly as given, with no
+orientation and no suffixes: the life number cards share one position and are told apart
+by a per-card numeric note in `position_description`, and the model used to copy that
+note's vocabulary into headings ("Life Number Root / Itself / Echo").*
 
 A significator chart is calculated from birth data, not drawn: a portrait of the
 querent, not a situational reading. The standard skeleton loses its QUESTION_ANALYSIS

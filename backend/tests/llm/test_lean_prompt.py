@@ -205,6 +205,23 @@ def test_significators_positions_come_from_the_frontend():
     assert "given with the cards" in prompt
 
 
+def test_significators_headings_are_card_name_and_position_only():
+    """Life number cards share one position and are told apart by a per-card note; the
+    model used to copy the note's vocabulary into headings ("Life Number Root / Itself").
+    The template must pin the heading to card name + position and forbid suffixes."""
+    prompt = build_system_prompt(_make_system_request("Significators"))
+    assert "card-by-card sections" in prompt
+    assert "Head each section with the card name and its position exactly as given" in prompt
+    assert "never add numbering, role labels, qualifiers or descriptive suffixes" in prompt
+    assert "position notes are for your reading, not for headings" in prompt
+    assert "no orientation" in prompt
+    # The frontend parser (narrative-blocks.ts) recognises a heading by ** or # markers
+    # on their own line; the prompt must ask for exactly that shape.
+    assert "as a bold line on its own" in prompt
+    assert '"**The Empress — Life Number**"' in prompt
+    assert "prose starting on the next line" in prompt
+
+
 def test_significators_omits_question_analysis():
     """A fixed character chart has no question axis — the portrait is its own subject."""
     prompt = build_system_prompt(_make_system_request("Significators"))

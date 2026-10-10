@@ -79,23 +79,33 @@ describe("life number card notes", () => {
       .map(([key, desc]) => [result.positions[key].name, desc] as const);
     expect(life.map(([name]) => name)).toEqual(["The High Priestess", "Justice", "Judgement"]);
     const [priestess, justice, judgement] = life.map(([, desc]) => desc);
-    expect(priestess).toContain("Your life number is 20. This card is number 2, the single-digit root");
-    expect(justice).toContain("This card is number 11, which reduces to the same root, 2.");
-    expect(judgement).toContain("This card, number 20, bears your life number itself.");
+    expect(priestess).toContain(
+      "Your life number is 20. Card number 2 is your life number reduced to a single digit."
+    );
+    expect(justice).toContain("Card number 11 also reduces to 2.");
+    expect(judgement).toContain("Card number 20 is your life number.");
   });
 
   it("counts The Fool as 22", () => {
     const fool = getCardByIndex(0);
-    expect(lifeNumberCardNote(fool, 22)).toBe("This card, number 22, bears your life number itself.");
-    expect(lifeNumberCardNote(fool, 13)).toBe(
-      "This card is number 22, which reduces to the same root, 4."
+    expect(lifeNumberCardNote(fool, 22)).toBe("Card number 22 is your life number.");
+    expect(lifeNumberCardNote(fool, 13)).toBe("Card number 22 also reduces to 4.");
+    expect(lifeNumberCardNote(getCardByIndex(4), 22)).toBe(
+      "Card number 4 is your life number reduced to a single digit."
     );
-    expect(lifeNumberCardNote(getCardByIndex(4), 22)).toContain("the single-digit root");
   });
 
   it("a single-digit life number is its own root", () => {
-    expect(lifeNumberCardNote(getCardByIndex(7), 7)).toBe(
-      "This card, number 7, bears your life number itself."
-    );
+    expect(lifeNumberCardNote(getCardByIndex(7), 7)).toBe("Card number 7 is your life number.");
+  });
+
+  it("never uses the role words the LLM copied into headings", () => {
+    const { lifeNumber } = calculateSignificators(2024, 3, 18);
+    const notes = lifeNumber.cards.map((card) => lifeNumberCardNote(card, lifeNumber.number));
+    expect(notes).toHaveLength(3);
+    for (const note of notes) {
+      expect(note).not.toMatch(/\b(root|itself|echo)\b/i);
+      expect(note).not.toContain("—");
+    }
   });
 });

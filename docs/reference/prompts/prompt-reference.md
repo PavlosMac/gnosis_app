@@ -85,7 +85,7 @@ The chart's positions and what each governs are given with the cards — read ea
 
 A card may appear in more than one position. Read each appearance through its own position — the repetition itself is meaningful: that energy is doubly written into the chart. Never repeat an interpretation, but you can comment on the fact that the card has appeared again in this reading.
 
-Write the portrait as card-by-card sections. Then at the end write one final paragraph  which sums up the chart giving a woven final elegant interpretation and land on a cohesive picture of the persons character and life themes.
+Write the portrait as card-by-card sections. Head each section with the card name and its position exactly as given, no orientation, as a bold line on its own (e.g. "**The Empress — Life Number**") with the section's prose starting on the next line; never add numbering, role labels, qualifiers or descriptive suffixes to a heading. The position notes are for your reading, not for headings. Then at the end write one final paragraph  which sums up the chart giving a woven final elegant interpretation and land on a cohesive picture of the persons character and life themes.
 
 Write about 750 words — treat that as a ceiling, not a target to exceed.  Every sentence must earn its place: no textbook boilerplate, no hedging.
 ```

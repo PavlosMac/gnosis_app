@@ -8,6 +8,20 @@ export interface NarrativeBlock {
 
 const BOLD_HEADING_RE = /^\*\*(.+?)\*\*[ \t]*(?:\n|$)/;
 const HASH_HEADING_RE = /^#{1,6}[ \t]+(.+?)[ \t]*(?:\n|$)/;
+// Tolerance for a heading the model forgot to mark: the prompts ask for
+// "**Card — Position**" on its own line, and the model sometimes drops the ** but
+// keeps the shape. Accept only that shape: a short line containing " — ", no
+// markers, no sentence punctuation at the end, with body text on the next line.
+// Anything looser promotes hard-wrapped prose in any spread to a heading.
+const PLAIN_HEADING_RE = /^([^\n*#]{1,80}?)[ \t]*\n(?=\S)/;
+const TITLE_SHAPE_RE = /^[^.!?,;:"')\]…]*\S — \S[^.!?,;:"')\]…]*$/;
+
+const matchHeading = (chunk: string): RegExpMatchArray | null => {
+  const marked = chunk.match(BOLD_HEADING_RE) ?? chunk.match(HASH_HEADING_RE);
+  if (marked) return marked;
+  const plain = chunk.match(PLAIN_HEADING_RE);
+  return plain && TITLE_SHAPE_RE.test(plain[1].trim()) ? plain : null;
+};
 
 const tidy = (text: string): string =>
   text
@@ -23,7 +37,7 @@ const parseChunks = (narrative: string): NarrativeBlock[] =>
     .map((chunk) => chunk.trim())
     .filter(Boolean)
     .map((chunk) => {
-      const match = chunk.match(BOLD_HEADING_RE) ?? chunk.match(HASH_HEADING_RE);
+      const match = matchHeading(chunk);
       if (!match) return { paragraphs: [tidy(chunk)] };
       const body = tidy(chunk.slice(match[0].length));
       return { heading: match[1].trim(), paragraphs: body ? [body] : [] };
