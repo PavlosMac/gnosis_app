@@ -53,7 +53,7 @@ class Settings(BaseSettings):
     # Email (Resend). Adapter selection mirrors openai_api_key: key set -> Resend,
     # unset -> console adapter that logs the link.
     resend_api_key: str = ""
-    email_from: str = "Tarot Divinations <noreply@tarotdivinations.com>"
+    email_from: str = "Tarot Divinations <hello@tarotdivinations.com>"
 
     # Frontend (reset links are {frontend_base_url}/reset-password?token=...)
     frontend_base_url: str = "http://localhost:3000"

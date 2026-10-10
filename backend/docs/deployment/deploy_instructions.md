@@ -71,6 +71,32 @@ Optional, with defaults: `EMAIL_VERIFICATION_TOKEN_TTL_HOURS` (24),
 `RATE_LIMIT_TRUST_FORWARDED_FOR` (true; the API has no host port and is reached only by
 the Next.js container, which forwards the browser address).
 
+### 3a. Copy and start the frontend container
+
+The frontend is a separate image and container from the API — `docker-compose.prod.yml`
+above does not include it, so it needs its own copy step or `GNOSIS_API_BASE_URL` /
+`REGISTRATION_ENABLED` have nothing to come from on the Pi.
+
+```bash
+# From your dev machine:
+scp frontend/docker-compose.yml ${PI}:~/projects/gnosis-esoterica/
+```
+
+If a frontend container is already running from an earlier manual `docker run` (not
+compose), stop and remove it first so compose can create `tarot-next-app` cleanly:
+
+```bash
+docker ps -a --filter name=tarot
+docker stop <old-container-name> && docker rm <old-container-name>
+```
+
+On the Pi, in the same directory as the backend's `docker-compose.prod.yml`:
+
+```bash
+cd ~/projects/gnosis-esoterica
+docker compose -f docker-compose.yml up -d
+```
+
 ### 3b. Frontend container environment
 
 The Next.js container needs two variables. They are set in `frontend/docker-compose.yml`
@@ -83,13 +109,25 @@ in this repo:
 
 **Sign-up is closed by default in production** (decided 2026-10-05), so deploying does
 not open registration. To open it, put `REGISTRATION_ENABLED=true` in an `.env` file
-beside the frontend compose file on the Pi (or export it) and recreate the container
-(`docker compose up -d`). To close it again, remove the line and recreate.
+beside the frontend compose file on the Pi (or export it), then recreate the container:
 
-**Check the compose file actually running on the Pi.** If the Pi's frontend compose was
-written by hand rather than copied from `frontend/docker-compose.yml`, add
-`GNOSIS_API_BASE_URL` there, and `REGISTRATION_ENABLED` when you want sign-up open.
-Nothing else in the repo supplies them.
+```bash
+docker compose -f docker-compose.yml up -d --force-recreate
+```
+
+To close it again, remove the line and recreate the same way.
+
+**`docker restart` is not enough for any env change here** — it reuses the container's
+existing environment rather than re-reading the `.env` file or the compose file's
+`environment:` block. Only a recreate (`up -d --force-recreate`, or removing the
+container first) picks up a new value. Verify with
+`docker exec tarot-next-app env | grep -E 'GNOSIS_API_BASE_URL|REGISTRATION_ENABLED'`
+after recreating.
+
+**Check the compose file actually running on the Pi.** If step 3a above was skipped and
+the Pi's frontend compose was written by hand instead, add `GNOSIS_API_BASE_URL` there,
+and `REGISTRATION_ENABLED` when you want sign-up open. Nothing else in the repo supplies
+them.
 
 After the first deploy of email verification, every existing user is asked to accept the
 Terms and Privacy Policy once on their next visit to `/user/*`. All sessions are also
@@ -126,7 +164,7 @@ docker ps --filter network=app-network
 curl http://localhost:8000  # expect: connection refused
 
 # API should be reachable from within the network
-docker exec timegnosis-next-app wget -qO- http://gnosis-api:8000/api/v1/health
+docker exec tarot-next-app wget -qO- http://gnosis-api:8000/api/v1/health
 ```
 
 ## Pi — Subsequent Updates
