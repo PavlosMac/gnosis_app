@@ -1,5 +1,5 @@
 from src.core.config import settings as app_settings
-from tests.factories import VALID_READING_BODY
+from tests.factories import VALID_READING_BODY, register_verify_and_login
 
 
 async def _create_reading(client, auth_token) -> str:
@@ -84,17 +84,14 @@ async def test_generate_interpretation_unauthenticated(client):
     assert resp.status_code == 401
 
 
-async def test_generate_interpretation_wrong_user(client, auth_token):
+async def test_generate_interpretation_wrong_user(client, auth_token, mock_email):
     """An existing interpretation on someone else's reading still 404s — ownership is
     checked before the idempotent return."""
     reading_id = await _create_reading(client, auth_token)
     await _generate(client, auth_token, reading_id)
 
-    reg = await client.post(
-        "/api/v1/auth/register",
-        json={"email": "otherinterp@example.com", "password": "securepassword123"},
-    )
-    other_token = reg.json()["access_token"]
+    reg = await register_verify_and_login(client, mock_email, "otherinterp@example.com")
+    other_token = reg["access_token"]
 
     resp = await _generate(client, other_token, reading_id)
     assert resp.status_code == 404

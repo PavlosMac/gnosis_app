@@ -44,6 +44,12 @@ class InterpretationWriteRepository(BaseWriteRepository):
             )
 
 
+    async def delete_all_for_user(self, user_id: str) -> None:
+        """Account deletion: every interpretation generated for the user (and with
+        them the per-interpretation usage ledger)."""
+        await self._collection.delete_many({"user_id": ObjectId(user_id)})
+
+
 class InterpretationReadRepository(BaseReadRepository):
     @property
     def collection_name(self) -> str:

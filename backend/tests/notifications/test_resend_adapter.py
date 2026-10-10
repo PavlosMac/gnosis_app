@@ -2,6 +2,7 @@ from datetime import UTC, datetime
 
 import pytest
 import resend.exceptions
+from structlog.testing import capture_logs
 
 from src.notifications.errors import EmailDeliveryError
 from src.notifications.resend_adapter import ResendEmailAdapter
@@ -92,3 +93,37 @@ async def test_send_support_request_failure_maps_to_email_delivery_error(adapter
     monkeypatch.setattr("resend.Emails.send_async", fake_send_async)
     with pytest.raises(EmailDeliveryError):
         await adapter.send_support_request(**SUPPORT_KWARGS)
+
+
+async def test_send_email_verification_builds_payload_and_logs_no_recipient(adapter, monkeypatch):
+    captured: dict = {}
+
+    async def fake_send_async(params):
+        captured.update(params)
+        return {"id": "email_456"}
+
+    monkeypatch.setattr("resend.Emails.send_async", fake_send_async)
+    link = "https://tarotdivinations.com/verify-email?token=abc123"
+
+    with capture_logs() as logs:
+        await adapter.send_email_verification(to="user@example.com", verify_link=link)
+
+    assert captured["to"] == "user@example.com"
+    assert captured["subject"] == "Confirm your email for Tarot Divinations"
+    assert link in captured["text"]
+    assert link in captured["html"]
+    assert len(logs) == 1
+    assert "user@example.com" not in str(logs)
+
+
+async def test_failed_send_logs_no_recipient(adapter, monkeypatch):
+    async def boom(params):
+        raise RuntimeError("provider down")
+
+    monkeypatch.setattr("resend.Emails.send_async", boom)
+
+    with capture_logs() as logs, pytest.raises(EmailDeliveryError):
+        await adapter.send_password_reset(to="user@example.com", reset_link=LINK)
+
+    assert len(logs) == 1
+    assert "user@example.com" not in str(logs)

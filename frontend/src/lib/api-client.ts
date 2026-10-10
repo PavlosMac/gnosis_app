@@ -1,6 +1,13 @@
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import type { ApiResult } from "@/types/api";
 import type { TokenResponse } from "@/types/auth";
+import { readErrorBody } from "@/lib/api-error";
+import { clientIpFrom } from "@/lib/client-ip";
+import {
+  applyAuthCookies,
+  clearAuthCookies as clearCookies,
+  readAuthCookies,
+} from "@/lib/auth-cookies";
 
 /** Map HTTP status codes to safe, user-facing messages. */
 const SAFE_MESSAGES: Record<number, string> = {
@@ -25,59 +32,52 @@ const GNOSIS_API_BASE_URL = () => {
   return url;
 };
 
+/** A 204 has no body to parse (DELETE /auth/me) */
+const parseBody = async <T>(res: Response): Promise<T> =>
+  res.status === 204 ? (undefined as T) : ((await res.json()) as T);
+
+/** Read a failed response exactly once: the backend's machine-readable `code`
+    when it sent one, and the raw text for local diagnostics */
+const readFailure = async (
+  res: Response
+): Promise<{ code?: string; detail?: string; bodyText: string }> => {
+  const bodyText = await res.text().catch(() => "");
+  const { code, detail } = readErrorBody(bodyText);
+  // detail travels only with a code: an uncoded detail is never meant for users
+  return { ...(code && { code, ...(detail && { detail }) }), bodyText };
+};
+
+/**
+ * Every backend call is made from this server, so the API would see one
+ * address for all users and its per-IP rate limits (login, register) would be
+ * global. Forward the browser's address as the edge reported it.
+ */
+const forwardedForHeader = async (): Promise<Record<string, string>> => {
+  try {
+    const ip = clientIpFrom(await headers());
+    return ip ? { "X-Forwarded-For": ip } : {};
+  } catch {
+    // No request scope (build-time render) — nothing to forward
+    return {};
+  }
+};
+
 const setAuthCookies = async (tokens: TokenResponse) => {
-  const cookieStore = await cookies();
-  const isProduction = process.env.NODE_ENV === "production";
-  const nowSeconds = Math.floor(Date.now() / 1000);
-  const accessMaxAge = Math.max(tokens.access_token_expires_at - nowSeconds, 0);
-  const refreshMaxAge = Math.max(tokens.refresh_token_expires_at - nowSeconds, 0);
-
-  console.log("[AUTH:COOKIES] Setting auth cookies", { isProduction, accessMaxAge, refreshMaxAge });
-
-  cookieStore.set("access_token", tokens.access_token, {
-    httpOnly: true,
-    secure: isProduction,
-    sameSite: "lax",
-    path: "/",
-    maxAge: accessMaxAge,
-  });
-
-  cookieStore.set("refresh_token", tokens.refresh_token, {
-    httpOnly: true,
-    secure: isProduction,
-    sameSite: "lax",
-    path: "/",
-    maxAge: refreshMaxAge,
-  });
-
-  cookieStore.set("token_expires_at", String(tokens.access_token_expires_at), {
-    httpOnly: true,
-    secure: isProduction,
-    sameSite: "lax",
-    path: "/",
-    maxAge: accessMaxAge,
-  });
-
-  console.log("[AUTH:COOKIES] Auth cookies set successfully");
+  applyAuthCookies(await cookies(), tokens);
+  console.log("[AUTH:COOKIES] Auth cookies set");
 };
 
 const clearAuthCookies = async () => {
-  console.log("[AUTH:COOKIES] Clearing auth cookies");
-  const cookieStore = await cookies();
-  cookieStore.delete("access_token");
-  cookieStore.delete("refresh_token");
-  cookieStore.delete("token_expires_at");
+  clearCookies(await cookies());
   console.log("[AUTH:COOKIES] Auth cookies cleared");
 };
 
 const getValidAccessToken = async (): Promise<string | null> => {
-  const cookieStore = await cookies();
-  return cookieStore.get("access_token")?.value ?? null;
+  return readAuthCookies(await cookies()).accessToken ?? null;
 };
 
 const refreshAccessToken = async (): Promise<string | null> => {
-  const cookieStore = await cookies();
-  const refreshToken = cookieStore.get("refresh_token")?.value;
+  const { refreshToken } = readAuthCookies(await cookies());
 
   if (!refreshToken) return null;
 
@@ -164,32 +164,38 @@ export const authenticatedFetch = async <T>(
       }
       if (retryRes.ok) {
         console.log("[AUTH:FETCH] Retry after refresh succeeded", { endpoint });
-        const data: T = await retryRes.json();
-        return { ok: true, data };
+        return { ok: true, data: await parseBody<T>(retryRes) };
       }
+      const { code } = await readFailure(retryRes);
       return {
         ok: false,
         status: retryRes.status,
         message: safeErrorMessage(retryRes.status, "Session expired. Please log in again."),
         unauthenticated: retryRes.status === 401,
+        ...(code && { code }),
       };
     }
     return { ok: false, status: 401, message: "Session expired. Please log in again.", unauthenticated: true };
   }
 
   if (!res.ok) {
+    const { code, bodyText } = await readFailure(res);
     console.log("[AUTH:FETCH] Request failed", {
       endpoint,
       status: res.status,
-      // response body is only read for local diagnostics
-      ...(process.env.NODE_ENV !== "production" && { body: await res.text() }),
+      // the body is only logged for local diagnostics
+      ...(process.env.NODE_ENV !== "production" && { body: bodyText }),
     });
-    return { ok: false, status: res.status, message: safeErrorMessage(res.status, "An unexpected error occurred.") };
+    return {
+      ok: false,
+      status: res.status,
+      message: safeErrorMessage(res.status, "An unexpected error occurred."),
+      ...(code && { code }),
+    };
   }
 
   console.log("[AUTH:FETCH] Request succeeded", { endpoint });
-  const data: T = await res.json();
-  return { ok: true, data };
+  return { ok: true, data: await parseBody<T>(res) };
 };
 
 export const publicFetch = async <T>(
@@ -207,6 +213,7 @@ export const publicFetch = async <T>(
       ...options,
       headers: {
         "Content-Type": "application/json",
+        ...(await forwardedForHeader()),
         ...options.headers,
       },
     });
@@ -216,13 +223,19 @@ export const publicFetch = async <T>(
   }
 
   if (!res.ok) {
-    console.log("[AUTH:PUBLIC_FETCH] Request failed", { endpoint, status: res.status });
-    return { ok: false, status: res.status, message: safeErrorMessage(res.status, "An unexpected error occurred.") };
+    const { code, detail } = await readFailure(res);
+    console.log("[AUTH:PUBLIC_FETCH] Request failed", { endpoint, status: res.status, code });
+    return {
+      ok: false,
+      status: res.status,
+      message: safeErrorMessage(res.status, "An unexpected error occurred."),
+      ...(code && { code }),
+      ...(detail && { detail }),
+    };
   }
 
   console.log("[AUTH:PUBLIC_FETCH] Request succeeded", { endpoint });
-  const data: T = await res.json();
-  return { ok: true, data };
+  return { ok: true, data: await parseBody<T>(res) };
 };
 
 export { setAuthCookies, clearAuthCookies };

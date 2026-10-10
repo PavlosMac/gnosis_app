@@ -9,9 +9,15 @@ JWT authentication via an external FastAPI backend. Tokens are stored in httpOnl
 | File | Role |
 |------|------|
 | `src/proxy.ts` | Middleware — route guard, token refresh (proactive + expired) |
-| `src/lib/api-client.ts` | `authenticatedFetch()`, `publicFetch()`, cookie helpers |
-| `src/lib/session.ts` | `getCurrentUser()` — cached user fetch for server components |
-| `src/app/user/layout.tsx` | Server layout — fetches user, passes to AuthProvider |
+| `src/lib/api-client.ts` | `authenticatedFetch()`, `publicFetch()` (forwards the browser IP, surfaces the backend error `code`), cookie wrappers |
+| `src/lib/auth-cookies.ts` | The only reader/writer of the three session cookies (edge-safe; used by the proxy and by server actions) |
+| `src/lib/session.ts` | `getCurrentUser()` — cached user fetch; `requireConsentedUser()` — the same, but null while onboarding is outstanding |
+| `src/lib/onboarding.ts` | `onboardingRedirect()` — the single decision of where a logged-in user must go first |
+| `src/app/layout.tsx` | Root server layout — fetches the user and the `REGISTRATION_ENABLED` flag, passes both to `AuthProvider` |
+| `src/app/user/layout.tsx` | The onboarding gate for `/user/*`: redirects a logged-in user to `/accept-terms` (or `/verify-email`) when something is outstanding. Does not fetch for `AuthProvider` — the root layout does |
+| `src/app/verify-email/` | Email confirmation page, Confirm and resend actions (public) |
+| `src/app/accept-terms/` | Re-consent interstitial and action |
+| `src/app/user/profile/manage-consent/`, `delete-account/` | Self-service consent and account deletion |
 | `src/app/providers/auth-provider.tsx` | React context — `useAuth()` hook |
 | `src/app/user/login/actions.ts` | Login server action |
 | `src/app/user/register/actions.ts` | Register server action |
@@ -29,9 +35,18 @@ JWT authentication via an external FastAPI backend. Tokens are stored in httpOnl
 | `refresh_token` | Single-use token for refresh | httpOnly, secure (prod), sameSite=lax |
 | `token_expires_at` | Unix timestamp — access token expiry | httpOnly, secure (prod), sameSite=lax |
 
+In production (`NODE_ENV=production`) each name carries the `__Host-` prefix
+(`__Host-access_token`, …), which binds the cookie to this exact host over HTTPS: Secure,
+Path=/ and no Domain are mandatory. The diagrams below use the plain dev names.
+
+All three are written, read and cleared only through `src/lib/auth-cookies.ts`
+(`applyAuthCookies`, `readAuthCookies`, `clearAuthCookies`). Clearing is a `set` with
+`maxAge: 0` and the same options, never `delete`: browsers drop the deletion of a
+`__Host-` cookie that lacks Secure.
+
 ## Token Lifetimes
 
-- **Access token:** 60 minutes
+- **Access token:** 60 minutes (backend `JWT_ACCESS_TOKEN_EXPIRE_SECONDS=3600`)
 - **Refresh token:** longer-lived (backend-controlled)
 - **Proactive refresh threshold:** 10 seconds (refresh when <10s remain)
 
@@ -289,6 +304,67 @@ backend emails a link to `{FRONTEND_BASE_URL}/reset-password?token=...`
 After a successful reset the user signs in again with the new password. Any
 other open tab's next refresh call 401s (all refresh tokens revoked), so the
 existing "refresh failed → logout" middleware path (diagram 5) cleans it up.
+
+### 10. Register → Verify → Explicit First Login
+
+```
+Browser            Next.js actions              FastAPI                    Email
+  | submit form  ---> register()                                              |
+  |   firstName, lastName, email, password,                                   |
+  |   acceptTerms, acceptPrivacy                                              |
+  |                  zod registerSchema (boxes must be "on")                  |
+  |                  POST /auth/register {email, password, first_name,        |
+  |                    last_name, consents: CURRENT_VERSIONS}  ------------>  |
+  |                                          user created, status             |
+  |                                          pending_verification  ---------> | link
+  |                  <-- 201 {detail}  (no tokens)                            |
+  | <-- "Check your email" panel (no cookies, no redirect)                    |
+  |                                                                           |
+  | login before confirming ---> POST /auth/login                             |
+  |                  <-- 403 {code: "email_not_verified"}                     |
+  | <-- "Please confirm your email" + link to /verify-email                   |
+  |                                                                           |
+  | GET /verify-email?token=...   (renders a Confirm button; nothing posted)  |
+  | click Confirm ---> verifyEmail()  POST /auth/verify-email {token}         |
+  |                  <-- 200 {detail}  (no tokens)   400 invalid / 410 expired|
+  | <-- "Email confirmed" + link to /user/login                               |
+  |                                                                           |
+  | POST /user/login ---> login() ---> 200 TokenResponse ---> Set-Cookie x3   |
+  | <-- 303 /user/profile                                                     |
+```
+
+`/verify-email` without a token, or after a 400/410, shows the resend form
+(`POST /auth/resend-verification`, always 200). Registration needs
+`REGISTRATION_ENABLED=true`; otherwise the proxy redirects `/user/register` to login.
+
+### 11. Re-consent (forced and self-service)
+
+```
+GET /user/*  --->  user/layout.tsx: getCurrentUser()
+                   onboardingRedirect(user, CURRENT_VERSIONS)
+                     stale Terms or Privacy  --->  redirect /accept-terms
+/accept-terms: lists only the stale documents, one checkbox each
+  Continue ---> acceptTerms() ---> POST /auth/consent {terms?: version, privacy?: version}
+           ---> redirect /user/profile
+  Log out, or "Delete my account" (the delete page is exempt from the gate)
+```
+
+`CURRENT_VERSIONS` is the newest dated file of each document
+(`src/content/legal/<doc>/<date>.mdx`). The same endpoint backs
+`/user/profile/manage-consent`, where a user can re-record acceptance at any time.
+Layouts do not protect server actions: `createReading`, `generateInterpretation`,
+`updateReadingTags` and `contactSupport` call `requireConsentedUser()` and answer with
+their not-authenticated shape while consent is stale.
+
+### 12. Account Deletion
+
+```
+/user/profile/delete-account: password + typed "DELETE"
+  deleteAccount() ---> zod deleteAccountSchema
+                  ---> DELETE /auth/me {password}
+                         403 {code: "invalid_password"}  ---> field error, nothing deleted
+                         204  ---> clearAuthCookies() ---> redirect /
+```
 
 ## Lessons Learned
 

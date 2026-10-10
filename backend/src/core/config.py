@@ -26,7 +26,7 @@ class Settings(BaseSettings):
     # No default on purpose: a fallback committed to the repo would let anyone forge
     # tokens. Startup fails fast unless JWT_SECRET_KEY is set (env or .env).
     jwt_secret_key: str
-    jwt_access_token_expire_seconds: int = 86400
+    jwt_access_token_expire_seconds: int = 3600
     jwt_refresh_token_expire_days: int = 30
     jwt_algorithm: str = "HS256"
 
@@ -63,6 +63,24 @@ class Settings(BaseSettings):
     password_reset_token_ttl_minutes: int = 30
     password_reset_rate_limit_window_seconds: int = 3600
     password_reset_rate_limit_max_attempts: int = 5
+
+    # Email verification (hard gate: no session until the emailed link is confirmed).
+    # Resend throttling reuses the password-reset window/max above.
+    email_verification_token_ttl_hours: int = 24
+    # A never-verified account is purged this long after registration or its last
+    # resend (migration 014's TTL index on users.verification_deadline_at).
+    pending_account_ttl_days: int = 7
+
+    # Rate limits. Login is keyed by client IP + email (so a flood cannot lock the real
+    # owner out from elsewhere), register by client IP.
+    login_rate_limit_window_seconds: int = 900
+    login_rate_limit_max_attempts: int = 10
+    register_rate_limit_window_seconds: int = 3600
+    register_rate_limit_max_attempts: int = 10
+    # The API is only reached through the Next.js server, which forwards the browser's
+    # address in X-Forwarded-For. Set false if the API is ever exposed directly —
+    # a client-supplied header would otherwise let a caller pick its own throttle key.
+    rate_limit_trust_forwarded_for: bool = True
 
     # Support contact form — messages are relayed to this inbox through the email
     # adapter (Reply-To = the user). Empty means the endpoint answers 503.

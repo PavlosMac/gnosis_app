@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import createMDX from "@next/mdx";
 
 // Security headers to apply to all routes
 const securityHeaders = [
@@ -35,11 +36,11 @@ const securityHeaders = [
     key: 'Content-Security-Policy',
     value: [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
       "style-src 'self' 'unsafe-inline'",
-      "img-src 'self' data: blob: https://steve-p.org https://www.google-analytics.com https://www.googletagmanager.com",
+      "img-src 'self' data: blob: https://steve-p.org",
       "font-src 'self'",
-      "connect-src 'self' https://www.googletagmanager.com https://www.google-analytics.com https://region1.google-analytics.com",
+      "connect-src 'self'",
       "frame-ancestors 'self'",
       "base-uri 'self'",
       "form-action 'self'",
@@ -49,6 +50,9 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   output: 'standalone',
+
+  // .mdx is only used for the versioned legal documents (src/content/legal)
+  pageExtensions: ['ts', 'tsx', 'md', 'mdx'],
 
   // Image optimization for better caching
   images: {
@@ -134,4 +138,7 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+// No remark/rehype plugins: Turbopack cannot serialise plugin functions
+const withMDX = createMDX();
+
+export default withMDX(nextConfig);

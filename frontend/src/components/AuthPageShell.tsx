@@ -124,4 +124,32 @@ export const AuthLink = ({ href, children }: AuthLinkProps) => (
   </Link>
 );
 
+interface AuthButtonLinkProps {
+  href: string;
+  children: React.ReactNode;
+}
+
+/** A link styled as the primary submit button, e.g. "Enter the Sanctum" on a
+    success panel */
+export const AuthButtonLink = ({ href, children }: AuthButtonLinkProps) => (
+  <Link
+    href={href}
+    className="mt-6 block w-full py-3 rounded-lg border border-[#d4af37]/60
+               bg-gradient-to-r from-[#d4af37]/20 via-[#d4af37]/15 to-[#d4af37]/20
+               text-[#d4af37] tracking-widest uppercase text-sm text-center
+               hover:border-[#d4af37] hover:bg-[#d4af37]/30
+               transition-all duration-300"
+    style={{ fontFamily: "'Cinzel', serif" }}
+  >
+    {children}
+  </Link>
+);
+
+/** Body copy of a success / information panel inside the auth card */
+export const AuthPanelText = ({ children }: { children: React.ReactNode }) => (
+  <p className="text-[#e6d5b8]/80 text-base" style={{ fontFamily: "'Crimson Pro', serif" }}>
+    {children}
+  </p>
+);
+
 export default AuthPageShell;

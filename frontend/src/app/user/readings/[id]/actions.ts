@@ -1,7 +1,8 @@
 "use server";
 
 import { authenticatedFetch } from "@/lib/api-client";
-import { getCurrentUser } from "@/lib/session";
+import { ONBOARDING_REQUIRED_MESSAGE } from "@/lib/onboarding";
+import { consentRefusalReason, getCurrentUser, requireConsentedUser } from "@/lib/session";
 import type { ReadingDetail, UpdateTagsResult } from "@/types/reading";
 import { updateTagsSchema } from "@/lib/validation/reading-schemas";
 import { readingIdSchema } from "@/lib/validation/interpret-schemas";
@@ -43,8 +44,14 @@ export const updateReadingTags = async (
   readingId: string,
   tags: string[]
 ): Promise<UpdateTagsResult> => {
-  const user = await getCurrentUser();
-  if (!user) return { ok: false, error: "You must be logged in." };
+  const user = await requireConsentedUser();
+  if (!user) {
+    const onboarding = (await consentRefusalReason()) === "onboarding";
+    return {
+      ok: false,
+      error: onboarding ? ONBOARDING_REQUIRED_MESSAGE : "You must be logged in.",
+    };
+  }
 
   if (!readingIdSchema.safeParse(readingId).success)
     return { ok: false, error: "Invalid reading ID." };

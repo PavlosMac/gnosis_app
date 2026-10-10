@@ -22,7 +22,7 @@ The frontend reaches the backend via `GNOSIS_API_BASE_URL`, server-side only.
 Dev topology: root `make dev` runs Mongo + API via `backend/docker-compose.yml`
 (compose project `gnosis`; API on `http://localhost:8001`, Mongo on
 `localhost:27019`) and the Next.js dev server natively on `:3000`. The Makefile
-exports `GNOSIS_API_BASE_URL=http://localhost:8001` itself, so
+exports `GNOSIS_API_BASE_URL=http://localhost:8001` and `REGISTRATION_ENABLED=true` itself, so
 `frontend/.env.local` (see `frontend/.env.example`) only matters for a bare
 `npm run dev`. `make -C backend dev` (uvicorn on `:8000`) is a native fallback
 that needs the compose Mongo up. `MONGODB_URI` has no code default: `backend/.env`

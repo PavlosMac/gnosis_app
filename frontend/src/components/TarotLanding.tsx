@@ -1,8 +1,13 @@
 "use client";
 import React from "react";
 import Link from "next/link";
+import { useAuth } from "@/app/providers/auth-provider";
+
+const FOOTER_LINK_CLASS =
+  "text-[#d4af37]/70 hover:text-[#d4af37] transition-colors underline-offset-4 hover:underline";
 
 const TarotLanding: React.FC = () => {
+  const { user, registrationEnabled } = useAuth();
   return (
     <div className="w-full max-w-5xl mx-auto px-4 py-8">
       {/* Header */}
@@ -371,6 +376,26 @@ const TarotLanding: React.FC = () => {
           <span className="text-[#d4af37]/30">✦</span>
           <span className="text-[#d4af37]/40">✦</span>
         </div>
+        <p
+          className="text-[#e6d5b8]/50 text-sm"
+          style={{ fontFamily: "'Crimson Pro', serif", marginTop: "1rem" }}
+        >
+          {registrationEnabled && !user && (
+            <>
+              <Link href="/user/register" className={FOOTER_LINK_CLASS}>
+                Begin your journey
+              </Link>
+              {" · "}
+            </>
+          )}
+          <Link href="/legal/terms" className={FOOTER_LINK_CLASS}>
+            Terms
+          </Link>
+          {" · "}
+          <Link href="/legal/privacy" className={FOOTER_LINK_CLASS}>
+            Privacy
+          </Link>
+        </p>
       </div>
     </div>
   );

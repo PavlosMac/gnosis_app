@@ -1,10 +1,21 @@
 import type { ReadingDetail, TagSummary } from "@/types/reading";
 import type { ContactSupportInput } from "@/lib/validation/support-schemas";
+import type { UserConsents } from "@/lib/consent";
+
+/** Where the account is in onboarding. `payment_required` slots in later. */
+export type UserStatus = "pending_verification" | "active";
 
 export interface User {
   id: string;
   email: string;
   displayName: string | null;
+  firstName: string | null;
+  lastName: string | null;
+  /** Accepted legal-document versions. `undefined` = the backend predates
+      consent (the key is always present once it ships, `{}` for legacy users) */
+  consents?: UserConsents;
+  status: UserStatus;
+  emailVerifiedAt: string | null;
   credits: number;
   isSuperadmin: boolean;
   createdAt: string;
@@ -23,6 +34,12 @@ export interface MeResponse {
   _id: string;
   email: string;
   display_name: string | null;
+  first_name?: string | null;
+  last_name?: string | null;
+  consents?: UserConsents;
+  /** Absent on a backend that predates email verification — treated as active */
+  status?: UserStatus;
+  email_verified_at?: string | null;
   credits: number;
   is_superadmin: boolean;
   created_at: string;
@@ -39,8 +56,42 @@ export interface AuthFormState<TValues = never> {
   values?: TValues;
 }
 
-export interface LoginFormState extends AuthFormState {}
-export interface RegisterFormState extends AuthFormState {}
+export interface LoginFormState extends AuthFormState {
+  /** The account exists but its email is unconfirmed — the form links to
+      /verify-email so the user can request a fresh link */
+  emailNotVerified?: boolean;
+}
+
+/** What the register form echoes back on failure. Never the passwords. */
+export interface RegisterEchoValues {
+  firstName: string;
+  lastName: string;
+  email: string;
+  acceptTerms: boolean;
+  acceptPrivacy: boolean;
+}
+
+export interface RegisterFormState extends AuthFormState<RegisterEchoValues> {}
+
+export interface VerifyEmailFormState extends AuthFormState {
+  /** Set when the verification token itself was rejected (400/410) — the page
+      renders the dead-link panel with the resend form */
+  tokenProblem?: "invalid" | "expired";
+}
+
+export interface ResendVerificationFormState extends AuthFormState<{ email: string }> {}
+
+export interface ConsentFormState extends AuthFormState {
+  /** Shown beside a successful save, e.g. when a box was left unticked */
+  notice?: string;
+}
+
+export interface DeleteAccountFormState extends AuthFormState {}
+
+/** `{"detail": "..."}` body returned by register / verify-email / resend */
+export interface DetailResponse {
+  detail: string;
+}
 export interface ForgotPasswordFormState extends AuthFormState {}
 export interface ContactSupportFormState extends AuthFormState<ContactSupportInput> {}
 
@@ -58,12 +109,19 @@ export interface MessageResponse {
 export interface AuthContextValue {
   user: User | null;
   clearUser: () => void;
+  /** The server-only REGISTRATION_ENABLED flag, exposed once by the root layout */
+  registrationEnabled: boolean;
 }
 
 export interface UserResponse {
   id: string;
   email: string;
   display_name: string | null;
+  first_name?: string | null;
+  last_name?: string | null;
+  consents?: UserConsents;
+  status?: UserStatus;
+  email_verified_at?: string | null;
   credits: number;
   is_superadmin: boolean;
   created_at: string;
@@ -81,6 +139,11 @@ export const mapMeResponseToUser = (me: MeResponse): User => ({
   id: me._id,
   email: me.email,
   displayName: me.display_name,
+  firstName: me.first_name ?? null,
+  lastName: me.last_name ?? null,
+  consents: me.consents,
+  status: me.status ?? "active",
+  emailVerifiedAt: me.email_verified_at ?? null,
   credits: me.credits,
   isSuperadmin: me.is_superadmin,
   createdAt: me.created_at,
@@ -151,6 +214,11 @@ export const mapUserResponseToUser = (u: UserResponse): User => ({
   id: u.id,
   email: u.email,
   displayName: u.display_name,
+  firstName: u.first_name ?? null,
+  lastName: u.last_name ?? null,
+  consents: u.consents,
+  status: u.status ?? "active",
+  emailVerifiedAt: u.email_verified_at ?? null,
   credits: u.credits,
   isSuperadmin: u.is_superadmin,
   createdAt: u.created_at,

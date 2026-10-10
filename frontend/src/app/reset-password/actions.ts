@@ -1,6 +1,7 @@
 "use server";
 
 import { clearAuthCookies, publicFetch } from "@/lib/api-client";
+import { WEAK_PASSWORD } from "@/lib/password-policy";
 import { resetPasswordSchema } from "@/lib/validation/auth-schemas";
 import type { MessageResponse, ResetPasswordFormState } from "@/types/auth";
 
@@ -36,7 +37,12 @@ export const resetPassword = async (
   });
 
   if (!result.ok) {
-    console.log("[AUTH:RESET] Reset failed", { status: result.status });
+    console.log("[AUTH:RESET] Reset failed", { status: result.status, code: result.code });
+    // The backend refused the password itself (blocklist, or it contains the
+    // account's name or email). The link is not consumed, so the user can retry.
+    if (result.code === WEAK_PASSWORD && result.detail) {
+      return { success: false, fieldErrors: { password: [result.detail] } };
+    }
     // 400/410 are the token's own verdicts and drive the dead-link panel (the
     // form owns that copy via `tokenProblem`); everything else — including a
     // 422 the zod guard should have made impossible — is a plain error line

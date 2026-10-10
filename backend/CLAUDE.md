@@ -146,12 +146,13 @@ src/auth/queries/get_user_by_id.py   # GetUserByIdQuery + GetUserByIdHandler in 
 ### Logging
 - `structlog` via `structlog.stdlib.get_logger(__name__)`; JSON in prod (`LOG_JSON`), console in dev
 - Event name is a short lowercase phrase; all data goes in keyword fields — never f-strings or `%` formatting in the message, never `extra=`
-- No PII in log fields: no emails, names, tokens, or raw request bodies. `user_id` is acceptable
+- No PII in log fields: no emails, names, tokens, links, or raw request bodies. `user_id` is acceptable
 - Levels: `info` for business events, `warning` for handled `AppError`s and validation failures, `error` only with `exc_info` for unhandled failures, `debug` for payloads
 
 ### Change Checklist
 Before opening a PR, if the diff touches any of these:
 - **New field on an existing collection** → migration to backfill, or every reader tolerates its absence
+- **New collection that stores a `user_id`** → add it to `DeleteUserHandler` (`src/auth/commands/delete_user.py`), or account deletion leaves it behind
 - **New index** → migration; ships before the code that relies on it
 - **New setting** → add to `Settings` in `src/core/config.py` with a default, to `.env.example`, and to `.env.gnosis.prod` on the Pi
 - **New dependency** → `uv add` (pinned in `uv.lock`); Docker image needs a rebuild
@@ -183,10 +184,10 @@ Read these before searching. Grep/Glob for anything not listed here.
 - `src/llm/prompt_builder.py` — Prompt templates + token budgeting; regenerate `docs/prompts/prompt_reference.md` (`make prompt-doc`) after editing
 - `src/llm/pricing.py` — Per-model price table, `cost_usd()` / `worst_case_cost_usd()`
 - `src/notifications/port.py` — `EmailPort` ABC; `resend_adapter.py` (prod) / `console_adapter.py` (when `RESEND_API_KEY` is unset) / `mock_adapter.py` (tests)
-- `src/notifications/templates.py` — Password-reset and support-request email copy
+- `src/notifications/templates.py` — Password-reset, email-verification and support-request email copy
 
 ### Domains (each follows the folder layout above)
-- `src/auth/` — Reference domain: register, login/refresh JWT, password reset
+- `src/auth/` — Reference domain: register (names + consent), email verification gate (`UserStatus`, `SESSION_STATUSES`), login/refresh JWT, password reset, consent, account deletion. See `docs/auth/registration-verification-and-consent.md`
 - `src/users/` — Superadmin user listing
 - `src/readings/` — Saved readings + user tags
 - `src/interpretations/` — AI interpretations of readings; `commands/generate_interpretation.py` is the LLM call site and usage accounting

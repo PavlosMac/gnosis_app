@@ -21,6 +21,9 @@ class FailingEmailAdapter(EmailPort):
     async def send_password_reset(self, to: str, reset_link: str) -> None:
         raise EmailDeliveryError()
 
+    async def send_email_verification(self, to: str, verify_link: str) -> None:
+        raise EmailDeliveryError()
+
     async def send_support_request(
         self,
         to: str,

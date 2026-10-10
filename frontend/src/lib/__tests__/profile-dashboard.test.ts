@@ -7,6 +7,8 @@ import {
   formatReadingDate,
   truncateQuestion,
   tagHref,
+  agreementRowModel,
+  accountName,
 } from "@/lib/profile-dashboard";
 
 describe("chaliceFill", () => {
@@ -96,5 +98,60 @@ describe("tagHref", () => {
 
   it("encodes tags with spaces", () => {
     expect(tagHref("big decision")).toBe("/user/readings?page=1&tags=big+decision");
+  });
+});
+
+describe("agreementRowModel", () => {
+  const accepted = { version: "2026-10-04", accepted_at: "2026-10-04T10:12:00Z" };
+
+  it("links an accepted document to the exact version that was accepted", () => {
+    const rows = agreementRowModel({ terms: accepted, privacy: accepted });
+    expect(rows).toEqual([
+      {
+        id: "terms",
+        title: "Terms and Conditions",
+        accepted: true,
+        href: "/legal/terms/2026-10-04",
+        detail: "accepted 4 Oct 2026",
+      },
+      {
+        id: "privacy",
+        title: "Privacy Policy",
+        accepted: true,
+        href: "/legal/privacy/2026-10-04",
+        detail: "accepted 4 Oct 2026",
+      },
+    ]);
+  });
+
+  it("links a document with no record to its current version", () => {
+    const [terms, privacy] = agreementRowModel({ privacy: accepted });
+    expect(terms).toEqual({
+      id: "terms",
+      title: "Terms and Conditions",
+      accepted: false,
+      href: "/legal/terms",
+      detail: "Not yet recorded",
+    });
+    expect(privacy.accepted).toBe(true);
+  });
+
+  it("treats absent consents (older backend) as nothing recorded", () => {
+    expect(agreementRowModel(undefined).map((r) => r.accepted)).toEqual([false, false]);
+  });
+
+  it("does not turn a malformed stored version into a path", () => {
+    const rows = agreementRowModel({ terms: { version: "../x", accepted_at: "nope" } });
+    expect(rows[0].href).toBe("/legal/terms");
+    expect(rows[0].accepted).toBe(true);
+  });
+});
+
+describe("accountName", () => {
+  it("prefers the display name, then first + last, then Seeker", () => {
+    expect(accountName({ displayName: "Ada L", firstName: "Ada", lastName: "Lovelace" })).toBe("Ada L");
+    expect(accountName({ displayName: null, firstName: "Ada", lastName: "Lovelace" })).toBe("Ada Lovelace");
+    expect(accountName({ displayName: null, firstName: "Ada", lastName: null })).toBe("Ada");
+    expect(accountName({ displayName: null, firstName: null, lastName: null })).toBe("Seeker");
   });
 });

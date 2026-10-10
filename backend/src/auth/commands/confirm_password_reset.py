@@ -1,13 +1,17 @@
-import hashlib
 from datetime import UTC, datetime
 
 from src.auth.repository import (
+    AuthReadRepository,
     AuthWriteRepository,
     PasswordResetTokenRepository,
     RefreshTokenRepository,
 )
 from src.auth.service import ExpiredPasswordResetTokenError, InvalidPasswordResetTokenError
-from src.core.security import hash_password
+from src.core.password_policy import (
+    validate_password_is_not_personal,
+    validate_password_strength,
+)
+from src.core.security import hash_password, hash_token
 from src.cqrs.commands import BaseCommand, CommandHandler
 
 
@@ -22,13 +26,31 @@ class ConfirmPasswordResetHandler(CommandHandler[ConfirmPasswordResetCommand, No
         write_repo: AuthWriteRepository,
         reset_token_repo: PasswordResetTokenRepository,
         refresh_token_repo: RefreshTokenRepository,
+        read_repo: AuthReadRepository,
     ) -> None:
+        self._read_repo = read_repo
         self._write_repo = write_repo
         self._reset_token_repo = reset_token_repo
         self._refresh_token_repo = refresh_token_repo
 
     async def handle(self, command: ConfirmPasswordResetCommand) -> None:
-        token_hash = hashlib.sha256(command.token.encode()).hexdigest()
+        # Policy first, so a refused password never burns the single-use link. The
+        # strength rules need nothing but the password (and so say nothing about the
+        # token); the name/email rule needs the account, read through the unconsumed
+        # token.
+        validate_password_strength(command.new_password)
+        token_hash = hash_token(command.token)
+        pending = await self._reset_token_repo.peek(token_hash)
+        if pending is not None:
+            user = await self._read_repo.find_by_id(pending["user_id"])
+            if user is not None:
+                validate_password_is_not_personal(
+                    command.new_password,
+                    email=user.get("email"),
+                    first_name=user.get("first_name"),
+                    last_name=user.get("last_name"),
+                )
+
         doc = await self._reset_token_repo.consume(token_hash)
         if doc is None:
             raise InvalidPasswordResetTokenError()

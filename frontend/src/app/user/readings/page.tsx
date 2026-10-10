@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { enforceOnboarding } from "@/lib/onboarding-gate";
 import TarotPageLayout from "@/components/TarotPageLayout";
 import { getReadings } from "./actions";
 import ReadingsFilterPanel from "@/components/ReadingsFilterPanel";
@@ -47,6 +48,8 @@ const ReadingsPage = async ({
     page_size?: string;
   }>;
 }) => {
+  await enforceOnboarding();
+
   const ctx = parseListContext(await searchParams) ?? { page: 1 };
   const { page: currentPage, spreadType, tags, birthDate, sort } = ctx;
   const pageSize = pageSizeOf(ctx);

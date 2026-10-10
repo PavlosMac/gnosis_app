@@ -31,6 +31,11 @@ class ReadingWriteRepository(BaseWriteRepository):
         return READINGS_COLLECTION
 
 
+    async def delete_all_for_user(self, user_id: str) -> None:
+        """Account deletion: every reading the user owns."""
+        await self._collection.delete_many({"user_id": ObjectId(user_id)})
+
+
 class ReadingReadRepository(BaseReadRepository):
     @property
     def collection_name(self) -> str:
@@ -119,6 +124,11 @@ class UserTagsWriteRepository(BaseWriteRepository):
             await self._collection.replace_one({"user_id": oid}, document, upsert=True)
         except DuplicateKeyError:
             await self._collection.replace_one({"user_id": oid}, document)
+
+
+    async def delete_all_for_user(self, user_id: str) -> None:
+        """Account deletion: the user's tag vocabulary document."""
+        await self._collection.delete_many({"user_id": ObjectId(user_id)})
 
 
 class UserTagsReadRepository(BaseReadRepository):

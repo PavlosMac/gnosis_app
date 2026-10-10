@@ -1,8 +1,9 @@
 # Email Service
 
 How the API sends email: the `EmailPort` abstraction in `src/notifications/`, the three
-adapters behind it, how one is chosen at startup, and the password-reset flow that is
-(so far) its only caller. Design rationale lives in
+adapters behind it, how one is chosen at startup, and the flows that call it: password
+reset, email verification and the support relay. The verification flow is described in
+[`docs/auth/registration-verification-and-consent.md`](../auth/registration-verification-and-consent.md). Design rationale lives in
 [`docs/auth/password-reset-flow.md`](../auth/password-reset-flow.md); this doc is the
 "how it actually works" reference for the code as built.
 
@@ -14,9 +15,9 @@ and a test mock:
 
 | Piece | File | Job |
 |---|---|---|
-| `EmailPort` | `src/notifications/port.py` | The contract: `send_password_reset(to, reset_link)`, `send_support_request(to, reply_to, subject, message, user_id, submitted_at)` and `close()`. Adapters either succeed or raise `EmailDeliveryError` — nothing else escapes. |
+| `EmailPort` | `src/notifications/port.py` | The contract: `send_password_reset(to, reset_link)`, `send_email_verification(to, verify_link)`, `send_support_request(to, reply_to, subject, message, user_id, submitted_at)` and `close()`. Adapters either succeed or raise `EmailDeliveryError` — nothing else escapes. |
 | `ResendEmailAdapter` | `src/notifications/resend_adapter.py` | Real delivery via the Resend SDK (`resend.Emails.send_async`). |
-| `ConsoleEmailAdapter` | `src/notifications/console_adapter.py` | Dev fallback — logs the recipient and the raw reset link (or the support message) instead of sending. |
+| `ConsoleEmailAdapter` | `src/notifications/console_adapter.py` | Fallback when `RESEND_API_KEY` is unset — logs instead of sending. Never logs recipients or message bodies; the link is logged only when constructed with `reveal_links=True` (`APP_ENV=development`), otherwise `[redacted]`. |
 | `MockEmailAdapter` | `src/notifications/mock_adapter.py` | Tests — appends `{to, reset_link}` to `sent_password_resets` so a test can pull the token straight out; support relays land in `sent_support_requests`. |
 | `EmailDeliveryError` | `src/notifications/errors.py` | The single error at the port boundary (`AppError`, 502). |
 | Templates | `src/notifications/templates.py` | Subject, plain-text and HTML bodies for the reset and support emails. |
@@ -28,7 +29,7 @@ Chosen once in the lifespan (`src/main.py`), keyed on the presence of
 
 - `RESEND_API_KEY` set → `ResendEmailAdapter(api_key, from_address=Settings.email_from)`.
   Real email goes out, even on a dev machine.
-- unset → `ConsoleEmailAdapter`.
+- unset → `ConsoleEmailAdapter(reveal_links=settings.app_env == "development")`.
 
 The chosen adapter is stored on `app.state.email`, exposed to routers as `EmailDep`
 (`src/core/dependencies.py`), and handed to `RequestPasswordResetHandler` through
@@ -41,7 +42,9 @@ with a `MockEmailAdapter` and exposes it as the `mock_email` fixture.
 |---|---|---|---|
 | `resend_api_key` | `RESEND_API_KEY` | `""` | Empty selects the console adapter. |
 | `email_from` | `EMAIL_FROM` | `Tarot Divinations <noreply@tarotdivinations.com>` | Must be on a domain verified in Resend (see [Resend setup](#resend-setup)). |
-| `frontend_base_url` | `FRONTEND_BASE_URL` | `http://localhost:3000` | Reset links are `{frontend_base_url}/reset-password?token=…`. |
+| `frontend_base_url` | `FRONTEND_BASE_URL` | `http://localhost:3000` | Links are `{frontend_base_url}/reset-password?token=…` and `{frontend_base_url}/verify-email?token=…`. |
+| `email_verification_token_ttl_hours` | `EMAIL_VERIFICATION_TOKEN_TTL_HOURS` | `24` | Verification-link lifetime. The email wording is derived from it. |
+| `pending_account_ttl_days` | `PENDING_ACCOUNT_TTL_DAYS` | `7` | Never-verified accounts are purged after this; stated in the verification email. |
 | `password_reset_token_ttl_minutes` | `PASSWORD_RESET_TOKEN_TTL_MINUTES` | `30` | Token lifetime. The email wording is hardcoded to match — see [Need to know](#need-to-know). |
 | `password_reset_rate_limit_window_seconds` | `PASSWORD_RESET_RATE_LIMIT_WINDOW_SECONDS` | `3600` | Throttle window per email. |
 | `password_reset_rate_limit_max_attempts` | `PASSWORD_RESET_RATE_LIMIT_MAX_ATTEMPTS` | `5` | Requests allowed per email per window. |
@@ -159,13 +162,15 @@ One-time, per environment, done by a human in the Resend dashboard and Cloudflar
 5. Set `FRONTEND_BASE_URL` to the real frontend origin — the link in the email is built
    from it verbatim.
 
-Local dev normally leaves `RESEND_API_KEY` empty and reads the reset link out of the
-console adapter's log line (`password reset email (console)`).
+Local dev normally leaves `RESEND_API_KEY` empty and reads the link out of the console
+adapter's log line (`password reset email (console)` / `email verification email
+(console)`). The link appears only with `APP_ENV=development`.
 
 ## Adding another email type
 
 The port is deliberately narrow — one method per email the product sends, not a generic
-`send(subject, body)`. To add, say, a welcome email:
+`send(subject, body)`. `send_email_verification` (added 2026-10-04) followed this recipe.
+To add, say, a welcome email:
 
 1. Add `send_welcome(...)` as an abstract method on `EmailPort`.
 2. Add `welcome_subject/_text/_html` to `templates.py` (plain-text and HTML both; inline
@@ -185,17 +190,22 @@ The port is deliberately narrow — one method per email the product sends, not 
 - **`EmailDeliveryError` is a 502 that no client ever sees from the reset flow.** The
   handler catches it (step 5 above). The status exists for any future caller that
   *should* surface delivery failures.
-- **The throttle case-folds; the account lookup does not.** `find_by_email` is an exact
-  match, so a user registered as `Ann@x.com` must request the reset with that casing to
-  get an email — while `ann@x.com` still burns their throttle budget. This is the
-  existing behavior of login too, not something the reset flow introduced.
+- **Emails are case-folded everywhere** (since 2026-10-04): the request schemas
+  lower-case them, registration stores them lower-cased and `find_by_email` folds its
+  query. The old gotcha — throttle case-folded, lookup exact — is gone. An account
+  stored with mixed case before that date cannot be found until it is re-registered.
+- **The verification email's wording is derived from settings** (`ttl_hours`,
+  `retention_days` are passed into the template functions). The reset email's
+  "30 minutes" is still the hardcoded string above.
 - **The throttle can over-count under a concurrent burst,** by design (record-then-count).
   Five genuinely simultaneous requests for one email may all get 429 even though only
   five are allowed; a retry a moment later succeeds. Erring this way is the point — the
   alternative order let a burst bypass the cap entirely.
-- **The raw token exists in exactly two places:** the email (or the console log line in
-  dev) and the URL the user clicks. The database only ever holds the hash. Dev logs
-  therefore contain live reset links — don't ship console-adapter logs anywhere shared.
+- **The raw token exists in exactly two places:** the email (or the console log line
+  when `APP_ENV=development`) and the URL the user clicks. The database only ever holds
+  the hash. Development logs therefore contain live links — don't ship them anywhere
+  shared. Outside development the console adapter redacts the link, and neither adapter
+  logs a recipient address (fixed 2026-10-04; both used to).
 - **The Resend SDK authenticates through a module-level global** (`resend.api_key`),
   set once in the adapter's constructor. One key per process; don't construct two
   adapters with different keys.
@@ -221,9 +231,10 @@ The port is deliberately narrow — one method per email the product sends, not 
 | Settings + env defaults | `src/core/config.py`, `.env.example` |
 | Endpoints + request/response schemas | `src/auth/router.py`, `src/auth/schemas.py` |
 | Request / confirm handlers | `src/auth/commands/request_password_reset.py`, `src/auth/commands/confirm_password_reset.py` |
-| Token, throttle, refresh-token repositories | `src/auth/repository.py` |
+| Token (`OneTimeTokenRepository`), throttle (`ThrottleRepository`), refresh-token repositories | `src/auth/repository.py` |
+| Email verification commands | `src/auth/commands/{register_user,verify_email,resend_verification,send_verification_email}.py` |
 | Reset-flow errors (400 / 410 / 429) | `src/auth/service.py` |
-| Collections + TTL indexes | `src/migrations/versions/011_password_reset_tokens_indexes.py` |
+| Collections + TTL indexes | `src/migrations/versions/011_password_reset_tokens_indexes.py`, `013_email_verification_tokens_indexes.py` |
 | Support endpoint, schemas, handler, errors (429 / 503) | `src/support/router.py`, `src/support/schemas.py`, `src/support/commands/contact_support.py`, `src/support/service.py` |
 
 ## Tests to read first

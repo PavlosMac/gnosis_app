@@ -108,6 +108,9 @@ async def test_email_delivery_failure_is_swallowed(mock_db, known_user):
         async def send_password_reset(self, to: str, reset_link: str) -> None:
             raise EmailDeliveryError()
 
+        async def send_email_verification(self, to: str, verify_link: str) -> None:
+            raise EmailDeliveryError()
+
         async def send_support_request(
             self,
             to: str,
@@ -140,6 +143,7 @@ def confirm_handler(mock_db):
         write_repo=AuthWriteRepository(mock_db),
         reset_token_repo=PasswordResetTokenRepository(mock_db),
         refresh_token_repo=RefreshTokenRepository(mock_db),
+        read_repo=AuthReadRepository(mock_db),
     )
 
 

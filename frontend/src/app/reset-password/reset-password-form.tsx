@@ -9,6 +9,7 @@ import AuthPageShell, {
   AuthSubmitButton,
 } from "@/components/AuthPageShell";
 import AuthField from "@/components/AuthField";
+import { PASSWORD_HINT } from "@/lib/password-policy";
 import { resetPassword } from "./actions";
 import type { ResetPasswordFormState } from "@/types/auth";
 
@@ -79,6 +80,7 @@ const ResetPasswordForm = ({ token }: ResetPasswordFormProps) => {
               placeholder="&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;"
               error={state.fieldErrors?.password?.[0]}
               autoComplete="new-password"
+              hint={PASSWORD_HINT}
               required
             />
             <AuthField

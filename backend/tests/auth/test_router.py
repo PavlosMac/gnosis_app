@@ -4,39 +4,33 @@ import jwt as pyjwt
 import pytest
 
 from src.core.config import settings
+from tests.factories import make_register_body, register_verify_and_login, verification_token
 
 
 @pytest.mark.asyncio
 async def test_register(client):
     response = await client.post(
-        "/api/v1/auth/register",
-        json={
-            "email": "test@example.com",
-            "password": "securepassword123",
-            "display_name": "Test User",
-        },
+        "/api/v1/auth/register", json=make_register_body(email="test@example.com")
     )
     assert response.status_code == 201
     data = response.json()
-    assert "access_token" in data
-    assert "refresh_token" in data
-    assert data["token_type"] == "bearer"
+    # Hard verification gate: registering never yields a session
+    assert "access_token" not in data
+    assert "refresh_token" not in data
+    assert "detail" in data
 
 
 @pytest.mark.asyncio
 async def test_register_duplicate_email(client):
-    payload = {"email": "dup@example.com", "password": "securepassword123"}
+    payload = make_register_body(email="dup@example.com")
     await client.post("/api/v1/auth/register", json=payload)
     response = await client.post("/api/v1/auth/register", json=payload)
     assert response.status_code == 409
 
 
 @pytest.mark.asyncio
-async def test_login(client):
-    await client.post(
-        "/api/v1/auth/register",
-        json={"email": "login@example.com", "password": "securepassword123"},
-    )
+async def test_login(client, mock_email):
+    await register_verify_and_login(client, mock_email, "login@example.com")
     response = await client.post(
         "/api/v1/auth/login",
         json={"email": "login@example.com", "password": "securepassword123"},
@@ -57,12 +51,9 @@ async def test_login_invalid_credentials(client):
 
 
 @pytest.mark.asyncio
-async def test_get_me(client):
-    reg = await client.post(
-        "/api/v1/auth/register",
-        json={"email": "me@example.com", "password": "securepassword123"},
-    )
-    token = reg.json()["access_token"]
+async def test_get_me(client, mock_email):
+    reg = await register_verify_and_login(client, mock_email, "me@example.com")
+    token = reg["access_token"]
 
     response = await client.get(
         "/api/v1/auth/me",
@@ -91,12 +82,9 @@ async def test_get_me_unauthenticated(client):
 
 
 @pytest.mark.asyncio
-async def test_refresh_tokens(client):
-    reg = await client.post(
-        "/api/v1/auth/register",
-        json={"email": "refresh@example.com", "password": "securepassword123"},
-    )
-    refresh_token = reg.json()["refresh_token"]
+async def test_refresh_tokens(client, mock_email):
+    reg = await register_verify_and_login(client, mock_email, "refresh@example.com")
+    refresh_token = reg["refresh_token"]
 
     response = await client.post(
         "/api/v1/auth/refresh",
@@ -116,12 +104,9 @@ async def test_refresh_tokens(client):
 
 
 @pytest.mark.asyncio
-async def test_refresh_with_access_token_fails(client):
-    reg = await client.post(
-        "/api/v1/auth/register",
-        json={"email": "accessrefresh@example.com", "password": "securepassword123"},
-    )
-    access_token = reg.json()["access_token"]
+async def test_refresh_with_access_token_fails(client, mock_email):
+    reg = await register_verify_and_login(client, mock_email, "accessrefresh@example.com")
+    access_token = reg["access_token"]
 
     response = await client.post(
         "/api/v1/auth/refresh",
@@ -131,12 +116,9 @@ async def test_refresh_with_access_token_fails(client):
 
 
 @pytest.mark.asyncio
-async def test_refresh_reuse_revokes_family(client):
-    reg = await client.post(
-        "/api/v1/auth/register",
-        json={"email": "rotation@example.com", "password": "securepassword123"},
-    )
-    old_refresh = reg.json()["refresh_token"]
+async def test_refresh_reuse_revokes_family(client, mock_email):
+    reg = await register_verify_and_login(client, mock_email, "rotation@example.com")
+    old_refresh = reg["refresh_token"]
 
     # First refresh succeeds and rotates the token
     response = await client.post(
@@ -154,12 +136,9 @@ async def test_refresh_reuse_revokes_family(client):
 
 
 @pytest.mark.asyncio
-async def test_refresh_replay_revokes_entire_family(client):
-    reg = await client.post(
-        "/api/v1/auth/register",
-        json={"email": "replay@example.com", "password": "securepassword123"},
-    )
-    old_refresh = reg.json()["refresh_token"]
+async def test_refresh_replay_revokes_entire_family(client, mock_email):
+    reg = await register_verify_and_login(client, mock_email, "replay@example.com")
+    old_refresh = reg["refresh_token"]
 
     # First refresh: rotates token, get new tokens
     first = await client.post(
@@ -185,12 +164,9 @@ async def test_refresh_replay_revokes_entire_family(client):
 
 
 @pytest.mark.asyncio
-async def test_logout(client):
-    reg = await client.post(
-        "/api/v1/auth/register",
-        json={"email": "logout@example.com", "password": "securepassword123"},
-    )
-    tokens = reg.json()
+async def test_logout(client, mock_email):
+    reg = await register_verify_and_login(client, mock_email, "logout@example.com")
+    tokens = reg
     access_token = tokens["access_token"]
     refresh_token = tokens["refresh_token"]
 
@@ -231,12 +207,9 @@ async def test_list_users_unauthenticated(client):
     assert response.status_code == 401
 
 
-async def test_list_users_forbidden_for_regular_user(client):
-    reg = await client.post(
-        "/api/v1/auth/register",
-        json={"email": "regular@example.com", "password": "securepassword123"},
-    )
-    token = reg.json()["access_token"]
+async def test_list_users_forbidden_for_regular_user(client, mock_email):
+    reg = await register_verify_and_login(client, mock_email, "regular@example.com")
+    token = reg["access_token"]
     response = await client.get(
         "/api/v1/users",
         headers={"Authorization": f"Bearer {token}"},
@@ -259,13 +232,10 @@ async def test_list_users_as_superadmin(client, superadmin_token):
     assert data["page"] == 1
 
 
-async def test_list_users_pagination_params(client, superadmin_token):
+async def test_list_users_pagination_params(client, superadmin_token, mock_email):
     # Register additional users
     for i in range(3):
-        await client.post(
-            "/api/v1/auth/register",
-            json={"email": f"pag{i}@example.com", "password": "securepassword123"},
-        )
+        await register_verify_and_login(client, mock_email, f"pag{i}@example.com")
 
     response = await client.get(
         "/api/v1/users?page=1&page_size=2",
@@ -312,13 +282,10 @@ async def test_expired_refresh_token_returns_401(client):
 
 
 @pytest.mark.asyncio
-async def test_expired_access_then_refresh_rotation_flow(client):
+async def test_expired_access_then_refresh_rotation_flow(client, mock_email):
     """Expired access → 401 → refresh → new tokens → retry succeeds."""
-    reg = await client.post(
-        "/api/v1/auth/register",
-        json={"email": "rotation_flow@example.com", "password": "securepassword123"},
-    )
-    tokens = reg.json()
+    reg = await register_verify_and_login(client, mock_email, "rotation_flow@example.com")
+    tokens = reg
     refresh_token = tokens["refresh_token"]
 
     # Extract user_id + family_id from the valid access token
@@ -353,3 +320,82 @@ async def test_expired_access_then_refresh_rotation_flow(client):
     )
     assert me_resp.status_code == 200
     assert me_resp.json()["email"] == "rotation_flow@example.com"
+
+
+# --- Email normalisation, names and consents ---
+
+
+async def test_register_normalises_email_and_login_is_case_insensitive(client, mock_db, mock_email):
+    await register_verify_and_login(client, mock_email, "MixedCase@Example.com")
+    assert await mock_db["users"].find_one({"email": "mixedcase@example.com"}) is not None
+
+    login = await client.post(
+        "/api/v1/auth/login",
+        json={"email": "MIXEDCASE@example.COM", "password": "securepassword123"},
+    )
+    assert login.status_code == 200
+
+
+async def test_register_duplicate_email_differing_only_in_case(client):
+    await client.post("/api/v1/auth/register", json=make_register_body(email="dupcase@example.com"))
+    response = await client.post(
+        "/api/v1/auth/register", json=make_register_body(email="DupCase@Example.com")
+    )
+    assert response.status_code == 409
+
+
+async def test_get_me_returns_empty_consents_for_a_legacy_document(client, mock_db):
+    from src.core.security import hash_password
+
+    now = datetime.now(UTC)
+    await mock_db["users"].insert_one(
+        {
+            "email": "legacy@example.com",
+            "password_hash": hash_password("securepassword123"),
+            "created_at": now,
+            "updated_at": now,
+        }
+    )
+    login = await client.post(
+        "/api/v1/auth/login",
+        json={"email": "legacy@example.com", "password": "securepassword123"},
+    )
+    token = login.json()["access_token"]
+
+    me = await client.get("/api/v1/auth/me", headers={"Authorization": f"Bearer {token}"})
+
+    assert me.status_code == 200
+    data = me.json()
+    assert data["consents"] == {}
+    assert data["first_name"] is None
+    assert data["last_name"] is None
+
+
+async def test_register_with_names_and_consents_shows_on_me(client, mock_email):
+    reg = await client.post(
+        "/api/v1/auth/register",
+        json=make_register_body(
+            email="named@example.com",
+            first_name="Ada",
+            last_name="Lovelace",
+            terms="2026-09-30",
+            privacy="2026-09-30",
+        ),
+    )
+    assert reg.status_code == 201
+    await client.post("/api/v1/auth/verify-email", json={"token": verification_token(mock_email)})
+    login = await client.post(
+        "/api/v1/auth/login",
+        json={"email": "named@example.com", "password": "securepassword123"},
+    )
+    token = login.json()["access_token"]
+
+    data = (
+        await client.get("/api/v1/auth/me", headers={"Authorization": f"Bearer {token}"})
+    ).json()
+
+    assert data["first_name"] == "Ada"
+    assert data["last_name"] == "Lovelace"
+    assert data["display_name"] == "Ada Lovelace"
+    assert data["consents"]["terms"]["version"] == "2026-09-30"
+    assert "accepted_at" in data["consents"]["privacy"]

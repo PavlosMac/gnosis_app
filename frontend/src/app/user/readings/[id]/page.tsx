@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { enforceOnboarding } from "@/lib/onboarding-gate";
 import { notFound } from "next/navigation";
 import TarotPageLayout from "@/components/TarotPageLayout";
 import InterpretationSection from "./InterpretationSection";
@@ -76,6 +77,8 @@ const ReadingDetailPage = async ({
   params: Promise<{ id: string }>;
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) => {
+  await enforceOnboarding();
+
   const { id } = await params;
   const ctx = parseListContext(await searchParams);
   const backHref = listHref(ctx);

@@ -3,9 +3,13 @@ from datetime import datetime
 import resend
 import structlog
 
+from src.core.config import settings
 from src.notifications.errors import EmailDeliveryError
 from src.notifications.port import EmailPort
 from src.notifications.templates import (
+    email_verification_html,
+    email_verification_subject,
+    email_verification_text,
     password_reset_html,
     password_reset_subject,
     password_reset_text,
@@ -31,8 +35,21 @@ class ResendEmailAdapter(EmailPort):
             "text": password_reset_text(reset_link),
             "html": password_reset_html(reset_link),
         }
-        message_id = await self._send(params, to=to)
-        logger.info("password reset email sent", to=to, message_id=message_id)
+        message_id = await self._send(params)
+        logger.info("password reset email sent", message_id=message_id)
+
+    async def send_email_verification(self, to: str, verify_link: str) -> None:
+        ttl_hours = settings.email_verification_token_ttl_hours
+        retention_days = settings.pending_account_ttl_days
+        params: resend.Emails.SendParams = {
+            "from": self._from,
+            "to": to,
+            "subject": email_verification_subject(),
+            "text": email_verification_text(verify_link, ttl_hours, retention_days),
+            "html": email_verification_html(verify_link, ttl_hours, retention_days),
+        }
+        message_id = await self._send(params)
+        logger.info("email verification email sent", message_id=message_id)
 
     async def send_support_request(
         self,
@@ -53,10 +70,10 @@ class ResendEmailAdapter(EmailPort):
             "text": support_request_text(message, reply_to, user_id, submitted_at),
             "html": support_request_html(message, reply_to, user_id, submitted_at),
         }
-        message_id = await self._send(params, to=to)
-        logger.info("support request email sent", to=to, user_id=user_id, message_id=message_id)
+        message_id = await self._send(params)
+        logger.info("support request email sent", user_id=user_id, message_id=message_id)
 
-    async def _send(self, params: resend.Emails.SendParams, to: str) -> str:
+    async def _send(self, params: resend.Emails.SendParams) -> str:
         try:
             response = await resend.Emails.send_async(params)
             return response["id"]
@@ -66,7 +83,8 @@ class ResendEmailAdapter(EmailPort):
             # NoContentError (bare Exception), transport-level errors, and a
             # malformed/missing "id" in the response (KeyError) — all map to the
             # same failure so callers never see anything but the port contract.
-            logger.warning("resend send failed", error=type(exc).__name__, detail=str(exc), to=to)
+            # No recipient in the log (PII); the caller logs a user_id where it has one.
+            logger.warning("resend send failed", error=type(exc).__name__, detail=str(exc))
             raise EmailDeliveryError() from exc
 
     async def close(self) -> None:

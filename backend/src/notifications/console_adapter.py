@@ -6,12 +6,28 @@ from src.notifications.port import EmailPort
 
 logger = structlog.stdlib.get_logger(__name__)
 
+_REDACTED = "[redacted]"
+
 
 class ConsoleEmailAdapter(EmailPort):
-    """Dev fallback when RESEND_API_KEY is unset — logs the link instead of sending."""
+    """Fallback when RESEND_API_KEY is unset — logs instead of sending.
+
+    Never logs recipients or message bodies. The link (which carries a live one-time
+    token) is logged only when `reveal_links` is set, which main.py does for
+    APP_ENV=development alone: a production deploy that is merely missing its Resend
+    key runs this adapter too, and must not write usable tokens to its logs."""
+
+    def __init__(self, reveal_links: bool = False) -> None:
+        self._reveal_links = reveal_links
+
+    def _link(self, link: str) -> str:
+        return link if self._reveal_links else _REDACTED
 
     async def send_password_reset(self, to: str, reset_link: str) -> None:
-        logger.info("password reset email (console)", to=to, reset_link=reset_link)
+        logger.info("password reset email (console)", reset_link=self._link(reset_link))
+
+    async def send_email_verification(self, to: str, verify_link: str) -> None:
+        logger.info("email verification email (console)", verify_link=self._link(verify_link))
 
     async def send_support_request(
         self,
@@ -24,12 +40,8 @@ class ConsoleEmailAdapter(EmailPort):
     ) -> None:
         logger.info(
             "support request email (console)",
-            to=to,
-            reply_to=reply_to,
-            subject=subject,
             user_id=user_id,
             submitted_at=submitted_at.isoformat(),
-            message=message,
         )
 
     async def close(self) -> None:

@@ -1,7 +1,8 @@
 "use server";
 
 import { authenticatedFetch } from "@/lib/api-client";
-import { getCurrentUser } from "@/lib/session";
+import { ONBOARDING_REQUIRED_MESSAGE } from "@/lib/onboarding";
+import { consentRefusalReason, requireConsentedUser } from "@/lib/session";
 import {
   interpretRequestSchema,
   readingIdSchema,
@@ -19,8 +20,11 @@ const NOT_LOGGED_IN = "You must be logged in to request an interpretation.";
 export const createReading = async (
   payload: InterpretRequest
 ): Promise<CreateReadingResult> => {
-  const user = await getCurrentUser();
-  if (!user) return { ok: false, error: NOT_LOGGED_IN };
+  const user = await requireConsentedUser();
+  if (!user) {
+    const onboarding = (await consentRefusalReason()) === "onboarding";
+    return { ok: false, error: onboarding ? ONBOARDING_REQUIRED_MESSAGE : NOT_LOGGED_IN };
+  }
 
   const parsed = interpretRequestSchema.safeParse(payload);
   if (!parsed.success) {
@@ -52,8 +56,14 @@ interface GenerateInterpretationResponse {
 export const generateInterpretation = async (
   readingId: string
 ): Promise<GenerateInterpretationResult> => {
-  const user = await getCurrentUser();
-  if (!user) return { ok: false, error: NOT_LOGGED_IN, unauthenticated: true };
+  const user = await requireConsentedUser();
+  if (!user) {
+    // Only a missing session is "unauthenticated" — a login round-trip cannot
+    // fix an outstanding onboarding step
+    return (await consentRefusalReason()) === "onboarding"
+      ? { ok: false, error: ONBOARDING_REQUIRED_MESSAGE }
+      : { ok: false, error: NOT_LOGGED_IN, unauthenticated: true };
+  }
 
   if (!readingIdSchema.safeParse(readingId).success)
     return { ok: false, error: "Invalid reading ID." };

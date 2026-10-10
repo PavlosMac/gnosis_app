@@ -3,7 +3,7 @@ from datetime import UTC, datetime
 from bson import ObjectId
 
 from src.database.collections.constants import READINGS_COLLECTION
-from tests.factories import VALID_READING_BODY
+from tests.factories import VALID_READING_BODY, register_verify_and_login
 
 
 async def test_create_reading(client, auth_token):
@@ -81,7 +81,7 @@ async def test_get_reading_not_found(client, auth_token):
     assert resp.status_code == 404
 
 
-async def test_get_reading_wrong_user(client, auth_token):
+async def test_get_reading_wrong_user(client, auth_token, mock_email):
     create_resp = await client.post(
         "/api/v1/readings",
         json=VALID_READING_BODY,
@@ -90,11 +90,8 @@ async def test_get_reading_wrong_user(client, auth_token):
     reading_id = create_resp.json()["_id"]
 
     # Register a second user
-    reg = await client.post(
-        "/api/v1/auth/register",
-        json={"email": "other@example.com", "password": "securepassword123"},
-    )
-    other_token = reg.json()["access_token"]
+    reg = await register_verify_and_login(client, mock_email, "other@example.com")
+    other_token = reg["access_token"]
 
     resp = await client.get(
         f"/api/v1/readings/{reading_id}",
@@ -355,7 +352,7 @@ async def test_update_reading_tags_rejects_non_string(client, auth_token):
     assert resp.status_code == 422
 
 
-async def test_update_reading_tags_wrong_user(client, auth_token):
+async def test_update_reading_tags_wrong_user(client, auth_token, mock_email):
     create_resp = await client.post(
         "/api/v1/readings",
         json=VALID_READING_BODY,
@@ -363,11 +360,8 @@ async def test_update_reading_tags_wrong_user(client, auth_token):
     )
     reading_id = create_resp.json()["_id"]
 
-    reg = await client.post(
-        "/api/v1/auth/register",
-        json={"email": "other2@example.com", "password": "securepassword123"},
-    )
-    other_token = reg.json()["access_token"]
+    reg = await register_verify_and_login(client, mock_email, "other2@example.com")
+    other_token = reg["access_token"]
 
     resp = await client.patch(
         f"/api/v1/readings/{reading_id}/tags",

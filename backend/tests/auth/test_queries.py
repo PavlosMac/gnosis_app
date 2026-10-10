@@ -1,6 +1,13 @@
-from src.auth.commands.register_user import RegisterUserCommand, RegisterUserHandler
+from src.auth.models import User
 from src.auth.repository import AuthReadRepository, AuthWriteRepository
 from src.users.queries.list_users import ListUsersHandler, ListUsersQuery
+
+
+async def _insert_user(mock_db, email: str) -> None:
+    """Listing only needs stored users — no need to drive registration (and its email
+    and throttle dependencies) to get them."""
+    user = User(email=email, password_hash="x")
+    await AuthWriteRepository(mock_db).insert(user.to_document())
 
 
 async def test_list_users_empty(mock_db):
@@ -15,12 +22,9 @@ async def test_list_users_empty(mock_db):
 
 
 async def test_list_users_returns_all(mock_db):
-    write_repo = AuthWriteRepository(mock_db)
     read_repo = AuthReadRepository(mock_db)
-    reg_handler = RegisterUserHandler(write_repo, read_repo)
-
-    await reg_handler.handle(RegisterUserCommand(email="a@example.com", password="testpassword123"))
-    await reg_handler.handle(RegisterUserCommand(email="b@example.com", password="testpassword123"))
+    await _insert_user(mock_db, "a@example.com")
+    await _insert_user(mock_db, "b@example.com")
 
     handler = ListUsersHandler(read_repo)
     result = await handler.handle(ListUsersQuery())
@@ -29,14 +33,9 @@ async def test_list_users_returns_all(mock_db):
 
 
 async def test_list_users_pagination(mock_db):
-    write_repo = AuthWriteRepository(mock_db)
     read_repo = AuthReadRepository(mock_db)
-    reg_handler = RegisterUserHandler(write_repo, read_repo)
-
     for i in range(3):
-        await reg_handler.handle(
-            RegisterUserCommand(email=f"user{i}@example.com", password="testpassword123")
-        )
+        await _insert_user(mock_db, f"user{i}@example.com")
 
     handler = ListUsersHandler(read_repo)
 

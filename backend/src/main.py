@@ -10,19 +10,32 @@ from src.auth.commands.confirm_password_reset import (
     ConfirmPasswordResetCommand,
     ConfirmPasswordResetHandler,
 )
+from src.auth.commands.delete_user import DeleteUserCommand, DeleteUserHandler
+from src.auth.commands.record_consent import RecordConsentCommand, RecordConsentHandler
 from src.auth.commands.register_user import RegisterUserCommand, RegisterUserHandler
 from src.auth.commands.request_password_reset import (
     RequestPasswordResetCommand,
     RequestPasswordResetHandler,
 )
+from src.auth.commands.resend_verification import (
+    ResendVerificationCommand,
+    ResendVerificationHandler,
+)
+from src.auth.commands.send_verification_email import (
+    SendVerificationEmailCommand,
+    SendVerificationEmailHandler,
+)
+from src.auth.commands.verify_email import VerifyEmailCommand, VerifyEmailHandler
 from src.auth.queries.get_user_by_email import GetUserByEmailHandler, GetUserByEmailQuery
 from src.auth.queries.get_user_by_id import GetUserByIdHandler, GetUserByIdQuery
 from src.auth.repository import (
     AuthReadRepository,
     AuthWriteRepository,
+    EmailVerificationTokenRepository,
     PasswordResetThrottleRepository,
     PasswordResetTokenRepository,
     RefreshTokenRepository,
+    ThrottleRepository,
 )
 from src.auth.router import router as auth_router
 from src.core.config import settings
@@ -89,9 +102,33 @@ def _wire_mediator(
     user_write_repo = AuthWriteRepository(db)
     user_read_repo = AuthReadRepository(db)
 
+    verification_token_repo = EmailVerificationTokenRepository(db)
+    # One throttle collection, one key prefix per limiter (login's lives in
+    # dependencies.get_auth_service).
     mediator.register_command(
-        RegisterUserCommand, RegisterUserHandler(user_write_repo, user_read_repo)
+        RegisterUserCommand,
+        RegisterUserHandler(
+            user_write_repo,
+            user_read_repo,
+            verification_token_repo,
+            email,
+            ThrottleRepository(db, key_prefix="register:"),
+        ),
     )
+    mediator.register_command(
+        VerifyEmailCommand, VerifyEmailHandler(user_write_repo, verification_token_repo)
+    )
+    mediator.register_command(
+        ResendVerificationCommand,
+        ResendVerificationHandler(user_read_repo, ThrottleRepository(db, key_prefix="verify:")),
+    )
+    mediator.register_command(
+        SendVerificationEmailCommand,
+        SendVerificationEmailHandler(
+            user_read_repo, user_write_repo, verification_token_repo, email
+        ),
+    )
+    mediator.register_command(RecordConsentCommand, RecordConsentHandler(user_write_repo))
     mediator.register_query(GetUserByIdQuery, GetUserByIdHandler(user_read_repo))
     mediator.register_query(GetUserByEmailQuery, GetUserByEmailHandler(user_read_repo))
     mediator.register_query(ListUsersQuery, ListUsersHandler(user_read_repo))
@@ -107,7 +144,9 @@ def _wire_mediator(
     )
     mediator.register_command(
         ConfirmPasswordResetCommand,
-        ConfirmPasswordResetHandler(user_write_repo, reset_token_repo, refresh_token_repo),
+        ConfirmPasswordResetHandler(
+            user_write_repo, reset_token_repo, refresh_token_repo, user_read_repo
+        ),
     )
 
     reading_write_repo = ReadingWriteRepository(db)
@@ -116,6 +155,22 @@ def _wire_mediator(
     user_tags_read_repo = UserTagsReadRepository(db)
     interpretation_write_repo = InterpretationWriteRepository(db)
     interpretation_read_repo = InterpretationReadRepository(db)
+
+    mediator.register_command(
+        DeleteUserCommand,
+        DeleteUserHandler(
+            user_read_repo,
+            user_write_repo,
+            refresh_token_repo,
+            reset_token_repo,
+            verification_token_repo,
+            # Unprefixed: it removes the account's records of every limiter.
+            reset_throttle_repo,
+            reading_write_repo,
+            interpretation_write_repo,
+            user_tags_write_repo,
+        ),
+    )
 
     mediator.register_command(CreateReadingCommand, CreateReadingHandler(reading_write_repo))
     mediator.register_command(
@@ -188,7 +243,9 @@ async def lifespan(app: FastAPI):
     else:
         from src.notifications.console_adapter import ConsoleEmailAdapter
 
-        email_adapter = ConsoleEmailAdapter()
+        # Links are only written to the log in development — a production deploy
+        # that is missing RESEND_API_KEY must not leak live tokens into its logs.
+        email_adapter = ConsoleEmailAdapter(reveal_links=settings.app_env == "development")
         logger.info("email adapter initialised", adapter="console")
     app.state.email = email_adapter
 

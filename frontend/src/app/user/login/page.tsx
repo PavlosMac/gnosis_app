@@ -1,5 +1,4 @@
 import LoginForm from "./login-form";
-import { isRegistrationEnabled } from "@/lib/feature-flags";
 
 interface LoginPageProps {
   searchParams: Promise<{ from?: string | string[] }>;
@@ -10,10 +9,7 @@ interface LoginPageProps {
 const LoginPage = async ({ searchParams }: LoginPageProps) => {
   const { from } = await searchParams;
   return (
-    <LoginForm
-      registrationEnabled={isRegistrationEnabled()}
-      from={typeof from === "string" ? from : undefined}
-    />
+    <LoginForm from={typeof from === "string" ? from : undefined} />
   );
 };
 

@@ -3,7 +3,13 @@
 import { useActionState, useEffect } from "react";
 import SanctumModal from "@/components/SanctumModal";
 import AuthField from "@/components/AuthField";
-import { AuthErrorBanner, AuthSubmitButton } from "@/components/AuthPageShell";
+import {
+  AuthErrorBanner,
+  AuthFootnote,
+  AuthLink,
+  AuthSubmitButton,
+} from "@/components/AuthPageShell";
+import { useAuth } from "@/app/providers/auth-provider";
 import { loginInline } from "@/app/user/login/actions";
 import type { LoginFormState } from "@/types/auth";
 
@@ -16,6 +22,7 @@ const initialState: LoginFormState = { success: false };
 
 const LoginToInterpretModal = ({ onClose, onSuccess }: LoginToInterpretModalProps) => {
   const [state, formAction, pending] = useActionState(loginInline, initialState);
+  const { registrationEnabled } = useAuth();
 
   useEffect(() => {
     if (state.success) onSuccess();
@@ -30,7 +37,12 @@ const LoginToInterpretModal = ({ onClose, onSuccess }: LoginToInterpretModalProp
         Login to reveal the Oracle&apos;s interpretation of your reading.
       </p>
 
-      <AuthErrorBanner message={state.error} className="mb-6" />
+      <AuthErrorBanner message={state.error} className={state.emailNotVerified ? "mb-3" : "mb-6"} />
+      {state.emailNotVerified && (
+        <AuthFootnote className="mb-6">
+          <AuthLink href="/verify-email">Send a new confirmation link</AuthLink>
+        </AuthFootnote>
+      )}
 
       <form action={formAction} className="space-y-6">
         <AuthField
@@ -56,6 +68,14 @@ const LoginToInterpretModal = ({ onClose, onSuccess }: LoginToInterpretModalProp
           Enter
         </AuthSubmitButton>
       </form>
+
+      {/* Leaves the modal: registration ends at the check-your-email panel, not
+          a session, so there is no reading to return to */}
+      {registrationEnabled && (
+        <AuthFootnote>
+          No account yet? <AuthLink href="/user/register">Begin your journey</AuthLink>
+        </AuthFootnote>
+      )}
     </SanctumModal>
   );
 };

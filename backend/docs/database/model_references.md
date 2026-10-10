@@ -15,9 +15,15 @@ Source: `src/auth/models.py`
 | Field              | Type            | Notes                                   |
 |--------------------|-----------------|-----------------------------------------|
 | _id                | ObjectId        | PK                                      |
-| email              | str             | unique                                  |
+| email              | str             | unique; stored lower-cased (every writer folds it, `find_by_email` folds the query) |
 | password_hash      | str             |                                         |
-| display_name       | str             | optional                                |
+| display_name       | str             | optional; derived as `"First Last"` at registration |
+| first_name         | str             | optional (absent on accounts created before 2026-10-04) |
+| last_name          | str             | optional (as above)                     |
+| consents           | sub-doc         | optional; `{terms: {version, accepted_at}, privacy: {version, accepted_at}}`. `version` is the frontend's dated MDX filename, stored unvalidated. Readers treat absent as `{}` |
+| status             | str             | `pending_verification` \| `active`. **Absent means active** (no backfill) — `user_status()` in `src/auth/models.py` |
+| email_verified_at  | datetime        | optional; set when the emailed link is confirmed |
+| verification_deadline_at | datetime  | optional; only on pending accounts. Purge clock for the TTL index of migration 014; moved forward by each resend, removed on verification |
 | credits            | int             | default 0                               |
 | is_superadmin      | bool            | default false                           |
 | stripe_customer_id | str             | optional (reserved; payments not built) |
@@ -25,6 +31,10 @@ Source: `src/auth/models.py`
 | budget_usd         | float           | optional per-user override of `Settings.user_budget_usd` ($3 default) |
 | created_at         | datetime        |                                         |
 | updated_at         | datetime        |                                         |
+
+Account deletion (`DeleteUserHandler`) removes the document and everything in the other
+collections that references it — see
+[`../auth/registration-verification-and-consent.md`](../auth/registration-verification-and-consent.md).
 
 `total_tokens_used` was retired by migration 009 — superseded by the `usage` aggregate.
 
@@ -110,10 +120,28 @@ the user's other unused tokens, so at most one is live per user.
 | used       | bool     | set true on consume                                     |
 | expires_at | datetime | TTL index; `Settings.password_reset_token_ttl_minutes` (30) after issue |
 
+### email_verification_tokens
+Source: `src/auth/repository.py` (`EmailVerificationTokenRepository`; it and
+`PasswordResetTokenRepository` are thin subclasses of `OneTimeTokenRepository`). Same
+shape and lifecycle as `password_reset_tokens`: created by `POST /auth/register` and by
+the resend background task, raw token only in the emailed link, consumed atomically,
+400-vs-410 decided by the handler. Confirming deletes all of the user's rows.
+
+| Field      | Type     | Notes                                                   |
+|------------|----------|---------------------------------------------------------|
+| _id        | ObjectId | PK                                                      |
+| token_hash | str      | unique                                                  |
+| user_id    | str      | FK→users, stored as a string                            |
+| used       | bool     | set true on consume                                     |
+| expires_at | datetime | TTL index; `Settings.email_verification_token_ttl_hours` (24) after issue |
+
 ### password_reset_attempts
-Source: `src/auth/repository.py` (`PasswordResetThrottleRepository`). A generic per-key
-request throttle, one document per attempt: `key` is the case-folded email for
-forgot-password and `support:<user_id>` for the support contact relay. A handler records the
+Source: `src/auth/repository.py` (`ThrottleRepository`; `PasswordResetThrottleRepository`
+is its unprefixed subclass). A generic per-key request throttle shared by every limiter,
+one document per attempt. Keys: the case-folded email for forgot-password,
+`support:<user_id>` for the support relay, `verify:<email>` for resend-verification,
+`login:<ip>:<email>` for login, `login:delete:<user_id>` for the delete-account password
+check, `register:<ip>` for registration. A handler records the
 attempt first, then counts documents with that key inside the window
 (`Settings.password_reset_rate_limit_window_seconds`, 3600s, max 5), so concurrent bursts can
 only over-throttle, never under-throttle.
@@ -135,13 +163,14 @@ users ─1:N─→ refresh_tokens
 users ─1:N─→ readings ─1:1─→ interpretations   (unique reading_id index)
 users ─1:N─→ interpretations                   (denormalized user_id for usage queries)
 users ─1:1─→ user_tags   (derived from that user's readings.tags)
-users ─1:N─→ password_reset_tokens   (user_id as string)
-password_reset_attempts is keyed by email or `support:<user_id>`, not by FK
+users ─1:N─→ password_reset_tokens       (user_id as string)
+users ─1:N─→ email_verification_tokens   (user_id as string)
+password_reset_attempts is keyed by email, user id or client IP (with a limiter prefix), not by FK
 ```
 
 ## Indexes
 
-Owned by migrations. Current state after 001–012:
+Owned by migrations. Current state after 001–014:
 
 | Collection      | Index                                        | Options            | Migration |
 |-----------------|----------------------------------------------|--------------------|-----------|
@@ -163,6 +192,10 @@ Owned by migrations. Current state after 001–012:
 | password_reset_attempts | `key`                                |                    | 011       |
 | password_reset_attempts | `created_at` desc                    |                    | 011       |
 | password_reset_attempts | `expires_at`                         | TTL (0s)           | 011       |
+| email_verification_tokens | `token_hash`                       | unique             | 013       |
+| email_verification_tokens | `user_id`                          |                    | 013       |
+| email_verification_tokens | `expires_at`                       | TTL (0s)           | 013       |
+| users           | `verification_deadline_at` (`pending_users_ttl`) | TTL (0s), partial: `status = "pending_verification"` | 014 |
 | _migrations     | `version`                                    | unique             | runner    |
 
 A tag filter with a date sort (`tags=…&sort=created_at`) is served entirely by the 012

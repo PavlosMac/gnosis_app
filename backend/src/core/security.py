@@ -1,3 +1,5 @@
+import hashlib
+import secrets
 from datetime import UTC, datetime, timedelta
 
 import jwt
@@ -39,3 +41,14 @@ def create_refresh_token(sub: str, jti: str, family_id: str) -> tuple[str, datet
 
 def decode_token(token: str) -> dict:
     return jwt.decode(token, settings.jwt_secret_key, algorithms=[settings.jwt_algorithm])
+
+
+def generate_url_token() -> str:
+    """A fresh one-time token for an emailed link (password reset, email verification).
+    Only its hash is ever stored — see hash_token."""
+    return secrets.token_urlsafe(32)
+
+
+def hash_token(raw_token: str) -> str:
+    """One-time tokens are stored hashed, so a database read never yields a usable link."""
+    return hashlib.sha256(raw_token.encode()).hexdigest()

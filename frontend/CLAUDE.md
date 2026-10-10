@@ -99,14 +99,19 @@ JWT auth via external FastAPI backend (`GNOSIS_API_BASE_URL` env var). Tokens st
 - `src/lib/api-client.ts` — `authenticatedFetch()` (silent 401 refresh) + `publicFetch()` for all FastAPI calls
 - `src/proxy.ts` — Route guard (Next.js 16 renamed middleware → proxy; `src/proxy.ts` is the correct filename)
 - `src/app/providers/auth-provider.tsx` — `AuthProvider` + `useAuth()` hook
-- `src/app/user/layout.tsx` — Server layout that fetches user and passes to AuthProvider
+- `src/lib/auth-cookies.ts` — The only reader/writer of the session cookies (`__Host-` names in production)
+- `src/app/layout.tsx` — Root server layout: fetches the user and the `REGISTRATION_ENABLED` flag and passes both to `AuthProvider`
+- `src/app/user/layout.tsx` — The onboarding gate for `/user/*`: redirects a logged-in user with stale Terms/Privacy consent to `/accept-terms` (`src/lib/onboarding.ts`)
+- `src/lib/session.ts` — `getCurrentUser()`; `requireConsentedUser()` for data-creating actions
+- `src/content/legal/` — Versioned Terms and Privacy Policy (MDX, filename = version); run `npm run legal:registry` after adding one
 - `src/types/auth.ts` — User, token, and form state interfaces
-- `src/lib/validation/auth-schemas.ts` — Zod schemas for login/register
+- `src/lib/validation/auth-schemas.ts` — Zod schemas for login/register/verify/reset/delete-account
 
 ### Patterns
 - All FastAPI calls go through `authenticatedFetch()` or `publicFetch()` — never raw `fetch`
 - Auth pages use `useActionState` with colocated `actions.ts` server actions
-- `AuthProvider` receives `initialUser` prop from server layout (no client-side fetch)
+- `AuthProvider` receives `initialUser` and `registrationEnabled` from the root server layout (no client-side fetch); client components read both via `useAuth()`
+- Data-creating server actions call `requireConsentedUser()`; actions a user must reach while consent is stale (accept terms, delete account, contact support) call `getCurrentUser()`
 - Zod validation in server actions before any API call
 - **Server actions are not protected by layouts** — layouts only run for full page renders, not direct action calls. Any server action that requires a role (e.g. `isSuperadmin`) MUST call `getCurrentUser()` and check the role itself before touching the API.
 

@@ -19,6 +19,8 @@ async def seed_superadmin(email: str, password: str, display_name: str | None) -
     client: AsyncIOMotorClient = AsyncIOMotorClient(settings.mongodb_uri)
     db = client[settings.mongodb_database]
     collection = db["users"]
+    # Emails are stored lower-cased; lookups fold the query (AuthReadRepository).
+    email = email.strip().lower()
 
     existing = await collection.find_one({"email": email})
     if existing:
@@ -30,6 +32,8 @@ async def seed_superadmin(email: str, password: str, display_name: str | None) -
     document = {
         "email": email,
         "password_hash": hash_password(password),
+        # Seeded accounts skip email verification.
+        "status": "active",
         "credits": 0,
         "is_superadmin": True,
         "created_at": now,

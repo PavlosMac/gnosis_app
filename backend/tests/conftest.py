@@ -28,6 +28,7 @@ from src.llm.port import LLMPort
 from src.llm.schemas import CardInSpread
 from src.readings.commands.create_reading import CreateReadingCommand, CreateReadingHandler
 from src.readings.repository import ReadingReadRepository, ReadingWriteRepository
+from tests.factories import register_verify_and_login
 
 
 @pytest.fixture(autouse=True)
@@ -65,31 +66,18 @@ async def app(mock_db):
 
 
 @pytest.fixture
-async def superadmin_token(client, mock_db):
-    reg = await client.post(
-        "/api/v1/auth/register",
-        json={"email": "admin@example.com", "password": "securepassword123"},
-    )
-    assert reg.status_code == 201, f"Registration failed: {reg.text}"
+async def superadmin_token(client, mock_db, mock_email):
+    tokens = await register_verify_and_login(client, mock_email, "admin@example.com")
     await mock_db["users"].update_one(
         {"email": "admin@example.com"}, {"$set": {"is_superadmin": True}}
     )
-    login = await client.post(
-        "/api/v1/auth/login",
-        json={"email": "admin@example.com", "password": "securepassword123"},
-    )
-    assert login.status_code == 200, f"Login failed: {login.text}"
-    return login.json()["access_token"]
+    return tokens["access_token"]
 
 
 @pytest.fixture
-async def auth_token(client):
-    reg = await client.post(
-        "/api/v1/auth/register",
-        json={"email": "user@example.com", "password": "securepassword123"},
-    )
-    assert reg.status_code == 201, f"Registration failed: {reg.text}"
-    return reg.json()["access_token"]
+async def auth_token(client, mock_email):
+    tokens = await register_verify_and_login(client, mock_email, "user@example.com")
+    return tokens["access_token"]
 
 
 @pytest.fixture

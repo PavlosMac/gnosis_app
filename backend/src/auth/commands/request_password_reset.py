@@ -1,5 +1,3 @@
-import hashlib
-import secrets
 from datetime import UTC, datetime, timedelta
 
 import structlog
@@ -11,6 +9,7 @@ from src.auth.repository import (
 )
 from src.auth.service import TooManyPasswordResetRequestsError
 from src.core.config import settings
+from src.core.security import generate_url_token, hash_token
 from src.cqrs.commands import BaseCommand, CommandHandler
 from src.notifications.errors import EmailDeliveryError
 from src.notifications.port import EmailPort
@@ -38,9 +37,8 @@ class RequestPasswordResetHandler(CommandHandler[RequestPasswordResetCommand, No
     async def handle(self, command: RequestPasswordResetCommand) -> None:
         now = datetime.now(UTC)
         window = timedelta(seconds=settings.password_reset_rate_limit_window_seconds)
-        # Case-fold the throttle key — email lookups elsewhere treat casing as
-        # significant, but the limit must apply per-account regardless of how the
-        # caller cases the address, or varying case bypasses it entirely.
+        # The router's NormalizedEmail already case-folds; fold again here so a direct
+        # caller cannot bypass the per-account limit by varying case.
         throttle_key = command.email.strip().lower()
 
         # Throttle before the existence check, and record every call (throttled or
@@ -61,8 +59,8 @@ class RequestPasswordResetHandler(CommandHandler[RequestPasswordResetCommand, No
         if user_doc is None:
             return  # enumeration-safe no-op
 
-        raw_token = secrets.token_urlsafe(32)
-        token_hash = hashlib.sha256(raw_token.encode()).hexdigest()
+        raw_token = generate_url_token()
+        token_hash = hash_token(raw_token)
         user_id = str(user_doc["_id"])
 
         # Only one live token per user: a new request supersedes older links.
@@ -77,4 +75,4 @@ class RequestPasswordResetHandler(CommandHandler[RequestPasswordResetCommand, No
             # A provider outage only errors for existing accounts (unknown emails never
             # reach the send), so surfacing it would be an enumeration oracle. Log it;
             # the endpoint answers 200 and the user can retry.
-            logger.error("password reset email delivery failed", email=command.email)
+            logger.error("password reset email delivery failed", user_id=user_id)

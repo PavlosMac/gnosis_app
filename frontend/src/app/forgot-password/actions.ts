@@ -8,7 +8,7 @@ export const requestPasswordReset = async (
   _prevState: ForgotPasswordFormState,
   formData: FormData
 ): Promise<ForgotPasswordFormState> => {
-  console.log("[AUTH:FORGOT] Forgot-password request", { email: formData.get("email") });
+  console.log("[AUTH:FORGOT] Forgot-password request");
 
   const parsed = forgotPasswordSchema.safeParse({ email: formData.get("email") });
   if (!parsed.success) {

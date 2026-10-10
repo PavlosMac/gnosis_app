@@ -1,13 +1,17 @@
 import { redirect } from "next/navigation";
+import { enforceOnboarding } from "@/lib/onboarding-gate";
 import TarotPageLayout from "@/components/TarotPageLayout";
 import OrnateFrame from "@/components/OrnateFrame";
 import { getCurrentUser } from "@/lib/session";
+import { accountName } from "@/lib/profile-dashboard";
 import { getDashboard } from "./actions";
 import AccountPanel from "./AccountPanel";
 import ReadingsPanel from "./ReadingsPanel";
 import type { ReadingsSummary } from "./ReadingsPanel";
 
 const ProfilePage = async () => {
+  await enforceOnboarding();
+
   // getCurrentUser is request-cached, so the guard inside getDashboard reuses it
   const [user, dash] = await Promise.all([getCurrentUser(), getDashboard()]);
 
@@ -66,8 +70,9 @@ const ProfilePage = async () => {
             />
 
             <AccountPanel
-              displayName={user.displayName}
+              name={accountName(user)}
               email={user.email}
+              consents={user.consents}
               budget={budget}
             />
 

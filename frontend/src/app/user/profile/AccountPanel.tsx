@@ -1,9 +1,12 @@
+import Link from "next/link";
 import BudgetChalice from "@/components/BudgetChalice";
+import AgreementRows from "./AgreementRows";
 import ContactSupportRow from "./ContactSupportRow";
 import ResetPasswordRequestButton from "./ResetPasswordRequestButton";
 import { budgetCaption, chaliceFill } from "@/lib/profile-dashboard";
+import type { UserConsents } from "@/lib/consent";
 
-const ProfileRow = ({ label, value }: { label: string; value: string }) => (
+export const ProfileRow = ({ label, value }: { label: string; value: string }) => (
   <div className="flex items-center justify-between gap-4">
     <span
       className="text-[#e6d5b8]/60 text-sm tracking-wider uppercase shrink-0"
@@ -22,7 +25,7 @@ const ProfileRow = ({ label, value }: { label: string; value: string }) => (
   </div>
 );
 
-const SectionLabel = ({ children }: { children: React.ReactNode }) => (
+export const SectionLabel = ({ children }: { children: React.ReactNode }) => (
   <h2
     className="text-[#d4af37]/80 text-xs tracking-[0.3em] uppercase text-center mb-6"
     style={{ fontFamily: "'Cinzel', serif" }}
@@ -32,13 +35,15 @@ const SectionLabel = ({ children }: { children: React.ReactNode }) => (
 );
 
 interface AccountPanelProps {
-  displayName: string | null;
+  /** Already resolved: display name, else first + last, else "Seeker" */
+  name: string;
   email: string;
+  consents: UserConsents | undefined;
   /** null when the ledger could not be fetched */
   budget: { remainingUsd: number; budgetUsd: number } | null;
 }
 
-const AccountPanel = ({ displayName, email, budget }: AccountPanelProps) => {
+const AccountPanel = ({ name, email, consents, budget }: AccountPanelProps) => {
   // Chalice and caption stand or fall together: a non-finite figure hides both
   // rather than leaving a "$NaN" caption under an empty space
   const usableBudget =
@@ -51,7 +56,7 @@ const AccountPanel = ({ displayName, email, budget }: AccountPanelProps) => {
       <SectionLabel>Tally</SectionLabel>
 
       <div className="space-y-4">
-        <ProfileRow label="Name" value={displayName || "Seeker"} />
+        <ProfileRow label="Name" value={name} />
         <ProfileRow label="Email" value={email} />
       </div>
 
@@ -87,9 +92,23 @@ const AccountPanel = ({ displayName, email, budget }: AccountPanelProps) => {
       </div>
 
       <div style={{ marginTop: "auto" }}>
+        <AgreementRows consents={consents} />
         <ContactSupportRow />
         <div className="pt-4 mt-4 border-t border-[#d4af37]/10">
           <ResetPasswordRequestButton />
+        </div>
+        {/* Danger zone: set apart from the rows above by its own rule and colour */}
+        <div
+          className="border-t border-red-400/20 text-center"
+          style={{ marginTop: "1.5rem", paddingTop: "1rem" }}
+        >
+          <Link
+            href="/user/profile/delete-account"
+            className="text-red-400/60 hover:text-red-400 text-xs tracking-widest uppercase transition-colors"
+            style={{ fontFamily: "'Cinzel', serif" }}
+          >
+            Delete account
+          </Link>
         </div>
       </div>
     </div>

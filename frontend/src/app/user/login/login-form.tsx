@@ -8,18 +8,20 @@ import AuthPageShell, {
   AuthSubmitButton,
 } from "@/components/AuthPageShell";
 import AuthField from "@/components/AuthField";
+import { useAuth } from "@/app/providers/auth-provider";
 import { login } from "./actions";
 import type { LoginFormState } from "@/types/auth";
 
 interface LoginFormProps {
-  registrationEnabled: boolean;
   from?: string;
 }
 
 const initialState: LoginFormState = { success: false };
 
-const LoginForm = ({ registrationEnabled, from }: LoginFormProps) => {
+const LoginForm = ({ from }: LoginFormProps) => {
   const [state, formAction, pending] = useActionState(login, initialState);
+  // One source for the flag: the root layout exposes it through AuthProvider
+  const { registrationEnabled } = useAuth();
 
   return (
     <AuthPageShell
@@ -28,7 +30,12 @@ const LoginForm = ({ registrationEnabled, from }: LoginFormProps) => {
       backButtonHref="/"
       backButtonLabel="Portal"
     >
-      <AuthErrorBanner message={state.error} className="mb-6" />
+      <AuthErrorBanner message={state.error} className={state.emailNotVerified ? "mb-3" : "mb-6"} />
+      {state.emailNotVerified && (
+        <AuthFootnote className="mb-6">
+          <AuthLink href="/verify-email">Send a new confirmation link</AuthLink>
+        </AuthFootnote>
+      )}
 
       <form action={formAction} className="space-y-6">
         {from && <input type="hidden" name="from" value={from} />}

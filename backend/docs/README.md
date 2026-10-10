@@ -14,7 +14,8 @@ history · **Snapshot** — generated output frozen in time.
 | [`database/production_mongo_commands.md`](database/production_mongo_commands.md) | Shell access to prod Mongo + ready-made queries |
 | [`database/dev-users.md`](database/dev-users.md) | Seeded local dev superadmin |
 | [`deployment/deploy_instructions.md`](deployment/deploy_instructions.md) | Build/push and Pi deploy runbook |
-| [`email/email_service.md`](email/email_service.md) | `EmailPort` + adapters, Resend setup, password-reset and support-contact flows end to end |
+| [`email/email_service.md`](email/email_service.md) | `EmailPort` + adapters, Resend setup, password-reset, email-verification and support-contact flows end to end |
+| [`auth/registration-verification-and-consent.md`](auth/registration-verification-and-consent.md) | Registration with names + consent, the email-verification gate, user status, rate limits, account deletion |
 | [`interpretations/usage-and-budget-flow.md`](interpretations/usage-and-budget-flow.md) | Generate flow, usage ledger, budget gate |
 | [`prompts/prompt_reference.md`](prompts/prompt_reference.md) | Current prompts (partly generated — `make prompt-doc`) |
 | [`prompts/lean_prompt_architecture.md`](prompts/lean_prompt_architecture.md) | Design rationale for the lean prompt architecture (implemented) |
@@ -23,7 +24,6 @@ history · **Snapshot** — generated output frozen in time.
 
 | Doc | Status |
 |---|---|
-| [`auth/password-reset-flow.md`](auth/password-reset-flow.md) | Unimplemented plan |
 | [`payment/braintree-recurring-subscription.md`](payment/braintree-recurring-subscription.md) | Design only — supersedes the Mollie plan |
 | [`sse-streaming-interpretations-and-call-time-logging.md`](sse-streaming-interpretations-and-call-time-logging.md) | Planned, not started |
 
@@ -31,6 +31,7 @@ history · **Snapshot** — generated output frozen in time.
 
 | Doc | Status |
 |---|---|
+| [`auth/password-reset-flow.md`](auth/password-reset-flow.md) | Implemented 2026-09-14; as-built in `email/email_service.md` |
 | [`lean-prompt-migration-plan.md`](lean-prompt-migration-plan.md) | Implemented through Phase 4; Phase 5 (frontend) pending |
 | [`deployment/mongodb-backup-design.md`](deployment/mongodb-backup-design.md) | Implemented; doubles as the backup runbook |
 | [`database/migration-strategy.md`](database/migration-strategy.md) | Archived — fully implemented |

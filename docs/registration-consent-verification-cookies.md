@@ -1,15 +1,60 @@
 # Finish user registration: names + consent, email verification, cookie hardening
 
-**Date:** 2026-09-30 · **Updated:** 2026-10-01 (ultracode feasibility review) · **Scope:** `backend/` + `frontend/` · **Status:** plan, not started
+**Date:** 2026-09-30 · **Updated:** 2026-10-01 (ultracode feasibility review) · **Scope:** `backend/` + `frontend/` · **Status:** implemented 2026-10-04 (one manual step left: the Pi, see Phase 6 row)
 
 | Phase | Status |
 |---|---|
-| 1. Shared cookie module + token lifetime (frontend) | not started |
-| 2. Backend names, consents, `/auth/consent`, email normalisation | not started |
-| 3. Frontend consent, incl. self-service consent management (Features 1–4) | not started |
-| 4. Email verification + auth hardening (backend + frontend) | not started |
-| 5. Account deletion (backend + frontend) | not started |
-| 6. Env, deploy docs, ADR-012–014, memory files | not started |
+| 1. Shared cookie module + token lifetime (frontend) | done 2026-10-04 |
+| 2. Backend names, consents, `/auth/consent`, email normalisation | done 2026-10-04 |
+| 3. Frontend consent, incl. self-service consent management (Features 1–4) | done 2026-10-04 |
+| 4. Email verification + auth hardening (backend + frontend) | done 2026-10-04 |
+| 5. Account deletion (backend + frontend) | done 2026-10-04 |
+| 6. Env, deploy docs, ADR-012–014, memory files | done 2026-10-04 in the repo. **Not done: the Pi.** Sign-up defaults to closed in `frontend/docker-compose.yml` (changed 2026-10-05, see Deviations), and the compose file and `.env.gnosis.prod` actually on the Pi were not reachable and still need the new variables (`backend/docs/deployment/deploy_instructions.md` §3–3b) |
+
+### Deviations from this plan (2026-10-04)
+
+Found during the per-phase review and implementation. As-built references:
+`backend/docs/auth/registration-verification-and-consent.md`, frontend ADR-012 to ADR-014.
+
+- **Per-IP rate limits needed the real client IP.** Every backend call comes from the
+  Next.js server, so `register:<ip>` and `login:<ip>:<email>` would have been keyed on one
+  address for all users. `publicFetch` now forwards the browser address in
+  `X-Forwarded-For` and the backend reads it (`RATE_LIMIT_TRUST_FORWARDED_FOR`).
+- **Wrong password on `DELETE /auth/me` is `403 {code: "invalid_password"}`, not 401.**
+  The frontend treats a 401 as an expired token and silently refreshes and retries.
+- **The delete-account page is exempt from the consent gate.** As planned, a user who
+  declined a new Terms version could not have reached it. The proxy passes the pathname
+  to layouts in an `x-pathname` header.
+- **Console adapter: links are logged only when `APP_ENV=development`.** The plan asked
+  both to redact links and to read them from the dev log.
+- **Resend timing fix uses a FastAPI background task** for the whole token issue and
+  send, so the three branches do the same work on the request path.
+- **The legal registry is generated** (`npm run legal:registry`, run before dev, build and
+  test) and committed; a test pins it to the directory listing.
+- **`mdx-components.tsx` is in `frontend/src/`**, which Next requires with a `src` directory.
+- **The documents are dated `2026-10-04`** (the day they were written), not `2026-09-30`.
+- **Delete-account password checks are throttled** with the login limits, and deletion
+  also removes throttle records that name the account.
+- **The consent gate also runs in each page** (`enforceOnboarding()`), because a layout is
+  not re-rendered on client-side navigation; `/accept-terms` joined the proxy matcher.
+- **Re-saving an unchanged consent version does not move `accepted_at`.** The plan called
+  the re-save a harmless `$set`; it would have overwritten the original acceptance date.
+- **Guarded actions on public pages** tell a logged-in user with stale consent to accept
+  the terms instead of "you must be logged in", and the inline login redirects to the gate.
+- **Production sign-up defaults to closed** (decision changed 2026-10-05). This plan
+  said to flip `REGISTRATION_ENABLED` on in production; `frontend/docker-compose.yml` now
+  defaults it to `false`, so sign-up is opened deliberately on the Pi at launch.
+- **`make dev` exports `REGISTRATION_ENABLED=true`** so the register page works locally.
+- **Open risks** (from the final code review). Resolved 2026-10-10: contact support no
+  longer requires current consent and is linked from `/accept-terms`; Google Analytics
+  is removed. Left as documented, by decision: an access token stays usable for up to an
+  hour after account deletion on endpoints that only decode the JWT; a pending
+  registration holds an email for 7 days and whoever confirms the link activates the
+  account with the registrant's password (pre-hijacking); the forwarded client address is
+  spoofable where Cloudflare is not in front; the 24-hour and 7-day figures in the UI
+  are constants that mirror backend settings.
+- `register_verify_and_login` and `make_register_body` live in `tests/factories.py`
+  (plain functions), with the fixtures in `tests/conftest.py` built on them.
 
 This document is the reference point for the work; update the status table as phases land.
 Companion design: `frontend/docs/gdpr-consent-terms-and-named-registration.md`.
@@ -315,7 +360,7 @@ not written from memory.
 | Proof of consent to terms (7.1) | `consents.{terms,privacy} = {version, accepted_at}` per user; every accepted version stays renderable at `/legal/<doc>/<date>`; re-consent gate on version change. | None. |
 | Withdrawal / decline (7.3) | `/accept-terms` offers Log out for users who decline a new version; the self-service "Review / change consent" page (Phase 3, Feature 4) lets a user revisit consent at any time, not only on a version bump; declining either, or deleting the account (Phase 5), is not penalised beyond losing access to the service that requires it. | None. |
 | Processors and transfers (28, 44–49) | Resend (email) and the LLM provider are named as processors; Google Analytics as a recipient. Both Resend and the LLM provider are US companies, so the Privacy text must cite the transfer mechanism (EU–US Data Privacy Framework participation or SCCs). | Confirm each provider's DPA/DPF status before publishing the text. |
-| Cookies / ePrivacy | The three auth cookies are strictly necessary and exempt from consent; the Privacy text lists them by name, purpose and lifetime. `localStorage` UI preference likewise. | Google Analytics sets non-essential cookies without consent. Explicitly out of scope of this plan and stays the one live exposure; ADR-014 records it. Options later: consent banner, or replace GA with a cookieless analytics tool. |
+| Cookies / ePrivacy | The three auth cookies are strictly necessary and exempt from consent; the Privacy text lists them by name, purpose and lifetime. `localStorage` UI preference likewise. | Google Analytics was removed on 2026-10-10; the site sets no non-essential cookies, so no banner is needed. |
 | Children (8) | Terms require the user to be 18 or older; no age verification beyond the declaration. | None for now. |
 | Security (32) | Argon2 password hashing, hashed one-time tokens, httpOnly `__Host-` cookies, no PII in logs, refresh-token rotation. | Breach-notification procedure is an operational document, not code; note the 72-hour duty in the Privacy text's internal notes only. |
 | Automated decision-making (22) | Interpretations are AI-generated text with no legal or similarly significant effect on the user. The Terms say so. | None. |
@@ -325,9 +370,9 @@ not written from memory.
 The Terms MDX (`src/content/legal/terms/2026-09-30.mdx`) must contain, in plain language:
 
 1. **Nature of the service.** Tarot readings and interpretations are provided for
-   entertainment, reflection and personal insight only.
+   entertainment only.
 2. **Not a psychic, fortune-telling or divination service.** The service does not claim to
-   predict the future, communicate with spirits, or possess supernatural ability. Some
+   predict the future or possess supernatural ability. Some
    jurisdictions regulate or prohibit fortune-telling for payment; this clause and the
    governing-law clause together are what keep the service outside those rules.
 3. **Not therapy, counselling or professional advice.** Nothing on the service is medical,
@@ -345,7 +390,8 @@ The Terms MDX (`src/content/legal/terms/2026-09-30.mdx`) must contain, in plain 
    secret, verification by email required, accounts never verified may be deleted after the
    stated period.
 8. **Acceptable use.** No harassment, no attempts to extract or abuse the AI, no scraping.
-9. **Intellectual property.** Card imagery and text belong to the operator or their licensors;
+9. **Intellectual property.** Card imagery is the Rider-Waite deck (not the operator's own;
+   corrected 2026-10-05); text, design and software belong to the operator or their licensors;
    the user's own readings remain theirs to export or delete.
 10. **Availability and changes.** The service may change or stop; substantive changes to the
     Terms produce a new dated version that the user must accept to continue.

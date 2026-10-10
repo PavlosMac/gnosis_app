@@ -3,6 +3,10 @@
 import { redirect } from "next/navigation";
 import { publicFetch, setAuthCookies } from "@/lib/api-client";
 import { loginSchema } from "@/lib/validation/auth-schemas";
+import { CURRENT_VERSIONS } from "@/lib/legal-documents";
+import { loginFailureState } from "@/lib/login-errors";
+import { onboardingRedirect } from "@/lib/onboarding";
+import { getCurrentUser } from "@/lib/session";
 import { isSafeReturnPath } from "@/lib/auth-return-path";
 import type { LoginFormState, TokenResponse } from "@/types/auth";
 
@@ -31,11 +35,8 @@ const authenticateWithCredentials = async (
   });
 
   if (!result.ok) {
-    console.log("[AUTH:LOGIN] Login failed", { status: result.status, error: result.message });
-    // On the login endpoint 401 means bad credentials, not an expired session —
-    // override the generic SAFE_MESSAGES mapping
-    const error = result.status === 401 ? "Incorrect email or password." : result.message;
-    return { success: false, error };
+    console.log("[AUTH:LOGIN] Login failed", { status: result.status, code: result.code });
+    return loginFailureState(result);
   }
 
   console.log("[AUTH:LOGIN] Login successful — setting cookies");
@@ -59,5 +60,15 @@ export const loginInline = async (
   _prevState: LoginFormState,
   formData: FormData
 ): Promise<LoginFormState> => {
-  return authenticateWithCredentials(formData);
+  const result = await authenticateWithCredentials(formData);
+  if (!result.success) return result;
+
+  // The inline modal lives on public pages, outside the /user layout gate. A
+  // user with an outstanding step (stale Terms/Privacy) would otherwise log in
+  // here and then be refused by every guarded action with nowhere to go.
+  const user = await getCurrentUser();
+  const destination = user ? onboardingRedirect(user, CURRENT_VERSIONS) : null;
+  if (destination) redirect(destination);
+
+  return result;
 };

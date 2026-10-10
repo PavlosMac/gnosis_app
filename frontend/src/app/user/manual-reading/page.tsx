@@ -1,9 +1,12 @@
 import { redirect } from "next/navigation";
+import { enforceOnboarding } from "@/lib/onboarding-gate";
 import TarotPageLayout from "@/components/TarotPageLayout";
 import TarotGame from "@/components/TarotGame";
 import { getCurrentUser } from "@/lib/session";
 
 export default async function ManualReadingPage() {
+  await enforceOnboarding();
+
   const user = await getCurrentUser();
   if (!user) redirect("/user/login");
 

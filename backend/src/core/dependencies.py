@@ -9,10 +9,11 @@ if TYPE_CHECKING:
     from src.notifications.port import EmailPort
 
 from src.auth.queries.get_user_by_id import GetUserByIdQuery
-from src.auth.repository import AuthReadRepository, RefreshTokenRepository
+from src.auth.repository import AuthReadRepository, RefreshTokenRepository, ThrottleRepository
 from src.auth.schemas import UserReadModel
-from src.auth.service import AuthService
-from src.core.exceptions import ForbiddenError, UnauthorizedError
+from src.auth.service import AuthService, assert_may_hold_session
+from src.core.config import settings
+from src.core.exceptions import ForbiddenError, NotFoundError, UnauthorizedError
 from src.core.security import decode_token
 from src.cqrs.mediator import Mediator
 from src.database.mongodb import get_database
@@ -59,8 +60,24 @@ async def get_current_user_id(request: Request) -> str:
 CurrentUserId = Annotated[str, Depends(get_current_user_id)]
 
 
+def get_client_ip(request: Request) -> str:
+    """The address rate limits are keyed on. Every request reaches the API through the
+    Next.js server, so the socket peer is that server for all users; it forwards the
+    browser's address in X-Forwarded-For, whose first entry is the original client."""
+    if settings.rate_limit_trust_forwarded_for:
+        forwarded = request.headers.get("X-Forwarded-For", "").split(",")[0].strip()
+        if forwarded:
+            return forwarded
+    return request.client.host if request.client else "unknown"
+
+
+ClientIp = Annotated[str, Depends(get_client_ip)]
+
+
 def get_auth_service(db: DB, refresh_repo: RefreshTokenRepoDep) -> AuthService:
-    return AuthService(AuthReadRepository(db), refresh_repo)
+    return AuthService(
+        AuthReadRepository(db), refresh_repo, ThrottleRepository(db, key_prefix="login:")
+    )
 
 
 AuthServiceDep = Annotated[AuthService, Depends(get_auth_service)]
@@ -70,7 +87,14 @@ async def get_current_user(
     user_id: CurrentUserId,
     mediator: MediatorDep,
 ) -> UserReadModel:
-    return await mediator.query(GetUserByIdQuery(user_id=user_id))
+    try:
+        user = await mediator.query(GetUserByIdQuery(user_id=user_id))
+    except NotFoundError:
+        # A valid token for an account that no longer exists (deleted or purged) is
+        # not a session.
+        raise UnauthorizedError()
+    assert_may_hold_session(user.status)
+    return user
 
 
 CurrentUser = Annotated[UserReadModel, Depends(get_current_user)]

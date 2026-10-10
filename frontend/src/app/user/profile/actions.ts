@@ -55,7 +55,7 @@ export const requestPasswordResetForCurrentUser = async (
     return { success: false, error: "Session expired. Please log in again." };
   }
 
-  console.log("[AUTH:FORGOT] Dashboard reset-link request", { email: user.email });
+  console.log("[AUTH:FORGOT] Dashboard reset-link request", { userId: user.id });
   return requestPasswordResetEmail(user.email);
 };
 
@@ -74,6 +74,10 @@ export const contactSupport = async (
     message: String(formData.get("message") ?? ""),
   };
 
+  // Deliberately getCurrentUser, not requireConsentedUser: support stays
+  // reachable while Terms/Privacy acceptance is stale, because it is also the
+  // route for data-access requests — the people most likely to need it are the
+  // ones who have not accepted a new version
   const user = await getCurrentUser();
   if (!user) {
     return { success: false, error: "Session expired. Please log in again.", values };

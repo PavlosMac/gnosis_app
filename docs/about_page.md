@@ -2,16 +2,16 @@
 
 ## Intro
 
-Tarot divinations is a decade long experiment of a programmer and mystical hobbiest. Inspiration for this website has come from 'Path of the Fool' , Michael Tsarions take on the 78 card deck. This is 'spirit tooling', using the best in modern software. 
+Tarot divinations is the culmination of a decade long investigation into Tarot. Inspiration for this website has come from 'Path of the Fool' , Michael Tsarions take on the 78 card deck. This is a 'spirit tooling' platform architected to encourage a person to take an interest in their true self. The Tarot offers us a symbolically rich tapestry to map the souls path through life. Creating spreads and pulling Tarot cards taps into our subconscious in a spectoral way. We offer a platform for the user to make many readings and get interpretive data quickly. Once you have made a reading and saved it, you are able to send the spread data to th LLM which returns the interpretation in text form within seconds, up to a minute for bigger spreads. The 'Oracle Interpretation' is the core of our platform. We save it for you to view again whenever you please. The complimentary feature of the platform is the 'Readings' database. This mean we can offer many readings, at lightning speed, using AI yes. If you follow the advice given on this platform, you will start to see patterns in the readings. Certain cards appear multiple times in different spreads, giving you unique perspective on the queries you make, this is when you will begin to experience real magic. It might be easy to disregard AI when it comes to divination, however the big models are trained on huge datasets, including occult and esoteric data. They are very good at finding threads, subtelties and drawing on ideosynchratic information in a spread.
 
 ## The Product
 - Oracle with 7 spreads
 - Readings Journal with filtering
-- Oracle interpreations (LLM)
+- Oracle interpretations (LLM)
 - User login and account settings
 
 ## Reading Oracle - Truly random shuffle algorithm
-- Our shuffle module uses your machines entropy. This is done using the browsers own cryptographic library and draws on your own device's pool of physical unpredictability. It works the same way if you would draw names from a hat, each card getting an equal chance of landing in evry position. No one can predict order, not even us, give your subconsious the best conditions to pick those cards it wants you to see.
+- Our shuffle module uses your machines entropy. This is done using the browsers own cryptographic library and draws on your own device's pool of physical unpredictability. It works the same way if you would draw names from a hat, each card getting an equal chance of landing in evry position. No one can predict order, not even us, give your subconsious the best conditions to pick those cards it wants you to see. The 'Reading Oracle' offers 7 spread types. You can then choose whether some cards will appear reversed, or none. You have the chance to add your question depending on the spread type.
 
 # Single, Two, Three Card Reading
 - The single card reading allows the user to pick one answer card. Less useful than a two card reading but better than nothing.
@@ -31,9 +31,9 @@ Tarot divinations is a decade long experiment of a programmer and mystical hobbi
 
 
 ## Oracle Interpretations
-- After much experimentation we are happy with the so called 'frontier' LLM models and their ability to synthesis card data into meaning interpretations. Modern LLMs, like Openai GPT range, are trained on vast data sets, this includes occult and esoteric data
-- Although we are not in favour of using AI everywhere, for our oracle interpretations we think it gives excellent results and good value
-- We believe access to many readings, allows the user quick access to quick information on spreads they have pulled, in this
+- After much experimentation we are happy with openaiAI's GPT model ability to synthesis card data into meaning interpretations. Frontier LLM models are trained on vast data sets, this includes occult and esoteric data
+- Although we are not in favour of using AI everywhere, for our oracle interpretations we think it gives excellent results and good value.
+- We believe that offering the user a platform where they can create many interpretations allows the user to really test the system and start to see the patterns in their readings, this we hope will produce real value.
 - respect they can curate meaningful readings, see patterns and enjoy the process. To provide quick reading information and not wait days for is the core of - our platform
 
 ## Significators

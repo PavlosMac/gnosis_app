@@ -1,9 +1,11 @@
 # Password Reset Flow
 
-> **Status: Unimplemented plan (verified 2026-09-10).** Nothing described here exists in
-> the code — no `src/notifications/`, no reset endpoints, no token collections — on any
-> branch. Migration numbers below say "next free" because 008/009 were taken since this
-> was written.
+> **Status: Implemented 2026-09-14.** This is the design record; the as-built reference
+> is [`docs/email/email_service.md`](../email/email_service.md). Details below that
+> differ from the code (migration numbers, provider choice) are superseded by that doc.
+> Since 2026-10-04 emails are case-folded on the way in, the reset and verification
+> tokens share `OneTimeTokenRepository`, and every limiter shares `ThrottleRepository`
+> (see [`registration-verification-and-consent.md`](registration-verification-and-consent.md)).
 
 ## Context
 

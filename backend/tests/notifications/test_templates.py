@@ -82,3 +82,34 @@ def test_support_html_escapes_metadata():
     )
     assert "<b>x</b>" not in html
     assert "&lt;b&gt;x&lt;/b&gt;@example.com" in html
+
+
+VERIFY_LINK = "https://tarotdivinations.com/verify-email?token=abc123"
+
+
+def test_email_verification_subject_names_the_product():
+    from src.notifications.templates import email_verification_subject
+
+    assert email_verification_subject() == "Confirm your email for Tarot Divinations"
+
+
+def test_email_verification_text_derives_its_wording_from_the_settings_passed():
+    from src.notifications.templates import email_verification_text
+
+    text = email_verification_text(VERIFY_LINK, ttl_hours=24, retention_days=7)
+
+    assert VERIFY_LINK in text
+    assert "24 hours" in text
+    assert "7 days" in text
+    assert "<" not in text
+    assert "1 hour " in email_verification_text(VERIFY_LINK, ttl_hours=1, retention_days=1)
+
+
+def test_email_verification_html_contains_link_twice_and_both_periods():
+    from src.notifications.templates import email_verification_html
+
+    html_body = email_verification_html(VERIFY_LINK, ttl_hours=48, retention_days=30)
+
+    assert html_body.count(VERIFY_LINK) == 2
+    assert "48 hours" in html_body
+    assert "30 days" in html_body

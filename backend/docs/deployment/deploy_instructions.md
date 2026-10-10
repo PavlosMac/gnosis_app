@@ -55,6 +55,46 @@ Edit `.env.gnosis.prod` — fill in the generated values and your OpenAI key. Th
 MONGODB_URI=mongodb://gnosis_app:<paste-GNOSIS_APP_PASSWORD-here>@gnosis-mongodb:27017/gnosis_esoterica?authSource=gnosis_esoterica
 ```
 
+**Required values** (the API starts without some of these, but registration cannot work):
+
+| Variable | Why it is required |
+|---|---|
+| `MONGO_ROOT_PASSWORD`, `GNOSIS_APP_PASSWORD`, `MONGODB_URI` | Database access; startup fails without `MONGODB_URI`. |
+| `JWT_SECRET_KEY` | Startup fails without it. |
+| `OPENAI_API_KEY` | Unset selects the mock LLM. |
+| `RESEND_API_KEY`, `EMAIL_FROM` | Unset selects the console adapter: no verification or password-reset email is delivered, so nobody can complete registration. |
+| `FRONTEND_BASE_URL` | Emailed links are built from it; the default is `http://localhost:3000`. Set `https://tarotdivinations.com`. |
+| `SUPPORT_EMAIL` | Empty makes `POST /support/contact` answer 503. |
+
+Optional, with defaults: `EMAIL_VERIFICATION_TOKEN_TTL_HOURS` (24),
+`PENDING_ACCOUNT_TTL_DAYS` (7), the `LOGIN_`/`REGISTER_RATE_LIMIT_*` values and
+`RATE_LIMIT_TRUST_FORWARDED_FOR` (true; the API has no host port and is reached only by
+the Next.js container, which forwards the browser address).
+
+### 3b. Frontend container environment
+
+The Next.js container needs two variables. They are set in `frontend/docker-compose.yml`
+in this repo:
+
+| Variable | Value | Effect when missing |
+|---|---|---|
+| `GNOSIS_API_BASE_URL` | `http://gnosis-api:8000` (the API's name on `app-network`) | Every backend call fails. |
+| `REGISTRATION_ENABLED` | `false` by default (closed) | Set it to exactly `true` to open sign-up. While closed, `/user/register` redirects to login and the Sign up links are hidden. |
+
+**Sign-up is closed by default in production** (decided 2026-10-05), so deploying does
+not open registration. To open it, put `REGISTRATION_ENABLED=true` in an `.env` file
+beside the frontend compose file on the Pi (or export it) and recreate the container
+(`docker compose up -d`). To close it again, remove the line and recreate.
+
+**Check the compose file actually running on the Pi.** If the Pi's frontend compose was
+written by hand rather than copied from `frontend/docker-compose.yml`, add
+`GNOSIS_API_BASE_URL` there, and `REGISTRATION_ENABLED` when you want sign-up open.
+Nothing else in the repo supplies them.
+
+After the first deploy of email verification, every existing user is asked to accept the
+Terms and Privacy Policy once on their next visit to `/user/*`. All sessions are also
+signed out once, because the session cookies were renamed to the `__Host-` form.
+
 ### 4. Pull, start, and migrate
 
 ```bash

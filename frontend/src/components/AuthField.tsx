@@ -45,6 +45,8 @@ interface AuthFieldProps {
   autoComplete?: string;
   maxLength?: number;
   defaultValue?: string;
+  /** Muted guidance under the input, e.g. the password rules */
+  hint?: string;
 }
 
 const AuthField = ({
@@ -57,6 +59,7 @@ const AuthField = ({
   autoComplete,
   maxLength,
   defaultValue,
+  hint,
 }: AuthFieldProps) => (
   <AuthFieldFrame name={name} label={label} error={error}>
     <input
@@ -68,10 +71,51 @@ const AuthField = ({
       autoComplete={autoComplete}
       maxLength={maxLength}
       defaultValue={defaultValue}
+      aria-describedby={hint ? `${name}-hint` : undefined}
       className={AUTH_CONTROL_CLASS}
       style={AUTH_CONTROL_STYLE}
     />
+    {hint && (
+      <p id={`${name}-hint`} className="text-xs text-[#e6d5b8]/40" style={AUTH_CONTROL_STYLE}>
+        {hint}
+      </p>
+    )}
   </AuthFieldFrame>
+);
+
+interface AuthCheckboxProps {
+  name: string;
+  /** Rendered beside the box. Callers put the `<label htmlFor={name}>` text and
+      any link/button inside, so a button in the label never toggles the box. */
+  children: React.ReactNode;
+  error?: string;
+  defaultChecked?: boolean;
+}
+
+/** A consent-style checkbox row with the same error line as the text fields */
+export const AuthCheckbox = ({ name, children, error, defaultChecked }: AuthCheckboxProps) => (
+  <div className="space-y-1.5">
+    <div className="flex items-start" style={{ gap: "0.75rem" }}>
+      <input
+        id={name}
+        name={name}
+        type="checkbox"
+        defaultChecked={defaultChecked}
+        aria-invalid={error ? true : undefined}
+        className="shrink-0 rounded border border-[#d4af37]/40 bg-[#0a0015]/60 accent-[#d4af37]
+                   focus:outline-none focus:ring-1 focus:ring-[#d4af37]/40"
+        style={{ width: "1.125rem", height: "1.125rem", marginTop: "0.2rem" }}
+      />
+      <div className="text-sm text-[#e6d5b8]/80" style={{ ...AUTH_CONTROL_STYLE, minWidth: 0 }}>
+        {children}
+      </div>
+    </div>
+    {error && (
+      <p className="text-xs text-red-400/80" style={AUTH_CONTROL_STYLE}>
+        {error}
+      </p>
+    )}
+  </div>
 );
 
 export default AuthField;

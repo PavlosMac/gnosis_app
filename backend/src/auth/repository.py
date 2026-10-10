@@ -1,11 +1,14 @@
-from datetime import UTC, datetime
+import re
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 from bson import ObjectId
 from pymongo import ReturnDocument
 
+from src.auth.models import UserStatus
 from src.database.base_repository import BaseReadRepository, BaseWriteRepository
 from src.database.collections.constants import (
+    EMAIL_VERIFICATION_TOKENS_COLLECTION,
     PASSWORD_RESET_ATTEMPTS_COLLECTION,
     PASSWORD_RESET_TOKENS_COLLECTION,
     REFRESH_TOKENS_COLLECTION,
@@ -71,6 +74,40 @@ class AuthWriteRepository(BaseWriteRepository):
             {"$inc": {"usage.cost_usd": -reserved_usd}},
         )
 
+    async def record_consent(
+        self, user_id: str, document: str, version: str, accepted_at: datetime
+    ) -> bool:
+        """Store acceptance of one legal document, unless that exact version is already
+        recorded. The record is evidence of when consent was given, so re-saving an
+        unchanged version must not move accepted_at. The dotted key leaves the other
+        document's record alone. Returns True when something was written."""
+        result = await self._collection.update_one(
+            {"_id": ObjectId(user_id), f"consents.{document}.version": {"$ne": version}},
+            {
+                "$set": {
+                    f"consents.{document}": {"version": version, "accepted_at": accepted_at},
+                    "updated_at": accepted_at,
+                }
+            },
+        )
+        return result.modified_count > 0
+
+    async def mark_email_verified(self, user_id: str, verified_at: datetime) -> bool:
+        """Flip a pending account to active and take it off the purge clock. Returns
+        False when the user no longer exists (purged between send and confirm)."""
+        result = await self._collection.update_one(
+            {"_id": ObjectId(user_id)},
+            {
+                "$set": {
+                    "status": str(UserStatus.ACTIVE),
+                    "email_verified_at": verified_at,
+                    "updated_at": verified_at,
+                },
+                "$unset": {"verification_deadline_at": ""},
+            },
+        )
+        return result.matched_count > 0
+
 
 class AuthReadRepository(BaseReadRepository):
     @property
@@ -78,7 +115,9 @@ class AuthReadRepository(BaseReadRepository):
         return USERS_COLLECTION
 
     async def find_by_email(self, email: str) -> dict[str, Any] | None:
-        return await self.find_one({"email": email})
+        """Emails are stored lower-cased (every writer folds them), so folding the
+        query makes the lookup case-insensitive for every caller."""
+        return await self.find_one({"email": email.strip().lower()})
 
     async def find_dashboard_fields(self, user_id: str) -> dict[str, Any] | None:
         """The user document projected to what the dashboard renders plus what the
@@ -123,13 +162,17 @@ class RefreshTokenRepository:
         await self._collection.delete_many({"family_id": family_id})
 
     async def revoke_all_for_user(self, user_id: str) -> None:
-        """Password reset kills every session — all families, all devices."""
+        """Password reset and account deletion kill every session — all families, all
+        devices."""
         await self._collection.delete_many({"user_id": user_id})
 
 
-class PasswordResetTokenRepository:
-    def __init__(self, db) -> None:
-        self._collection = db[PASSWORD_RESET_TOKENS_COLLECTION]
+class OneTimeTokenRepository:
+    """Hashed single-use tokens for emailed links. One collection per purpose
+    (password reset, email verification) via the thin subclasses below."""
+
+    def __init__(self, db, collection: str) -> None:
+        self._collection = db[collection]
 
     async def store(self, token_hash: str, user_id: str, expires_at: datetime) -> None:
         await self._collection.insert_one(
@@ -150,21 +193,86 @@ class PasswordResetTokenRepository:
             {"$set": {"used": True}},
         )
 
+    async def peek(self, token_hash: str) -> dict[str, Any] | None:
+        """The unused token without consuming it — for checks that must not burn a
+        single-use link when they fail (e.g. the new password is refused)."""
+        return await self._collection.find_one({"token_hash": token_hash, "used": False})
+
     async def invalidate_all_for_user(self, user_id: str) -> None:
         await self._collection.delete_many({"user_id": user_id, "used": False})
 
+    async def delete_all_for_user(self, user_id: str) -> None:
+        """Account deletion: used and unused alike."""
+        await self._collection.delete_many({"user_id": user_id})
 
-class PasswordResetThrottleRepository:
-    """Mongo-backed per-key request throttle; `key` is generic (currently the email)
-    so a per-IP variant can reuse the collection via a prefix later."""
 
+class PasswordResetTokenRepository(OneTimeTokenRepository):
     def __init__(self, db) -> None:
-        self._collection = db[PASSWORD_RESET_ATTEMPTS_COLLECTION]
+        super().__init__(db, PASSWORD_RESET_TOKENS_COLLECTION)
+
+
+class EmailVerificationTokenRepository(OneTimeTokenRepository):
+    def __init__(self, db) -> None:
+        super().__init__(db, EMAIL_VERIFICATION_TOKENS_COLLECTION)
+
+
+class ThrottleRepository:
+    """Mongo-backed per-key request throttle. Every limiter shares one collection
+    (TTL-cleaned by migration 011); `key_prefix` keeps their keys apart — "login:",
+    "register:", "verify:". Password reset uses the bare email and support prefixes its
+    own keys, both through PasswordResetThrottleRepository."""
+
+    def __init__(
+        self,
+        db,
+        collection: str = PASSWORD_RESET_ATTEMPTS_COLLECTION,
+        key_prefix: str = "",
+    ) -> None:
+        self._collection = db[collection]
+        self._key_prefix = key_prefix
 
     async def record_attempt(self, key: str, expires_at: datetime) -> None:
         await self._collection.insert_one(
-            {"key": key, "created_at": datetime.now(UTC), "expires_at": expires_at}
+            {
+                "key": f"{self._key_prefix}{key}",
+                "created_at": datetime.now(UTC),
+                "expires_at": expires_at,
+            }
         )
 
     async def count_recent(self, key: str, since: datetime) -> int:
-        return await self._collection.count_documents({"key": key, "created_at": {"$gte": since}})
+        return await self._collection.count_documents(
+            {"key": f"{self._key_prefix}{key}", "created_at": {"$gte": since}}
+        )
+
+    async def is_over_limit(self, key: str, window_seconds: int, max_attempts: int) -> bool:
+        """Record this call, then count. Record-before-count means the count includes
+        the call's own attempt, so a concurrent burst can only over-throttle (everyone
+        sees everyone's insert), never under-throttle."""
+        now = datetime.now(UTC)
+        window = timedelta(seconds=window_seconds)
+        await self.record_attempt(key, expires_at=now + window)
+        return await self.count_recent(key, since=now - window) > max_attempts
+
+    async def delete_for_account(self, email: str, user_id: str) -> None:
+        """Account deletion: throttle records are keyed by the user's email or id, so
+        they are personal data too. Matches the stored (already prefixed) keys of every
+        limiter — call it on the unprefixed repository. They would expire within the
+        hour anyway; erasure should not wait for that."""
+        await self._collection.delete_many(
+            {
+                "$or": [
+                    {"key": email},
+                    {"key": f"verify:{email}"},
+                    {"key": f"support:{user_id}"},
+                    {"key": f"login:delete:{user_id}"},
+                    # login:<ip>:<email> for any ip
+                    {"key": {"$regex": f"^login:.*:{re.escape(email)}$"}},
+                ]
+            }
+        )
+
+
+class PasswordResetThrottleRepository(ThrottleRepository):
+    def __init__(self, db) -> None:
+        super().__init__(db)

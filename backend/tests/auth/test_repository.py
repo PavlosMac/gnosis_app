@@ -122,3 +122,17 @@ async def test_find_dashboard_fields_returns_none_for_missing_or_malformed_id(mo
     repo = AuthReadRepository(mock_db)
     assert await repo.find_dashboard_fields(str(ObjectId())) is None
     assert await repo.find_dashboard_fields("not-an-object-id") is None
+
+
+# --- find_by_email: case-insensitive lookup against lower-cased storage ---
+
+
+async def test_find_by_email_case_folds_the_query(mock_db):
+    from src.auth.repository import AuthReadRepository
+
+    await mock_db["users"].insert_one({"email": "mixed@example.com", "password_hash": "x"})
+
+    doc = await AuthReadRepository(mock_db).find_by_email("  MiXeD@Example.COM ")
+
+    assert doc is not None
+    assert doc["email"] == "mixed@example.com"

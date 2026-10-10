@@ -229,3 +229,95 @@ Each decision should include:
 - Court royal is frontend-computed like the rest of the chart; existing readings and their interpretations have none
 - Each chart carries one more distinct card, so the server-owned word budget rises by one card's share
 - If a different King/Knight convention is wanted, only the table in `lib/court-royals.ts` changes
+
+### ADR-012: Versioned Legal-Document Consent Stored per Document; Version = Dated MDX Filename (2026-10-04)
+
+**Context:**
+- The app had no legal documents and no record of consent; registration collected only an optional display name
+- We must be able to prove what each user accepted, re-ask when a document changes, and let users see and revisit what they agreed to
+- Design: `docs/gdpr-consent-terms-and-named-registration.md`; plan: `/docs/registration-consent-verification-cookies.md`
+
+**Decision:**
+- Terms and Privacy Policy are MDX files in `src/content/legal/<doc>/<YYYY-MM-DD>.mdx`. **The filename is the version**; the newest filename is current; every older file stays renderable at `/legal/<doc>/<date>`. Nothing else declares a version
+- Each acceptance is stored on the user as `consents.<doc> = {version, accepted_at}` (backend), not as booleans. The backend stores the version string unvalidated, so a document edit needs no backend deploy
+- Documents load through a generated static import map (`src/lib/legal-registry.generated.ts`, written by `scripts/generate-legal-registry.mjs` before `dev`, `build` and `test`), not `fs.readdirSync` + a template-literal `import()`: Turbopack needs literal import paths and the standalone production image has no `src/content` at runtime. A test pins the registry to the directory listing
+- Registration requires first and last name plus two unticked checkboxes. Terms: "I accept". Privacy: "I have read" (an acknowledgement of notice; the lawful basis for account data is the contract, not consent). Versions sent to the backend always come from the server-side registry, never from the form
+- **Re-consent gate:** `src/app/user/layout.tsx` and `superadmin/layout.tsx` redirect to `/accept-terms` when a stored version is behind (`onboardingRedirect` in `src/lib/onboarding.ts`). Data-creating server actions use `requireConsentedUser()` because layouts do not protect actions
+- **Self-service:** `/user/profile/manage-consent` lets a user review both documents and re-record acceptance at any time. Unticking is not a withdrawal: there is no "account without the Terms" state, and the page says so
+- **`/user/profile/delete-account` is exempt from the gate** (`isOnboardingExempt`; the proxy passes the pathname to layouts in an `x-pathname` request header). Leaving must never require accepting new terms first
+- The profile shows an Agreements block: one row per document linking to the exact version accepted
+
+**Alternatives Considered:**
+- Two booleans -> Rejected: cannot prove which text was accepted or re-prompt on change
+- One file per document with a version export -> Rejected: old versions would not stay renderable
+- Backend-owned versions -> Rejected: every wording change would need a backend deploy
+- A global blocking modal -> Rejected: public pages must stay usable; a route is simpler to reason about
+- Runtime directory listing -> Rejected: breaks in the standalone image and under Turbopack
+
+**Consequences:**
+- Adding a version = add a dated file and commit the regenerated registry. Existing users (and all legacy users, whose `consents` is `{}`) see `/accept-terms` once
+- `contactSupport` needs only a session (`getCurrentUser()`), not current consent, and `/accept-terms` links to the support modal: it is the route for data-access requests, so it must stay open to a user who declines a new version (changed 2026-10-10; it was behind the gate at first)
+- A layout does not re-run on client-side navigation inside `/user`, so every page under `/user` and `/superadmin` (except the exempt delete page) also calls `enforceOnboarding()` (`src/lib/onboarding-gate.ts`). A new page in those sections must call it too
+- `/accept-terms` is in the proxy matcher so an expired access token is refreshed where the rotated cookies can be persisted
+- On public pages (e.g. `/reading`) there is no gate: a guarded action answers "Please accept the updated Terms…" and the inline login redirects to the outstanding step
+- Re-saving an already-recorded version (the manage-consent page) leaves `accepted_at` untouched on the backend, so the original acceptance date is kept as evidence
+- The MDX texts are drafts for legal review. Placeholders marked `[TO BE COMPLETED]` (controller identity, governing law, supervisory authority) must be filled in before launch
+
+### ADR-013: Hard Email-Verification Gate, User Status Enum, and `__Host-` Session Cookies (2026-10-04)
+
+**Context:**
+- Registration auto-logged the user in with an unproven address
+- The three session cookies were written in two places (`api-client.ts`, `proxy.ts`) with duplicated options
+- A payment step is coming and must not need a redesign
+
+**Decision:**
+- **No session until the email is confirmed.** `POST /auth/register` answers `201 {detail}` with no tokens; the form shows a "check your email" panel. The emailed link opens `/verify-email?token=...`, which renders a Confirm button and posts only on click (a mail scanner that pre-fetches the link cannot burn the token). `POST /auth/verify-email` also returns no tokens: the user signs in explicitly afterwards, so a leaked link never yields a session
+- The backend holds `users.status` (`pending_verification | active`; absent = active). One check, `assert_may_hold_session`, guards login, refresh and `get_current_user`. Login answers `403 {code: "email_not_verified"}`; `ApiError.code` carries it and both login forms link to `/verify-email`, where a new link can be requested
+- `onboardingRedirect(user, currentVersions)` is the single frontend decision point: pending -> `/verify-email`, stale consents -> `/accept-terms`. A payment step adds one enum member (backend) and one branch (frontend)
+- **One cookie module:** `src/lib/auth-cookies.ts` (edge-safe) is the only reader and writer. In production the names are `__Host-access_token`, `__Host-refresh_token`, `__Host-token_expires_at` (httpOnly, Secure, SameSite=Lax, Path=/, no Domain); in dev the plain names. Cookies are cleared with `set(..., maxAge: 0)`, never `delete`, because a `__Host-` deletion without Secure is dropped by browsers
+- Access token lifetime is 3600s everywhere (config default, env examples, docs)
+- Rate limits on login (IP + email) and register (IP). Because every backend call is made by the Next.js server, `publicFetch` forwards the browser address in `X-Forwarded-For` (`src/lib/client-ip.ts`); without it the limits would be global
+- `REGISTRATION_ENABLED` is exposed to client components once, through `AuthProvider` / `useAuth().registrationEnabled`, and gates the Sign up links in `ProfileNav`, the login page, the inline login modal and the landing footer
+
+**Alternatives Considered:**
+- Soft gate (log in, nag to verify) -> Rejected: an unproven address would hold a session and data
+- Auto-login from the verification link -> Rejected: turns the emailed link into a bearer credential
+- Verifying on GET -> Rejected: mail scanners follow links
+- Keeping plain cookie names in production -> Rejected: `__Host-` binds the cookie to this host over HTTPS at no cost
+
+**Consequences:**
+- Renaming the cookies signs every user out once on deploy
+- `__Host-` requires HTTPS: a production build served over plain http cannot hold a session (prod is behind the Cloudflare tunnel)
+- A never-verified account is deleted after 7 days (backend TTL index); a resend restarts the clock
+- The 24-hour and 7-day figures shown in the UI are constants in `src/lib/verification-policy.ts` that mirror backend settings; change both together
+- No cookie-consent banner: Google Analytics was removed instead (2026-10-10), see ADR-014
+
+### ADR-014: Self-Service Account Deletion (2026-10-04)
+
+**Context:**
+- The system must be open to removing users who wish to leave. `POST /support/contact` is an inbox, not a mechanism
+
+**Decision:**
+- `/user/profile/delete-account` (linked from a danger zone at the foot of the profile and from `/accept-terms`): password plus a typed `DELETE` confirmation. The action calls `DELETE /api/v1/auth/me`, clears the session cookies and redirects to `/`
+- The backend re-verifies the password and cascades: refresh tokens, interpretations, readings, tags, reset and verification tokens, throttle records naming the account, then the user document (with its usage aggregate and consent record). Deletion is immediate and irreversible
+- A wrong password is `403 {code: "invalid_password"}`, not 401: `authenticatedFetch` treats a 401 as an expired token and would refresh and retry
+- The action uses `getCurrentUser()`, not `requireConsentedUser()`, and the page is exempt from the onboarding gate (ADR-012)
+
+**Alternatives Considered:**
+- Support-ticket deletion -> Rejected: depends on a human and leaves no guarantee
+- Soft delete with a grace period -> Rejected: more state and a retention question, for no current need
+- Checkbox confirmation -> Rejected: too easy to trigger for an irreversible action
+
+**Consequences:**
+- Accepted debts, each needing a follow-up:
+  - **Google Analytics** loaded unconditionally and set non-essential cookies without consent. Resolved 2026-10-10 by removing the tag and its CSP entries; the site has no analytics. A cookieless tool (Plausible, Umami) can be added later without a banner
+  - **Data export** (a downloadable copy of a user's data) is not built; access requests go through Contact support with a 30-day response time
+  - **Breach-notification runbook** (72-hour duty) is an operational document that does not exist yet
+  - **Backups:** a deleted account stays in existing database backups until they rotate
+  - **Name editing** from the profile is not built
+  - **No backend-side registration gate:** `REGISTRATION_ENABLED` is enforced by the frontend only; the API's `/auth/register` is reachable from inside the container network regardless
+- An access token stays valid for up to an hour after deletion for endpoints that do not re-read the user; the cookies are cleared, so it needs a copied bearer token to matter
+
+**ADR-013 addendum (2026-10-05): password policy.** New passwords (register, reset) must be 12 to 128 characters, must not be on a bundled common-password list, must not be a repeat or plain run, and must not contain the user's name or the local part of their email. No character-mix rules: they push users to `Password1!`. No Have I Been Pwned lookup: judged overkill here, since it adds an outside dependency to sign-up and a recipient to explain. The backend owns the list and answers `422 {code: "weak_password"}` with a user-facing `detail`, which the form shows on the password field; the frontend checks only length and the name/email rule (`src/lib/password-policy.ts`) and shows a hint under the field. Login keeps the 8-character floor so existing accounts can sign in. A refused password does not consume a reset link.
+
+**ADR-013 addendum (2026-10-05): sign-up is closed by default in production.** `frontend/docker-compose.yml` defaults `REGISTRATION_ENABLED` to `false`, reversing the 2026-10-04 default of `true`, so a deploy never opens registration by itself; it is opened on the Pi by setting the variable to `true`. Local `make dev` still defaults to open.

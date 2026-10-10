@@ -1,4 +1,11 @@
 import { listHref } from "@/lib/reading-list-context";
+import type { UserConsents } from "@/lib/consent";
+import {
+  DOCUMENT_TITLES,
+  LEGAL_DOCUMENT_IDS,
+  isVersionString,
+  type LegalDocumentId,
+} from "@/lib/legal-versions";
 
 /**
  * How full the chalice is, 0..1 — null when the figures can't yield a level
@@ -55,3 +62,43 @@ export const truncateQuestion = (text: string | null, max = 120): string | null 
 
 /** The readings list filtered to one tag — shared serializer, so it can't drift */
 export const tagHref = (tag: string): string => listHref({ page: 1, tags: tag });
+
+/** The profile's Name row: the display name, else first + last, else "Seeker" */
+export const accountName = (user: {
+  displayName: string | null;
+  firstName: string | null;
+  lastName: string | null;
+}): string =>
+  user.displayName ||
+  [user.firstName, user.lastName].filter(Boolean).join(" ") ||
+  "Seeker";
+
+export interface AgreementRow {
+  id: LegalDocumentId;
+  title: string;
+  /** A consent record exists for this document */
+  accepted: boolean;
+  /** The exact version accepted, or the current document when none is recorded */
+  href: string;
+  detail: string;
+}
+
+/** One row per legal document for the profile's Agreements block */
+export const agreementRowModel = (consents: UserConsents | undefined): AgreementRow[] =>
+  LEGAL_DOCUMENT_IDS.map((id) => {
+    const record = consents?.[id];
+    const title = DOCUMENT_TITLES[id];
+    if (!record) {
+      return { id, title, accepted: false, href: `/legal/${id}`, detail: "Not yet recorded" };
+    }
+    // The stored version is whatever string the backend holds; only a
+    // well-formed one becomes a path segment
+    const href = isVersionString(record.version)
+      ? `/legal/${id}/${record.version}`
+      : `/legal/${id}`;
+    const acceptedAt = new Date(record.accepted_at);
+    const detail = Number.isNaN(acceptedAt.getTime())
+      ? "accepted"
+      : `accepted ${formatReadingDate(record.accepted_at)}`;
+    return { id, title, accepted: true, href, detail };
+  });

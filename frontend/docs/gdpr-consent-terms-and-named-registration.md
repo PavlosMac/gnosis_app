@@ -4,11 +4,17 @@
 
 | Feature | Status |
 |---|---|
-| 1. MDX tooling + public legal pages | not started |
-| 2. Registration: names + consent checkboxes | not started |
-| 3. Re-consent gate for existing users | not started |
-| Housekeeping (ADR, key_facts, issues, auth-flow docs) | not started |
-| Backend contract (`docs/backend-contracts/consent-and-names.md`) | not started |
+| 1. MDX tooling + public legal pages | done 2026-10-04 |
+| 2. Registration: names + consent checkboxes | done 2026-10-04 |
+| 3. Re-consent gate for existing users | done 2026-10-04 |
+| 4. Self-service consent management (added by the registration plan) | done 2026-10-04 |
+| Housekeeping (ADR, key_facts, issues, auth-flow docs) | done 2026-10-04 (ADR-012, renumbered from 011) |
+| Backend contract | implemented in `backend/` (monorepo); `docs/backend-contracts/consent-and-names.md` was not created |
+
+Implemented as part of `/docs/registration-consent-verification-cookies.md`, which
+supersedes this document where they differ: registration no longer logs the user in (email
+verification gate), documents are dated 2026-10-04, the document registry is a generated
+import map rather than a runtime directory listing, and account deletion is now in scope.
 
 This document is the reference point for the feature; update the status table as work lands.
 
@@ -23,7 +29,7 @@ The app has no legal documents, no record of user consent, and registration coll
 
 Decisions taken in the design conversation (2026-09-16):
 
-- Scope is **consent at signup + re-consent gate** only. Account deletion, data export, and gating Google Analytics behind cookie consent are separate later features (the GA tag in `src/app/layout.tsx` loads unconditionally and is the remaining live exposure).
+- Scope is **consent at signup + re-consent gate** only. Account deletion, data export, and gating Google Analytics behind cookie consent are separate later features (the GA tag in `src/app/layout.tsx` loaded unconditionally and was the remaining live exposure until it was removed on 2026-10-10).
 - Not two bare booleans. Each document acceptance is stored as **`{version, accepted_at}`**, so we can prove what was accepted and re-prompt only when a version changes. Field names are `terms` and `privacy` (not "gdpr").
 - **Version is the MDX filename.** Each document is a folder of dated files (`src/content/legal/terms/2026-09-16.mdx`); the newest filename is the current version, and every accepted version stays renderable at `/legal/<doc>/<date>`. Nothing else declares a version. (Amended 2026-09-16 from "version as an MDX export".)
 - **Users can see what they agreed to** on the profile `AccountPanel`: one read-only row per document with a checkmark, accepted date and a link to the exact dated version. Public footer links point at the current documents; the nav dropdown carries nothing legal.

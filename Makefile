@@ -1,5 +1,6 @@
 COMPOSE := docker compose -f backend/docker-compose.yml
 API_URL := http://localhost:8001
+REGISTRATION_ENABLED ?= true
 
 .PHONY: install dev dev-down dev-logs test lint deploy
 
@@ -12,11 +13,12 @@ dev:
 	# so Turbopack hot reload keeps working. `--wait` blocks until both
 	# containers are healthy, so the frontend never starts against a dead API.
 	# GNOSIS_API_BASE_URL is exported here and beats frontend/.env.local.
+	# REGISTRATION_ENABLED opens sign-up in dev (override: make dev REGISTRATION_ENABLED=false).
 	# Ctrl+C stops the containers (volume is kept); `make dev-down` removes them.
 	$(COMPOSE) up -d --build --wait --wait-timeout 120
 	@trap 'kill $$LOGS 2>/dev/null; $(COMPOSE) stop' EXIT; trap 'exit 130' INT TERM; \
 	$(COMPOSE) logs -f --tail=50 api & LOGS=$$!; \
-	cd frontend && GNOSIS_API_BASE_URL=$(API_URL) npm run dev
+	cd frontend && GNOSIS_API_BASE_URL=$(API_URL) REGISTRATION_ENABLED=$(REGISTRATION_ENABLED) npm run dev
 
 dev-down:
 	$(COMPOSE) down

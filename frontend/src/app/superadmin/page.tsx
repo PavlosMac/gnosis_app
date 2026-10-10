@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { enforceOnboarding } from "@/lib/onboarding-gate";
 import TarotPageLayout from "@/components/TarotPageLayout";
 import { getUsers } from "./actions";
 
@@ -9,6 +10,8 @@ const SuperadminPage = async ({
 }: {
   searchParams: Promise<{ page?: string }>;
 }) => {
+  await enforceOnboarding();
+
   const { page: pageParam } = await searchParams;
   const currentPage = Math.max(1, parseInt(pageParam ?? "1", 10) || 1);
   const result = await getUsers(currentPage, PAGE_SIZE);

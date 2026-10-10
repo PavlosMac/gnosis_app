@@ -4,6 +4,13 @@ services:
     container_name: tarot-next-app
     environment:
       - NODE_ENV=${NODE_ENV:-production}
+      # Server-side only. The API is reachable by name on app-network.
+      - GNOSIS_API_BASE_URL=${GNOSIS_API_BASE_URL:-http://gnosis-api:8000}
+      # Sign-up is CLOSED in production unless you open it deliberately: set
+      # REGISTRATION_ENABLED=true (exactly "true", src/lib/feature-flags.ts) in the
+      # environment or in an .env file beside this compose file, then recreate
+      # the container.
+      - REGISTRATION_ENABLED=${REGISTRATION_ENABLED:-false}
     restart: unless-stopped
     networks:
       - app-network

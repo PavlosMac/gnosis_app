@@ -1,4 +1,4 @@
-from tests.factories import VALID_READING_BODY
+from tests.factories import VALID_READING_BODY, register_verify_and_login
 
 
 async def test_get_dashboard_authenticated(client, auth_token):
@@ -36,12 +36,9 @@ async def test_get_dashboard_reflects_created_reading(client, auth_token):
     assert data["last_reading"]["interpretation"] is None
 
 
-async def test_get_dashboard_does_not_leak_other_users_readings(client, auth_token):
-    other = await client.post(
-        "/api/v1/auth/register",
-        json={"email": "other@example.com", "password": "securepassword123"},
-    )
-    other_headers = {"Authorization": f"Bearer {other.json()['access_token']}"}
+async def test_get_dashboard_does_not_leak_other_users_readings(client, auth_token, mock_email):
+    other = await register_verify_and_login(client, mock_email, "other@example.com")
+    other_headers = {"Authorization": f"Bearer {other['access_token']}"}
     assert (
         await client.post("/api/v1/readings", json=VALID_READING_BODY, headers=other_headers)
     ).status_code == 201

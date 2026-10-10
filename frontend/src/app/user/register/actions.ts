@@ -1,10 +1,11 @@
 "use server";
 
-import { redirect } from "next/navigation";
-import { publicFetch, setAuthCookies } from "@/lib/api-client";
+import { publicFetch } from "@/lib/api-client";
 import { isRegistrationEnabled } from "@/lib/feature-flags";
+import { CURRENT_VERSIONS } from "@/lib/legal-documents";
+import { WEAK_PASSWORD } from "@/lib/password-policy";
 import { registerSchema } from "@/lib/validation/auth-schemas";
-import type { RegisterFormState, TokenResponse } from "@/types/auth";
+import type { DetailResponse, RegisterEchoValues, RegisterFormState } from "@/types/auth";
 
 export const register = async (
   _prevState: RegisterFormState,
@@ -14,41 +15,59 @@ export const register = async (
     return { success: false, error: "Registration is currently closed." };
   }
 
-  console.log("[AUTH:REGISTER] Register attempt", { email: formData.get("email") });
+  console.log("[AUTH:REGISTER] Register attempt");
 
-  const raw = {
+  // Echoed back on any failure so the re-rendered form keeps what was typed
+  // (React 19 resets uncontrolled inputs after an action). Never the passwords.
+  const values: RegisterEchoValues = {
+    firstName: String(formData.get("firstName") ?? ""),
+    lastName: String(formData.get("lastName") ?? ""),
+    email: String(formData.get("email") ?? ""),
+    acceptTerms: formData.get("acceptTerms") === "on",
+    acceptPrivacy: formData.get("acceptPrivacy") === "on",
+  };
+
+  const parsed = registerSchema.safeParse({
+    firstName: formData.get("firstName"),
+    lastName: formData.get("lastName"),
     email: formData.get("email"),
     password: formData.get("password"),
     confirmPassword: formData.get("confirmPassword"),
-    displayName: formData.get("displayName") || undefined,
-  };
-
-  const parsed = registerSchema.safeParse(raw);
+    acceptTerms: formData.get("acceptTerms"),
+    acceptPrivacy: formData.get("acceptPrivacy"),
+  });
   if (!parsed.success) {
-    console.log("[AUTH:REGISTER] Validation failed", parsed.error.flatten().fieldErrors);
-    return {
-      success: false,
-      fieldErrors: parsed.error.flatten().fieldErrors,
-    };
+    const fieldErrors = parsed.error.flatten().fieldErrors;
+    console.log("[AUTH:REGISTER] Validation failed", { fields: Object.keys(fieldErrors) });
+    return { success: false, fieldErrors, values };
   }
 
-  const { confirmPassword: _, ...body } = parsed.data;
-  const result = await publicFetch<TokenResponse>("/api/v1/auth/register", {
+  const result = await publicFetch<DetailResponse>("/api/v1/auth/register", {
     method: "POST",
     body: JSON.stringify({
-      email: body.email,
-      password: body.password,
-      display_name: body.displayName,
+      email: parsed.data.email,
+      password: parsed.data.password,
+      first_name: parsed.data.firstName,
+      last_name: parsed.data.lastName,
+      // The accepted versions come from the server-side registry, never from
+      // the form: a client cannot record acceptance of a version it was not shown
+      consents: { terms: CURRENT_VERSIONS.terms, privacy: CURRENT_VERSIONS.privacy },
     }),
   });
 
   if (!result.ok) {
-    console.log("[AUTH:REGISTER] Registration failed", { error: result.message });
-    return { success: false, error: result.message };
+    console.log("[AUTH:REGISTER] Registration failed", { status: result.status, code: result.code });
+    // The backend's blocklist verdict: its message is written for the user
+    if (result.code === WEAK_PASSWORD && result.detail) {
+      return { success: false, fieldErrors: { password: [result.detail] }, values };
+    }
+    const error =
+      result.status === 409 ? "An account with this email already exists." : result.message;
+    return { success: false, error, values };
   }
 
-  console.log("[AUTH:REGISTER] Registration successful — setting cookies");
-  await setAuthCookies(result.data);
-
-  redirect("/user/profile");
+  // No cookies and no redirect: the account is pending until the emailed link
+  // is confirmed, and the user signs in explicitly after that
+  console.log("[AUTH:REGISTER] Registration accepted — awaiting email confirmation");
+  return { success: true };
 };
