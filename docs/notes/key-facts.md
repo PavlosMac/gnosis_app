@@ -51,6 +51,7 @@ This file stores project constants, configuration, and frequently-needed **non-s
 - `/significators` - Birth date-based card calculator
 - `/chart` - Tarot chart explanation
 - `/guide` - How to use the oracle
+- `/about` - What the platform offers: spreads, journal, interpretations, significators, Tree of Life (article, public)
 - `/user/login`, `/user/register` - Auth pages (JWT via FastAPI backend). Register needs `REGISTRATION_ENABLED=true`; it ends at a "check your email" panel, not a session
 - `/forgot-password`, `/reset-password` - Password reset (public)
 - `/verify-email` - Email confirmation: Confirm button for `?token=...`, resend form otherwise (public)

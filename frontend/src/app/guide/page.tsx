@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Cinzel, Crimson_Pro } from "next/font/google";
 import { useMemo } from "react";
 import "../tarot.css";
+import Section from "@/components/ArticleSection";
 
 const cinzel = Cinzel({
   subsets: ["latin"],
@@ -15,32 +16,6 @@ const crimsonPro = Crimson_Pro({
   weight: ["300", "400", "600"],
   variable: "--font-crimson-pro",
 });
-
-interface SectionProps {
-  title: string;
-  symbol?: string;
-  children: React.ReactNode;
-}
-
-const Section: React.FC<SectionProps> = ({ title, symbol = "✦", children }) => {
-  return (
-    <div className="mb-12">
-      <div className="flex items-center justify-center gap-4 mb-6">
-        <div className="w-12 h-px bg-gradient-to-r from-transparent to-[#d4af37]/50" />
-        <span className="text-[#d4af37]/60">{symbol}</span>
-        <h2
-          className="text-xl sm:text-2xl text-[#d4af37] tracking-wider text-center"
-          style={{ fontFamily: "'Cinzel', serif" }}
-        >
-          {title}
-        </h2>
-        <span className="text-[#d4af37]/60">{symbol}</span>
-        <div className="w-12 h-px bg-gradient-to-l from-transparent to-[#d4af37]/50" />
-      </div>
-      {children}
-    </div>
-  );
-};
 
 export default function GuidePage() {
   const stars = useMemo(
@@ -113,7 +88,7 @@ export default function GuidePage() {
           </div>
 
           {/* Intent is Key */}
-          <Section title="Intent is Key" symbol="✧">
+          <Section framed title="Intent is Key" symbol="✧">
             <div
               className="space-y-4 text-[#e6d5b8]/90 leading-relaxed"
               style={{ fontFamily: "'Crimson Pro', serif" }}
@@ -138,7 +113,7 @@ export default function GuidePage() {
           </Section>
 
           {/* Framing Your Question */}
-          <Section title="Framing Your Question" symbol="☾">
+          <Section framed title="Framing Your Question" symbol="☾">
             <div
               className="space-y-4 text-[#e6d5b8]/90 leading-relaxed"
               style={{ fontFamily: "'Crimson Pro', serif" }}
@@ -177,7 +152,7 @@ export default function GuidePage() {
           </Section>
 
           {/* Reversed Cards */}
-          <Section title="Reversed Cards" symbol="⚝">
+          <Section framed title="Reversed Cards" symbol="⚝">
             <div
               className="space-y-4 text-[#e6d5b8]/90 leading-relaxed"
               style={{ fontFamily: "'Crimson Pro', serif" }}
@@ -211,7 +186,7 @@ export default function GuidePage() {
           </Section>
 
           {/* Significators */}
-          <Section title="Significators" symbol="⚝">
+          <Section framed title="Significators" symbol="⚝">
             <div
               className="space-y-4 text-[#e6d5b8]/90 leading-relaxed"
               style={{ fontFamily: "'Crimson Pro', serif" }}
@@ -265,7 +240,7 @@ export default function GuidePage() {
           </Section>
 
           {/* Reading as a Whole */}
-          <Section title="Reading as a Whole" symbol="☉">
+          <Section framed title="Reading as a Whole" symbol="☉">
             <div
               className="space-y-4 text-[#e6d5b8]/90 leading-relaxed"
               style={{ fontFamily: "'Crimson Pro', serif" }}

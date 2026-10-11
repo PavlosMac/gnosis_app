@@ -6,6 +6,75 @@ import { useAuth } from "@/app/providers/auth-provider";
 const FOOTER_LINK_CLASS =
   "text-[#d4af37]/70 hover:text-[#d4af37] transition-colors underline-offset-4 hover:underline";
 
+interface ArticleCardProps {
+  href: string;
+  symbol: string;
+  title: string;
+  body: string;
+  cta: string;
+}
+
+/** One of the "Article" cards in the landing grid (the Significators tool card has its own markup). */
+const ArticleCard: React.FC<ArticleCardProps> = ({ href, symbol, title, body, cta }) => (
+  <Link
+    href={href}
+    className="group relative overflow-hidden rounded-2xl
+               bg-gradient-to-br from-[#0a0015] via-[#1a0033] to-[#2d1b4e]
+               p-1 transition-all duration-700
+               hover:shadow-[0_0_80px_rgba(212,175,55,0.3)]
+               focus:outline-none focus:ring-2 focus:ring-[#d4af37]/50"
+  >
+    <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-[#d4af37]/40 via-[#8b5cf6]/40 to-[#d4af37]/40
+                    opacity-60 group-hover:opacity-100 transition-opacity duration-500
+                    animate-border-flow" />
+
+    <div className="relative rounded-xl bg-gradient-to-br from-[#0a0015] via-[#1a0033] to-[#2d1b4e]
+                    p-6 h-full">
+
+      <div className="absolute top-4 right-4">
+        <span
+          className="text-[10px] text-[#d4af37]/50 tracking-widest uppercase
+                     border border-[#d4af37]/20 px-2 py-1 rounded-full"
+          style={{ fontFamily: "'Cinzel', serif" }}
+        >
+          Article
+        </span>
+      </div>
+
+      <div className="relative mb-4">
+        <span className="text-3xl opacity-80 group-hover:opacity-100 transition-opacity">{symbol}</span>
+      </div>
+
+      <h3
+        className="text-xl sm:text-2xl text-[#d4af37] tracking-wide mb-3
+                   group-hover:text-[#e6c860] transition-colors"
+        style={{ fontFamily: "'Cinzel', serif" }}
+      >
+        {title}
+      </h3>
+
+      <p
+        className="text-[#e6d5b8]/70 text-sm leading-relaxed mb-4
+                   group-hover:text-[#e6d5b8]/90 transition-colors"
+        style={{ fontFamily: "'Crimson Pro', serif" }}
+      >
+        {body}
+      </p>
+
+      <div className="flex items-center gap-2 text-[#d4af37]/60 group-hover:text-[#d4af37]
+                      transition-colors">
+        <span
+          className="text-xs tracking-widest uppercase"
+          style={{ fontFamily: "'Cinzel', serif" }}
+        >
+          {cta}
+        </span>
+        <span className="text-base group-hover:translate-x-2 transition-transform duration-300">→</span>
+      </div>
+    </div>
+  </Link>
+);
+
 const TarotLanding: React.FC = () => {
   const { user, registrationEnabled } = useAuth();
   return (
@@ -42,8 +111,7 @@ const TarotLanding: React.FC = () => {
           className="text-[#e6d5b8]/80 text-lg sm:text-xl mt-6 max-w-2xl mx-auto leading-relaxed"
           style={{ fontFamily: "'Crimson Pro', serif" }}
         >
-          Enter the sacred realm of the Tarot. Discover ancient wisdom,
-          learn the mysteries of the cards, and receive divine guidance.
+          Enter the sacred realm of the Tarot and unravel the mysteries of spirit.
         </p>
       </div>
 
@@ -165,8 +233,8 @@ const TarotLanding: React.FC = () => {
           </div>
         </Link>
 
-        {/* Three Cards Row: Significators, Your Tarot Chart, How to use the Oracle */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* Card grid, two by two: Significators, Your Tarot Chart, How to use the Oracle, About */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Significators */}
           <Link
             href="/significators"
@@ -227,8 +295,7 @@ const TarotLanding: React.FC = () => {
                            group-hover:text-[#e6d5b8]/90 transition-colors"
                 style={{ fontFamily: "'Crimson Pro', serif" }}
               >
-                The Court Cards mirror your soul. Discover which King, Queen,
-                Knight, or Page embodies your essence.
+                Use our calculator to discover your Tarot Significators.
               </p>
 
               {/* Enter prompt */}
@@ -238,132 +305,36 @@ const TarotLanding: React.FC = () => {
                   className="text-xs tracking-widest uppercase"
                   style={{ fontFamily: "'Cinzel', serif" }}
                 >
-                  Discover Yourself
+                  Input a birth date
                 </span>
                 <span className="text-base group-hover:translate-x-2 transition-transform duration-300">→</span>
               </div>
             </div>
           </Link>
 
-          {/* Your Tarot Chart */}
-          <Link
+          <ArticleCard
             href="/chart"
-            className="group relative overflow-hidden rounded-2xl
-                       bg-gradient-to-br from-[#0a0015] via-[#1a0033] to-[#2d1b4e]
-                       p-1 transition-all duration-700
-                       hover:shadow-[0_0_80px_rgba(212,175,55,0.3)]
-                       focus:outline-none focus:ring-2 focus:ring-[#d4af37]/50"
-          >
-            <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-[#d4af37]/40 via-[#8b5cf6]/40 to-[#d4af37]/40
-                            opacity-60 group-hover:opacity-100 transition-opacity duration-500
-                            animate-border-flow" />
+            symbol="☉"
+            title="Your Tarot Chart"
+            body="Discover your personal Tarot chart and understand how the cards align with your unique journey."
+            cta="Learn More"
+          />
 
-            <div className="relative rounded-xl bg-gradient-to-br from-[#0a0015] via-[#1a0033] to-[#2d1b4e]
-                            p-6 h-full">
-
-              <div className="absolute top-4 right-4">
-                <span
-                  className="text-[10px] text-[#d4af37]/50 tracking-widest uppercase
-                             border border-[#d4af37]/20 px-2 py-1 rounded-full"
-                  style={{ fontFamily: "'Cinzel', serif" }}
-                >
-                  Article
-                </span>
-              </div>
-
-              <div className="relative mb-4">
-                <span className="text-3xl opacity-80 group-hover:opacity-100 transition-opacity">☉</span>
-              </div>
-
-              <h3
-                className="text-xl sm:text-2xl text-[#d4af37] tracking-wide mb-3
-                           group-hover:text-[#e6c860] transition-colors"
-                style={{ fontFamily: "'Cinzel', serif" }}
-              >
-                Your Tarot Chart
-              </h3>
-
-              <p
-                className="text-[#e6d5b8]/70 text-sm leading-relaxed mb-4
-                           group-hover:text-[#e6d5b8]/90 transition-colors"
-                style={{ fontFamily: "'Crimson Pro', serif" }}
-              >
-                Discover your personal Tarot significators and understand
-                how the cards align with your unique journey.
-              </p>
-
-              <div className="flex items-center gap-2 text-[#d4af37]/60 group-hover:text-[#d4af37]
-                              transition-colors">
-                <span
-                  className="text-xs tracking-widest uppercase"
-                  style={{ fontFamily: "'Cinzel', serif" }}
-                >
-                  Learn More
-                </span>
-                <span className="text-base group-hover:translate-x-2 transition-transform duration-300">→</span>
-              </div>
-            </div>
-          </Link>
-
-          {/* How to use the Oracle */}
-          <Link
+          <ArticleCard
             href="/guide"
-            className="group relative overflow-hidden rounded-2xl
-                       bg-gradient-to-br from-[#0a0015] via-[#1a0033] to-[#2d1b4e]
-                       p-1 transition-all duration-700
-                       hover:shadow-[0_0_80px_rgba(212,175,55,0.3)]
-                       focus:outline-none focus:ring-2 focus:ring-[#d4af37]/50"
-          >
-            <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-[#d4af37]/40 via-[#8b5cf6]/40 to-[#d4af37]/40
-                            opacity-60 group-hover:opacity-100 transition-opacity duration-500
-                            animate-border-flow" />
+            symbol="☾"
+            title="How to use the Oracle"
+            body="Learn the sacred art of Tarot reading. Prepare your space, formulate questions, and interpret the rich imagery."
+            cta="Read Guide"
+          />
 
-            <div className="relative rounded-xl bg-gradient-to-br from-[#0a0015] via-[#1a0033] to-[#2d1b4e]
-                            p-6 h-full">
-
-              <div className="absolute top-4 right-4">
-                <span
-                  className="text-[10px] text-[#d4af37]/50 tracking-widest uppercase
-                             border border-[#d4af37]/20 px-2 py-1 rounded-full"
-                  style={{ fontFamily: "'Cinzel', serif" }}
-                >
-                  Article
-                </span>
-              </div>
-
-              <div className="relative mb-4">
-                <span className="text-3xl opacity-80 group-hover:opacity-100 transition-opacity">☾</span>
-              </div>
-
-              <h3
-                className="text-xl sm:text-2xl text-[#d4af37] tracking-wide mb-3
-                           group-hover:text-[#e6c860] transition-colors"
-                style={{ fontFamily: "'Cinzel', serif" }}
-              >
-                How to use the Oracle
-              </h3>
-
-              <p
-                className="text-[#e6d5b8]/70 text-sm leading-relaxed mb-4
-                           group-hover:text-[#e6d5b8]/90 transition-colors"
-                style={{ fontFamily: "'Crimson Pro', serif" }}
-              >
-                Learn the sacred art of tarot reading. Prepare your space,
-                formulate questions, and interpret the symbols.
-              </p>
-
-              <div className="flex items-center gap-2 text-[#d4af37]/60 group-hover:text-[#d4af37]
-                              transition-colors">
-                <span
-                  className="text-xs tracking-widest uppercase"
-                  style={{ fontFamily: "'Cinzel', serif" }}
-                >
-                  Read Guide
-                </span>
-                <span className="text-base group-hover:translate-x-2 transition-transform duration-300">→</span>
-              </div>
-            </div>
-          </Link>
+          <ArticleCard
+            href="/about"
+            symbol="✧"
+            title="About Tarot Divinations"
+            body="What the platform offers: the Oracle and its spreads, the Readings Journal, Oracle interpretations and more."
+            cta="Read Article"
+          />
         </div>
       </div>
 

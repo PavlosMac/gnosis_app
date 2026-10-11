@@ -47,7 +47,6 @@ or in the three `CLAUDE.md` files, and CI runs it.
 | [`2026-09-10-sse-streaming-interpretations.md`](plans/2026-09-10-sse-streaming-interpretations.md) | Not started. Stream the interpretation; add request duration and `request_id` logging. |
 | [`2026-09-21-user-accounting-ledger.md`](plans/2026-09-21-user-accounting-ledger.md) | Agreed, not started. Price source, monthly budget period, superadmin ledger UI. |
 | [`2026-09-29-readings-sort-index.md`](plans/2026-09-29-readings-sort-index.md) | Deferred. Compound index for spread + tags + date sort; trigger inside. |
-| [`2026-10-10-about-page.md`](plans/2026-10-10-about-page.md) | Draft copy, no route yet. |
 | [`2026-10-10-reading-limit-cta.md`](plans/2026-10-10-reading-limit-cta.md) | Spec, not started. Sign-up nudge after three free shuffles. |
 
 ## Notes

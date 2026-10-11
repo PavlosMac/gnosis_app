@@ -411,3 +411,47 @@
 @media (prefers-reduced-motion: reduce) {
   .sanctum-tip__label { transition: none; }
 }
+
+/* Tree of Life diagram (/about): sephiroth are focusable <g role="button"> nodes; hovering,
+   focusing or tapping one opens .tree-popup over the svg. Kept in plain CSS so hover, focus
+   and the glow never depend on a stale dev-server Tailwind build. */
+.tree-node { cursor: pointer; outline: none; }
+.tree-node__ring {
+  transition: fill 0.3s ease, stroke 0.3s ease, filter 0.3s ease;
+}
+.tree-node:hover .tree-node__ring,
+.tree-node:focus-visible .tree-node__ring,
+.tree-node--active .tree-node__ring {
+  stroke: #ffd700;
+  filter: drop-shadow(0 0 8px rgba(212, 175, 55, 0.8));
+}
+.tree-node:focus-visible .tree-node__ring { stroke-width: 2.5; }
+/* The popup ignores the pointer so sliding onto it never ends the hover on the node
+   beneath. --node-x / --node-y are the node's centre as percentages of the svg box, set
+   inline by TreeOfLifeDiagram. Phones: centred on the node, clamped inside the tree, under
+   nodes in the upper half and over nodes in the lower half. Wide screens: beside the tree,
+   roughly level with the node. */
+.tree-popup {
+  position: absolute;
+  width: 15rem;
+  pointer-events: none;
+  animation: treePopupIn 0.2s ease-out;
+  left: clamp(0px, calc(var(--node-x) - 7.5rem), calc(100% - 15rem));
+}
+@keyframes treePopupIn { from { opacity: 0; } to { opacity: 1; } }
+.tree-popup--below { top: calc(var(--node-y) + 34px); }
+.tree-popup--above { bottom: calc(100% - var(--node-y) + 34px); }
+@media (min-width: 1024px) {
+  /* The tree is 300px in a ~768px panel, leaving ~200px a side: the popup must fit there. */
+  .tree-popup--below,
+  .tree-popup--above {
+    width: 11.5rem;
+    left: calc(100% + 0.5rem);
+    top: clamp(0px, calc(var(--node-y) - 5rem), calc(100% - 16rem));
+    bottom: auto;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tree-node__ring { transition: none; }
+  .tree-popup { animation: none; }
+}
