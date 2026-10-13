@@ -36,6 +36,7 @@ or in the three `CLAUDE.md` files, and CI runs it.
 | [`prompts/prompt-reference.md`](reference/prompts/prompt-reference.md) | backend | The current prompts. Sections 3–4 are generated (`make -C backend prompt-doc`; CI fails if stale) |
 | [`prompts/experiments/`](reference/prompts/experiments/) | backend | Frozen sample readings from `scripts/lean_prompt_test.py`, cited by the architecture doc |
 | [`readings/search-and-tags.md`](reference/readings/search-and-tags.md) | both | Reading tags and the filter panel, with dated amendments |
+| [`readings/free-limit-cta.md`](reference/readings/free-limit-cta.md) | frontend | Per-browser free-use counters for `/reading` and `/significators` and the sign-up nudge panel |
 | [`support/contact-support.md`](reference/support/contact-support.md) | both | The support endpoint contract and the profile-page modal |
 | [`frontend/src/content/legal/README.md`](../frontend/src/content/legal/README.md) | frontend | How Terms / Privacy versions are named and registered (lives next to the content) |
 
@@ -47,7 +48,7 @@ or in the three `CLAUDE.md` files, and CI runs it.
 | [`2026-09-10-sse-streaming-interpretations.md`](plans/2026-09-10-sse-streaming-interpretations.md) | Not started. Stream the interpretation; add request duration and `request_id` logging. |
 | [`2026-09-21-user-accounting-ledger.md`](plans/2026-09-21-user-accounting-ledger.md) | Agreed, not started. Price source, monthly budget period, superadmin ledger UI. |
 | [`2026-09-29-readings-sort-index.md`](plans/2026-09-29-readings-sort-index.md) | Deferred. Compound index for spread + tags + date sort; trigger inside. |
-| [`2026-10-10-reading-limit-cta.md`](plans/2026-10-10-reading-limit-cta.md) | Spec, not started. Sign-up nudge after three free shuffles. |
+| [`2026-10-13-user-guide.md`](plans/2026-10-13-user-guide.md) | Agreed, not started. `/guide` hub with MDX how-to chapters and annotated screenshots. |
 
 ## Notes
 

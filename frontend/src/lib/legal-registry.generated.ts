@@ -13,5 +13,6 @@ export const LEGAL_REGISTRY: Record<
   },
   privacy: {
     "2026-10-04": () => import("@/content/legal/privacy/2026-10-04.mdx"),
+    "2026-10-13": () => import("@/content/legal/privacy/2026-10-13.mdx"),
   },
 };

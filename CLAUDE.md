@@ -42,6 +42,7 @@ and the two side `CLAUDE.md` files. `make docs-check` verifies every relative li
 | Interpretations, LLM calls, usage and budget | [`usage-and-budget-flow.md`](docs/reference/interpretations/usage-and-budget-flow.md), [`user-accounting.md`](docs/reference/interpretations/user-accounting.md) |
 | Prompts | [`lean-prompt-architecture.md`](docs/reference/prompts/lean-prompt-architecture.md), [`prompt-reference.md`](docs/reference/prompts/prompt-reference.md) (generated: `make -C backend prompt-doc`) |
 | Readings, tags, search | [`search-and-tags.md`](docs/reference/readings/search-and-tags.md) |
+| Free-use limit, sign-up nudge | [`free-limit-cta.md`](docs/reference/readings/free-limit-cta.md) |
 | Email: reset, verification, support relay | [`email-service.md`](docs/reference/email/email-service.md) |
 | Contact support | [`contact-support.md`](docs/reference/support/contact-support.md) |
 | Legal pages, consent versions | [`frontend/src/content/legal/README.md`](frontend/src/content/legal/README.md) |

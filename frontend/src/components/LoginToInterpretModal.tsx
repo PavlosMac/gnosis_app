@@ -14,13 +14,17 @@ import { loginInline } from "@/app/user/login/actions";
 import type { LoginFormState } from "@/types/auth";
 
 interface LoginToInterpretModalProps {
+  /** Line under the title; defaults to the interpretation invitation */
+  message?: string;
   onClose: () => void;
   onSuccess: () => void;
 }
 
+const DEFAULT_MESSAGE = "Login to reveal the Oracle's interpretation of your reading.";
+
 const initialState: LoginFormState = { success: false };
 
-const LoginToInterpretModal = ({ onClose, onSuccess }: LoginToInterpretModalProps) => {
+const LoginToInterpretModal = ({ message = DEFAULT_MESSAGE, onClose, onSuccess }: LoginToInterpretModalProps) => {
   const [state, formAction, pending] = useActionState(loginInline, initialState);
   const { registrationEnabled } = useAuth();
 
@@ -34,7 +38,7 @@ const LoginToInterpretModal = ({ onClose, onSuccess }: LoginToInterpretModalProp
         className="text-center text-[#e6d5b8]/60 text-sm mb-6"
         style={{ fontFamily: "'Crimson Pro', serif" }}
       >
-        Login to reveal the Oracle&apos;s interpretation of your reading.
+        {message}
       </p>
 
       <AuthErrorBanner message={state.error} className={state.emailNotVerified ? "mb-3" : "mb-6"} />

@@ -7,6 +7,8 @@ import FaceUpDeck from "@/components/FaceUpDeck";
 import ShuffleAnimation from "@/components/ShuffleAnimation";
 import InterpretationModal from "@/components/InterpretationModal";
 import LoginToInterpretModal from "@/components/LoginToInterpretModal";
+import { BookmarkPlus } from "lucide-react";
+import FreeLimitPanel from "@/components/FreeLimitPanel";
 import OrnateFrame from "@/components/OrnateFrame";
 import SpreadPreview from "@/components/SpreadPreview";
 import PillarNameInputs from "@/components/PillarNameInputs";
@@ -18,6 +20,7 @@ import {
 import { updateReadingTags } from "@/app/user/readings/[id]/actions";
 import readingsConfig from "@/lib/readings-config.json";
 import { parseAndValidateDate } from "@/lib/dateValidation";
+import { FREE_TRIALS, recordVisitorUse, shouldShowFreeLimit } from "@/lib/free-trials";
 
 import { useGameReducer, getSelectedCards, getReading, isPostDeal, isPickingCards, hasDeckOnScreen } from "@/hooks/useGameReducer";
 import { createReading } from "@/app/user/interpret/actions";
@@ -85,7 +88,10 @@ export default function TarotGame({ user, mode = 'draw' }: TarotGameProps) {
   const [pillarNames, setPillarNames] = useState<Record<"querent" | "other", string>>({ ...DEFAULT_PILLAR_NAMES });
   const [showOracleInfo, setShowOracleInfo] = useState(false);
   const [showInterpretModal, setShowInterpretModal] = useState(false);
-  const [showLoginModal, setShowLoginModal] = useState(false);
+  // What a successful login continues with: begin the next reading (from the
+  // free-limit panel) or save the one on screen (from "Log in to save")
+  const [loginIntent, setLoginIntent] = useState<'begin' | 'save' | null>(null);
+  const [showFreeLimitPanel, setShowFreeLimitPanel] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(!!user);
   const [savedReadingId, setSavedReadingId] = useState<string | null>(null);
   const [savingReading, setSavingReading] = useState(false);
@@ -159,7 +165,7 @@ export default function TarotGame({ user, mode = 'draw' }: TarotGameProps) {
     setPillarNames(prev => ({ ...prev, [key]: value }));
   }, []);
 
-  const startGame = () => {
+  const beginReading = useCallback(() => {
     if (isManual) {
       dispatch({ type: 'START_MANUAL_ENTRY' });
     } else if (isBirthdateSpread(selectedReading)) {
@@ -167,7 +173,32 @@ export default function TarotGame({ user, mode = 'draw' }: TarotGameProps) {
     } else {
       dispatch({ type: 'START_SHUFFLE' });
     }
+  }, [isManual, selectedReading]);
+
+  // Logged-in users need some text in the question box to begin; visitors may
+  // try a spread freely without one
+  const questionMissing = isLoggedIn && selectedReading.meta?.field === "input" && !userQuestion.trim();
+
+  // A visitor's free readings are counted per browser (lib/free-trials.ts);
+  // once spent, Begin shows the sign-up nudge instead of the deck. Manual
+  // entry already requires a login and is never gated.
+  const startGame = () => {
+    if (!isManual && shouldShowFreeLimit(FREE_TRIALS.reading, isLoggedIn)) {
+      setShowFreeLimitPanel(true);
+      return;
+    }
+    beginReading();
   };
+
+  // Count each reading a visitor completes, once per reading object, the
+  // moment it reaches the screen (shuffled spreads and birth-date charts alike)
+  const countedReadingRef = useRef<unknown>(null);
+  useEffect(() => {
+    if (game.phase !== 'reading' || isManual || isLoggedIn) return;
+    if (countedReadingRef.current === game.reading) return;
+    countedReadingRef.current = game.reading;
+    recordVisitorUse(FREE_TRIALS.reading, isLoggedIn);
+  }, [game, isManual, isLoggedIn]);
 
   const handleShuffleComplete = useCallback(() => {
     dispatch({ type: 'SHUFFLE_COMPLETE' });
@@ -211,7 +242,7 @@ export default function TarotGame({ user, mode = 'draw' }: TarotGameProps) {
     saveGenerationRef.current += 1;
     dispatch({ type: 'RESET' });
     setShowInterpretModal(false);
-    setShowLoginModal(false);
+    setLoginIntent(null);
     setSavedReadingId(null);
     setSaveReadingError(null);
     setSavingReading(false);
@@ -226,7 +257,13 @@ export default function TarotGame({ user, mode = 'draw' }: TarotGameProps) {
     if (savedReadingId) router.push(`/user/readings/${savedReadingId}`);
   }, [router, savedReadingId]);
 
-  const handleCloseLoginModal = useCallback(() => setShowLoginModal(false), []);
+  const handleCloseLoginModal = useCallback(() => setLoginIntent(null), []);
+  const handleCloseFreeLimitPanel = useCallback(() => setShowFreeLimitPanel(false), []);
+  const handleLoginFromFreeLimitPanel = useCallback(() => {
+    setShowFreeLimitPanel(false);
+    setLoginIntent('begin');
+  }, []);
+  const handleLoginToSave = useCallback(() => setLoginIntent('save'), []);
 
   const saveReading = useCallback(async () => {
     if (!completedReading || savingReading || savedReadingId) return;
@@ -261,20 +298,14 @@ export default function TarotGame({ user, mode = 'draw' }: TarotGameProps) {
     }
   }, [completedReading, savingReading, savedReadingId]);
 
-  const handleRibbonClick = useCallback(() => {
-    if (!isLoggedIn) {
-      setShowLoginModal(true);
-      return;
-    }
-    saveReading();
-  }, [isLoggedIn, saveReading]);
-
   const handleLoginSuccess = useCallback(() => {
-    setShowLoginModal(false);
+    const intent = loginIntent;
+    setLoginIntent(null);
     setIsLoggedIn(true);
     router.refresh();
-    saveReading();
-  }, [router, saveReading]);
+    if (intent === 'save') saveReading();
+    else beginReading();
+  }, [router, loginIntent, saveReading, beginReading]);
 
   const cardVisuals = useMemo(
     () =>
@@ -489,7 +520,7 @@ export default function TarotGame({ user, mode = 'draw' }: TarotGameProps) {
             )}
 
             {selectedReading.meta?.field === "input" && (
-              <div className="w-full max-w-xl flex flex-col items-end gap-1">
+              <div className="w-full max-w-md flex flex-col items-end gap-1">
                 <textarea
                   rows={3}
                   maxLength={QUESTION_MAX_LENGTH}
@@ -513,9 +544,12 @@ export default function TarotGame({ user, mode = 'draw' }: TarotGameProps) {
             <button
               className="px-10 py-4 bg-gradient-to-br from-[#d4af37] to-[#b8942f] text-[#1a0033] rounded-lg
                          shadow-lg hover:shadow-[#d4af37]/50 transition-all duration-300 font-bold text-lg
-                         hover:scale-105 active:scale-95 border border-[#d4af37]/50"
+                         hover:scale-105 active:scale-95 border border-[#d4af37]/50
+                         disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:shadow-lg"
               style={{ fontFamily: "'Cinzel', serif", letterSpacing: '0.1em' }}
               onClick={startGame}
+              disabled={questionMissing}
+              title={questionMissing ? "Enter your question to begin" : undefined}
             >
               ✦ Begin Your Journey ✦
             </button>
@@ -653,7 +687,8 @@ export default function TarotGame({ user, mode = 'draw' }: TarotGameProps) {
             {game.phase === 'reading' && (
               <div ref={readingRef} className="mt-10 flex justify-center animate-fadeIn">
                 <div className="flex flex-col">
-                  {isReadingComplete && (
+                  {/* Saving needs an account */}
+                  {isReadingComplete && isLoggedIn && (
                     <div className="self-end flex items-center gap-2 mb-3">
                       <div className="flex flex-col items-end">
                         {!savedReadingId && (
@@ -675,7 +710,7 @@ export default function TarotGame({ user, mode = 'draw' }: TarotGameProps) {
                       </div>
                       <button
                         type="button"
-                        onClick={handleRibbonClick}
+                        onClick={saveReading}
                         disabled={savingReading || !!savedReadingId}
                         title={savedReadingId ? "Saved to Journal" : undefined}
                         aria-label={savedReadingId ? "Saved to Journal" : "Save this reading"}
@@ -704,6 +739,23 @@ export default function TarotGame({ user, mode = 'draw' }: TarotGameProps) {
                     isComplete={isReadingComplete}
                     significatorResult={completedReading?.significatorResult}
                   />
+
+                  {/* A visitor gets a separate login button under the cards, not the save ribbon */}
+                  {isReadingComplete && !isLoggedIn && !isManual && (
+                    <div className="flex justify-center mt-8">
+                      <button
+                        type="button"
+                        onClick={handleLoginToSave}
+                        title="Log in to save this reading"
+                        aria-label="Log in to save this reading"
+                        className="p-3 rounded-lg border border-[#d4af37]/40 bg-[#1a0033]/70
+                                   text-[#d4af37]/70 hover:text-[#d4af37] hover:border-[#d4af37]
+                                   transition-all duration-300"
+                      >
+                        <BookmarkPlus size={22} aria-hidden="true" />
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -801,10 +853,21 @@ export default function TarotGame({ user, mode = 'draw' }: TarotGameProps) {
       />
     )}
 
-    {showLoginModal && completedReading && (
+    {loginIntent && (
       <LoginToInterpretModal
+        message={loginIntent === 'save'
+          ? "Login to save this reading to your Journal."
+          : "Login to keep reading with the Oracle."}
         onClose={handleCloseLoginModal}
         onSuccess={handleLoginSuccess}
+      />
+    )}
+
+    {showFreeLimitPanel && (
+      <FreeLimitPanel
+        variant="reading"
+        onClose={handleCloseFreeLimitPanel}
+        onLogin={handleLoginFromFreeLimitPanel}
       />
     )}
     </>

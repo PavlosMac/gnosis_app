@@ -131,18 +131,23 @@ interface AuthButtonLinkProps {
 
 /** A link styled as the primary submit button, e.g. "Enter the Sanctum" on a
     success panel */
-export const AuthButtonLink = ({ href, children }: AuthButtonLinkProps) => (
-  <Link
-    href={href}
-    className="mt-6 block w-full py-3 rounded-lg border border-[#d4af37]/60
+const AUTH_BUTTON_CLASS = `mt-6 block w-full py-3 rounded-lg border border-[#d4af37]/60
                bg-gradient-to-r from-[#d4af37]/20 via-[#d4af37]/15 to-[#d4af37]/20
                text-[#d4af37] tracking-widest uppercase text-sm text-center
                hover:border-[#d4af37] hover:bg-[#d4af37]/30
-               transition-all duration-300"
-    style={{ fontFamily: "'Cinzel', serif" }}
-  >
+               transition-all duration-300`;
+
+export const AuthButtonLink = ({ href, children }: AuthButtonLinkProps) => (
+  <Link href={href} className={AUTH_BUTTON_CLASS} style={{ fontFamily: "'Cinzel', serif" }}>
     {children}
   </Link>
+);
+
+/** The same button for an action rather than a navigation */
+export const AuthButton = ({ onClick, children }: { onClick: () => void; children: React.ReactNode }) => (
+  <button type="button" onClick={onClick} className={AUTH_BUTTON_CLASS} style={{ fontFamily: "'Cinzel', serif" }}>
+    {children}
+  </button>
 );
 
 /** Body copy of a success / information panel inside the auth card */

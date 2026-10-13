@@ -1,18 +1,31 @@
 "use client";
-import { useState } from "react";
+import { useCallback, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import TarotPageLayout from "@/components/TarotPageLayout";
 import SignificatorsLayout from "@/components/SignificatorsLayout";
+import FreeLimitPanel from "@/components/FreeLimitPanel";
+import LoginToInterpretModal from "@/components/LoginToInterpretModal";
+import { useAuth } from "@/app/providers/auth-provider";
 import { calculateSignificators, SignificatorResult } from "@/lib/significators";
 import { parseAndValidateDate } from "@/lib/dateValidation";
-  
+import { FREE_TRIALS, recordVisitorUse, shouldShowFreeLimit } from "@/lib/free-trials";
+
 export default function SignificatorsPage() {
+  const router = useRouter();
+  const { user } = useAuth();
+  const [loggedInViaModal, setLoggedInViaModal] = useState(false);
+  const isLoggedIn = !!user || loggedInViaModal;
+  // Date of the last chart that counted, so regenerating it is free
+  const lastCountedDate = useRef<string | null>(null);
   const [day, setDay] = useState<string>("");
   const [month, setMonth] = useState<string>("");
   const [year, setYear] = useState<string>("");
   const [result, setResult] = useState<SignificatorResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [showFreeLimitPanel, setShowFreeLimitPanel] = useState(false);
+  const [showLoginModal, setShowLoginModal] = useState(false);
 
-  const handleGenerate = () => {
+  const generateSignificators = useCallback((loggedIn: boolean) => {
     const { dateParts, validation } = parseAndValidateDate(day, month, year);
 
     if (!validation.isValid) {
@@ -34,7 +47,35 @@ export default function SignificatorsPage() {
       dateParts.day
     );
     setResult(significators);
+    // Visitors get a couple of charts per browser (lib/free-trials.ts)
+    const dateKey = `${dateParts.year}-${dateParts.month}-${dateParts.day}`;
+    if (dateKey !== lastCountedDate.current) {
+      lastCountedDate.current = dateKey;
+      recordVisitorUse(FREE_TRIALS.significators, loggedIn);
+    }
+  }, [day, month, year]);
+
+  // Once the free charts are spent, Generate shows the sign-up nudge instead;
+  // the chart already on screen stays
+  const handleGenerate = () => {
+    if (shouldShowFreeLimit(FREE_TRIALS.significators, isLoggedIn)) {
+      setShowFreeLimitPanel(true);
+      return;
+    }
+    generateSignificators(isLoggedIn);
   };
+
+  const handleLoginFromFreeLimitPanel = useCallback(() => {
+    setShowFreeLimitPanel(false);
+    setShowLoginModal(true);
+  }, []);
+
+  const handleLoginSuccess = useCallback(() => {
+    setShowLoginModal(false);
+    setLoggedInViaModal(true);
+    router.refresh();
+    generateSignificators(true);
+  }, [router, generateSignificators]);
 
   const hasValidInput = () => {
     const { validation } = parseAndValidateDate(day, month, year);
@@ -164,6 +205,22 @@ export default function SignificatorsPage() {
           <div className="animate-fadeIn">
             <SignificatorsLayout significatorResult={result} />
           </div>
+        )}
+
+        {showFreeLimitPanel && (
+          <FreeLimitPanel
+            variant="significators"
+            onClose={() => setShowFreeLimitPanel(false)}
+            onLogin={handleLoginFromFreeLimitPanel}
+          />
+        )}
+
+        {showLoginModal && (
+          <LoginToInterpretModal
+            message="Login to chart as many birth dates as you wish."
+            onClose={() => setShowLoginModal(false)}
+            onSuccess={handleLoginSuccess}
+          />
         )}
 
         {/* Footer decoration */}
