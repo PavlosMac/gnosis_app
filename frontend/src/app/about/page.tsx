@@ -69,7 +69,7 @@ export default function AboutPage() {
           </p>
         </div>
 
-        <ArticleSection framed title="A Decade of Investigation" symbol="✧">
+        <ArticleSection framed title="A Decade of Tarot Reflection" symbol="✧">
           <Body>
             <P>
               Tarot Divinations is the culmination of a decade-long investigation into the Tarot.
