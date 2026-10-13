@@ -114,8 +114,7 @@ const Reading: React.FC<ReadingProps> = React.memo(({
               className="text-[#e6d5b8]/70 text-sm italic max-w-2xl mx-auto"
               style={{ fontFamily: "'Crimson Pro', serif" }}
             >
-              Now you have a rich, pictographic answer to your question. Meditate
-              on the cards and let them guide you forward.
+              Now you have a rich, pictographic reading to meditate on.
             </p>
           </div>
         </>
