@@ -2,7 +2,7 @@
 
 import { useCallback, useState } from "react";
 import { AuthCheckbox } from "@/components/AuthField";
-import SanctumModal from "@/components/SanctumModal";
+import LegalDocumentModal from "@/components/LegalDocumentModal";
 import { CONSENT_FIELDS, DOCUMENT_TITLES, type LegalDocumentId } from "@/lib/legal-versions";
 
 // The Privacy Policy is acknowledged, not consented to (the lawful basis for
@@ -43,23 +43,7 @@ const ConsentCheckbox = ({ id, document, error, defaultChecked }: ConsentCheckbo
         </button>
       </AuthCheckbox>
 
-      {open && (
-        <SanctumModal title={DOCUMENT_TITLES[id]} size="lg" onClose={close}>
-          {document}
-          <div className="text-center" style={{ marginTop: "1.5rem" }}>
-            <button
-              type="button"
-              onClick={close}
-              className="px-8 py-2 rounded-lg border border-[#d4af37]/60 text-[#d4af37]
-                         tracking-widest uppercase text-sm hover:border-[#d4af37]
-                         hover:bg-[#d4af37]/20 transition-all duration-300"
-              style={{ fontFamily: "'Cinzel', serif" }}
-            >
-              Close
-            </button>
-          </div>
-        </SanctumModal>
-      )}
+      {open && <LegalDocumentModal id={id} document={document} onClose={close} />}
     </>
   );
 };

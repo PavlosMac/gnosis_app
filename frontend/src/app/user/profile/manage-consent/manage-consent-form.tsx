@@ -37,8 +37,8 @@ const ManageConsentForm = ({ documents }: ManageConsentFormProps) => {
     <AuthPageShell
       glyph={<>&#9878;</>}
       title="Agreements"
-      backButtonHref="/user/profile"
-      backButtonLabel="Sanctum"
+      backButtonHref="/user/profile/settings"
+      backButtonLabel="Settings"
     >
       <p className="text-center text-[#e6d5b8]/70 text-sm mb-6" style={BODY}>
         Review the documents that govern your account. Open either one to read

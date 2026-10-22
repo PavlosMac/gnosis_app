@@ -114,7 +114,7 @@ Paths are from the repo root. Symbols, not line numbers, so this survives edits.
 | `frontend/src/app/user/profile/actions.ts` | `getDashboard` | Fetches the dashboard. |
 | `frontend/src/components/InterpretationModal.tsx` | remaining-budget line | "Saved to your journal · Remaining Oracle budget $X". |
 | `frontend/src/app/user/readings/[id]/InterpretationSection.tsx` | token label | "Model: … · N tokens", where N is input plus output added together. Cost and the split are never shown, which is why the label looks cheaper than the bill. |
-| `frontend/src/components/BudgetChalice.tsx`, `frontend/src/app/user/profile/AccountPanel.tsx`, `frontend/src/lib/profile-dashboard.ts` | `chaliceFill`, `chaliceState`, `budgetCaption`, `formatUsd` | The budget chalice and its caption. |
+| `frontend/src/components/BudgetChalice.tsx`, `frontend/src/app/user/profile/AccountPanel.tsx`, `frontend/src/lib/profile-dashboard.ts` | `chaliceFill`, `chaliceState`, `chaliceCaption`, `chaliceTitle` | The "Remaining Readings" chalice. The profile shows no currency: the fill level is remaining/budget, the only caption is "The chalice runs dry", and the accessible title gives the percentage (kept within 1..99, "full" where the chalice is drawn full, "runs dry" only at zero). |
 | `frontend/src/lib/api-client.ts` | `SAFE_MESSAGES[402]` | "Your Oracle budget is exhausted." The only budget-exhausted handling; no dedicated UI state. |
 | `frontend/src/app/superadmin/page.tsx` | | Users table. No spend or budget column. |
 

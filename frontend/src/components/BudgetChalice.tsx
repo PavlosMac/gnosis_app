@@ -1,14 +1,12 @@
 import { useId } from "react";
-import {
-  budgetCaption,
-  chaliceFill,
-  chaliceState,
-} from "@/lib/profile-dashboard";
+import { chaliceFill, chaliceState, chaliceTitle } from "@/lib/profile-dashboard";
 
 interface BudgetChaliceProps {
   remainingUsd: number;
   budgetUsd: number;
   className?: string;
+  /** Rendered width cap in px; the SVG scales to it */
+  maxWidth?: number;
 }
 
 // Bowl interior in viewBox units: the liquid surface travels between these
@@ -34,7 +32,7 @@ const LIQUID_STOPS: Record<"full" | "partial" | "low", [string, string, string]>
  * transforms are pure translations on nested <g>s, and no element carries both a
  * transform attribute and a CSS transform.
  */
-const BudgetChalice = ({ remainingUsd, budgetUsd, className }: BudgetChaliceProps) => {
+const BudgetChalice = ({ remainingUsd, budgetUsd, className, maxWidth = 160 }: BudgetChaliceProps) => {
   const fraction = chaliceFill(remainingUsd, budgetUsd);
   // React ids contain colons; keep url(#…) references plain in every engine
   const uid = useId().replace(/[^a-zA-Z0-9_-]/g, "");
@@ -42,7 +40,6 @@ const BudgetChalice = ({ remainingUsd, budgetUsd, className }: BudgetChaliceProp
 
   const state = chaliceState(fraction);
   const surfaceY = surfaceYFor(fraction);
-  const caption = budgetCaption(remainingUsd, budgetUsd);
   const titleId = `chalice-title-${uid}`;
   const clipId = `chalice-bowl-${uid}`;
   const liquidId = `chalice-liquid-${uid}`;
@@ -55,7 +52,7 @@ const BudgetChalice = ({ remainingUsd, budgetUsd, className }: BudgetChaliceProp
       className={className}
       style={{
         width: "100%",
-        maxWidth: 160,
+        maxWidth,
         filter: "drop-shadow(0 0 18px rgba(212,175,55,0.35))",
       }}
     >
@@ -65,7 +62,7 @@ const BudgetChalice = ({ remainingUsd, budgetUsd, className }: BudgetChaliceProp
         aria-labelledby={titleId}
         style={{ width: "100%", height: "auto", display: "block", overflow: "visible" }}
       >
-        <title id={titleId}>{`Oracle budget: ${caption}`}</title>
+        <title id={titleId}>{chaliceTitle(fraction)}</title>
         <defs>
           <clipPath id={clipId}>
             <path d="M23 32 Q23 89 60 89 Q97 89 97 32 Z" />

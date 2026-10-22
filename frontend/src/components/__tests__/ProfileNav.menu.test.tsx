@@ -22,6 +22,10 @@ describe("ProfileNavMenu (logged out)", () => {
     expect(render(true)).toContain('href="/user/login"');
   });
 
+  it("links to the Guide", () => {
+    expect(render(false)).toContain('href="/guide"');
+  });
+
   it("offers Sign up only when registration is enabled", () => {
     expect(render(true)).toContain('href="/user/register"');
     expect(render(true)).toContain("Sign up");
@@ -50,6 +54,7 @@ describe("ProfileNavMenu (logged in)", () => {
     );
     expect(html).toContain("Ada Lovelace");
     expect(html).toContain('href="/user/profile"');
+    expect(html).toContain('href="/guide"');
     expect(html).not.toContain("/user/register");
   });
 });

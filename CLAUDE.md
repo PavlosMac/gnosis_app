@@ -44,6 +44,7 @@ and the two side `CLAUDE.md` files. `make docs-check` verifies every relative li
 | Readings, tags, search | [`search-and-tags.md`](docs/reference/readings/search-and-tags.md) |
 | Free-use limit, sign-up nudge | [`free-limit-cta.md`](docs/reference/readings/free-limit-cta.md) |
 | Email: reset, verification, support relay | [`email-service.md`](docs/reference/email/email-service.md) |
+| Guide chapters, screenshots | [`user-guide.md`](docs/reference/guide/user-guide.md), capture list [`screenshot-checklist.md`](docs/reference/guide/screenshot-checklist.md) |
 | Contact support | [`contact-support.md`](docs/reference/support/contact-support.md) |
 | Legal pages, consent versions | [`frontend/src/content/legal/README.md`](frontend/src/content/legal/README.md) |
 | Local Mongo, dev superadmin | [`configure-db.md`](docs/reference/database/configure-db.md), [`dev-users.md`](docs/reference/database/dev-users.md) |

@@ -2,8 +2,8 @@ import { describe, it, expect } from "vitest";
 import {
   chaliceFill,
   chaliceState,
-  formatUsd,
-  budgetCaption,
+  chaliceCaption,
+  chaliceTitle,
   formatReadingDate,
   truncateQuestion,
   tagHref,
@@ -48,26 +48,34 @@ describe("chaliceState", () => {
   });
 });
 
-describe("formatUsd", () => {
-  it("prints two decimals with a dollar sign", () => {
-    expect(formatUsd(2.41)).toBe("$2.41");
-    expect(formatUsd(3)).toBe("$3.00");
-    expect(formatUsd(0.005)).toBe("$0.01");
-  });
-
-  it("clamps negatives to zero", () => {
-    expect(formatUsd(-0.3)).toBe("$0.00");
-  });
-});
-
-describe("budgetCaption", () => {
-  it("states remaining of budget", () => {
-    expect(budgetCaption(2.41, 3)).toBe("$2.41 of $3.00 remains");
+describe("chaliceCaption", () => {
+  it("says nothing while something remains — no currency on the profile", () => {
+    expect(chaliceCaption(2.41)).toBeNull();
   });
 
   it("marks the dry chalice", () => {
-    expect(budgetCaption(0, 3)).toBe("The chalice runs dry");
-    expect(budgetCaption(-0.1, 3)).toBe("The chalice runs dry");
+    expect(chaliceCaption(0)).toBe("The chalice runs dry");
+    expect(chaliceCaption(-0.1)).toBe("The chalice runs dry");
+  });
+});
+
+describe("chaliceTitle", () => {
+  it("describes the fill level as a percentage for assistive tech", () => {
+    expect(chaliceTitle(0.5)).toBe("Remaining readings: the chalice is 50% full");
+  });
+
+  it("never says 0% while something remains", () => {
+    expect(chaliceTitle(0.004)).toBe("Remaining readings: the chalice is 1% full");
+  });
+
+  it("says full wherever the chalice is drawn full", () => {
+    expect(chaliceTitle(1)).toBe("Remaining readings: the chalice is full");
+    expect(chaliceTitle(0.98)).toBe("Remaining readings: the chalice is full");
+    expect(chaliceTitle(0.97)).toBe("Remaining readings: the chalice is 97% full");
+  });
+
+  it("names the dry chalice", () => {
+    expect(chaliceTitle(0)).toBe("Remaining readings: the chalice runs dry");
   });
 });
 
@@ -104,33 +112,33 @@ describe("tagHref", () => {
 describe("agreementRowModel", () => {
   const accepted = { version: "2026-10-04", accepted_at: "2026-10-04T10:12:00Z" };
 
-  it("links an accepted document to the exact version that was accepted", () => {
+  it("carries the exact version that was accepted", () => {
     const rows = agreementRowModel({ terms: accepted, privacy: accepted });
     expect(rows).toEqual([
       {
         id: "terms",
         title: "Terms and Conditions",
         accepted: true,
-        href: "/legal/terms/2026-10-04",
+        version: "2026-10-04",
         detail: "accepted 4 Oct 2026",
       },
       {
         id: "privacy",
         title: "Privacy Policy",
         accepted: true,
-        href: "/legal/privacy/2026-10-04",
+        version: "2026-10-04",
         detail: "accepted 4 Oct 2026",
       },
     ]);
   });
 
-  it("links a document with no record to its current version", () => {
+  it("has no version for a document with no record", () => {
     const [terms, privacy] = agreementRowModel({ privacy: accepted });
     expect(terms).toEqual({
       id: "terms",
       title: "Terms and Conditions",
       accepted: false,
-      href: "/legal/terms",
+      version: null,
       detail: "Not yet recorded",
     });
     expect(privacy.accepted).toBe(true);
@@ -140,9 +148,9 @@ describe("agreementRowModel", () => {
     expect(agreementRowModel(undefined).map((r) => r.accepted)).toEqual([false, false]);
   });
 
-  it("does not turn a malformed stored version into a path", () => {
+  it("drops a malformed stored version", () => {
     const rows = agreementRowModel({ terms: { version: "../x", accepted_at: "nope" } });
-    expect(rows[0].href).toBe("/legal/terms");
+    expect(rows[0].version).toBeNull();
     expect(rows[0].accepted).toBe(true);
   });
 });

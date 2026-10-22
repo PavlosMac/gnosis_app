@@ -17,6 +17,7 @@ JWT authentication via an external FastAPI backend. Tokens are stored in httpOnl
 | `src/app/user/layout.tsx` | The onboarding gate for `/user/*`: redirects a logged-in user to `/accept-terms` (or `/verify-email`) when something is outstanding. Does not fetch for `AuthProvider` — the root layout does |
 | `src/app/verify-email/` | Email confirmation page, Confirm and resend actions (public) |
 | `src/app/accept-terms/` | Re-consent interstitial and action |
+| `src/app/user/profile/settings/` | Account settings: contact support, the Agreements rows (each opens the accepted version in `LegalDocumentModal`, rendered on demand by the `loadAgreementDocument` server action so the page ships no legal text), one-click password reset, link to deletion. The agreements and delete pages' back buttons return here |
 | `src/app/user/profile/manage-consent/`, `delete-account/` | Self-service consent and account deletion |
 | `src/app/providers/auth-provider.tsx` | React context — `useAuth()` hook |
 | `src/app/user/login/actions.ts` | Login server action |

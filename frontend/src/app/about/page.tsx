@@ -80,17 +80,19 @@ export default function AboutPage() {
             </P>
             <P>
               The Tarot offers us a symbolically rich tapestry on which to map the soul&apos;s path
-              through life. Creating spreads and pulling cards is a way to mirror the subconscious.
-              We offer this platform where you can make many readings and get
-              interpretive data quickly.
+              through life. Creating spreads and pulling cards is a way to mirror the subconscious revealing
+              vital information. We offer this platform where you can make many readings and get
+              synthesised reading data returned quickly.
             </P>
             <P>
               Once you have made a reading and saved it, you can send the spread to the LLM, which
               returns the interpretation in text form within seconds, or up to a minute for the
               bigger spreads. The <span className="text-[#d4af37]">Oracle Interpretation</span> is
-              the core of our platform. We save it for you to view again whenever you please. The
-              complementary feature is the Readings database: many readings, at lightning speed,
-              using AI, yes.
+              the core of our platform, an advanced reading interpreter. LLMs are particularly good
+              at analysing Tarot spreads because of their ability to understand context and pattern
+              recognition. We save every interpretation for you to view again whenever you please.
+              To complement this we provide the Readings database: many readings, at lightning
+              speed, using AI, yes.
             </P>
             <P>
               Instructions on how to use the oracle are given{" "}

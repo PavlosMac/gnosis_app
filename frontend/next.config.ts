@@ -51,7 +51,7 @@ const securityHeaders = [
 const nextConfig: NextConfig = {
   output: 'standalone',
 
-  // .mdx is only used for the versioned legal documents (src/content/legal)
+  // .mdx is used for the versioned legal documents (src/content/legal) and the guide chapters (src/content/guide)
   pageExtensions: ['ts', 'tsx', 'md', 'mdx'],
 
   // Image optimization for better caching

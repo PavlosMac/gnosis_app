@@ -79,14 +79,15 @@ On the register form, with everything else valid:
 - [ ] Log in, typing the email in different letter case. You land on `/user/profile`.
 - [ ] Cookies are `access_token`, `refresh_token` and `token_expires_at`, all HttpOnly.
 - [ ] The profile shows "First Last".
-- [ ] The Agreements block shows two rows with today's date. Each row links to
-      `/legal/<doc>/2026-10-04`.
-- [ ] "Delete account" appears at the foot of the panel, set apart in red.
+- [ ] "Account settings" in the left panel opens `/user/profile/settings`.
+- [ ] There, the Agreements block shows two rows with today's date. Each title opens
+      version 2026-10-04 of that document in a modal; Close returns you to the page.
+- [ ] "Delete account" appears at the foot of that page, set apart in red.
 
 ## 7. Self-service consent
 
-- [ ] Click "Review / change". Both boxes are pre-ticked.
-- [ ] Save. You see the saved message. Back on the profile, the accepted dates have not changed.
+- [ ] On `/user/profile/settings`, click "Review / change". Both boxes are pre-ticked.
+- [ ] Save. You see the saved message. Back on Account settings, the accepted dates have not changed.
 - [ ] Untick both and save. You see the message that unticking does not withdraw acceptance.
 
 ## 8. Re-consent gate
@@ -102,7 +103,7 @@ On the register form, with everything else valid:
 - [ ] On `/accept-terms`, "Contact support" opens the support form and a message can be
       sent without accepting the new version.
 - [ ] On `/accept-terms`, click Continue without ticking. You see an error on the box.
-- [ ] Tick and continue. You reach the profile, and the Terms row shows the new version.
+- [ ] Tick and continue. You reach the profile; under Account settings the Terms row shows the new version.
 - [ ] Clean up: delete the test file and rerun `npm --prefix frontend run legal:registry`.
 
 ## 9. Existing accounts and password reset
@@ -125,7 +126,7 @@ On the register form, with everything else valid:
 
 - [ ] Save one reading first, so there is data to remove. Skip the interpretation unless
       you want a billed OpenAI call.
-- [ ] On the profile, click "Delete account". Type `delete` in lower case and submit. You
+- [ ] On Account settings, click "Delete account". Type `delete` in lower case and submit. You
       see "Type DELETE to confirm".
 - [ ] Enter a wrong password with `DELETE`. You see "Incorrect password", and the account
       still works.

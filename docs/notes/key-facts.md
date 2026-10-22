@@ -50,16 +50,17 @@ This file stores project constants, configuration, and frequently-needed **non-s
 - `/reading` - Interactive tarot reading oracle
 - `/significators` - Birth date-based card calculator
 - `/chart` - Tarot chart explanation
-- `/guide` - How to use the oracle
+- `/guide`, `/guide/[slug]` - The user guide: hub plus one MDX chapter per page (public)
 - `/about` - What the platform offers: spreads, journal, interpretations, significators, Tree of Life (article, public)
 - `/user/login`, `/user/register` - Auth pages (JWT via FastAPI backend). Register needs `REGISTRATION_ENABLED=true`; it ends at a "check your email" panel, not a session
 - `/forgot-password`, `/reset-password` - Password reset (public)
 - `/verify-email` - Email confirmation: Confirm button for `?token=...`, resend form otherwise (public)
 - `/accept-terms` - Re-consent interstitial for a logged-in user whose accepted Terms/Privacy version is behind
 - `/legal/[doc]`, `/legal/[doc]/[version]` - Terms (`terms`) and Privacy Policy (`privacy`): current version, and each dated version (public)
+- `/user/profile/settings` - Account settings: contact support, Agreements rows, reset password, delete-account link
 - `/user/profile/manage-consent` - Review / re-record acceptance at any time
 - `/user/profile/delete-account` - Self-service account deletion (exempt from the onboarding gate)
-- `/user/profile` - "Your Sanctum" dashboard (account + budget chalice, readings summary; `GET /api/v1/dashboard`)
+- `/user/profile` - "Your Sanctum" dashboard (account + "Remaining Readings" chalice, no currency shown; readings summary; `GET /api/v1/dashboard`)
 - `/user/readings`, `/user/readings/[id]` - Readings journal list (filters via URL params) and detail
 - `/user/manual-reading` - Manual interpretation entry
 - `/superadmin` - User list (superadmin only)

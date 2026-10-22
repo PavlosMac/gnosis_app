@@ -15,11 +15,19 @@ describe("BudgetChalice", () => {
   it("renders the liquid at the level of remaining/budget with an accessible title", () => {
     const html = renderToStaticMarkup(<BudgetChalice remainingUsd={1.5} budgetUsd={3} />);
     expect(html).toContain('transform="translate(0 60.5)"');
-    expect(html).toContain("Oracle budget: $1.50 of $3.00 remains");
+    expect(html).toContain("Remaining readings: the chalice is 50% full");
+    expect(html).not.toContain("$");
     expect(html).toContain('role="img"');
     expect(html.match(/chalice-wave/g)?.length).toBeGreaterThanOrEqual(2);
     expect(html).toContain("chalice-rise");
     expect(html).toContain("chalice-shimmer");
+  });
+
+  it("defaults to 160px wide and takes a wider maxWidth", () => {
+    expect(renderToStaticMarkup(<BudgetChalice remainingUsd={1} budgetUsd={3} />)).toContain("max-width:160px");
+    expect(
+      renderToStaticMarkup(<BudgetChalice remainingUsd={1} budgetUsd={3} maxWidth={200} />)
+    ).toContain("max-width:200px");
   });
 
   it("references its own clip path and gradient ids", () => {
@@ -37,13 +45,13 @@ describe("BudgetChalice", () => {
 
   it("draws the dry chalice for a $0-capped account", () => {
     const html = renderToStaticMarkup(<BudgetChalice remainingUsd={0} budgetUsd={0} />);
-    expect(html).toContain("The chalice runs dry");
+    expect(html).toContain("Remaining readings: the chalice runs dry");
     expect(html).toContain('stroke-dasharray="2 3"');
   });
 
   it("shows a dry chalice with no liquid when nothing remains", () => {
     const html = renderToStaticMarkup(<BudgetChalice remainingUsd={0} budgetUsd={3} />);
-    expect(html).toContain("The chalice runs dry");
+    expect(html).toContain("Remaining readings: the chalice runs dry");
     expect(html).not.toContain("chalice-wave");
     expect(html).toContain('stroke-dasharray="2 3"');
   });

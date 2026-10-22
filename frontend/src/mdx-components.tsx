@@ -1,6 +1,8 @@
+import Link from "next/link";
 import type { MDXComponents } from "mdx/types";
 
-// Typography for the legal documents (the only MDX content). Layout-critical
+// Typography shared by all MDX content (legal documents and guide chapters; the
+// guide adds its own elements in components/guide/guide-components.tsx). Layout-critical
 // spacing is inline: a long-running dev server can miss newly introduced
 // Tailwind utilities (ADR-008), and these pages must never render unspaced.
 const HEADING = { fontFamily: "'Cinzel', serif" } as const;
@@ -54,15 +56,27 @@ const components: MDXComponents = {
       {children}
     </code>
   ),
-  a: ({ href, children }) => (
-    <a
-      href={href}
-      className="text-[#d4af37]/80 hover:text-[#d4af37] underline underline-offset-4 transition-colors"
-      {...(href?.startsWith("http") ? { target: "_blank", rel: "noopener noreferrer" } : {})}
-    >
-      {children}
-    </a>
-  ),
+  a: ({ href, children }) => {
+    const className =
+      "text-[#d4af37]/80 hover:text-[#d4af37] underline underline-offset-4 transition-colors";
+    // In-site links navigate client-side; everything else (http, mailto, #anchors) stays a plain anchor
+    if (href?.startsWith("/") && !href.startsWith("//")) {
+      return (
+        <Link href={href} className={className}>
+          {children}
+        </Link>
+      );
+    }
+    return (
+      <a
+        href={href}
+        className={className}
+        {...(href?.startsWith("http") ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+      >
+        {children}
+      </a>
+    );
+  },
 };
 
 export const useMDXComponents = (): MDXComponents => components;

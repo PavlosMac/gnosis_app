@@ -37,15 +37,23 @@ export const chaliceState = (fraction: number): ChaliceState => {
   return "partial";
 };
 
-/** "$2.41" — fixed two decimals, negatives clamp to $0.00 (deterministic, no Intl) */
-export const formatUsd = (amount: number): string =>
-  `$${Math.max(0, amount).toFixed(2)}`;
+const DRY_CAPTION = "The chalice runs dry";
 
-/** The line under the chalice: "$2.41 of $3.00 remains", or the dry-chalice line */
-export const budgetCaption = (remaining: number, budget: number): string =>
-  remaining <= 0
-    ? "The chalice runs dry"
-    : `${formatUsd(remaining)} of ${formatUsd(budget)} remains`;
+/** The line under the chalice: only the dry state is worth words — the profile
+    shows no currency, the fill level says the rest */
+export const chaliceCaption = (remaining: number): string | null =>
+  remaining <= 0 ? DRY_CAPTION : null;
+
+/** The chalice's accessible title, from the 0..1 fill fraction. It follows the
+    drawn state: dry only at zero, full where the chalice is drawn full, and a
+    percentage kept inside 1..99 so a sliver never reads "0%". */
+export const chaliceTitle = (fraction: number): string => {
+  const state = chaliceState(fraction);
+  if (state === "empty") return "Remaining readings: the chalice runs dry";
+  if (state === "full") return "Remaining readings: the chalice is full";
+  const percent = Math.min(99, Math.max(1, Math.round(fraction * 100)));
+  return `Remaining readings: the chalice is ${percent}% full`;
+};
 
 /** "10 Sept 2026" — the readings journal's date format */
 export const formatReadingDate = (iso: string): string =>
@@ -78,8 +86,8 @@ export interface AgreementRow {
   title: string;
   /** A consent record exists for this document */
   accepted: boolean;
-  /** The exact version accepted, or the current document when none is recorded */
-  href: string;
+  /** The exact version accepted when it is well-formed; null means show the current one */
+  version: string | null;
   detail: string;
 }
 
@@ -89,16 +97,14 @@ export const agreementRowModel = (consents: UserConsents | undefined): Agreement
     const record = consents?.[id];
     const title = DOCUMENT_TITLES[id];
     if (!record) {
-      return { id, title, accepted: false, href: `/legal/${id}`, detail: "Not yet recorded" };
+      return { id, title, accepted: false, version: null, detail: "Not yet recorded" };
     }
     // The stored version is whatever string the backend holds; only a
-    // well-formed one becomes a path segment
-    const href = isVersionString(record.version)
-      ? `/legal/${id}/${record.version}`
-      : `/legal/${id}`;
+    // well-formed one is passed on
+    const version = isVersionString(record.version) ? record.version : null;
     const acceptedAt = new Date(record.accepted_at);
     const detail = Number.isNaN(acceptedAt.getTime())
       ? "accepted"
       : `accepted ${formatReadingDate(record.accepted_at)}`;
-    return { id, title, accepted: true, href, detail };
+    return { id, title, accepted: true, version, detail };
   });

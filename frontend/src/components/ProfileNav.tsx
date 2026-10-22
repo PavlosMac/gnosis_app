@@ -32,6 +32,9 @@ export const ProfileNavMenu = ({ user, registrationEnabled, onNavigate }: Profil
         <Link href="/user/readings" onClick={onNavigate} className={MENU_LINK_CLASS}>
           Readings
         </Link>
+        <Link href="/guide" onClick={onNavigate} className={MENU_LINK_CLASS}>
+          Guide
+        </Link>
         <form action={logout}>
           <button
             type="submit"
@@ -45,6 +48,9 @@ export const ProfileNavMenu = ({ user, registrationEnabled, onNavigate }: Profil
       <>
         <Link href="/user/login" onClick={onNavigate} className={MENU_LINK_CLASS}>
           Login
+        </Link>
+        <Link href="/guide" onClick={onNavigate} className={MENU_LINK_CLASS}>
+          Guide
         </Link>
         {registrationEnabled && (
           <Link href="/user/register" onClick={onNavigate} className={MENU_LINK_CLASS}>

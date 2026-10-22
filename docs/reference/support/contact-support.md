@@ -37,7 +37,7 @@ Change all three together.
 
 ## Frontend
 
-- Entry point: the "Contact support" row in the profile page's `AccountPanel`
+- Entry point: the "Contact support" row on `/user/profile/settings` (`AccountSettingsCard`), reached from the profile's "Account settings" row; the Agreements rows sit under it
   (`frontend/src/app/user/profile/ContactSupportRow.tsx`) opens `ContactSupportModal.tsx`
   (subject + message, zod-validated, confirmation panel on success).
 - Submission: the `contactSupport` server action (`frontend/src/app/user/profile/actions.ts`)

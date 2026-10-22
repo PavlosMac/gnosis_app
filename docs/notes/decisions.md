@@ -323,3 +323,25 @@ Each decision should include:
 **ADR-013 addendum (2026-10-05): password policy.** New passwords (register, reset) must be 12 to 128 characters, must not be on a bundled common-password list, must not be a repeat or plain run, and must not contain the user's name or the local part of their email. No character-mix rules: they push users to `Password1!`. No Have I Been Pwned lookup: judged overkill here, since it adds an outside dependency to sign-up and a recipient to explain. The backend owns the list and answers `422 {code: "weak_password"}` with a user-facing `detail`, which the form shows on the password field; the frontend checks only length and the name/email rule (`src/lib/password-policy.ts`) and shows a hint under the field. Login keeps the 8-character floor so existing accounts can sign in. A refused password does not consume a reset link.
 
 **ADR-013 addendum (2026-10-05): sign-up is closed by default in production.** `frontend/docker-compose.yml` defaults `REGISTRATION_ENABLED` to `false`, reversing the 2026-10-04 default of `true`, so a deploy never opens registration by itself; it is opened on the Pi by setting the variable to `true`. Local `make dev` still defaults to open.
+
+### ADR-015: User Guide as MDX Chapters with a TS Manifest and Overlay-Annotated Screenshots (2026-10-13)
+
+**Context:**
+- `/guide` only explained reading philosophy; nothing explained how to use the platform (register, save, interpret, filter, contact support)
+- MDX is configured without remark/rehype plugins (Turbopack cannot serialise plugin functions), so there is no frontmatter; `.mdx` imports cannot use template-string paths
+
+**Decision:**
+- `/guide` is a hub; each chapter is its own page `/guide/<slug>`. The old philosophy text became the chapter `reading-the-cards`
+- Chapter bodies are MDX (`frontend/src/content/guide`); order and metadata live in `lib/guide-chapters.ts`; a static import map joins them, and a test keeps the three in step
+- Screenshots are raw PNGs in `public/guide/`; the `Shot` MDX component draws numbered rings from percentage coordinates kept in the MDX, plus a text legend. A missing PNG renders a "Screenshot pending" placeholder
+- Chapter text quotes the real UI labels; it must be re-checked when a flow changes
+
+**Alternatives Considered:**
+- One long page with a table of contents -> Rejected: heavy with screenshots, weaker deep links
+- Circles baked into the images -> Rejected: every UI change means redrawing the image, and the rings cannot scale or be read by assistive tech
+- Playwright auto-capture -> Deferred: new dependency, and the interpretation shot needs a billed OpenAI call or seeded data
+- Reuse the legal registry generator -> Rejected: overkill for a small fixed set of slugs
+
+**Consequences:**
+- Mark coordinates are authored by eye and need tuning when an image is added or the UI shifts
+- Screenshots go stale silently; the reference doc lists what exists

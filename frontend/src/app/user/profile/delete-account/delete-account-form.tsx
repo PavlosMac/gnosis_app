@@ -20,8 +20,8 @@ const DeleteAccountForm = () => {
     <AuthPageShell
       glyph={<>&#9760;</>}
       title="Delete Account"
-      backButtonHref="/user/profile"
-      backButtonLabel="Sanctum"
+      backButtonHref="/user/profile/settings"
+      backButtonLabel="Settings"
     >
       <div
         className="rounded-lg border border-red-400/30 bg-red-400/5 px-4 py-3 mb-6 text-sm text-[#e6d5b8]/80"

@@ -1,10 +1,7 @@
 import Link from "next/link";
+import { Settings } from "lucide-react";
 import BudgetChalice from "@/components/BudgetChalice";
-import AgreementRows from "./AgreementRows";
-import ContactSupportRow from "./ContactSupportRow";
-import ResetPasswordRequestButton from "./ResetPasswordRequestButton";
-import { budgetCaption, chaliceFill } from "@/lib/profile-dashboard";
-import type { UserConsents } from "@/lib/consent";
+import { chaliceCaption, chaliceFill } from "@/lib/profile-dashboard";
 
 export const ProfileRow = ({ label, value }: { label: string; value: string }) => (
   <div className="flex items-center justify-between gap-4">
@@ -38,18 +35,18 @@ interface AccountPanelProps {
   /** Already resolved: display name, else first + last, else "Seeker" */
   name: string;
   email: string;
-  consents: UserConsents | undefined;
   /** null when the ledger could not be fetched */
   budget: { remainingUsd: number; budgetUsd: number } | null;
 }
 
-const AccountPanel = ({ name, email, consents, budget }: AccountPanelProps) => {
+const AccountPanel = ({ name, email, budget }: AccountPanelProps) => {
   // Chalice and caption stand or fall together: a non-finite figure hides both
   // rather than leaving a "$NaN" caption under an empty space
   const usableBudget =
     budget && chaliceFill(budget.remainingUsd, budget.budgetUsd) !== null
       ? budget
       : null;
+  const caption = usableBudget ? chaliceCaption(usableBudget.remainingUsd) : null;
 
   return (
     <div className="flex flex-col p-5 sm:p-8">
@@ -60,26 +57,30 @@ const AccountPanel = ({ name, email, consents, budget }: AccountPanelProps) => {
         <ProfileRow label="Email" value={email} />
       </div>
 
-      {/* Oracle budget as a chalice */}
-      <div className="flex flex-col items-center py-8">
+      {/* Oracle budget as a chalice: the fill level is the whole message, no
+          currency. It takes the panel's free height and centres in it. */}
+      <div className="flex-1 flex flex-col items-center justify-center py-8">
         <span
           className="text-[#d4af37]/70 text-xs tracking-[0.25em] uppercase mb-3"
           style={{ fontFamily: "'Cinzel', serif" }}
         >
-          Oracle Chalice
+          Remaining Readings
         </span>
         {usableBudget ? (
           <>
             <BudgetChalice
               remainingUsd={usableBudget.remainingUsd}
               budgetUsd={usableBudget.budgetUsd}
+              maxWidth={200}
             />
-            <p
-              className="text-[#e6d5b8]/80 text-base mt-3 text-center"
-              style={{ fontFamily: "'Crimson Pro', serif" }}
-            >
-              {budgetCaption(usableBudget.remainingUsd, usableBudget.budgetUsd)}
-            </p>
+            {caption && (
+              <p
+                className="text-[#e6d5b8]/80 text-base mt-3 text-center"
+                style={{ fontFamily: "'Crimson Pro', serif" }}
+              >
+                {caption}
+              </p>
+            )}
           </>
         ) : (
           <p
@@ -92,22 +93,24 @@ const AccountPanel = ({ name, email, consents, budget }: AccountPanelProps) => {
       </div>
 
       <div style={{ marginTop: "auto" }}>
-        <AgreementRows consents={consents} />
-        <ContactSupportRow />
-        <div className="pt-4 mt-4 border-t border-[#d4af37]/10">
-          <ResetPasswordRequestButton />
-        </div>
-        {/* Danger zone: set apart from the rows above by its own rule and colour */}
-        <div
-          className="border-t border-red-400/20 text-center"
-          style={{ marginTop: "1.5rem", paddingTop: "1rem" }}
-        >
+        {/* Support, agreements, password reset and deletion live on their own page */}
+        <div className="pt-4 border-t border-[#d4af37]/10">
           <Link
-            href="/user/profile/delete-account"
-            className="text-red-400/60 hover:text-red-400 text-xs tracking-widest uppercase transition-colors"
-            style={{ fontFamily: "'Cinzel', serif" }}
+            href="/user/profile/settings"
+            className="w-full flex items-center justify-between group"
           >
-            Delete account
+            <span
+              className="text-[#e6d5b8]/60 text-sm tracking-wider uppercase group-hover:text-[#d4af37] transition-colors"
+              style={{ fontFamily: "'Cinzel', serif" }}
+            >
+              Account settings
+            </span>
+            <span
+              className="text-[#d4af37]/40 group-hover:text-[#d4af37] transition-colors"
+              aria-hidden="true"
+            >
+              <Settings size={18} strokeWidth={1.75} />
+            </span>
           </Link>
         </div>
       </div>

@@ -72,7 +72,6 @@ const ProfilePage = async () => {
             <AccountPanel
               name={accountName(user)}
               email={user.email}
-              consents={user.consents}
               budget={budget}
             />
 

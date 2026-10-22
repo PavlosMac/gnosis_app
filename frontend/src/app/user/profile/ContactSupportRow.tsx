@@ -4,7 +4,7 @@ import { useState } from "react";
 import { MailPen } from "lucide-react";
 import ContactSupportModal from "./ContactSupportModal";
 
-/** The AccountPanel's "Contact support" row: same visuals as the old
+/** The Account Settings "Contact support" row: same visuals as the old
     ProfileLinkRow, but a button opening the support modal instead of a link */
 const ContactSupportRow = () => {
   const [open, setOpen] = useState(false);

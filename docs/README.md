@@ -37,6 +37,8 @@ or in the three `CLAUDE.md` files, and CI runs it.
 | [`prompts/experiments/`](reference/prompts/experiments/) | backend | Frozen sample readings from `scripts/lean_prompt_test.py`, cited by the architecture doc |
 | [`readings/search-and-tags.md`](reference/readings/search-and-tags.md) | both | Reading tags and the filter panel, with dated amendments |
 | [`readings/free-limit-cta.md`](reference/readings/free-limit-cta.md) | frontend | Per-browser free-use counters for `/reading` and `/significators` and the sign-up nudge panel |
+| [`guide/user-guide.md`](reference/guide/user-guide.md) | frontend | The `/guide` hub and chapters (MDX), the `Shot` screenshot component, and the list of screenshots still to capture |
+| [`guide/screenshot-checklist.md`](reference/guide/screenshot-checklist.md) | frontend | Tick-list for capturing the 16 guide screenshots: file names, pages, states, ring labels. Delete when done |
 | [`support/contact-support.md`](reference/support/contact-support.md) | both | The support endpoint contract and the profile-page modal |
 | [`frontend/src/content/legal/README.md`](../frontend/src/content/legal/README.md) | frontend | How Terms / Privacy versions are named and registered (lives next to the content) |
 
@@ -48,7 +50,6 @@ or in the three `CLAUDE.md` files, and CI runs it.
 | [`2026-09-10-sse-streaming-interpretations.md`](plans/2026-09-10-sse-streaming-interpretations.md) | Not started. Stream the interpretation; add request duration and `request_id` logging. |
 | [`2026-09-21-user-accounting-ledger.md`](plans/2026-09-21-user-accounting-ledger.md) | Agreed, not started. Price source, monthly budget period, superadmin ledger UI. |
 | [`2026-09-29-readings-sort-index.md`](plans/2026-09-29-readings-sort-index.md) | Deferred. Compound index for spread + tags + date sort; trigger inside. |
-| [`2026-10-13-user-guide.md`](plans/2026-10-13-user-guide.md) | Agreed, not started. `/guide` hub with MDX how-to chapters and annotated screenshots. |
 
 ## Notes
 
