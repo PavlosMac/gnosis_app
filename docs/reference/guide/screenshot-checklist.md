@@ -2,13 +2,13 @@
 
 Working list for capturing the screenshots of the `/guide` chapters. Everything needed to add them is on this page; you do not need a Claude session. How the guide is built is in [`user-guide.md`](user-guide.md).
 
-**12 screenshots, 6 captured (your-profile, making-a-reading and saving-a-reading, 2026-10-22), 6 to go.** Tick a box when the PNG is in place.
+**12 screenshots, 9 captured (your-profile, making-a-reading, saving-a-reading and oracle-interpretation, 2026-10-22), 3 to go.** Tick a box when the PNG is in place.
 
 Until a PNG exists the chapter shows a dashed "Screenshot pending" box plus the numbered legend, so you can add them in any order.
 
 ## Capture table
 
-Save each file at the path shown. Folder = chapter. Details and ring labels are in the sections below.
+Save each file under `frontend/public/guide/` (from the repository root, not next to this document), in the chapter folder shown. Details and ring labels are in the sections below.
 
 | ☐ | Save as (under `frontend/public/guide/`) | Size | Page | What to capture |
 |---|---|---|---|---|
@@ -18,9 +18,9 @@ Save each file at the path shown. Folder = chapter. Details and ring labels are 
 | ☑ | `making-a-reading/03-reading.png` | 1566 × 1634 | `/reading` | A finished reading, signed in, so the bookmark (top right) is visible. Add a question on the setup screen first so it shows. |
 | ☑ | `saving-a-reading/01-save-icon.png` | 1342 × 980 | `/reading` | Crop only the top of a finished reading, enough to show the bookmark icon at the top right. Short image. |
 | ☑ | `saving-a-reading/02-tags.png` | 1718 × 1234 | `/user/readings/[id]` | A saved reading with two or three tags and the **+** pressed, so the "Add a tag…" box is open. |
-| ☐ | `oracle-interpretation/01-button.png` | 1280 × 800 | `/reading` | Right after saving a reading: the **Oracle Interpretation** button under the cards. **Do not press it**: on this page it starts a billed request at once. |
-| ☐ | `oracle-interpretation/02-confirm.png` | 1280 × 800 | `/user/readings/[id]` | A saved reading with no interpretation. Press **Oracle Interpretation** and capture the "Ready to consult the Oracle for this reading?" window. **Do not press Consult the Oracle.** Close the window afterwards. |
-| ☐ | `oracle-interpretation/03-interpretation.png` | 1280 × 1000 | `/user/readings/[id]` | A reading that already has an interpretation: cards at the top, interpretation text below. Do not generate a new one just for this. |
+| ☑ | `oracle-interpretation/01-button.png` | 996 × 1556 | `/reading` | Right after saving a reading: the **Oracle Interpretation** button under the cards. **Do not press it**: on this page it starts a billed request at once. |
+| ☑ | `oracle-interpretation/02-confirm.png` | 1508 × 454 | `/user/readings/[id]` | A saved reading with no interpretation. Press **Oracle Interpretation** and capture the "Ready to consult the Oracle for this reading?" window. **Do not press Consult the Oracle.** Close the window afterwards. |
+| ☑ | `oracle-interpretation/03-interpretation.png` | 1502 × 1478 | `/user/readings/[id]` | A reading that already has an interpretation: cards at the top, interpretation text below. Do not generate a new one just for this. |
 | ☐ | `finding-readings/01-list.png` | 1280 × 1000 | `/user/readings` | More than 10 readings, so Next/Previous and "Per page" show. Filter panel closed. |
 | ☐ | `finding-readings/02-filter-panel.png` | 1280 × 800 | `/user/readings` | Same page with **Filter Readings** open. Optionally pick a spread so the pills show. |
 | ☐ | `contacting-support/02-modal.png` | 1280 × 800 | `/user/profile/settings` | Press **Contact support**; capture the empty "Seek Counsel" window. Do not send. |
@@ -119,20 +119,20 @@ Page: `/guide/saving-a-reading` (source `frontend/src/content/guide/saving-a-rea
 
 Page: `/guide/oracle-interpretation` (source `frontend/src/content/guide/oracle-interpretation.mdx`)
 
-- [ ] **`01-button.png`** (1280 × 800)
+- [x] **`01-button.png`** (996 × 1556)
   - Save as: `frontend/public/guide/oracle-interpretation/01-button.png`
   - Page: `/reading`
   - Capture: Right after saving a reading: the **Oracle Interpretation** button under the cards. **Do not press it**: on this page it starts a billed request at once.
   - Rings to place:
     1. Oracle Interpretation
-- [ ] **`02-confirm.png`** (1280 × 800)
+- [x] **`02-confirm.png`** (1508 × 454)
   - Save as: `frontend/public/guide/oracle-interpretation/02-confirm.png`
   - Page: `/user/readings/[id]`
   - Capture: A saved reading with no interpretation. Press **Oracle Interpretation** and capture the "Ready to consult the Oracle for this reading?" window. **Do not press Consult the Oracle.** Close the window afterwards.
   - Rings to place:
     1. Confirmation message
     2. Consult the Oracle
-- [ ] **`03-interpretation.png`** (1280 × 1000)
+- [x] **`03-interpretation.png`** (1502 × 1478)
   - Save as: `frontend/public/guide/oracle-interpretation/03-interpretation.png`
   - Page: `/user/readings/[id]`
   - Capture: A reading that already has an interpretation: cards at the top, interpretation text below. Do not generate a new one just for this.
