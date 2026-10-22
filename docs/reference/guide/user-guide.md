@@ -47,4 +47,4 @@ Metadata sits in TS, not MDX frontmatter, because `next.config.ts` uses no remar
 
 ### Screenshot status
 
-1 of 16 captured (`your-profile/01-profile.png`, rings placed). The capture checklist, with every file name, page, state and ring label, is [`screenshot-checklist.md`](screenshot-checklist.md). Tick it off or delete it once all images are in.
+1 of 15 captured (`your-profile/01-profile.png`, rings placed). The capture checklist, with every file name, page, state and ring label, is [`screenshot-checklist.md`](screenshot-checklist.md). Tick it off or delete it once all images are in.

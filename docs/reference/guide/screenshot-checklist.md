@@ -2,7 +2,7 @@
 
 Working list for capturing the screenshots of the `/guide` chapters. Everything needed to add them is on this page; you do not need a Claude session. How the guide is built is in [`user-guide.md`](user-guide.md).
 
-**16 screenshots, 1 captured (`your-profile/01-profile.png`, 2026-10-22).** Tick a box when the PNG is in place.
+**15 screenshots, 1 captured (`your-profile/01-profile.png`, 2026-10-22).** Tick a box when the PNG is in place.
 
 Until a PNG exists the chapter shows a dashed "Screenshot pending" box plus the numbered legend, so you can add them in any order.
 
@@ -13,7 +13,6 @@ Save each file at the path shown. Folder = chapter. Details and ring labels are 
 | ☐ | Save as (under `frontend/public/guide/`) | Size | Page | What to capture |
 |---|---|---|---|---|
 | ☑ | `your-profile/01-profile.png` | 1806 × 1160 | `/user/profile` | Signed in, with a few saved readings and tags so the Readings Journal panel and the Focused tags are filled. Whole page, both panels. |
-| ☐ | `your-profile/02-significators-input.png` | 1280 × 800 | `/significators` | Before pressing Generate. Leave the date boxes empty. |
 | ☐ | `making-a-reading/01-setup.png` | 1280 × 900 | `/reading` | Setup screen with **Three Card** selected (this makes the question box appear). Whole page. |
 | ☐ | `making-a-reading/02-deck.png` | 1280 × 900 | `/reading` | Press Begin, then capture the 78 face-down cards with the "Select N card(s)" prompt, before choosing any. |
 | ☐ | `making-a-reading/03-reading.png` | 1280 × 900 | `/reading` | A finished reading, signed in, so the bookmark (top right) is visible. Add a question on the setup screen first so it shows. |
@@ -69,13 +68,6 @@ Page: `/guide/your-profile` (source `frontend/src/content/guide/your-profile.mdx
     5. Your last reading. Select it to open it
     6. Tags you use most. Select one to see those readings
     7. Start a new reading or open all readings
-- [ ] **`02-significators-input.png`** (1280 × 800)
-  - Save as: `frontend/public/guide/your-profile/02-significators-input.png`
-  - Page: `/significators`
-  - Capture: Before pressing Generate. Leave the date boxes empty.
-  - Rings to place:
-    1. Enter your birth date as day, month and year
-    2. Generate Significators
 
 ## Making a Reading
 

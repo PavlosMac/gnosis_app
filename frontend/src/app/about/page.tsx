@@ -79,10 +79,14 @@ export default function AboutPage() {
               take and reflect on their life through the perspective of the authentic Self.
             </P>
             <P>
-              The Tarot offers us a symbolically rich tapestry on which to map the soul&apos;s path
-              through life. Creating spreads and pulling cards is a way to mirror the subconscious revealing
-              vital information. We offer this platform where you can make many readings and get
-              synthesised reading data returned quickly.
+              The Tarot offers us a symbolically rich tapestry from which to map the soul&apos;s journey
+              through life. Creating spreads and pulling cards is a great way to mirror the subconscious, revealing
+              vital information about destiny, character and much more. We can also make enquries about events, other persons and much more - there is no limit actually.
+              We offer this platform for users to make many readings and get
+              interpretitive reading data quickly, in an endevour to encourage more people to delve deeper into these esoteric arts. 
+              The divination arts are fun and receptive, anyone with an interest should be able dabble in Tarot, make readings and reflective on the symbolism in the cards. 
+              We also hope to offer a powerful tool for advanced users, its up to you 
+              how you would like to use Tarot Divinations.
             </P>
             <P>
               Once you have made a reading and saved it, you can send the spread to the LLM, which
@@ -106,7 +110,7 @@ export default function AboutPage() {
               real magic when this happens.
             </P>
             <P aside>
-              It might be easy to disregard AI when it comes to divination. Our hope is that offering a service
+              Our hope is that offering a service
               where users can get reading material interpreted quickly and accurately will encourage them to deepen their
               interest in the divination arts.
             </P>
