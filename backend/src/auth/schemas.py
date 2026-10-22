@@ -17,6 +17,21 @@ def _normalize_email(value: str) -> str:
 # the edge — "A@x.com" and "a@x.com" are one account.
 NormalizedEmail = Annotated[EmailStr, AfterValidator(_normalize_email)]
 
+
+def _reject_unencodable(value: str) -> str:
+    # JSON allows a lone surrogate ("\ud800") that Python keeps in the str but cannot
+    # encode; hashing it raises UnicodeEncodeError, which would surface as a 500.
+    try:
+        value.encode("utf-8")
+    except UnicodeEncodeError:
+        raise ValueError("Password contains characters that cannot be stored") from None
+    return value
+
+
+# Every password field uses this, so no request can reach the hasher with text it
+# cannot encode.
+Password = Annotated[str, AfterValidator(_reject_unencodable)]
+
 # A legal-document version is the dated MDX filename the frontend owns ("2026-09-30").
 # The backend stores whatever string it receives — no version validation here, so a
 # document edit needs no backend deploy.
@@ -58,7 +73,7 @@ class ConsentRequest(AppSchema):
 
 class RegisterRequest(AppSchema):
     email: NormalizedEmail
-    password: str = Field(min_length=MIN_PASSWORD_LENGTH, max_length=MAX_PASSWORD_LENGTH)
+    password: Password = Field(min_length=MIN_PASSWORD_LENGTH, max_length=MAX_PASSWORD_LENGTH)
     first_name: PersonName
     last_name: PersonName
     consents: ConsentVersions
@@ -86,7 +101,9 @@ class ResendVerificationResponse(AppSchema):
 
 class LoginRequest(AppSchema):
     email: NormalizedEmail
-    password: str
+    # Capped like a new password so a giant body never reaches the hasher, but with no
+    # minimum: accounts created under the older 8-character rule must still sign in.
+    password: Password = Field(max_length=MAX_PASSWORD_LENGTH)
 
 
 class TokenResponse(AppSchema):
@@ -154,7 +171,7 @@ class UserReadModel(UserIdentity):
 
 class DeleteAccountRequest(AppSchema):
     # Re-authentication for an irreversible action. Identity is the JWT's, never the body's.
-    password: str = Field(min_length=1)
+    password: Password = Field(min_length=1, max_length=MAX_PASSWORD_LENGTH)
 
 
 class PasswordResetRequestRequest(AppSchema):
@@ -167,7 +184,7 @@ class PasswordResetRequestResponse(AppSchema):
 
 class PasswordResetConfirmRequest(AppSchema):
     token: str = Field(min_length=1)
-    new_password: str = Field(min_length=MIN_PASSWORD_LENGTH, max_length=MAX_PASSWORD_LENGTH)
+    new_password: Password = Field(min_length=MIN_PASSWORD_LENGTH, max_length=MAX_PASSWORD_LENGTH)
 
 
 class PasswordResetConfirmResponse(AppSchema):

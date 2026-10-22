@@ -1,3 +1,4 @@
+import asyncio
 from typing import TYPE_CHECKING, Annotated
 
 import jwt
@@ -40,21 +41,43 @@ def get_refresh_token_repo(request: Request) -> RefreshTokenRepository:
 RefreshTokenRepoDep = Annotated[RefreshTokenRepository, Depends(get_refresh_token_repo)]
 
 
-async def get_current_user_id(request: Request) -> str:
+class AccessClaims:
+    __slots__ = ("user_id", "family_id")
+
+    def __init__(self, user_id: str, family_id: str) -> None:
+        self.user_id = user_id
+        self.family_id = family_id
+
+
+async def get_access_claims(request: Request) -> AccessClaims:
+    """Decode the bearer token. Stateless: does not check that the session is live."""
     auth_header = request.headers.get("Authorization")
     if not auth_header or not auth_header.startswith("Bearer "):
         raise UnauthorizedError()
     token = auth_header.removeprefix("Bearer ")
     try:
         payload = decode_token(token)
-        if payload.get("type") != "access":
-            raise UnauthorizedError("Invalid token type")
-        user_id: str | None = payload.get("sub")
-        if user_id is None:
-            raise UnauthorizedError()
-        return user_id
     except jwt.PyJWTError:
         raise UnauthorizedError()
+    if payload.get("type") != "access":
+        raise UnauthorizedError("Invalid token type")
+    user_id: str | None = payload.get("sub")
+    family_id: str | None = payload.get("family_id")
+    if user_id is None or family_id is None:
+        raise UnauthorizedError()
+    return AccessClaims(user_id, family_id)
+
+
+AccessClaimsDep = Annotated[AccessClaims, Depends(get_access_claims)]
+
+
+async def get_current_user_id(claims: AccessClaimsDep, refresh_repo: RefreshTokenRepoDep) -> str:
+    # The JWT is stateless, so on its own it would outlive logout, a password reset and
+    # refresh-replay detection. Tying it to its refresh family makes ending the session
+    # end the access token too.
+    if not await refresh_repo.family_is_live(claims.family_id):
+        raise UnauthorizedError()
+    return claims.user_id
 
 
 CurrentUserId = Annotated[str, Depends(get_current_user_id)]
@@ -84,15 +107,28 @@ AuthServiceDep = Annotated[AuthService, Depends(get_auth_service)]
 
 
 async def get_current_user(
-    user_id: CurrentUserId,
+    claims: AccessClaimsDep,
+    refresh_repo: RefreshTokenRepoDep,
     mediator: MediatorDep,
 ) -> UserReadModel:
-    try:
-        user = await mediator.query(GetUserByIdQuery(user_id=user_id))
-    except NotFoundError:
+    # The session check and the user lookup are independent, so they run together
+    # rather than as two serial round trips.
+    live, user_result = await asyncio.gather(
+        refresh_repo.family_is_live(claims.family_id),
+        mediator.query(GetUserByIdQuery(user_id=claims.user_id)),
+        return_exceptions=True,
+    )
+    if isinstance(live, BaseException):
+        raise live
+    if not live:
+        raise UnauthorizedError()
+    if isinstance(user_result, NotFoundError):
         # A valid token for an account that no longer exists (deleted or purged) is
         # not a session.
         raise UnauthorizedError()
+    if isinstance(user_result, BaseException):
+        raise user_result
+    user = user_result
     assert_may_hold_session(user.status)
     return user
 

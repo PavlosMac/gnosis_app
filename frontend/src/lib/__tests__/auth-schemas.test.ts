@@ -96,6 +96,12 @@ describe("loginSchema", () => {
   it("normalises the email the same way", () => {
     expect(loginSchema.parse({ email: " A@B.com ", password: "12345678" }).email).toBe("a@b.com");
   });
+
+  it("caps the password at the backend's length", () => {
+    const login = (password: string) => loginSchema.safeParse({ email: "a@b.com", password });
+    expect(login("x".repeat(128)).success).toBe(true);
+    expect(login("x".repeat(129)).success).toBe(false);
+  });
 });
 
 describe("verifyEmailSchema", () => {

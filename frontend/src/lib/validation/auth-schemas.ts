@@ -40,8 +40,12 @@ const PASSWORDS_MATCH = { message: "Passwords do not match", path: ["confirmPass
 export const loginSchema = z.object({
   email: emailField,
   // Login only checks the old 8-character floor, never the current policy —
-  // accounts created before the minimum rose to 12 must still be able to sign in
-  password: z.string().min(8, "Password must be at least 8 characters"),
+  // accounts created before the minimum rose to 12 must still be able to sign in.
+  // The cap matches the backend's, which rejects anything longer with a 422
+  password: z
+    .string()
+    .min(8, "Password must be at least 8 characters")
+    .max(MAX_PASSWORD_LENGTH, `Password must be at most ${MAX_PASSWORD_LENGTH} characters`),
 });
 
 export const registerSchema = z
@@ -83,7 +87,10 @@ export const resendVerificationSchema = z.object({
 });
 
 export const deleteAccountSchema = z.object({
-  password: z.string().min(1, "Enter your password to confirm"),
+  password: z
+    .string()
+    .min(1, "Enter your password to confirm")
+    .max(MAX_PASSWORD_LENGTH, `Password must be at most ${MAX_PASSWORD_LENGTH} characters`),
   // Type-to-confirm: deletion is irreversible, so a checkbox is not enough
   confirm: z.literal("DELETE", { error: "Type DELETE to confirm" }),
 });

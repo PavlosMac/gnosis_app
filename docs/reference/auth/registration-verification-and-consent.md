@@ -28,8 +28,9 @@ side: [`frontend-auth-flow.md`](frontend-auth-flow.md). Email plumbing:
   (`src/core/dependencies.py`). A later payment step adds `payment_required` to the enum
   and to `SESSION_STATUSES` (they must log in to pay); nothing else moves.
 - Endpoints that take only `CurrentUserId` (readings, interpretations, dashboard) decode
-  the JWT and do not re-read the user. A pending user can never obtain a token, so this
-  only matters for a token that outlives its account — see [Need to know](#need-to-know).
+  the JWT and check that its refresh family is live, but do not re-read the user. A pending
+  user can never obtain a token, and account deletion ends every family — see
+  [Need to know](#need-to-know).
 
 ## Endpoints
 
@@ -73,6 +74,10 @@ changed during implementation.)
   the Privacy Policy needs no extra recipient.
 - **Login does not apply the policy.** Accounts created under the older 8-character
   minimum keep working; the schemas' `min_length` (12) is only on register and reset.
+  Every password field (login and delete-account included) is capped at
+  `MAX_PASSWORD_LENGTH` (128) and rejects text that cannot be UTF-8 encoded (a JSON lone
+  surrogate such as `\ud800`), so a request answers 422 and never reaches the hasher.
+  The frontend's login and delete-account schemas carry the same cap.
 - **A refused password never burns a reset link.** The handler checks strength first,
   reads the account through `OneTimeTokenRepository.peek()` for the name/email rule, and
   only then consumes the token.
@@ -209,12 +214,17 @@ logs a link only when constructed with `reveal_links=True`, which `main.py` does
 
 ## Need to know
 
-- **An access token outlives its account by up to an hour.** Deleting an account revokes
-  its refresh tokens and makes `/auth/me` answer 401, but endpoints that take only
-  `CurrentUserId` accept the still-valid JWT until it expires
-  (`jwt_access_token_expire_seconds`, 3600). The frontend clears its cookies on deletion,
-  so this needs a copied bearer token to matter; anything created that way belongs to no
-  account.
+- **An access token lives only as long as its session.** `CurrentUserId`
+  (`get_current_user_id`) checks that the token's `family_id` still has a row in
+  `refresh_tokens` (`RefreshTokenRepository.family_is_live`, one indexed lookup per
+  request, run in parallel with the user lookup in `get_current_user`). Logout, password reset, account deletion and refresh-replay detection all
+  delete the family, so the access token answers 401 at once instead of surviving up to
+  an hour (`jwt_access_token_expire_seconds`, 3600). Refresh rotation keeps the family,
+  so the previous access token stays valid until it expires. A token without a
+  `family_id` is refused. A refresh token replayed within 10 s of its rotation
+  (`REFRESH_REPLAY_GRACE_SECONDS`; two tabs or a proxy plus a render racing) answers 401
+  without revoking the family, so the winner's session survives; a later replay is
+  treated as theft. Other sessions of the same user are untouched by a logout.
 - **Legacy users have `consents: {}`** and are sent to `/accept-terms` by the frontend
   once.
 - **`register:<ip>` throttle records** carry a network address, not an account identity,

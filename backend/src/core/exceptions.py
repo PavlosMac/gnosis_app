@@ -58,10 +58,16 @@ async def app_exception_handler(_request: Request, exc: AppError) -> JSONRespons
 async def validation_exception_handler(
     _request: Request, exc: RequestValidationError
 ) -> JSONResponse:
-    logger.warning("request validation error", errors=exc.errors())
+    # Pydantic's `input` is the submitted value and `ctx` can embed it: on a login or
+    # register body that is a plaintext password, so neither is logged or returned.
+    errors = [
+        {key: value for key, value in error.items() if key not in ("input", "ctx")}
+        for error in exc.errors()
+    ]
+    logger.warning("request validation error", errors=[(e["loc"], e["type"]) for e in errors])
     return JSONResponse(
         status_code=422,
-        content={"detail": jsonable_encoder(exc.errors())},
+        content={"detail": jsonable_encoder(errors)},
     )
 
 

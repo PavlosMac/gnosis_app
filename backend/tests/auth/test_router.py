@@ -136,7 +136,8 @@ async def test_refresh_reuse_revokes_family(client, mock_email):
 
 
 @pytest.mark.asyncio
-async def test_refresh_replay_revokes_entire_family(client, mock_email):
+async def test_refresh_replay_revokes_entire_family(client, mock_email, monkeypatch):
+    monkeypatch.setattr("src.auth.service.REFRESH_REPLAY_GRACE_SECONDS", -1)
     reg = await register_verify_and_login(client, mock_email, "replay@example.com")
     old_refresh = reg["refresh_token"]
 
@@ -178,14 +179,14 @@ async def test_logout(client, mock_email):
     assert response.status_code == 200
     assert response.json()["detail"] == "Logged out"
 
-    # Access token still works (no blacklist check, valid until expiry)
+    # The access token dies with its session
     me_response = await client.get(
         "/api/v1/auth/me",
         headers={"Authorization": f"Bearer {access_token}"},
     )
-    assert me_response.status_code == 200
+    assert me_response.status_code == 401
 
-    # But refresh token family is revoked — can't get new tokens
+    # And the refresh token family is revoked — can't get new tokens
     refresh_response = await client.post(
         "/api/v1/auth/refresh",
         json={"refresh_token": refresh_token},

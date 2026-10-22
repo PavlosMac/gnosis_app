@@ -32,6 +32,10 @@ from src.notifications.port import EmailPort
 logger = structlog.stdlib.get_logger(__name__)
 
 
+# A refresh token replayed this soon after rotation is a racing client, not a thief.
+REFRESH_REPLAY_GRACE_SECONDS = 10
+
+
 class EmailAlreadyExistsError(ConflictError):
     def __init__(self) -> None:
         super().__init__(detail="A user with this email already exists")
@@ -262,6 +266,8 @@ class AuthService:
 
         doc = await self._refresh_repo.consume(jti)
         if doc is None:
+            if await self._refresh_repo.was_just_consumed(jti, REFRESH_REPLAY_GRACE_SECONDS):
+                raise UnauthorizedError("Token has been rotated")
             await self._refresh_repo.revoke_family(family_id)
             raise UnauthorizedError("Token has been revoked")
 

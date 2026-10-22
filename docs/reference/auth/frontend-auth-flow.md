@@ -47,7 +47,7 @@ All three are written, read and cleared only through `src/lib/auth-cookies.ts`
 
 ## Token Lifetimes
 
-- **Access token:** 60 minutes (backend `JWT_ACCESS_TOKEN_EXPIRE_SECONDS=3600`)
+- **Access token:** 60 minutes (backend `JWT_ACCESS_TOKEN_EXPIRE_SECONDS=3600`), but only while its session lives: logout, password reset, account deletion and refresh replay end it at once, and the next call answers 401 (`authenticatedFetch` then tries a refresh, which fails, and the user is sent to login)
 - **Refresh token:** longer-lived (backend-controlled)
 - **Proactive refresh threshold:** 10 seconds (refresh when <10s remain)
 

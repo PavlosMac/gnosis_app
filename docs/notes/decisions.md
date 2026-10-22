@@ -277,7 +277,7 @@ Each decision should include:
 - The backend holds `users.status` (`pending_verification | active`; absent = active). One check, `assert_may_hold_session`, guards login, refresh and `get_current_user`. Login answers `403 {code: "email_not_verified"}`; `ApiError.code` carries it and both login forms link to `/verify-email`, where a new link can be requested
 - `onboardingRedirect(user, currentVersions)` is the single frontend decision point: pending -> `/verify-email`, stale consents -> `/accept-terms`. A payment step adds one enum member (backend) and one branch (frontend)
 - **One cookie module:** `src/lib/auth-cookies.ts` (edge-safe) is the only reader and writer. In production the names are `__Host-access_token`, `__Host-refresh_token`, `__Host-token_expires_at` (httpOnly, Secure, SameSite=Lax, Path=/, no Domain); in dev the plain names. Cookies are cleared with `set(..., maxAge: 0)`, never `delete`, because a `__Host-` deletion without Secure is dropped by browsers
-- Access token lifetime is 3600s everywhere (config default, env examples, docs)
+- Access token lifetime is 3600s everywhere (config default, env examples, docs) (config default, env examples, docs)
 - Rate limits on login (IP + email) and register (IP). Because every backend call is made by the Next.js server, `publicFetch` forwards the browser address in `X-Forwarded-For` (`src/lib/client-ip.ts`); without it the limits would be global
 - `REGISTRATION_ENABLED` is exposed to client components once, through `AuthProvider` / `useAuth().registrationEnabled`, and gates the Sign up links in the login page, the inline login modal and the landing footer
 
@@ -318,9 +318,9 @@ Each decision should include:
   - **Backups:** a deleted account stays in existing database backups until they rotate
   - **Name editing** from the profile is not built
   - **No backend-side registration gate:** `REGISTRATION_ENABLED` is enforced by the frontend only; the API's `/auth/register` is reachable from inside the container network regardless
-- An access token stays valid for up to an hour after deletion for endpoints that do not re-read the user; the cookies are cleared, so it needs a copied bearer token to matter
+- An access token stays valid for up to an hour after deletion for endpoints that do not re-read the user; the cookies are cleared, so it needs a copied bearer token to matter (superseded by ADR-016: the access token now ends with its session)
 
-**ADR-013 addendum (2026-10-05): password policy.** New passwords (register, reset) must be 12 to 128 characters, must not be on a bundled common-password list, must not be a repeat or plain run, and must not contain the user's name or the local part of their email. No character-mix rules: they push users to `Password1!`. No Have I Been Pwned lookup: judged overkill here, since it adds an outside dependency to sign-up and a recipient to explain. The backend owns the list and answers `422 {code: "weak_password"}` with a user-facing `detail`, which the form shows on the password field; the frontend checks only length and the name/email rule (`src/lib/password-policy.ts`) and shows a hint under the field. Login keeps the 8-character floor so existing accounts can sign in. A refused password does not consume a reset link.
+**ADR-013 addendum (2026-10-05): password policy.** New passwords (register, reset) must be 12 to 128 characters, must not be on a bundled common-password list, must not be a repeat or plain run, and must not contain the user's name or the local part of their email. No character-mix rules: they push users to `Password1!`. No Have I Been Pwned lookup: judged overkill here, since it adds an outside dependency to sign-up and a recipient to explain. The backend owns the list and answers `422 {code: "weak_password"}` with a user-facing `detail`, which the form shows on the password field; the frontend checks only length and the name/email rule (`src/lib/password-policy.ts`) and shows a hint under the field. Login keeps the 8-character floor (frontend only; the backend has no minimum) so existing accounts can sign in, and both sides cap it at 128. A refused password does not consume a reset link.
 
 **ADR-013 addendum (2026-10-05): sign-up is closed by default in production.** `frontend/docker-compose.yml` defaults `REGISTRATION_ENABLED` to `false`, reversing the 2026-10-04 default of `true`, so a deploy never opens registration by itself; it is opened on the Pi by setting the variable to `true`. Local `make dev` still defaults to open.
 
@@ -347,3 +347,23 @@ Each decision should include:
 - Screenshots go stale silently; the reference doc lists what exists
 
 **ADR-015 addendum (2026-10-22): the guide stays public.** Hiding it behind login was tried and reverted: the landing card and the link on `/about` are the way a visitor learns how the platform works before registering, so they must stay open, and chapters that walk through signed-in pages say so ("needs an account"). The ☥ menu is the account-area navigation, so the Guide item appears there only when signed in; the logged-out menu is Login only (registration is reached from the login page).
+
+### ADR-016: Access Tokens Die With Their Session (2026-10-22)
+
+**Context:**
+- Access tokens were stateless JWTs (1 hour). Logout, a password reset, refresh-replay detection and account deletion revoked the refresh family but not the access token, which kept working until it expired. The password-hashing audit raised it; the owner wanted logout to end the access token.
+
+**Decision:**
+- `get_current_user_id` requires the token's `family_id` to still exist in `refresh_tokens` (`RefreshTokenRepository.family_is_live`). Every way of ending a session already deletes the family, so each now ends the access token immediately. A token with no `family_id` is refused.
+
+**Alternatives Considered:**
+- Shorter access TTL (15 min) -> Rejected: shrinks the window, never closes it; with the family check the TTL is only a backstop, and 4x the refreshes means more refresh-race exposure (tried 2026-10-22, reverted)
+- `password_changed_at` plus `iat` -> Rejected: covers resets only, not logout
+- Leave it -> Rejected: logout that does not log out
+
+**Consequences:**
+- One indexed lookup (`family_id`) per authenticated request, on top of the user lookup most routes already do
+- Access tokens are no longer verifiable without the database
+- The ADR-014 note that a token outlives a deleted account is now obsolete
+
+**ADR-016 addendum (2026-10-22):** `get_current_user` runs the family check and the user lookup with `asyncio.gather`, so it adds no serial round trip. A refresh token replayed within 10 s of its rotation (`used_at`, `REFRESH_REPLAY_GRACE_SECONDS`) answers 401 without revoking the family, so racing refreshes no longer kill the winner's session; later replays still revoke.

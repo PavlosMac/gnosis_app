@@ -155,11 +155,28 @@ class RefreshTokenRepository:
         """Atomically find an unused refresh token and mark it as consumed."""
         return await self._collection.find_one_and_update(
             {"jti": jti, "used": False},
-            {"$set": {"used": True}},
+            {"$set": {"used": True, "used_at": datetime.now(UTC)}},
         )
+
+    async def was_just_consumed(self, jti: str, grace_seconds: int) -> bool:
+        """Whether this token was rotated within the last few seconds. Two refreshes
+        racing with the same token (two tabs, a proxy plus a render) are a client
+        race, not theft, so the loser must not revoke the winner's session."""
+        doc = await self._collection.find_one({"jti": jti, "used": True}, {"used_at": 1})
+        used_at = doc.get("used_at") if doc else None
+        if used_at is None:
+            return False
+        if used_at.tzinfo is None:
+            used_at = used_at.replace(tzinfo=UTC)
+        return datetime.now(UTC) - used_at <= timedelta(seconds=grace_seconds)
 
     async def revoke_family(self, family_id: str) -> None:
         await self._collection.delete_many({"family_id": family_id})
+
+    async def family_is_live(self, family_id: str) -> bool:
+        """Whether the session still exists. Rotation keeps a family's rows (used ones
+        stay until their TTL), so only a revoke or an expiry empties it."""
+        return await self._collection.find_one({"family_id": family_id}, {"_id": 1}) is not None
 
     async def revoke_all_for_user(self, user_id: str) -> None:
         """Password reset and account deletion kill every session — all families, all
