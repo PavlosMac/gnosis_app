@@ -44,8 +44,15 @@ Metadata sits in TS, not MDX frontmatter, because `next.config.ts` uses no remar
 - Until the PNG exists, `Shot` shows a dashed "Screenshot pending" box plus the legend, so chapters never show a broken image.
 - File path: `frontend/public/guide/<chapter-slug>/<nn>-<name>.png`. `w`/`h` should be the real pixel size of the file (a mismatch only affects layout before the image loads).
 - Capture at a desktop window about **1280 pixels wide** (a wider or retina capture works: set `w`/`h` to the file's real size, as `your-profile/01-profile.png` does at 1746 × 1252), raw (no annotation), signed in as the dev user ([`dev-users.md`](../database/dev-users.md)). No billed calls: for the interpretation shots use a reading that already has an interpretation (the dev stack calls real OpenAI).
-- **Mark coordinates in the MDX are first guesses made without the images.** After adding a PNG, load the chapter and nudge `x/y/w/h` until each ring sits on its control.
+- Mark coordinates are measured from the real captures; re-check them whenever a screenshot or the page layout changes.
 
-### Screenshot status
+### Replacing or adding a screenshot
 
-9 of 12 captured (your-profile, making-a-reading, saving-a-reading and oracle-interpretation, rings placed). The capture checklist, with every file name, page, state and ring label, is [`screenshot-checklist.md`](screenshot-checklist.md). Tick it off or delete it once all images are in.
+All 12 screenshots are captured and their rings placed from the real images (2026-10-22). To retake one:
+
+1. Run the app (`make dev`), sign in as the dev user, set up the page state, capture raw at a desktop width (a Chrome DevTools device toolbar at 1280 with pixel ratio 1 works). Never press a button that sends something real: interpretation requests are billed, support messages and account deletion are real.
+2. Overwrite the PNG at the same path under `frontend/public/guide/<chapter>/` and set `w`/`h` on the `<Shot>` to the file's real size.
+3. **Clear the image cache.** The site caches resized copies of every image for a year, keyed by file name and not contents, so an overwritten file can keep showing the old picture at some sizes. In development stop the dev server, delete `frontend/.next/dev/cache/images`, restart and hard-reload (Cmd+Shift+R). In production give the new file a new name (for example `01-profile-v2.png`) and update `src` in the MDX, because browsers and the server both hold the old one.
+4. Reload the chapter and nudge each mark's `x/y/w/h` until its ring sits on the right control. Keep personal names and real data out of the capture (question text, tags and the profile all show up).
+
+Known cosmetic point: the numbered badge sits at each ring's top-left corner and can cover the first letter of a label that the ring includes (for example "SUBJECT" in the support window).
