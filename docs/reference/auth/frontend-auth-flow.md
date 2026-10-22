@@ -8,7 +8,7 @@ JWT authentication via an external FastAPI backend. Tokens are stored in httpOnl
 
 | File | Role |
 |------|------|
-| `src/proxy.ts` | Middleware — route guard, token refresh (proactive + expired) |
+| `src/proxy.ts` | Middleware — route guard, token refresh (proactive + expired). Guards `/user/*`, `/superadmin/*` and `/accept-terms`; the root pages (`/`, `/reading`, `/significators`, `/about`, `/guide`, `/legal`) are public |
 | `src/lib/api-client.ts` | `authenticatedFetch()`, `publicFetch()` (forwards the browser IP, surfaces the backend error `code`), cookie wrappers |
 | `src/lib/auth-cookies.ts` | The only reader/writer of the three session cookies (edge-safe; used by the proxy and by server actions) |
 | `src/lib/session.ts` | `getCurrentUser()` — cached user fetch; `requireConsentedUser()` — the same, but null while onboarding is outstanding |

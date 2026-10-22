@@ -6,7 +6,7 @@ How the public guide is built and how to add a chapter or a screenshot. Frontend
 
 - `/guide` — hub (`frontend/src/app/guide/page.tsx`): one card per chapter, from `GUIDE_CHAPTERS`.
 - `/guide/<slug>` — one chapter per page (`frontend/src/app/guide/[slug]/page.tsx`): framed `ArticleSection`, previous / next links, an "needs an account" note when `requiresAccount`. Unknown slug → 404 (`dynamicParams = false`). All pages are public.
-- Entry points: the `Guide` item in the ☥ menu (`ProfileNavMenu`) and the landing "How to use the Oracle" card.
+- Entry points: the landing "How to use the Oracle" card and the link on `/about` (both open to everyone), and the `Guide` item in the ☥ menu (`ProfileNavMenu`), shown to signed-in users only. The guide itself is public (outside the proxy matcher).
 
 | File | Role |
 |---|---|

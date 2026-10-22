@@ -11,15 +11,13 @@ const MENU_LINK_CLASS =
 
 interface ProfileNavMenuProps {
   user: User | null;
-  /** Hides "Sign up" when the REGISTRATION_ENABLED flag is off */
-  registrationEnabled: boolean;
   /** Closes the dropdown after a link is followed */
   onNavigate: () => void;
 }
 
 /** The dropdown's contents, split out so they can be rendered (and tested)
     without the open/closed state of the button */
-export const ProfileNavMenu = ({ user, registrationEnabled, onNavigate }: ProfileNavMenuProps) => (
+export const ProfileNavMenu = ({ user, onNavigate }: ProfileNavMenuProps) => (
   <div className="absolute top-12 right-0 min-w-[180px] bg-[#0a0015]/95 backdrop-blur-sm border border-[#d4af37]/20 rounded-lg shadow-xl py-2 font-[Cinzel,serif]">
     {user ? (
       <>
@@ -45,25 +43,15 @@ export const ProfileNavMenu = ({ user, registrationEnabled, onNavigate }: Profil
         </form>
       </>
     ) : (
-      <>
-        <Link href="/user/login" onClick={onNavigate} className={MENU_LINK_CLASS}>
-          Login
-        </Link>
-        <Link href="/guide" onClick={onNavigate} className={MENU_LINK_CLASS}>
-          Guide
-        </Link>
-        {registrationEnabled && (
-          <Link href="/user/register" onClick={onNavigate} className={MENU_LINK_CLASS}>
-            Sign up
-          </Link>
-        )}
-      </>
+      <Link href="/user/login" onClick={onNavigate} className={MENU_LINK_CLASS}>
+        Login
+      </Link>
     )}
   </div>
 );
 
 export default function ProfileNav() {
-  const { user, registrationEnabled } = useAuth();
+  const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -92,11 +80,7 @@ export default function ProfileNav() {
         ☥
       </button>
       {open && (
-        <ProfileNavMenu
-          user={user}
-          registrationEnabled={registrationEnabled}
-          onNavigate={() => setOpen(false)}
-        />
+        <ProfileNavMenu user={user} onNavigate={() => setOpen(false)} />
       )}
     </div>
   );

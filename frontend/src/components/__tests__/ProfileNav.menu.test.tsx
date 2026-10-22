@@ -11,26 +11,20 @@ vi.mock("next/link", () => ({
 
 const { ProfileNavMenu } = await import("@/components/ProfileNav");
 
-const render = (registrationEnabled: boolean) =>
-  renderToStaticMarkup(
-    <ProfileNavMenu user={null} registrationEnabled={registrationEnabled} onNavigate={() => {}} />
-  );
+const render = () =>
+  renderToStaticMarkup(<ProfileNavMenu user={null} onNavigate={() => {}} />);
 
 describe("ProfileNavMenu (logged out)", () => {
-  it("always offers Login", () => {
-    expect(render(false)).toContain('href="/user/login"');
-    expect(render(true)).toContain('href="/user/login"');
+  it("offers Login", () => {
+    expect(render()).toContain('href="/user/login"');
   });
 
-  it("links to the Guide", () => {
-    expect(render(false)).toContain('href="/guide"');
-  });
-
-  it("offers Sign up only when registration is enabled", () => {
-    expect(render(true)).toContain('href="/user/register"');
-    expect(render(true)).toContain("Sign up");
-    expect(render(false)).not.toContain("/user/register");
-    expect(render(false)).not.toContain("Sign up");
+  it("offers nothing else: no Sign up (the login page links to it) and no Guide (signed-in menu only)", () => {
+    const html = render();
+    expect(html).not.toContain("/user/register");
+    expect(html).not.toContain("Sign up");
+    expect(html).not.toContain("/guide");
+    expect(html.match(/<a /g) ?? []).toHaveLength(1);
   });
 });
 
@@ -50,7 +44,7 @@ describe("ProfileNavMenu (logged in)", () => {
       updatedAt: "",
     };
     const html = renderToStaticMarkup(
-      <ProfileNavMenu user={user} registrationEnabled onNavigate={() => {}} />
+      <ProfileNavMenu user={user} onNavigate={() => {}} />
     );
     expect(html).toContain("Ada Lovelace");
     expect(html).toContain('href="/user/profile"');

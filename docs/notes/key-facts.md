@@ -50,7 +50,7 @@ This file stores project constants, configuration, and frequently-needed **non-s
 - `/reading` - Interactive tarot reading oracle
 - `/significators` - Birth date-based card calculator
 - `/chart` - Tarot chart explanation
-- `/guide`, `/guide/[slug]` - The user guide: hub plus one MDX chapter per page (public)
+- `/guide`, `/guide/[slug]` - The user guide: hub plus one MDX chapter per page (public; the ☥ menu lists it for signed-in users only)
 - `/about` - What the platform offers: spreads, journal, interpretations, significators, Tree of Life (article, public)
 - `/user/login`, `/user/register` - Auth pages (JWT via FastAPI backend). Register needs `REGISTRATION_ENABLED=true`; it ends at a "check your email" panel, not a session
 - `/forgot-password`, `/reset-password` - Password reset (public)

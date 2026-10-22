@@ -279,7 +279,7 @@ Each decision should include:
 - **One cookie module:** `src/lib/auth-cookies.ts` (edge-safe) is the only reader and writer. In production the names are `__Host-access_token`, `__Host-refresh_token`, `__Host-token_expires_at` (httpOnly, Secure, SameSite=Lax, Path=/, no Domain); in dev the plain names. Cookies are cleared with `set(..., maxAge: 0)`, never `delete`, because a `__Host-` deletion without Secure is dropped by browsers
 - Access token lifetime is 3600s everywhere (config default, env examples, docs)
 - Rate limits on login (IP + email) and register (IP). Because every backend call is made by the Next.js server, `publicFetch` forwards the browser address in `X-Forwarded-For` (`src/lib/client-ip.ts`); without it the limits would be global
-- `REGISTRATION_ENABLED` is exposed to client components once, through `AuthProvider` / `useAuth().registrationEnabled`, and gates the Sign up links in `ProfileNav`, the login page, the inline login modal and the landing footer
+- `REGISTRATION_ENABLED` is exposed to client components once, through `AuthProvider` / `useAuth().registrationEnabled`, and gates the Sign up links in the login page, the inline login modal and the landing footer
 
 **Alternatives Considered:**
 - Soft gate (log in, nag to verify) -> Rejected: an unproven address would hold a session and data
@@ -345,3 +345,5 @@ Each decision should include:
 **Consequences:**
 - Mark coordinates are authored by eye and need tuning when an image is added or the UI shifts
 - Screenshots go stale silently; the reference doc lists what exists
+
+**ADR-015 addendum (2026-10-22): the guide stays public.** Hiding it behind login was tried and reverted: the landing card and the link on `/about` are the way a visitor learns how the platform works before registering, so they must stay open, and chapters that walk through signed-in pages say so ("needs an account"). The ☥ menu is the account-area navigation, so the Guide item appears there only when signed in; the logged-out menu is Login only (registration is reached from the login page).

@@ -36,7 +36,7 @@ A password that passes the rules, for use below: `plum-harbour-lantern-42`.
 
 ## 2. Registration form
 
-- [ ] The profile menu (logged out) shows "Sign up", and it opens `/user/register`.
+- [ ] The profile menu (logged out) shows only "Login" (no "Sign up", no "Guide"). The login page links to registration when it is open, and that link opens `/user/register`.
 - [ ] The password field shows the hint "At least 12 characters. Avoid common passwords
       and your own name or email."
 - [ ] Submit with both boxes unticked. Each box shows its own error, and the names and

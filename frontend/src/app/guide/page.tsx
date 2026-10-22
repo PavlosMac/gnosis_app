@@ -33,7 +33,7 @@ export default function GuidePage() {
             className="text-[#e6d5b8]/70 text-lg sm:text-xl mt-6 max-w-2xl mx-auto leading-relaxed"
             style={BODY_FONT}
           >
-            Everything you need to get value from the Oracle, one short chapter at a time.
+            Everything you need to get value from Tarot Divinations, one short chapter at a time.
           </p>
         </div>
 
