@@ -2,7 +2,7 @@
 
 Working list for capturing the screenshots of the `/guide` chapters. Everything needed to add them is on this page; you do not need a Claude session. How the guide is built is in [`user-guide.md`](user-guide.md).
 
-**15 screenshots, 1 captured (`your-profile/01-profile.png`, 2026-10-22).** Tick a box when the PNG is in place.
+**12 screenshots, 1 captured (`your-profile/01-profile.png`, 2026-10-22).** Tick a box when the PNG is in place.
 
 Until a PNG exists the chapter shows a dashed "Screenshot pending" box plus the numbered legend, so you can add them in any order.
 
@@ -23,10 +23,7 @@ Save each file at the path shown. Folder = chapter. Details and ring labels are 
 | ☐ | `oracle-interpretation/03-interpretation.png` | 1280 × 1000 | `/user/readings/[id]` | A reading that already has an interpretation: cards at the top, interpretation text below. Do not generate a new one just for this. |
 | ☐ | `finding-readings/01-list.png` | 1280 × 1000 | `/user/readings` | More than 10 readings, so Next/Previous and "Per page" show. Filter panel closed. |
 | ☐ | `finding-readings/02-filter-panel.png` | 1280 × 800 | `/user/readings` | Same page with **Filter Readings** open. Optionally pick a spread so the pills show. |
-| ☐ | `contacting-support/01-support-row.png` | 1280 × 500 | `/user/profile/settings` | Crop around the **Contact support** row on the Account Settings page. Short image. |
 | ☐ | `contacting-support/02-modal.png` | 1280 × 800 | `/user/profile/settings` | Press **Contact support**; capture the empty "Seek Counsel" window. Do not send. |
-| ☐ | `account-and-privacy/01-agreements.png` | 1280 × 800 | `/user/profile/manage-consent` | The Agreements page as it loads. |
-| ☐ | `account-and-privacy/02-delete.png` | 1280 × 800 | `/user/profile/delete-account` | The page as it loads. **Do not submit.** |
 
 ## How to capture
 
@@ -171,12 +168,6 @@ Page: `/guide/finding-readings` (source `frontend/src/content/guide/finding-read
 
 Page: `/guide/contacting-support` (source `frontend/src/content/guide/contacting-support.mdx`)
 
-- [ ] **`01-support-row.png`** (1280 × 500)
-  - Save as: `frontend/public/guide/contacting-support/01-support-row.png`
-  - Page: `/user/profile/settings`
-  - Capture: Crop around the **Contact support** row on the Account Settings page. Short image.
-  - Rings to place:
-    1. Contact support
 - [ ] **`02-modal.png`** (1280 × 800)
   - Save as: `frontend/public/guide/contacting-support/02-modal.png`
   - Page: `/user/profile/settings`
@@ -185,23 +176,3 @@ Page: `/guide/contacting-support` (source `frontend/src/content/guide/contacting
     1. Subject: at least 3 characters
     2. Message: at least 10 characters
     3. Send
-
-## Account and Privacy
-
-Page: `/guide/account-and-privacy` (source `frontend/src/content/guide/account-and-privacy.mdx`)
-
-- [ ] **`01-agreements.png`** (1280 × 800)
-  - Save as: `frontend/public/guide/account-and-privacy/01-agreements.png`
-  - Page: `/user/profile/manage-consent`
-  - Capture: The Agreements page as it loads.
-  - Rings to place:
-    1. Terms and Conditions and Privacy Policy, with the version and date you accepted
-    2. Save
-- [ ] **`02-delete.png`** (1280 × 800)
-  - Save as: `frontend/public/guide/account-and-privacy/02-delete.png`
-  - Page: `/user/profile/delete-account`
-  - Capture: The page as it loads. **Do not submit.**
-  - Rings to place:
-    1. What will be removed
-    2. Your password, and the word DELETE to confirm
-    3. Delete My Account, or Keep my account to stay
