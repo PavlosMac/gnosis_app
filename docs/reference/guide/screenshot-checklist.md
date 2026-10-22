@@ -2,7 +2,7 @@
 
 Working list for capturing the screenshots of the `/guide` chapters. Everything needed to add them is on this page; you do not need a Claude session. How the guide is built is in [`user-guide.md`](user-guide.md).
 
-**12 screenshots, 4 captured (`your-profile/01-profile.png` and the three `making-a-reading` shots, 2026-10-22), 8 to go.** Tick a box when the PNG is in place.
+**12 screenshots, 6 captured (your-profile, making-a-reading and saving-a-reading, 2026-10-22), 6 to go.** Tick a box when the PNG is in place.
 
 Until a PNG exists the chapter shows a dashed "Screenshot pending" box plus the numbered legend, so you can add them in any order.
 
@@ -16,8 +16,8 @@ Save each file at the path shown. Folder = chapter. Details and ring labels are 
 | ☑ | `making-a-reading/01-setup.png` | 2302 × 1664 | `/reading` | Setup screen with **Three Card** selected (this makes the question box appear). Whole page. |
 | ☑ | `making-a-reading/02-deck.png` | 1618 × 1168 | `/reading` | Press Begin, then capture the 78 face-down cards with the "Select N card(s)" prompt, before choosing any. |
 | ☑ | `making-a-reading/03-reading.png` | 1566 × 1634 | `/reading` | A finished reading, signed in, so the bookmark (top right) is visible. Add a question on the setup screen first so it shows. |
-| ☐ | `saving-a-reading/01-save-icon.png` | 1280 × 500 | `/reading` | Crop only the top of a finished reading, enough to show the bookmark icon at the top right. Short image. |
-| ☐ | `saving-a-reading/02-tags.png` | 1280 × 800 | `/user/readings/[id]` | A saved reading with two or three tags and the **+** pressed, so the "Add a tag…" box is open. |
+| ☑ | `saving-a-reading/01-save-icon.png` | 1342 × 980 | `/reading` | Crop only the top of a finished reading, enough to show the bookmark icon at the top right. Short image. |
+| ☑ | `saving-a-reading/02-tags.png` | 1718 × 1234 | `/user/readings/[id]` | A saved reading with two or three tags and the **+** pressed, so the "Add a tag…" box is open. |
 | ☐ | `oracle-interpretation/01-button.png` | 1280 × 800 | `/reading` | Right after saving a reading: the **Oracle Interpretation** button under the cards. **Do not press it**: on this page it starts a billed request at once. |
 | ☐ | `oracle-interpretation/02-confirm.png` | 1280 × 800 | `/user/readings/[id]` | A saved reading with no interpretation. Press **Oracle Interpretation** and capture the "Ready to consult the Oracle for this reading?" window. **Do not press Consult the Oracle.** Close the window afterwards. |
 | ☐ | `oracle-interpretation/03-interpretation.png` | 1280 × 1000 | `/user/readings/[id]` | A reading that already has an interpretation: cards at the top, interpretation text below. Do not generate a new one just for this. |
@@ -101,18 +101,18 @@ Page: `/guide/making-a-reading` (source `frontend/src/content/guide/making-a-rea
 
 Page: `/guide/saving-a-reading` (source `frontend/src/content/guide/saving-a-reading.mdx`)
 
-- [ ] **`01-save-icon.png`** (1280 × 500)
+- [x] **`01-save-icon.png`** (1342 × 980)
   - Save as: `frontend/public/guide/saving-a-reading/01-save-icon.png`
   - Page: `/reading`
   - Capture: Crop only the top of a finished reading, enough to show the bookmark icon at the top right. Short image.
   - Rings to place:
     1. Save reading
-- [ ] **`02-tags.png`** (1280 × 800)
+- [x] **`02-tags.png`** (1718 × 1234)
   - Save as: `frontend/public/guide/saving-a-reading/02-tags.png`
   - Page: `/user/readings/[id]`
   - Capture: A saved reading with two or three tags and the **+** pressed, so the "Add a tag…" box is open.
   - Rings to place:
-    1. Existing tags and the + button
+    1. Your existing tags
     2. Type a tag, then confirm with the tick or cancel with the cross
 
 ## The Oracle's Interpretation
