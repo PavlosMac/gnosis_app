@@ -70,10 +70,9 @@ const Shot = ({ src, w, h, alt, marks = [] }: ShotProps) => {
             position: "relative",
             borderRadius: "0.5rem",
             border: "1px solid rgba(212,175,55,0.3)",
-            overflow: "hidden",
           }}
         >
-          <Image src={src} width={w} height={h} alt={alt} sizes="(min-width: 768px) 720px, 100vw" style={{ width: "100%", height: "auto", display: "block" }} />
+          <Image src={src} width={w} height={h} alt={alt} sizes="(min-width: 768px) 720px, 100vw" style={{ width: "100%", height: "auto", display: "block", borderRadius: "calc(0.5rem - 1px)" }} />
           {marks.map((m, i) => (
             <span
               key={`${i}-${m.label}`}

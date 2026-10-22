@@ -2,7 +2,7 @@
 
 Working list for capturing the screenshots of the `/guide` chapters. Everything needed to add them is on this page; you do not need a Claude session. How the guide is built is in [`user-guide.md`](user-guide.md).
 
-**12 screenshots, 1 captured (`your-profile/01-profile.png`, 2026-10-22).** Tick a box when the PNG is in place.
+**12 screenshots, 4 captured (`your-profile/01-profile.png` and the three `making-a-reading` shots, 2026-10-22), 8 to go.** Tick a box when the PNG is in place.
 
 Until a PNG exists the chapter shows a dashed "Screenshot pending" box plus the numbered legend, so you can add them in any order.
 
@@ -13,9 +13,9 @@ Save each file at the path shown. Folder = chapter. Details and ring labels are 
 | ☐ | Save as (under `frontend/public/guide/`) | Size | Page | What to capture |
 |---|---|---|---|---|
 | ☑ | `your-profile/01-profile.png` | 1806 × 1160 | `/user/profile` | Signed in, with a few saved readings and tags so the Readings Journal panel and the Focused tags are filled. Whole page, both panels. |
-| ☐ | `making-a-reading/01-setup.png` | 1280 × 900 | `/reading` | Setup screen with **Three Card** selected (this makes the question box appear). Whole page. |
-| ☐ | `making-a-reading/02-deck.png` | 1280 × 900 | `/reading` | Press Begin, then capture the 78 face-down cards with the "Select N card(s)" prompt, before choosing any. |
-| ☐ | `making-a-reading/03-reading.png` | 1280 × 900 | `/reading` | A finished reading, signed in, so the bookmark (top right) is visible. Add a question on the setup screen first so it shows. |
+| ☑ | `making-a-reading/01-setup.png` | 2302 × 1664 | `/reading` | Setup screen with **Three Card** selected (this makes the question box appear). Whole page. |
+| ☑ | `making-a-reading/02-deck.png` | 1618 × 1168 | `/reading` | Press Begin, then capture the 78 face-down cards with the "Select N card(s)" prompt, before choosing any. |
+| ☑ | `making-a-reading/03-reading.png` | 1566 × 1634 | `/reading` | A finished reading, signed in, so the bookmark (top right) is visible. Add a question on the setup screen first so it shows. |
 | ☐ | `saving-a-reading/01-save-icon.png` | 1280 × 500 | `/reading` | Crop only the top of a finished reading, enough to show the bookmark icon at the top right. Short image. |
 | ☐ | `saving-a-reading/02-tags.png` | 1280 × 800 | `/user/readings/[id]` | A saved reading with two or three tags and the **+** pressed, so the "Add a tag…" box is open. |
 | ☐ | `oracle-interpretation/01-button.png` | 1280 × 800 | `/reading` | Right after saving a reading: the **Oracle Interpretation** button under the cards. **Do not press it**: on this page it starts a billed request at once. |
@@ -44,7 +44,7 @@ Save each file at the path shown. Folder = chapter. Details and ring labels are 
 
 **Replacing a PNG you already added:** the site caches resized copies of every image, for a year, keyed by the file name and not the contents. After overwriting a file, the page can keep showing the old picture at some sizes (it depends on window width and browser). In development, stop the dev server, delete `frontend/.next/dev/cache/images`, start it again and hard-reload the browser (Cmd+Shift+R). In production, give the new file a new name (for example `01-profile-v2.png`) and update `src` in the MDX, because browsers and the server both hold the old one.
 
-The ring positions in the MDX for `01-profile.png` are placed; the others are still guesses made without the images, so expect to adjust them.
+The rings for the captured shots are placed from the real images; the rest are still guesses made without the images, so expect to adjust them.
 
 Never press a button that sends something real while capturing: interpretation requests are billed, and support messages and deletions are real.
 
@@ -70,7 +70,7 @@ Page: `/guide/your-profile` (source `frontend/src/content/guide/your-profile.mdx
 
 Page: `/guide/making-a-reading` (source `frontend/src/content/guide/making-a-reading.mdx`)
 
-- [ ] **`01-setup.png`** (1280 × 900)
+- [x] **`01-setup.png`** (2302 × 1664)
   - Save as: `frontend/public/guide/making-a-reading/01-setup.png`
   - Page: `/reading`
   - Capture: Setup screen with **Three Card** selected (this makes the question box appear). Whole page.
@@ -80,14 +80,14 @@ Page: `/guide/making-a-reading` (source `frontend/src/content/guide/making-a-rea
     3. Upright Only or With Reversals
     4. Your question (some spreads)
     5. Begin Your Journey
-- [ ] **`02-deck.png`** (1280 × 900)
+- [x] **`02-deck.png`** (1618 × 1168)
   - Save as: `frontend/public/guide/making-a-reading/02-deck.png`
   - Page: `/reading`
   - Capture: Press Begin, then capture the 78 face-down cards with the "Select N card(s)" prompt, before choosing any.
   - Rings to place:
     1. How many cards to choose
     2. Select cards one at a time
-- [ ] **`03-reading.png`** (1280 × 900)
+- [x] **`03-reading.png`** (1566 × 1634)
   - Save as: `frontend/public/guide/making-a-reading/03-reading.png`
   - Page: `/reading`
   - Capture: A finished reading, signed in, so the bookmark (top right) is visible. Add a question on the setup screen first so it shows.
