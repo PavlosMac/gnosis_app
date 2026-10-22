@@ -40,6 +40,16 @@ describe("Shot with an existing image", () => {
     expect(ellipse).toContain("width:3%;height:4%;border-radius:50%");
   });
 
+  it("caps the display width and centres the figure when maxWidth is given", () => {
+    const narrow = renderToStaticMarkup(
+      <Shot src="/globe.svg" w={100} h={100} alt="x" maxWidth={420} marks={[{ x: 1, y: 2, w: 3, h: 4, label: "A" }]} />
+    );
+    expect(narrow).toContain("max-width:420px");
+    expect(narrow).toContain("margin:1.5rem auto");
+    // without it the figure fills the panel and has no max-width
+    expect(renderToStaticMarkup(<Shot src="/globe.svg" w={100} h={100} alt="x" />)).not.toContain("max-width");
+  });
+
   it("numbers the rings and repeats the labels in a legend list", () => {
     expect(html.match(/<li/g) ?? []).toHaveLength(2);
     expect(html).toContain("Choose a spread");

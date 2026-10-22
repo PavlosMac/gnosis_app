@@ -40,6 +40,7 @@ Metadata sits in TS, not MDX frontmatter, because `next.config.ts` uses no remar
 ```
 
 - Each mark is an ellipse by default (good for buttons and icons); add `shape: "rect"` for a rounded rectangle around a wide block such as a card or a row of text. `x`, `y` = top-left, `w`, `h` = size, all **percent of the image**. Rings scale with the image. A numbered legend below repeats the labels (readable on phones).
+- Narrow or portrait captures (a few hundred pixels wide) would be stretched to the panel width and make buttons look huge; give those a display cap, e.g. `maxWidth={420}` on the `<Shot>`, which centres the figure. Wide captures need nothing.
 - Until the PNG exists, `Shot` shows a dashed "Screenshot pending" box plus the legend, so chapters never show a broken image.
 - File path: `frontend/public/guide/<chapter-slug>/<nn>-<name>.png`. `w`/`h` should be the real pixel size of the file (a mismatch only affects layout before the image loads).
 - Capture at a desktop window about **1280 pixels wide** (a wider or retina capture works: set `w`/`h` to the file's real size, as `your-profile/01-profile.png` does at 1746 × 1252), raw (no annotation), signed in as the dev user ([`dev-users.md`](../database/dev-users.md)). No billed calls: for the interpretation shots use a reading that already has an interpretation (the dev stack calls real OpenAI).

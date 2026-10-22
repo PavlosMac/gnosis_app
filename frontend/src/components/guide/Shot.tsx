@@ -23,6 +23,8 @@ export interface ShotProps {
   h: number;
   alt: string;
   marks?: ShotMark[];
+  /** Display width cap in px; use for narrow captures so UI elements are not blown up to the panel width */
+  maxWidth?: number;
 }
 
 const GOLD = "#d4af37";
@@ -60,10 +62,10 @@ const Legend = ({ marks }: { marks: ShotMark[] }) =>
 
 /** A captured screenshot with numbered gold rings drawn over it. Rings are percentage-positioned,
     so they scale with the image. Without the PNG a placeholder keeps the chapter readable. */
-const Shot = ({ src, w, h, alt, marks = [] }: ShotProps) => {
+const Shot = ({ src, w, h, alt, marks = [], maxWidth }: ShotProps) => {
   const present = shotExists(src);
   return (
-    <figure style={{ margin: "1.5rem 0" }}>
+    <figure style={{ margin: maxWidth ? "1.5rem auto" : "1.5rem 0", maxWidth: maxWidth ? `${maxWidth}px` : undefined }}>
       {present ? (
         <div
           style={{
