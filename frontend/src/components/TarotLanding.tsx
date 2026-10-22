@@ -323,8 +323,8 @@ const TarotLanding: React.FC = () => {
           <ArticleCard
             href="/guide"
             symbol="☾"
-            title="How to use the Oracle"
-            body="Learn the sacred art of Tarot reading. Prepare your space, formulate questions, and interpret the rich imagery."
+            title="The Guide"
+            body="See what we offer registered users on this platform."
             cta="Read Guide"
           />
 
@@ -332,7 +332,7 @@ const TarotLanding: React.FC = () => {
             href="/about"
             symbol="✧"
             title="About Tarot Divinations"
-            body="What the platform offers: the Oracle and its spreads, the Readings Journal, Oracle interpretations and more."
+            body="Learn about the 'Reading Oracle', the 'Readings Journal', 'Oracle Interpretations' and more."
             cta="Read Article"
           />
         </div>
