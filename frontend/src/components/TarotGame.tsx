@@ -60,7 +60,7 @@ export default function TarotGame({ user, mode = 'draw' }: TarotGameProps) {
   const [selectedReading, setSelectedReading] = useState<ReadingConfig>(
     () => spreadOptions.find((r) => r.name === DEFAULT_READING_NAME) ?? spreadOptions[0]
   );
-  const [allowReversals, setAllowReversals] = useState(false);
+  const [allowReversals, setAllowReversals] = useState(true);
   // Spread layout preview visibility; closed by default, persisted, read after mount to avoid a hydration mismatch
   const [showPreview, setShowPreview] = useState(false);
   useEffect(() => {
