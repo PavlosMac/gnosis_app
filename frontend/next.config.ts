@@ -95,18 +95,20 @@ const nextConfig: NextConfig = {
         ],
       },
       {
-        // Cache Next.js static files (/_next/static/*) for 1 year
-        source: '/_next/static/:path*',
+        // Guide screenshots keep their filename when retaken, so they must not be
+        // immutable. Listed after the extension rule above, which also matches them:
+        // for the same header key the later matching rule wins.
+        source: '/guide/:path*',
         headers: [
           {
             key: 'Cache-Control',
-            value: 'public, max-age=31536000, immutable',
+            value: 'public, max-age=3600, must-revalidate',
           },
         ],
       },
       {
-        // Cache optimized images for 1 year
-        source: '/_next/image/:path*',
+        // Cache Next.js static files (/_next/static/*) for 1 year
+        source: '/_next/static/:path*',
         headers: [
           {
             key: 'Cache-Control',

@@ -38,7 +38,7 @@ or in the three `CLAUDE.md` files, and CI runs it.
 | [`prompts/experiments/`](reference/prompts/experiments/) | backend | Frozen sample readings from `scripts/lean_prompt_test.py`, cited by the architecture doc |
 | [`readings/search-and-tags.md`](reference/readings/search-and-tags.md) | both | Reading tags and the filter panel, with dated amendments |
 | [`readings/free-limit-cta.md`](reference/readings/free-limit-cta.md) | frontend | Per-browser free-use counters for `/reading` and `/significators` and the sign-up nudge panel |
-| [`guide/user-guide.md`](reference/guide/user-guide.md) | frontend | The `/guide` hub and chapters (MDX), the `Shot` screenshot component, and the list of screenshots still to capture |
+| [`guide/user-guide.md`](reference/guide/user-guide.md) | frontend | The `/guide` hub and chapters (MDX), the `Shot` screenshot component, and how to capture and convert a screenshot |
 | [`support/contact-support.md`](reference/support/contact-support.md) | both | The support endpoint contract and the profile-page modal |
 | [`frontend/src/content/legal/README.md`](../frontend/src/content/legal/README.md) | frontend | How Terms / Privacy versions are named and registered (lives next to the content) |
 

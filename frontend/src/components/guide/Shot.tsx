@@ -16,7 +16,7 @@ export interface ShotMark {
 }
 
 export interface ShotProps {
-  /** Path under public/, e.g. /guide/making-a-reading/01-spreads.png */
+  /** Path under public/, e.g. /guide/making-a-reading/01-setup.webp */
   src: string;
   /** Intrinsic pixel size of the capture (sets the aspect ratio) */
   w: number;
@@ -74,7 +74,16 @@ const Shot = ({ src, w, h, alt, marks = [], maxWidth }: ShotProps) => {
             border: "1px solid rgba(212,175,55,0.3)",
           }}
         >
-          <Image src={src} width={w} height={h} alt={alt} sizes="(min-width: 768px) 720px, 100vw" style={{ width: "100%", height: "auto", display: "block", borderRadius: "calc(0.5rem - 1px)" }} />
+          {/* unoptimized: the WebP under public/ is already sized for display (scripts/guide-shot-to-webp.mjs),
+              so the browser fetches it directly and the server never resizes anything */}
+          <Image
+            src={src}
+            width={w}
+            height={h}
+            alt={alt}
+            unoptimized
+            style={{ width: "100%", height: "auto", display: "block", borderRadius: "calc(0.5rem - 1px)" }}
+          />
           {marks.map((m, i) => (
             <span
               key={`${i}-${m.label}`}

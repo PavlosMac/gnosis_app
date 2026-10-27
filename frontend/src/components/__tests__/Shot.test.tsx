@@ -79,3 +79,14 @@ describe("Shot with a missing image", () => {
     expect(html).toContain("Choose a spread");
   });
 });
+
+describe("Shot serves the file straight from public/", () => {
+  it("points the img at the asset path, not the image optimizer", () => {
+    // a real WebP: next/image already leaves SVG sources alone, so globe.svg would not prove anything
+    const html = renderToStaticMarkup(
+      <Shot src="/guide/your-profile/01-profile.webp" w={1440} h={925} alt="x" />
+    );
+    expect(html).toContain('src="/guide/your-profile/01-profile.webp"');
+    expect(html).not.toContain("/_next/image");
+  });
+});
