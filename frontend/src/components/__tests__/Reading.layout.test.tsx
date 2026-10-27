@@ -101,9 +101,9 @@ describe("Reading layout selection", () => {
     expect(html).not.toMatch(/\(ALICE\)/);
   });
 
-  it("keeps the default row for Career (5 inline)", () => {
+  it("keeps the default row for Career (4 inline)", () => {
     const positions = positionsOf("Career Reading");
-    const html = renderToStaticMarkup(<Reading selectedCards={fakeCards(5)} positions={positions} isComplete />);
+    const html = renderToStaticMarkup(<Reading selectedCards={fakeCards(4)} positions={positions} isComplete />);
     expect(html).toMatch(/md:flex-row/);
     expect(html).not.toMatch(/grid-cols-3/);
   });

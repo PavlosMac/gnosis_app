@@ -117,13 +117,42 @@ const RelationshipShape: React.FC<{
   );
 };
 
-const DefaultShape: React.FC<{ names: string[] }> = ({ names }) => (
-  <div className="flex flex-wrap justify-center gap-3 max-w-[16rem]">
-    {names.map((name, i) => (
-      <MiniSlot key={name} name={name} index={i} />
-    ))}
-  </div>
-);
+// A label short enough to stay on one line in a narrow column.
+const SHORT_LABEL_CHARS = 6;
+const NARROW_COL = "3.5rem";
+const WIDE_COL = "4.75rem";
+const GRID_GAP = "0.5rem"; // gap-2
+
+/** Column count and width for the plain grid. Up to three cards sit on one row;
+ *  four or more with short labels (Fire, Water, Air, Earth) stay on one row of
+ *  narrow columns; otherwise long two-line labels get wide columns, two per row
+ *  for four cards and three per row beyond that. */
+const defaultColumns = (names: string[]) => {
+  if (names.length <= 3) return { cols: Math.max(names.length, 1), width: WIDE_COL };
+  if (names.every((n) => n.length <= SHORT_LABEL_CHARS)) {
+    return { cols: Math.min(names.length, 4), width: NARROW_COL };
+  }
+  return { cols: names.length === 4 ? 2 : 3, width: WIDE_COL };
+};
+
+// Equal-width cells that wrap and centre, so a label that wraps to two lines
+// never pushes its slot out of line, and a short last row stays centred.
+const DefaultShape: React.FC<{ names: string[] }> = ({ names }) => {
+  const { cols, width } = defaultColumns(names);
+  return (
+    <div
+      data-cols={cols}
+      className="flex flex-wrap justify-center gap-2"
+      style={{ maxWidth: `calc(${cols} * ${width} + ${cols - 1} * ${GRID_GAP})` }}
+    >
+      {names.map((name, i) => (
+        <div key={name} className="flex justify-center" style={{ width }}>
+          <MiniSlot name={name} index={i} />
+        </div>
+      ))}
+    </div>
+  );
+};
 
 interface SpreadPreviewProps {
   reading: ReadingConfig;

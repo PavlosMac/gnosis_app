@@ -20,12 +20,19 @@ const render = (name: string) =>
 const slotCount = (html: string) => html.match(/spread-preview-slot/g)?.length ?? 0;
 
 describe("SpreadPreview layout shapes", () => {
-  it("renders Career as a plain wrap of 5 named slots", () => {
+  it("renders Career as a 2×2 grid of 4 named slots (long labels)", () => {
     const html = render("Career Reading");
-    expect(slotCount(html)).toBe(5);
+    expect(slotCount(html)).toBe(4);
     expect(html).not.toMatch(/grid-cols-3/);
+    expect(html).toContain('data-cols="2"');
     expect(html).toContain("Current status");
     expect(html).toContain("Action steps");
+  });
+
+  it("keeps four short-labelled cards on one row", () => {
+    const html = render("Fire, Water, Air, Earth");
+    expect(slotCount(html)).toBe(4);
+    expect(html).toContain('data-cols="4"');
   });
 
   it("renders Relationship as a 3-column grid with pillar headers and suffix-free labels", () => {
@@ -65,7 +72,7 @@ describe("SpreadPreview layout shapes", () => {
   });
 
   it("synthesizes Card 1..N slots for spreads without named positions", () => {
-    const html = render("Three Card Open Question");
+    const html = render("Three Card");
     expect(slotCount(html)).toBe(3);
     for (const label of ["Card 1", "Card 2", "Card 3"]) {
       expect(html).toContain(label);
@@ -79,5 +86,11 @@ describe("SpreadPreview layout shapes", () => {
     expect(html).toContain("star sign");
     expect(html).toContain("decanate");
     expect(html).toContain("Derived from your birth date");
+  });
+
+  it("lays 5 long-labelled slots out three per row so the last row can centre", () => {
+    const html = render("Significators");
+    expect(html).toContain('data-cols="3"');
+    expect(html).toContain("justify-center");
   });
 });

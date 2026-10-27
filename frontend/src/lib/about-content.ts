@@ -114,7 +114,7 @@ export const SPREAD_BLURBS: Record<string, string> = {
   "Relationship Reading":
     "Nine cards in three pillars: you, the other person, and the relationship that stands between you. Name the two outer pillars so the reading can concern anyone, and compare how each side behaves, what each wants and where the bond is heading.",
   "Career Reading":
-    "Five cards for the working life: where you stand, the challenge in front of you, the opportunity you may be missing, the likely outcome and the step to take next.",
+    "Four cards for the working life: where you stand, the challenge in front of you, the opportunity you may be missing and the step to take next.",
   "Tree of Life":
     "The classic Kabbalistic spread. Eleven sephiroth, one card for each, every zone carrying its own meaning for past, present and future influences. A divination art of its own.",
   Significators:
