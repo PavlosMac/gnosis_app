@@ -14,6 +14,7 @@ side: [`frontend-auth-flow.md`](frontend-auth-flow.md). Email plumbing:
 
 | Value | Meaning |
 |---|---|
+| `invited` | Created by a superadmin invite; no password, names or consents until the emailed link is accepted. Cannot hold a session; login answers 401 and forgot-password sends nothing. See [`../admin/user-management.md`](../admin/user-management.md). |
 | `pending_verification` | Registered; the emailed link has not been confirmed. Cannot hold a session. |
 | `active` | May log in. |
 
@@ -39,7 +40,7 @@ side: [`frontend-auth-flow.md`](frontend-auth-flow.md). Email plumbing:
 | `POST /auth/register` | `{email, password, first_name, last_name, consents: {terms, privacy}}` | `201 {detail}`, no tokens | 409 duplicate email; 422, including `{detail, code: "weak_password"}`; 429 |
 | `POST /auth/reset-password` | `{token, new_password}` | `200 {detail}` | 400, 410; `422 {detail, code: "weak_password"}` (the link is not consumed) |
 | `POST /auth/login` | `{email, password}` | `200 TokenResponse` | 401; `403 {detail, code: "email_not_verified"}`; 429 |
-| `POST /auth/verify-email` | `{token}` | `200 {detail}`, no tokens | 400 invalid / used / account gone, 410 expired |
+| `POST /auth/verify-email` | `{token}` | `200 {detail}`, no tokens | 400 invalid / used / account gone / not a pending account (e.g. an invite token), 410 expired |
 | `POST /auth/resend-verification` | `{email}` | `200 {detail}` always | 429 |
 | `POST /auth/consent` (bearer) | `{terms?, privacy?}`, at least one key | `200 UserResponse` | 401, 422 |
 | `DELETE /auth/me` (bearer) | `{password}` | `204`, no body | 401 unauthenticated or account gone; `403 {detail, code: "invalid_password"}`; 422; 429 |
@@ -118,7 +119,12 @@ addresses (data was expendable): such an account cannot be found until it is re-
 - `OneTimeTokenRepository(db, collection)` (`src/auth/repository.py`) with two thin
   subclasses: `PasswordResetTokenRepository` and `EmailVerificationTokenRepository`.
   `consume()` atomically marks an unused token used and deliberately does not filter on
-  expiry, so the handler can answer 400 (unknown/used) or 410 (expired).
+  expiry, so the handler can answer 400 (unknown/used) or 410 (expired). Email
+  verification and invite acceptance do not consume first: they `peek()`, flip the
+  account's status with a status-guarded update (`mark_email_verified` needs
+  `pending_verification`, `activate_invited` needs `invited` — which also makes the link
+  single-use), then delete the user's tokens. A wrong-kind token or a failure in between
+  therefore never burns a link.
 - `issue_verification_email()` (`src/auth/service.py`) is shared by register and resend:
   delete the user's unused tokens, store a new hash with
   `email_verification_token_ttl_hours` (24), send
@@ -167,6 +173,7 @@ over-throttle.
 | Login | `login:<ip>:<email>` | `login_rate_limit_*` (900s / 10) | `AuthService.authenticate` |
 | Delete-account password | `login:delete:<user_id>` | `login_rate_limit_*` | `AuthService.confirm_password` |
 | Register | `register:<ip>` | `register_rate_limit_*` (3600s / 10) | `RegisterUserHandler` |
+| Invite lookup + accept | `invite:<ip>` | reuses `login_rate_limit_*` (900s / 10) | `GetInviteByTokenHandler`, `AcceptInviteHandler` |
 
 - Login is keyed by IP **and** email: by email alone an attacker could lock the owner
   out; by IP alone one address could try every account. The throttle runs before the
@@ -185,8 +192,9 @@ over-throttle.
 ## Account deletion
 
 `DELETE /auth/me` re-verifies the password (`AuthService.confirm_password`, throttled),
-then sends `DeleteUserCommand`. `DeleteUserHandler` (`src/auth/commands/delete_user.py`)
-removes, in this order:
+then sends `DeleteUserCommand`. The superadmin's `DELETE /users/{id}` ends in the same
+command (see [`../admin/user-management.md`](../admin/user-management.md#deletion)).
+`DeleteUserHandler` (`src/auth/commands/delete_user.py`) removes, in this order:
 
 1. `refresh_tokens` for the user (sessions end first)
 2. `interpretations` (and with them the per-interpretation usage ledger)
@@ -242,5 +250,5 @@ logs a link only when constructed with `reveal_links=True`, which `main.py` does
 | Commands | `src/auth/commands/{register_user,verify_email,resend_verification,send_verification_email,record_consent,delete_user}.py` |
 | Endpoints | `src/auth/router.py` |
 | `ClientIp`, `get_current_user` status check | `src/core/dependencies.py` |
-| Migrations | `src/migrations/versions/013_email_verification_tokens_indexes.py`, `014_pending_users_ttl.py` |
+| Migrations | `src/migrations/versions/013_email_verification_tokens_indexes.py`, `014_pending_users_ttl.py`, `015_invited_users_ttl.py` |
 | Tests | `tests/auth/test_email_verification_{router,commands}.py`, `test_consent_router.py`, `test_delete_account_router.py`, `tests/migrations/test_email_verification_migrations.py` |

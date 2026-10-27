@@ -6,6 +6,7 @@ from fastapi.exceptions import RequestValidationError
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from openai import AsyncOpenAI
 
+from src.auth.commands.accept_invite import AcceptInviteCommand, AcceptInviteHandler
 from src.auth.commands.confirm_password_reset import (
     ConfirmPasswordResetCommand,
     ConfirmPasswordResetHandler,
@@ -26,6 +27,10 @@ from src.auth.commands.send_verification_email import (
     SendVerificationEmailHandler,
 )
 from src.auth.commands.verify_email import VerifyEmailCommand, VerifyEmailHandler
+from src.auth.queries.get_invite_by_token import (
+    GetInviteByTokenHandler,
+    GetInviteByTokenQuery,
+)
 from src.auth.queries.get_user_by_email import GetUserByEmailHandler, GetUserByEmailQuery
 from src.auth.queries.get_user_by_id import GetUserByIdHandler, GetUserByIdQuery
 from src.auth.repository import (
@@ -86,6 +91,12 @@ from src.readings.repository import (
 from src.readings.router import router as readings_router
 from src.support.commands.contact_support import ContactSupportCommand, ContactSupportHandler
 from src.support.router import router as support_router
+from src.users.commands.admin_delete_user import AdminDeleteUserCommand, AdminDeleteUserHandler
+from src.users.commands.invite_user import InviteUserCommand, InviteUserHandler
+from src.users.commands.send_admin_message import (
+    SendAdminMessageCommand,
+    SendAdminMessageHandler,
+)
 from src.users.queries.list_users import ListUsersHandler, ListUsersQuery
 from src.users.router import router as users_router
 
@@ -131,6 +142,27 @@ def _wire_mediator(
     mediator.register_query(GetUserByEmailQuery, GetUserByEmailHandler(user_read_repo))
     mediator.register_query(ListUsersQuery, ListUsersHandler(user_read_repo))
 
+    # Superadmin invites share the verification-token collection; the invitee's side
+    # (lookup + accept) is public and token-authenticated like verify-email.
+    mediator.register_command(
+        InviteUserCommand,
+        InviteUserHandler(user_read_repo, user_write_repo, verification_token_repo, email),
+    )
+    invite_throttle_repo = ThrottleRepository(db, key_prefix="invite:")
+    mediator.register_query(
+        GetInviteByTokenQuery,
+        GetInviteByTokenHandler(user_read_repo, verification_token_repo, invite_throttle_repo),
+    )
+    mediator.register_command(
+        AcceptInviteCommand,
+        AcceptInviteHandler(
+            user_read_repo, user_write_repo, verification_token_repo, invite_throttle_repo
+        ),
+    )
+    mediator.register_command(
+        SendAdminMessageCommand, SendAdminMessageHandler(user_read_repo, email)
+    )
+
     reset_token_repo = PasswordResetTokenRepository(db)
     reset_throttle_repo = PasswordResetThrottleRepository(db)
     # Fresh instance is fine — a stateless wrapper around db[collection], same as the
@@ -154,20 +186,22 @@ def _wire_mediator(
     interpretation_write_repo = InterpretationWriteRepository(db)
     interpretation_read_repo = InterpretationReadRepository(db)
 
+    delete_user_handler = DeleteUserHandler(
+        user_read_repo,
+        user_write_repo,
+        refresh_token_repo,
+        reset_token_repo,
+        verification_token_repo,
+        # Unprefixed: it removes the account's records of every limiter.
+        reset_throttle_repo,
+        reading_write_repo,
+        interpretation_write_repo,
+        user_tags_write_repo,
+    )
+    mediator.register_command(DeleteUserCommand, delete_user_handler)
+    # Same cascade, admin entry point (existence and not-yourself checks on top).
     mediator.register_command(
-        DeleteUserCommand,
-        DeleteUserHandler(
-            user_read_repo,
-            user_write_repo,
-            refresh_token_repo,
-            reset_token_repo,
-            verification_token_repo,
-            # Unprefixed: it removes the account's records of every limiter.
-            reset_throttle_repo,
-            reading_write_repo,
-            interpretation_write_repo,
-            user_tags_write_repo,
-        ),
+        AdminDeleteUserCommand, AdminDeleteUserHandler(user_read_repo, delete_user_handler)
     )
 
     mediator.register_command(CreateReadingCommand, CreateReadingHandler(reading_write_repo))

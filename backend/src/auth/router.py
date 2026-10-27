@@ -1,5 +1,6 @@
-from fastapi import APIRouter, BackgroundTasks, Request, Response
+from fastapi import APIRouter, BackgroundTasks, Query, Request, Response
 
+from src.auth.commands.accept_invite import AcceptInviteCommand
 from src.auth.commands.confirm_password_reset import ConfirmPasswordResetCommand
 from src.auth.commands.delete_user import DeleteUserCommand
 from src.auth.commands.record_consent import RecordConsentCommand
@@ -8,10 +9,14 @@ from src.auth.commands.request_password_reset import RequestPasswordResetCommand
 from src.auth.commands.resend_verification import ResendVerificationCommand
 from src.auth.commands.send_verification_email import SendVerificationEmailCommand
 from src.auth.commands.verify_email import VerifyEmailCommand
+from src.auth.queries.get_invite_by_token import GetInviteByTokenQuery
 from src.auth.queries.get_user_by_id import GetUserByIdQuery
 from src.auth.schemas import (
+    AcceptInviteRequest,
+    AcceptInviteResponse,
     ConsentRequest,
     DeleteAccountRequest,
+    InviteLookupResponse,
     LoginRequest,
     PasswordResetConfirmRequest,
     PasswordResetConfirmResponse,
@@ -82,6 +87,34 @@ async def resend_verification(
         # request path, so response time does not reveal which one it was.
         background_tasks.add_task(mediator.send, SendVerificationEmailCommand(user_id=user_id))
     return ResendVerificationResponse()
+
+
+@router.get("/invite", response_model=InviteLookupResponse)
+async def lookup_invite(
+    mediator: MediatorDep, client_ip: ClientIp, token: str = Query(min_length=1)
+) -> InviteLookupResponse:
+    """Public, read-only: the address an invite link is for, so the accept page can
+    show it and refuse a dead link before the invitee types anything. Throttled per
+    client IP: it discloses the invitee's address to whoever holds a valid token."""
+    return await mediator.query(GetInviteByTokenQuery(token=token, client_ip=client_ip))
+
+
+@router.post("/accept-invite", response_model=AcceptInviteResponse)
+async def accept_invite(
+    body: AcceptInviteRequest, mediator: MediatorDep, client_ip: ClientIp
+) -> AcceptInviteResponse:
+    await mediator.send(
+        AcceptInviteCommand(
+            token=body.token,
+            password=body.password,
+            first_name=body.first_name,
+            last_name=body.last_name,
+            terms_version=body.consents.terms,
+            privacy_version=body.consents.privacy,
+            client_ip=client_ip,
+        )
+    )
+    return AcceptInviteResponse()
 
 
 @router.post("/login", response_model=TokenResponse)

@@ -52,3 +52,27 @@ describe("ProfileNavMenu (logged in)", () => {
     expect(html).not.toContain("/user/register");
   });
 });
+
+describe("ProfileNavMenu (superadmin)", () => {
+  const base = {
+    id: "1",
+    email: "ada@example.com",
+    displayName: "Ada Lovelace",
+    firstName: "Ada",
+    lastName: "Lovelace",
+    status: "active" as const,
+    emailVerifiedAt: null,
+    credits: 0,
+    createdAt: "",
+    updatedAt: "",
+  };
+  const renderFor = (isSuperadmin: boolean) =>
+    renderToStaticMarkup(
+      <ProfileNavMenu user={{ ...base, isSuperadmin }} onNavigate={() => {}} />
+    );
+
+  it("shows the Superadmin link to the superadmin only", () => {
+    expect(renderFor(true)).toContain('href="/superadmin"');
+    expect(renderFor(false)).not.toContain("/superadmin");
+  });
+});

@@ -1,7 +1,10 @@
 import Link from "next/link";
 import { enforceOnboarding } from "@/lib/onboarding-gate";
+import { getCurrentUser } from "@/lib/session";
 import TarotPageLayout from "@/components/TarotPageLayout";
 import { getUsers } from "./actions";
+import InviteUserForm from "./InviteUserForm";
+import UsersTable from "./UsersTable";
 
 const PAGE_SIZE = 20;
 
@@ -11,6 +14,8 @@ const SuperadminPage = async ({
   searchParams: Promise<{ page?: string }>;
 }) => {
   await enforceOnboarding();
+  // The layout already redirected anyone who is not the superadmin
+  const currentUserId = (await getCurrentUser())?.id ?? "";
 
   const { page: pageParam } = await searchParams;
   const currentPage = Math.max(1, parseInt(pageParam ?? "1", 10) || 1);
@@ -59,60 +64,8 @@ const SuperadminPage = async ({
           </div>
         ) : (
           <>
-            <div className="rounded-2xl border border-[#d4af37]/20 bg-gradient-to-b from-[#1a0033]/80 to-[#0a0015]/80 backdrop-blur-sm overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full text-left">
-                  <thead>
-                    <tr className="border-b border-[#d4af37]/20">
-                      {["Email", "Name", "Credits", "Joined"].map(
-                        (heading) => (
-                          <th
-                            key={heading}
-                            className="px-4 sm:px-6 py-4 text-[#d4af37]/80 text-xs tracking-[0.15em] uppercase whitespace-nowrap"
-                            style={{ fontFamily: "'Cinzel', serif" }}
-                          >
-                            {heading}
-                          </th>
-                        )
-                      )}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {result.users.map((user) => (
-                      <tr
-                        key={user.id}
-                        className="border-b border-[#d4af37]/10 last:border-b-0 hover:bg-[#d4af37]/5 transition-colors"
-                      >
-                        <td
-                          className="px-4 sm:px-6 py-3 text-[#e6d5b8] text-sm"
-                          style={{ fontFamily: "'Crimson Pro', serif" }}
-                        >
-                          {user.email}
-                        </td>
-                        <td
-                          className="px-4 sm:px-6 py-3 text-[#e6d5b8]/80 text-sm"
-                          style={{ fontFamily: "'Crimson Pro', serif" }}
-                        >
-                          {user.displayName || "—"}
-                        </td>
-                        <td
-                          className="px-4 sm:px-6 py-3 text-[#d4af37] text-sm"
-                          style={{ fontFamily: "'Cinzel', serif" }}
-                        >
-                          {user.credits}
-                        </td>
-                        <td
-                          className="px-4 sm:px-6 py-3 text-[#e6d5b8]/60 text-sm whitespace-nowrap"
-                          style={{ fontFamily: "'Crimson Pro', serif" }}
-                        >
-                          {new Date(user.createdAt).toLocaleDateString()}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
+            <InviteUserForm />
+            <UsersTable users={result.users} currentUserId={currentUserId} />
 
             {/* Pagination */}
             {totalPages > 1 && (

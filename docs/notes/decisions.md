@@ -294,7 +294,7 @@ Each decision should include:
 - The 24-hour and 7-day figures shown in the UI are constants in `src/lib/verification-policy.ts` that mirror backend settings; change both together
 - No cookie-consent banner: Google Analytics was removed instead (2026-10-10), see ADR-014
 
-### ADR-014: Self-Service Account Deletion (2026-10-04)
+### ADR-014: Self-Service Account Deletion (2026-10-04; confirmed 2026-10-25, see ADR-017)
 
 **Context:**
 - The system must be open to removing users who wish to leave. `POST /support/contact` is an inbox, not a mechanism
@@ -367,3 +367,30 @@ Each decision should include:
 - The ADR-014 note that a token outlives a deleted account is now obsolete
 
 **ADR-016 addendum (2026-10-22):** `get_current_user` runs the family check and the user lookup with `asyncio.gather`, so it adds no serial round trip. A refresh token replayed within 10 s of its rotation (`used_at`, `REFRESH_REPLAY_GRACE_SECONDS`) answers 401 without revoking the family, so racing refreshes no longer kill the winner's session; later replays still revoke.
+
+### ADR-017: Admin User Management — Invites Alongside Open Sign-up, One Deletion Path (2026-10-25)
+
+**Context:**
+- Before launch the owner wants to manage accounts from `/superadmin`: invite people by email while production sign-up is closed (`REGISTRATION_ENABLED=false`, ADR-013 addendum), send one user a note, and delete an account. Public sign-up opens at launch; invites must extend it, not replace it. A first draft also added `account_type` (free trial / subscription) and moved deletion to admin-only.
+
+**Decision:**
+- **Invite = a user document in a new `invited` status** (no `password_hash`, names or consents) plus a one-time link in the existing `email_verification_tokens` collection, mailed by the backend. The invitee opens the public `/accept-invite` page (app root, outside `/user`, so neither the proxy's register gate nor the onboarding gate applies and the flag is never read), sees the address the invite is for (`GET /auth/invite?token=` peeks without consuming), and supplies names, password and consents. Accepting makes the account `active` with `email_verified_at` set: opening the link proved the address. No session is issued; the user signs in, as after verify-email
+- **One clock:** `INVITE_TTL_DAYS` (7) expires the link and purges the account (migration 015 widens the `pending_users_ttl` partial index to `status in [pending_verification, invited]`). A re-invite rotates the token and restarts the clock
+- **A password-less user is handled where the hash is read:** `authenticate` and `confirm_password` answer "wrong password" when the hash is absent; forgot-password sends nothing for an invited address; registration with the address stays 409
+- **The admin endpoints surface `EmailDeliveryError` as 502** (invite, email a user). The admin is watching and resends; the account is already in place. Registration keeps swallowing it (ADR-009 reasoning)
+- **Email to a user is one-way:** plain text, escaped, no Reply-To
+- **Deletion stays self-service (ADR-014 confirmed) and gains an admin entry point** that runs the same `DeleteUserHandler`. `DELETE /users/{id}` adds only a 404 and a 409 for the admin's own account (the self-service path re-verifies the password; this one must not bypass it). `DeleteUserHandler` is the single place a pre-deletion step (a future subscription cancellation) is added
+- **`account_type` is not added.** No behaviour depends on it until the payment step exists; it ships with that step and its real default
+
+**Alternatives Considered:**
+- Admin-only deletion -> Rejected: self-service is the consumer norm (app stores require it; GDPR only needs a request channel, but EU dark-pattern rules penalise hard exits), and the Terms and Privacy Policy already promise it, so moving it would re-version both documents for no gain
+- Invite link opening `/user/register` with the email prefilled -> Rejected: entangles the flow with `REGISTRATION_ENABLED` (the proxy would need a token bypass) and the register action would need a second path for an existing document
+- Admin creates the account with a temporary password -> Rejected: weaker, and the user would still face the consent gate on first login
+- A separate `invite_tokens` collection -> Rejected: same shape and lifecycle as verification tokens; the user's status disambiguates
+- `account_type` enum now -> Deferred: no use case
+
+**Consequences:**
+- `User.password_hash` is `str | None`; readers must not index the key
+- Two new `EmailPort` methods; every adapter (including the two test-only subclasses) implements them
+- `AdminUserResponse` carries `status`; the frontend maps the admin listing through `mapAdminUserResponse` (the old mapper read `id` instead of the `_id` alias, so row ids were `undefined`)
+- Reference: `docs/reference/admin/user-management.md`

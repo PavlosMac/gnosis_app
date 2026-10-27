@@ -22,6 +22,7 @@ or in the three `CLAUDE.md` files, and CI runs it.
 | [`auth/registration-verification-and-consent.md`](reference/auth/registration-verification-and-consent.md) | backend | Registration with names + consent, `UserStatus` and the verification gate, re-consent, rate limits, account deletion |
 | [`auth/frontend-auth-flow.md`](reference/auth/frontend-auth-flow.md) | frontend | JWT in httpOnly cookies, the proxy, onboarding gate, server actions, `/accept-terms`, `/verify-email` |
 | [`auth/registration-qa-checklist.md`](reference/auth/registration-qa-checklist.md) | both | Manual QA script for the registration flow against the local stack |
+| [`admin/user-management.md`](reference/admin/user-management.md) | both | The `/superadmin` page: invite by email (the `invited` status and accept flow), one-way email to a user, admin deletion through the shared cascade |
 | [`database/model-references.md`](reference/database/model-references.md) | backend | Every collection, field, index and relationship |
 | [`database/db-migrations.md`](reference/database/db-migrations.md) | backend | The migration runner and how to write a migration |
 | [`database/configure-db.md`](reference/database/configure-db.md) | ops | MongoDB auth setup (dev and Pi), init script |
@@ -47,7 +48,7 @@ or in the three `CLAUDE.md` files, and CI runs it.
 |---|---|
 | [`2026-08-31-mollie-recurring-subscription.md`](plans/2026-08-31-mollie-recurring-subscription.md) | Design only, not started. The only payment plan. |
 | [`2026-09-10-sse-streaming-interpretations.md`](plans/2026-09-10-sse-streaming-interpretations.md) | Not started. Stream the interpretation; add request duration and `request_id` logging. |
-| [`2026-09-21-user-accounting-ledger.md`](plans/2026-09-21-user-accounting-ledger.md) | Agreed, not started. Price source, monthly budget period, superadmin ledger UI. |
+| [`2026-09-21-user-accounting-ledger.md`](plans/2026-09-21-user-accounting-ledger.md) | Agreed, not started. Admin-set model and prices, monthly budget period, per-spread cost table, superadmin ledger UI. |
 | [`2026-09-29-readings-sort-index.md`](plans/2026-09-29-readings-sort-index.md) | Deferred. Compound index for spread + tags + date sort; trigger inside. |
 
 ## Notes

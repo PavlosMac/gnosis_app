@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  acceptInviteSchema,
   deleteAccountSchema,
   loginSchema,
   registerSchema,
@@ -143,5 +144,39 @@ describe("deleteAccountSchema", () => {
   it("requires the password", () => {
     const parsed = deleteAccountSchema.safeParse({ password: "", confirm: "DELETE" });
     expect(parsed.success).toBe(false);
+  });
+});
+
+describe("acceptInviteSchema", () => {
+  const VALID_INVITE = {
+    token: "raw-token",
+    firstName: "Ada",
+    lastName: "Lovelace",
+    password: "securepassword123",
+    confirmPassword: "securepassword123",
+    acceptTerms: "on",
+    acceptPrivacy: "on",
+  };
+  const inviteErrors = (input: unknown) => {
+    const parsed = acceptInviteSchema.safeParse(input);
+    return parsed.success ? {} : parsed.error.flatten().fieldErrors;
+  };
+
+  it("is the register form without an email, plus the token", () => {
+    expect(acceptInviteSchema.safeParse(VALID_INVITE).success).toBe(true);
+    expect(inviteErrors({ ...VALID_INVITE, token: "" }).token).toBeDefined();
+    expect("email" in acceptInviteSchema.shape).toBe(false);
+  });
+
+  it("keeps the register rules: names, consents, matching passwords, no personal info", () => {
+    expect(inviteErrors({ ...VALID_INVITE, firstName: "  " }).firstName).toBeDefined();
+    expect(inviteErrors({ ...VALID_INVITE, acceptTerms: null }).acceptTerms).toBeDefined();
+    expect(inviteErrors({ ...VALID_INVITE, acceptPrivacy: null }).acceptPrivacy).toBeDefined();
+    expect(inviteErrors({ ...VALID_INVITE, confirmPassword: "other-password-1" }).confirmPassword)
+      .toEqual(["Passwords do not match"]);
+    expect(
+      inviteErrors({ ...VALID_INVITE, password: "lovelace-rocks-1", confirmPassword: "lovelace-rocks-1" })
+        .password
+    ).toBeDefined();
   });
 });

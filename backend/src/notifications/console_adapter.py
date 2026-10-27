@@ -44,5 +44,12 @@ class ConsoleEmailAdapter(EmailPort):
             submitted_at=submitted_at.isoformat(),
         )
 
+    async def send_invite(self, to: str, invite_link: str) -> None:
+        logger.info("invite email (console)", invite_link=self._link(invite_link))
+
+    async def send_admin_message(self, to: str, subject: str, message: str) -> None:
+        # Neither the recipient nor the body: both are personal data.
+        logger.info("admin message email (console)")
+
     async def close(self) -> None:
         return None

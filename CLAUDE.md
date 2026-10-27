@@ -38,6 +38,7 @@ and the two side `CLAUDE.md` files. `make docs-check` verifies every relative li
 | Working on | Read first |
 |---|---|
 | Registration, login, verification, consent, deletion | [`registration-verification-and-consent.md`](docs/reference/auth/registration-verification-and-consent.md) (backend), [`frontend-auth-flow.md`](docs/reference/auth/frontend-auth-flow.md) (frontend), QA script [`registration-qa-checklist.md`](docs/reference/auth/registration-qa-checklist.md) |
+| Admin: user list, invites, emailing or deleting a user | [`user-management.md`](docs/reference/admin/user-management.md) |
 | Collections, fields, indexes, migrations | [`model-references.md`](docs/reference/database/model-references.md), [`db-migrations.md`](docs/reference/database/db-migrations.md) |
 | Interpretations, LLM calls, usage and budget | [`usage-and-budget-flow.md`](docs/reference/interpretations/usage-and-budget-flow.md), [`user-accounting.md`](docs/reference/interpretations/user-accounting.md) |
 | Prompts | [`lean-prompt-architecture.md`](docs/reference/prompts/lean-prompt-architecture.md), [`prompt-reference.md`](docs/reference/prompts/prompt-reference.md) (generated: `make -C backend prompt-doc`) |

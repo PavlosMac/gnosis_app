@@ -75,3 +75,37 @@ async def register_verify_and_login(
     login = await client.post("/api/v1/auth/login", json={"email": email, "password": password})
     assert login.status_code == 200, f"Login failed: {login.text}"
     return login.json()
+
+
+def invite_token(mock_email, index: int = -1) -> str:
+    """The raw token from an invite mail the mock adapter recorded."""
+    link = mock_email.sent_invites[index]["invite_link"]
+    return link.split("token=", 1)[1]
+
+
+def make_accept_invite_body(
+    token: str,
+    password: str = DEFAULT_PASSWORD,
+    first_name: str = "Invited",
+    last_name: str = "Seeker",
+    terms: str = "2026-10-04",
+    privacy: str = "2026-10-13",
+) -> dict:
+    """A valid POST /auth/accept-invite body."""
+    return {
+        "token": token,
+        "password": password,
+        "first_name": first_name,
+        "last_name": last_name,
+        "consents": {"terms": terms, "privacy": privacy},
+    }
+
+
+async def invite(client, superadmin_token: str, email: str) -> None:
+    """Superadmin invites an address; the mock adapter records the link."""
+    resp = await client.post(
+        "/api/v1/users/invite",
+        json={"email": email},
+        headers={"Authorization": f"Bearer {superadmin_token}"},
+    )
+    assert resp.status_code == 200, f"Invite failed: {resp.text}"

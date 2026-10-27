@@ -72,47 +72,37 @@ export default function AboutPage() {
         <ArticleSection framed title="A Decade of Tarot Reflection" symbol="✧">
           <Body>
             <P>
-              Tarot Divinations is the culmination of a decade-long investigation into the Tarot.
-              Much inspiration to build this platform has come from Michael Tsarion&apos;s{" "}
-              <span className="text-[#d4af37]">Path of the Fool</span>, his take on the 78-card deck.
-              This is a &lsquo;spirit tooling&rsquo; platform, architected to encourage a person to
-              take and reflect on their life through the perspective of the authentic Self.
-            </P>
+              Tarot Divinations is the culmination of a decade-long experiment with the Tarot. It is the western magical system. The Tarot is the therapist of antiquity. 
+
+            The purpose of this platform was to create a tool which can help sharpen intuition. A means by which one can start a conversation with the authentic Self. 
+       </P>
             <P>
               The Tarot offers us a symbolically rich tapestry from which to map the soul&apos;s journey
-              through life. Creating spreads and pulling cards is a great way to mirror the subconscious, revealing
-              vital information about destiny, character and much more. We can also make enquries about events, other persons and much more - there is no limit actually.
+              through life. Creating spreads and pulling cards is a powerful way of interacting with the unconsious, that intuitive part of ourselves, revealing
+              important information about destiny, character, challenges and more. The language of the unconscious is symbolism and imagery.
               We offer this platform for users to make many readings and get
-              interpretitive reading data quickly, in an endevour to encourage more people to delve deeper into these esoteric arts. 
-              The divination arts are fun and receptive, anyone with an interest should be able dabble in Tarot, make readings and reflective on the symbolism in the cards. 
-              We also hope to offer a powerful tool for advanced users, its up to you 
-              how you would like to use Tarot Divinations.
+              interpretitive data returned fast. We hope to hook people into using the Tarot as an esoteric art form. Our powerful spread engine
+              is designed to work with the magick of the universe - the interpretations are an complimentary add-on.
+              Anyone with an interest should be able to dabble in the Tarot, make readings and meditate on the symbolism in the cards. This will kick start a conversation with mystery.
             </P>
             <P>
-              Once you have made a reading and saved it, you can send the spread to the LLM, which
+              Once you have made a reading and saved it, you can send the spread details to the LLM, we use GPT-4, which
               returns the interpretation in text form within seconds, or up to a minute for the
               bigger spreads. The <span className="text-[#d4af37]">Oracle Interpretation</span> is
-              the core of our platform, an advanced reading interpreter. LLMs are particularly good
+              an advanced reading interpreter. LLMs are particularly good
               at analysing Tarot spreads because of their ability to understand context and pattern
-              recognition. We save every interpretation for you to view again whenever you please.
-              To complement this we provide the Readings database: many readings, at lightning
-              speed, using AI, yes.
+              recognition. However, take these with a pinch of salt. Do not take them literally - or expect to point you in the correct direction. We believe that 
+              these interpreations do not need to be completely accurate. Nonetheless they will open the door to stimulate your own imagintation.
+              After all the Tarot should be considered a tool of the imagination. It is your journey and only your imagination can take you on it.
             </P>
             <P>
-              Instructions on how to use the oracle are given{" "}
+              The guide can be used to get the most out the application{" "}
               <Link href="/guide" className={INLINE_LINK}>
                 here
-              </Link>
-              , but are more suggestions on best practices.
-              We encourage our users to build their own rituals for using our Reading Oracle.
+              </Link>.
               Certain cards appear multiple times in different spreads, giving you a
-              unique perspective on the queries you make. You will begin to experience
-              real magic when this happens.
-            </P>
-            <P aside>
-              Our hope is that offering a service
-              where users can get reading material interpreted quickly and accurately will encourage them to deepen their
-              interest in the divination arts.
+              unique perspective on the queries you make. When this happens you will begin to experience
+              real magic.
             </P>
           </Body>
         </ArticleSection>

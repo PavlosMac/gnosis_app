@@ -324,7 +324,7 @@ const TarotLanding: React.FC = () => {
             href="/guide"
             symbol="☾"
             title="The Guide"
-            body="See what we offer registered users on this platform."
+            body="Our guide offers registered users valuable instructions on how to get the best out of the web application."
             cta="Read Guide"
           />
 
@@ -332,7 +332,7 @@ const TarotLanding: React.FC = () => {
             href="/about"
             symbol="✧"
             title="About Tarot Divinations"
-            body="Learn about the 'Reading Oracle', the 'Readings Journal', 'Oracle Interpretations' and more."
+            body="Learn about our product and what we offer."
             cta="Read Article"
           />
         </div>

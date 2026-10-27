@@ -2,8 +2,9 @@ import type { ReadingDetail, TagSummary } from "@/types/reading";
 import type { ContactSupportInput } from "@/lib/validation/support-schemas";
 import type { UserConsents } from "@/lib/consent";
 
-/** Where the account is in onboarding. `payment_required` slots in later. */
-export type UserStatus = "pending_verification" | "active";
+/** Where the account is in onboarding. `invited` is a superadmin invite not yet
+    accepted (no password, names or consents). `payment_required` slots in later. */
+export type UserStatus = "invited" | "pending_verification" | "active";
 
 export interface User {
   id: string;
@@ -87,6 +88,31 @@ export interface ConsentFormState extends AuthFormState {
 }
 
 export interface DeleteAccountFormState extends AuthFormState {}
+
+/** What the accept-invite form echoes back on failure. Never the passwords. */
+export interface AcceptInviteEchoValues {
+  firstName: string;
+  lastName: string;
+  acceptTerms: boolean;
+  acceptPrivacy: boolean;
+}
+
+export interface AcceptInviteFormState extends AuthFormState<AcceptInviteEchoValues> {
+  /** Set when the invite token itself was rejected (400/410) */
+  tokenProblem?: "invalid" | "expired";
+}
+
+/** `{"email": "..."}` from GET /auth/invite?token= */
+export interface InviteLookupResponse {
+  email: string;
+}
+
+// --- Superadmin actions ---
+
+export interface InviteUserFormState extends AuthFormState<{ email: string }> {}
+export interface EmailUserFormState
+  extends AuthFormState<{ subject: string; message: string }> {}
+export interface DeleteUserFormState extends AuthFormState {}
 
 /** `{"detail": "..."}` body returned by register / verify-email / resend */
 export interface DetailResponse {
@@ -208,6 +234,38 @@ export const mapDashboardResponse = (d: DashboardResponse): Dashboard => ({
   lastReading: d.last_reading,
   // Tolerate a backend that omits the vocabulary rather than crash the page
   userTags: Array.isArray(d.user_tags) ? d.user_tags : [],
+});
+
+// --- Superadmin listing: GET /api/v1/users ---
+
+/** One row of the admin listing. The id is serialised under the `_id` alias. */
+export interface AdminUserResponse {
+  _id: string;
+  email: string;
+  display_name: string | null;
+  status?: UserStatus;
+  credits: number;
+  is_superadmin: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AdminUser {
+  id: string;
+  email: string;
+  displayName: string | null;
+  status: UserStatus;
+  isSuperadmin: boolean;
+  createdAt: string;
+}
+
+export const mapAdminUserResponse = (u: AdminUserResponse): AdminUser => ({
+  id: u._id,
+  email: u.email,
+  displayName: u.display_name,
+  status: u.status ?? "active",
+  isSuperadmin: u.is_superadmin,
+  createdAt: u.created_at,
 });
 
 export const mapUserResponseToUser = (u: UserResponse): User => ({

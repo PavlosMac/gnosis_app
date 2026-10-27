@@ -7,9 +7,15 @@ from src.core.config import settings
 from src.notifications.errors import EmailDeliveryError
 from src.notifications.port import EmailPort
 from src.notifications.templates import (
+    admin_message_html,
+    admin_message_subject,
+    admin_message_text,
     email_verification_html,
     email_verification_subject,
     email_verification_text,
+    invite_html,
+    invite_subject,
+    invite_text,
     password_reset_html,
     password_reset_subject,
     password_reset_text,
@@ -72,6 +78,30 @@ class ResendEmailAdapter(EmailPort):
         }
         message_id = await self._send(params)
         logger.info("support request email sent", user_id=user_id, message_id=message_id)
+
+    async def send_invite(self, to: str, invite_link: str) -> None:
+        ttl_days = settings.invite_ttl_days
+        params: resend.Emails.SendParams = {
+            "from": self._from,
+            "to": to,
+            "subject": invite_subject(),
+            "text": invite_text(invite_link, ttl_days),
+            "html": invite_html(invite_link, ttl_days),
+        }
+        message_id = await self._send(params)
+        logger.info("invite email sent", message_id=message_id)
+
+    async def send_admin_message(self, to: str, subject: str, message: str) -> None:
+        # No Reply-To: this is a one-way note. Replies would bounce off the noreply From.
+        params: resend.Emails.SendParams = {
+            "from": self._from,
+            "to": to,
+            "subject": admin_message_subject(subject),
+            "text": admin_message_text(message),
+            "html": admin_message_html(message),
+        }
+        message_id = await self._send(params)
+        logger.info("admin message email sent", message_id=message_id)
 
     async def _send(self, params: resend.Emails.SendParams) -> str:
         try:

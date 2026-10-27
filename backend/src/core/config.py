@@ -70,6 +70,10 @@ class Settings(BaseSettings):
     # A never-verified account is purged this long after registration or its last
     # resend (migration 014's TTL index on users.verification_deadline_at).
     pending_account_ttl_days: int = 7
+    # Superadmin invites: the emailed link and the invited account share one clock —
+    # the link expires and the never-accepted account is purged (migration 015) this
+    # long after the invite or its last resend.
+    invite_ttl_days: int = 7
 
     # Rate limits. Login is keyed by client IP + email (so a flood cannot lock the real
     # owner out from elsewhere), register by client IP.

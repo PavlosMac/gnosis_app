@@ -194,3 +194,33 @@ async def test_send_verification_email_swallows_delivery_failure(mock_db):
     await _send_handler(mock_db, FailingVerificationEmail()).handle(
         SendVerificationEmailCommand(user_id=user_id)
     )  # must not raise
+
+
+async def test_verify_refuses_an_account_that_is_not_pending_and_keeps_the_token(mock_db):
+    email = MockEmailAdapter()
+    user_id = await _register(mock_db, email)
+    await AuthWriteRepository(mock_db).update(user_id, {"status": "invited"})
+    handler = VerifyEmailHandler(
+        AuthWriteRepository(mock_db), EmailVerificationTokenRepository(mock_db)
+    )
+
+    with pytest.raises(InvalidVerificationTokenError):
+        await handler.handle(VerifyEmailCommand(token=verification_token(email)))
+
+    doc = await AuthReadRepository(mock_db).find_by_id(user_id)
+    assert doc["status"] == "invited"
+    stored = await mock_db[EMAIL_VERIFICATION_TOKENS_COLLECTION].find_one({})
+    assert stored["used"] is False
+
+
+async def test_verify_token_is_single_use(mock_db):
+    email = MockEmailAdapter()
+    await _register(mock_db, email)
+    handler = VerifyEmailHandler(
+        AuthWriteRepository(mock_db), EmailVerificationTokenRepository(mock_db)
+    )
+    command = VerifyEmailCommand(token=verification_token(email))
+    await handler.handle(command)
+
+    with pytest.raises(InvalidVerificationTokenError):
+        await handler.handle(command)

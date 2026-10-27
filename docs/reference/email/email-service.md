@@ -180,18 +180,26 @@ To add, say, a welcome email:
 3. Implement it on all three adapters. The Resend one follows `send_password_reset`
    exactly: build the `SendParams`, keep the `send_async` call *and* the response
    parsing inside the broad `try`, map everything to `EmailDeliveryError`.
-4. Tests: `tests/notifications/test_templates.py` for wording,
-   `test_adapters.py::test_adapters_implement_port` will fail until every adapter has the
-   method.
+4. Implement it on the two test-only subclasses as well (`FailingEmailAdapter` in
+   `tests/support/conftest.py` and the inline one in `tests/auth/test_password_reset_commands.py`),
+   or they stop instantiating.
+5. Tests: `tests/notifications/test_templates.py` for wording, and an explicit
+   `test_mock_adapter_records_<type>` / console send test in `test_adapters.py` (the
+   `issubclass` check there does not catch a missing method; instantiation does).
+
+`send_invite` and `send_admin_message` (added 2026-10-25) followed it; they are described
+in [`../admin/user-management.md`](../admin/user-management.md#email).
 
 ## Need to know
 
 - **The email's "expires in 30 minutes" is a hardcoded string.** `_TTL_WORDING` in
   `templates.py` is not derived from `password_reset_token_ttl_minutes`; change one,
   change the other.
-- **`EmailDeliveryError` is a 502 that no client ever sees from the reset flow.** The
-  handler catches it (step 5 above). The status exists for any future caller that
-  *should* surface delivery failures.
+- **`EmailDeliveryError` is a 502 that the reset and registration flows swallow** (the
+  handler catches it, step 5 above) and that the two superadmin endpoints surface:
+  `POST /users/invite` and `POST /users/{id}/email` answer 502 so the admin can press the
+  button again (see
+  [`../admin/user-management.md`](../admin/user-management.md)).
 - **Emails are case-folded everywhere** (since 2026-10-04): the request schemas
   lower-case them, registration stores them lower-cased and `find_by_email` folds its
   query. The old gotcha — throttle case-folded, lookup exact — is gone. An account

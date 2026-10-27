@@ -16,6 +16,8 @@ JWT authentication via an external FastAPI backend. Tokens are stored in httpOnl
 | `src/app/layout.tsx` | Root server layout — fetches the user and the `REGISTRATION_ENABLED` flag, passes both to `AuthProvider` |
 | `src/app/user/layout.tsx` | The onboarding gate for `/user/*`: redirects a logged-in user to `/accept-terms` (or `/verify-email`) when something is outstanding. Does not fetch for `AuthProvider` — the root layout does |
 | `src/app/verify-email/` | Email confirmation page, Confirm and resend actions (public) |
+| `src/app/accept-invite/` | Accept a superadmin invite: names, password, consents against the emailed token (public, app root, not gated by `REGISTRATION_ENABLED`) |
+| `src/app/superadmin/` | The admin page: user list, invite form, email and delete modals; every action re-checks `isSuperadmin` |
 | `src/app/accept-terms/` | Re-consent interstitial and action |
 | `src/app/user/profile/settings/` | Account settings: contact support, the Agreements rows (each opens the accepted version in `LegalDocumentModal`, rendered on demand by the `loadAgreementDocument` server action so the page ships no legal text), one-click password reset, link to deletion. The agreements and delete pages' back buttons return here |
 | `src/app/user/profile/manage-consent/`, `delete-account/` | Self-service consent and account deletion |
@@ -25,7 +27,8 @@ JWT authentication via an external FastAPI backend. Tokens are stored in httpOnl
 | `src/app/user/logout/actions.ts` | Logout server action |
 | `src/app/forgot-password/actions.ts` | Forgot-password server action (public) |
 | `src/app/reset-password/actions.ts` | Reset-password server action (public) |
-| `src/lib/validation/auth-schemas.ts` | Zod schemas for login/register/forgot/reset |
+| `src/lib/validation/auth-schemas.ts` | Zod schemas for login/register/accept-invite/forgot/reset |
+| `src/lib/validation/admin-schemas.ts` | Zod schemas for the superadmin actions (invite, email a user, delete a user) |
 | `src/types/auth.ts` | User, TokenResponse, form state types |
 
 ## Cookies
@@ -365,6 +368,43 @@ their not-authenticated shape while consent is stale.
                   ---> DELETE /auth/me {password}
                          403 {code: "invalid_password"}  ---> field error, nothing deleted
                          204  ---> clearAuthCookies() ---> redirect /
+```
+
+### 13. Invite → Accept → Explicit First Login
+
+```
+Superadmin /superadmin        Next.js actions            FastAPI                      Invitee
+  Invite a seeker {email} ---> inviteUser()  (isSuperadmin re-checked)
+                               POST /users/invite  ------>  invited user + link  -----> email
+                               <-- 200 | 409 exists | 502 mail failed
+  <-- row "Invited" (revalidatePath)
+                                                                                         opens /accept-invite?token=...
+                               page: publicFetch GET /auth/invite?token=  (peek only)
+                                 200 {email} -> form with "Invitation for <email>"
+                                 400 / 410   -> dead-link panel, no form
+                                                                                         submit names, password, consents
+                               acceptInvite()  zod acceptInviteSchema (no email field)
+                               POST /auth/accept-invite {token, password, first_name,
+                                 last_name, consents: CURRENT_VERSIONS}
+                                 <-- 200 (no tokens) | 400 / 410 dead link
+                                     | 422 weak_password -> field error, link still usable
+                                                                                         <-- "Your account is ready" -> /user/login
+```
+
+The page lives at the app root, so neither the proxy's `/user/register` gate nor the
+onboarding gate applies, and `REGISTRATION_ENABLED` is never read: prod keeps sign-up
+closed while the admin invites. Details and the backend side:
+[`../admin/user-management.md`](../admin/user-management.md).
+
+### 14. Superadmin Email and Delete
+
+```
+/superadmin row  Email  ---> EmailUserModal  ---> emailUser()  POST /users/{id}/email {subject, message}
+                                                     <-- 200 | 404 gone | 502 mail failed
+/superadmin row  Delete ---> DeleteUserModal (type DELETE) ---> deleteUser()
+                                                     own id -> refused before the API
+                                                     DELETE /users/{id}  <-- 204 | 404 | 409 self
+                              modal closes, row gone (revalidatePath)
 ```
 
 ## Lessons Learned

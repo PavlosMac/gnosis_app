@@ -186,11 +186,11 @@ Read these before searching. Grep/Glob for anything not listed here.
 - `src/llm/prompt_builder.py` — Prompt templates + token budgeting; regenerate `../docs/reference/prompts/prompt-reference.md` (`make prompt-doc`) after editing
 - `src/llm/pricing.py` — Per-model price table, `cost_usd()` / `worst_case_cost_usd()`
 - `src/notifications/port.py` — `EmailPort` ABC; `resend_adapter.py` (prod) / `console_adapter.py` (when `RESEND_API_KEY` is unset) / `mock_adapter.py` (tests)
-- `src/notifications/templates.py` — Password-reset, email-verification and support-request email copy
+- `src/notifications/templates.py` — Password-reset, email-verification, invite, admin-message and support-request email copy
 
 ### Domains (each follows the folder layout above)
 - `src/auth/` — Reference domain: register (names + consent), email verification gate (`UserStatus`, `SESSION_STATUSES`), login/refresh JWT, password reset, consent, account deletion. See `../docs/reference/auth/registration-verification-and-consent.md`
-- `src/users/` — Superadmin user listing
+- `src/users/` — Superadmin user listing, invite by email, one-way email to a user, admin deletion (shares `DeleteUserHandler`). See `../docs/reference/admin/user-management.md`
 - `src/readings/` — Saved readings + user tags
 - `src/interpretations/` — AI interpretations of readings; `commands/generate_interpretation.py` is the LLM call site and usage accounting
 - `src/dashboard/` — Per-user aggregate read model

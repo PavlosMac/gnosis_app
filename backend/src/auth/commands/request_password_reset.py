@@ -2,6 +2,7 @@ from datetime import UTC, datetime, timedelta
 
 import structlog
 
+from src.auth.models import UserStatus, user_status
 from src.auth.repository import (
     AuthReadRepository,
     PasswordResetThrottleRepository,
@@ -58,6 +59,10 @@ class RequestPasswordResetHandler(CommandHandler[RequestPasswordResetCommand, No
         user_doc = await self._read_repo.find_by_email(command.email)
         if user_doc is None:
             return  # enumeration-safe no-op
+        if user_status(user_doc) is UserStatus.INVITED:
+            # No password to reset: setting one here would leave an account with no
+            # names or consents that still cannot log in. The invite link is the way in.
+            return
 
         raw_token = generate_url_token()
         token_hash = hash_token(raw_token)

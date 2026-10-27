@@ -9,6 +9,9 @@ class UserStatus(StrEnum):
     """Where the account is in onboarding. A later payment step adds a member here
     (and to SESSION_STATUSES in src/auth/service.py) — nothing else changes."""
 
+    # Created by a superadmin invite: no password, no names, no consents until the
+    # invitee accepts the emailed link (POST /auth/accept-invite).
+    INVITED = "invited"
     PENDING_VERIFICATION = "pending_verification"
     ACTIVE = "active"
 
@@ -19,11 +22,30 @@ def user_status(doc: dict[str, Any]) -> UserStatus:
     return UserStatus(doc.get("status", UserStatus.ACTIVE))
 
 
+def build_consents(
+    terms_version: str, privacy_version: str, accepted_at: datetime
+) -> dict[str, dict[str, Any]]:
+    """The `consents` sub-document written when an account is created (sign-up or
+    invite acceptance): both legal documents, stamped with the same acceptance time."""
+    return {
+        "terms": {"version": terms_version, "accepted_at": accepted_at},
+        "privacy": {"version": privacy_version, "accepted_at": accepted_at},
+    }
+
+
+def build_display_name(first_name: str, last_name: str) -> str:
+    """Every existing consumer reads display_name, so it is derived from the names
+    rather than making them all learn first/last."""
+    return f"{first_name} {last_name}"
+
+
 class User:
     def __init__(
         self,
         email: str,
-        password_hash: str,
+        # None only while the account is INVITED; every reader of the hash must treat
+        # absence as "wrong password" (see AuthService), never as a 500.
+        password_hash: str | None,
         display_name: str | None = None,
         first_name: str | None = None,
         last_name: str | None = None,
@@ -69,13 +91,14 @@ class User:
     def to_document(self) -> dict[str, Any]:
         doc: dict[str, Any] = {
             "email": self.email,
-            "password_hash": self.password_hash,
             "status": str(self.status),
             "credits": self.credits,
             "is_superadmin": self.is_superadmin,
             "created_at": self.created_at,
             "updated_at": self.updated_at,
         }
+        if self.password_hash is not None:
+            doc["password_hash"] = self.password_hash
         if self.id:
             doc["_id"] = ObjectId(self.id)
         if self.display_name is not None:
@@ -103,7 +126,7 @@ class User:
         return cls(
             id=str(doc["_id"]),
             email=doc["email"],
-            password_hash=doc["password_hash"],
+            password_hash=doc.get("password_hash"),
             display_name=doc.get("display_name"),
             first_name=doc.get("first_name"),
             last_name=doc.get("last_name"),

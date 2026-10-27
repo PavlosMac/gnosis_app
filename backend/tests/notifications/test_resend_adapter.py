@@ -127,3 +127,43 @@ async def test_failed_send_logs_no_recipient(adapter, monkeypatch):
 
     assert len(logs) == 1
     assert "user@example.com" not in str(logs)
+
+
+async def test_send_invite_builds_payload(adapter, monkeypatch):
+    captured: dict = {}
+
+    async def fake_send_async(params):
+        captured.update(params)
+        return {"id": "email_789"}
+
+    monkeypatch.setattr("resend.Emails.send_async", fake_send_async)
+    link = "https://tarotdivinations.com/accept-invite?token=abc123"
+    await adapter.send_invite(to="user@example.com", invite_link=link)
+
+    assert captured["to"] == "user@example.com"
+    assert captured["subject"] == "You're invited to Tarot Divinations"
+    assert link in captured["text"]
+    assert link in captured["html"]
+    assert "reply_to" not in captured
+
+
+async def test_send_admin_message_builds_payload_without_reply_to(adapter, monkeypatch):
+    captured: dict = {}
+
+    async def fake_send_async(params):
+        captured.update(params)
+        return {"id": "email_790"}
+
+    monkeypatch.setattr("resend.Emails.send_async", fake_send_async)
+    with capture_logs() as logs:
+        await adapter.send_admin_message(
+            to="user@example.com", subject="A word\nfrom us", message="Welcome <aboard>."
+        )
+
+    assert captured["to"] == "user@example.com"
+    assert captured["subject"] == "A word from us"
+    assert captured["text"] == "Welcome <aboard>."
+    assert "Welcome &lt;aboard&gt;." in captured["html"]
+    assert "reply_to" not in captured
+    assert "user@example.com" not in str(logs)
+    assert "Welcome" not in str(logs)

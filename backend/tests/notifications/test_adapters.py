@@ -98,3 +98,43 @@ async def test_console_adapter_reveals_links_only_when_asked():
     logged = str(logs)
     assert "secret-token" in logged
     assert "a@b.com" not in logged
+
+
+INVITE_LINK = "http://x/accept-invite?token=invite-secret"
+
+
+async def test_mock_adapter_records_invites():
+    adapter = MockEmailAdapter()
+    await adapter.send_invite(to="a@b.com", invite_link=INVITE_LINK)
+    assert adapter.sent_invites == [{"to": "a@b.com", "invite_link": INVITE_LINK}]
+
+
+async def test_mock_adapter_records_admin_messages():
+    adapter = MockEmailAdapter()
+    await adapter.send_admin_message(to="a@b.com", subject="Hello", message="A note.")
+    assert adapter.sent_admin_messages == [
+        {"to": "a@b.com", "subject": "Hello", "message": "A note."}
+    ]
+
+
+async def test_console_adapter_redacts_invite_and_admin_message():
+    adapter = ConsoleEmailAdapter()
+
+    with capture_logs() as logs:
+        await adapter.send_invite(to="a@b.com", invite_link=INVITE_LINK)
+        await adapter.send_admin_message(to="a@b.com", subject="Hello", message="A note.")
+
+    logged = str(logs)
+    assert len(logs) == 2
+    assert "invite-secret" not in logged
+    assert "a@b.com" not in logged
+    assert "A note." not in logged
+
+
+async def test_console_adapter_reveals_invite_link_only_when_asked():
+    adapter = ConsoleEmailAdapter(reveal_links=True)
+
+    with capture_logs() as logs:
+        await adapter.send_invite(to="a@b.com", invite_link=INVITE_LINK)
+
+    assert "invite-secret" in str(logs)

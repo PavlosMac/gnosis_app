@@ -1,7 +1,7 @@
 # User Accounting
 
 **Status:** Live. Describes the code as it stands (last audited 2026-09-21). The agreed
-but unbuilt follow-up (price source, monthly period, superadmin ledger UI) is the plan
+but unbuilt follow-up (admin-set model and prices, monthly period, superadmin ledger UI) is the plan
 [`../../plans/2026-09-21-user-accounting-ledger.md`](../../plans/2026-09-21-user-accounting-ledger.md).
 **Read this before touching anything that prices, reserves, debits or displays a
 user's LLM spend**, and update it in the same change.

@@ -5,7 +5,7 @@ from typing import Any
 from bson import ObjectId
 from pymongo import ReturnDocument
 
-from src.auth.models import UserStatus
+from src.auth.models import UserStatus, build_display_name
 from src.database.base_repository import BaseReadRepository, BaseWriteRepository
 from src.database.collections.constants import (
     EMAIL_VERIFICATION_TOKENS_COLLECTION,
@@ -94,14 +94,58 @@ class AuthWriteRepository(BaseWriteRepository):
 
     async def mark_email_verified(self, user_id: str, verified_at: datetime) -> bool:
         """Flip a pending account to active and take it off the purge clock. Returns
-        False when the user no longer exists (purged between send and confirm)."""
+        False when the user no longer exists (purged between send and confirm) or is not
+        pending — verification tokens share a collection with invite tokens, and an
+        invited account must only ever be activated by accepting its invite. Also what
+        makes a verification link single-use: of two concurrent confirms, one matches."""
         result = await self._collection.update_one(
-            {"_id": ObjectId(user_id)},
+            {"_id": ObjectId(user_id), "status": str(UserStatus.PENDING_VERIFICATION)},
             {
                 "$set": {
                     "status": str(UserStatus.ACTIVE),
                     "email_verified_at": verified_at,
                     "updated_at": verified_at,
+                },
+                "$unset": {"verification_deadline_at": ""},
+            },
+        )
+        return result.matched_count > 0
+
+    async def extend_invite(self, user_id: str, deadline: datetime, now: datetime) -> bool:
+        """Re-invite: move the purge clock forward, but only while the account is still
+        invited. Guarded on status so a resend racing an accept cannot put a purge
+        deadline back on an active user. Returns False when it no longer matches."""
+        result = await self._collection.update_one(
+            {"_id": ObjectId(user_id), "status": str(UserStatus.INVITED)},
+            {"$set": {"verification_deadline_at": deadline, "updated_at": now}},
+        )
+        return result.matched_count > 0
+
+    async def activate_invited(
+        self,
+        user_id: str,
+        *,
+        password_hash: str,
+        first_name: str,
+        last_name: str,
+        consents: dict[str, Any],
+        activated_at: datetime,
+    ) -> bool:
+        """Accepting an invite: the account gets everything registration would have
+        given it and goes straight to active (opening the emailed link proved the
+        address). Guarded on status so two concurrent accepts cannot both win."""
+        result = await self._collection.update_one(
+            {"_id": ObjectId(user_id), "status": str(UserStatus.INVITED)},
+            {
+                "$set": {
+                    "password_hash": password_hash,
+                    "first_name": first_name,
+                    "last_name": last_name,
+                    "display_name": build_display_name(first_name, last_name),
+                    "consents": consents,
+                    "status": str(UserStatus.ACTIVE),
+                    "email_verified_at": activated_at,
+                    "updated_at": activated_at,
                 },
                 "$unset": {"verification_deadline_at": ""},
             },

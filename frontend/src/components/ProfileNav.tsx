@@ -33,6 +33,11 @@ export const ProfileNavMenu = ({ user, onNavigate }: ProfileNavMenuProps) => (
         <Link href="/guide" onClick={onNavigate} className={MENU_LINK_CLASS}>
           Guide
         </Link>
+        {user.isSuperadmin && (
+          <Link href="/superadmin" onClick={onNavigate} className={MENU_LINK_CLASS}>
+            Superadmin
+          </Link>
+        )}
         <form action={logout}>
           <button
             type="submit"

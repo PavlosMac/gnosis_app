@@ -22,11 +22,14 @@ class DeleteUserCommand(BaseCommand):
 
 
 class DeleteUserHandler(CommandHandler[DeleteUserCommand, None]):
-    """Self-service erasure: removes the account and everything that references it.
+    """Erasure: removes the account and everything that references it.
 
-    The collection list mirrors docs/reference/database/model-references.md — a new collection
-    that stores a user_id must be added here. The caller (DELETE /auth/me) has already
-    re-verified the password; this handler only deletes.
+    The single deletion path — DELETE /auth/me (self-service, password re-verified by
+    the router) and DELETE /users/{id} (superadmin, via AdminDeleteUserHandler) both end
+    here, so a step that must run before an account disappears (a future subscription
+    cancellation, for instance) is added here once. The collection list mirrors
+    docs/reference/database/model-references.md — a new collection that stores a user_id
+    must be added here. This handler only deletes; authorisation is the caller's.
     """
 
     def __init__(

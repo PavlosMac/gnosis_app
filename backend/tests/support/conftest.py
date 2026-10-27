@@ -35,5 +35,11 @@ class FailingEmailAdapter(EmailPort):
     ) -> None:
         raise EmailDeliveryError()
 
+    async def send_invite(self, to: str, invite_link: str) -> None:
+        raise EmailDeliveryError()
+
+    async def send_admin_message(self, to: str, subject: str, message: str) -> None:
+        raise EmailDeliveryError()
+
     async def close(self) -> None:
         return None

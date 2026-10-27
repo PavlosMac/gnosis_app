@@ -66,6 +66,24 @@ export const registerSchema = z
     path: ["password"],
   });
 
+// The invite's address is fixed by the token on the backend, so the form has no
+// email field; the token is the credential (like reset-password).
+export const acceptInviteSchema = z
+  .object({
+    token: z.string().min(1, "Missing invitation token"),
+    firstName: nameField("First name"),
+    lastName: nameField("Last name"),
+    password: passwordField,
+    confirmPassword: z.string(),
+    acceptTerms: tickedBox("You must accept the Terms and Conditions"),
+    acceptPrivacy: tickedBox("You must confirm you have read the Privacy Policy"),
+  })
+  .refine(passwordsMatch, PASSWORDS_MATCH)
+  .refine((data) => !containsPersonalInfo(data.password, data), {
+    message: PERSONAL_INFO_MESSAGE,
+    path: ["password"],
+  });
+
 export const forgotPasswordSchema = z.object({
   email: emailField,
 });
@@ -97,6 +115,7 @@ export const deleteAccountSchema = z.object({
 
 export type LoginInput = z.infer<typeof loginSchema>;
 export type RegisterInput = z.infer<typeof registerSchema>;
+export type AcceptInviteInput = z.infer<typeof acceptInviteSchema>;
 export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;
 export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
 export type VerifyEmailInput = z.infer<typeof verifyEmailSchema>;

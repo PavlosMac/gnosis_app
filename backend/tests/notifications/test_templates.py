@@ -113,3 +113,50 @@ def test_email_verification_html_contains_link_twice_and_both_periods():
     assert html_body.count(VERIFY_LINK) == 2
     assert "48 hours" in html_body
     assert "30 days" in html_body
+
+
+INVITE_LINK = "https://tarotdivinations.com/accept-invite?token=abc123"
+
+
+def test_invite_subject_names_the_product():
+    from src.notifications.templates import invite_subject
+
+    assert invite_subject() == "You're invited to Tarot Divinations"
+
+
+def test_invite_text_contains_link_and_ttl():
+    from src.notifications.templates import invite_text
+
+    text = invite_text(INVITE_LINK, ttl_days=7)
+    assert INVITE_LINK in text
+    assert "7 days" in text
+    assert "<" not in text
+
+
+def test_invite_html_contains_link_twice_and_ttl():
+    from src.notifications.templates import invite_html
+
+    html_body = invite_html(INVITE_LINK, ttl_days=14)
+    assert html_body.count(INVITE_LINK) == 2
+    assert "14 days" in html_body
+
+
+def test_admin_message_subject_collapses_line_breaks():
+    from src.notifications.templates import admin_message_subject
+
+    assert admin_message_subject("first\r\nsecond   third") == "first second third"
+
+
+def test_admin_message_text_is_the_message():
+    from src.notifications.templates import admin_message_text
+
+    assert admin_message_text("Line one.\n\nLine two.") == "Line one.\n\nLine two."
+
+
+def test_admin_message_html_escapes_and_keeps_line_breaks():
+    from src.notifications.templates import admin_message_html
+
+    html_body = admin_message_html("<b>hi</b>\nsecond line & more")
+    assert "<b>hi</b>" not in html_body
+    assert "&lt;b&gt;hi&lt;/b&gt;\nsecond line &amp; more" in html_body
+    assert "white-space:pre-wrap" in html_body

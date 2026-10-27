@@ -16,14 +16,14 @@ Source: `src/auth/models.py`
 |--------------------|-----------------|-----------------------------------------|
 | _id                | ObjectId        | PK                                      |
 | email              | str             | unique; stored lower-cased (every writer folds it, `find_by_email` folds the query) |
-| password_hash      | str             |                                         |
+| password_hash      | str             | optional only while `status` is `invited` (set when the invite is accepted). Every reader treats absence as "wrong password" |
 | display_name       | str             | optional; derived as `"First Last"` at registration |
 | first_name         | str             | optional (absent on accounts created before 2026-10-04) |
 | last_name          | str             | optional (as above)                     |
 | consents           | sub-doc         | optional; `{terms: {version, accepted_at}, privacy: {version, accepted_at}}`. `version` is the frontend's dated MDX filename, stored unvalidated. Readers treat absent as `{}` |
-| status             | str             | `pending_verification` \| `active`. **Absent means active** (no backfill) — `user_status()` in `src/auth/models.py` |
+| status             | str             | `invited` \| `pending_verification` \| `active`. **Absent means active** (no backfill) — `user_status()` in `src/auth/models.py`. `invited` = superadmin invite not yet accepted: no password, names or consents |
 | email_verified_at  | datetime        | optional; set when the emailed link is confirmed |
-| verification_deadline_at | datetime  | optional; only on pending accounts. Purge clock for the TTL index of migration 014; moved forward by each resend, removed on verification |
+| verification_deadline_at | datetime  | optional; only on pending and invited accounts. Purge clock for the TTL index of migrations 014/015; moved forward by each resend or re-invite, removed on verification or acceptance |
 | credits            | int             | default 0                               |
 | is_superadmin      | bool            | default false                           |
 | stripe_customer_id | str             | optional (reserved; payments not built) |
@@ -125,7 +125,10 @@ Source: `src/auth/repository.py` (`EmailVerificationTokenRepository`; it and
 `PasswordResetTokenRepository` are thin subclasses of `OneTimeTokenRepository`). Same
 shape and lifecycle as `password_reset_tokens`: created by `POST /auth/register` and by
 the resend background task, raw token only in the emailed link, consumed atomically,
-400-vs-410 decided by the handler. Confirming deletes all of the user's rows.
+400-vs-410 decided by the handler. Confirming deletes all of the user's rows. Superadmin
+invites (`POST /users/invite`) store their token here too, with `expires_at` =
+`Settings.invite_ttl_days` after issue; the accept handler tells the two apart by the
+user's `status`.
 
 | Field      | Type     | Notes                                                   |
 |------------|----------|---------------------------------------------------------|
@@ -141,7 +144,7 @@ is its unprefixed subclass). A generic per-key request throttle shared by every 
 one document per attempt. Keys: the case-folded email for forgot-password,
 `support:<user_id>` for the support relay, `verify:<email>` for resend-verification,
 `login:<ip>:<email>` for login, `login:delete:<user_id>` for the delete-account password
-check, `register:<ip>` for registration. A handler records the
+check, `register:<ip>` for registration, `invite:<ip>` for the public invite lookup and accept. A handler records the
 attempt first, then counts documents with that key inside the window
 (`Settings.password_reset_rate_limit_window_seconds`, 3600s, max 5), so concurrent bursts can
 only over-throttle, never under-throttle.
@@ -170,7 +173,7 @@ password_reset_attempts is keyed by email, user id or client IP (with a limiter 
 
 ## Indexes
 
-Owned by migrations. Current state after 001–014:
+Owned by migrations. Current state after 001–015:
 
 | Collection      | Index                                        | Options            | Migration |
 |-----------------|----------------------------------------------|--------------------|-----------|
@@ -195,7 +198,7 @@ Owned by migrations. Current state after 001–014:
 | email_verification_tokens | `token_hash`                       | unique             | 013       |
 | email_verification_tokens | `user_id`                          |                    | 013       |
 | email_verification_tokens | `expires_at`                       | TTL (0s)           | 013       |
-| users           | `verification_deadline_at` (`pending_users_ttl`) | TTL (0s), partial: `status = "pending_verification"` | 014 |
+| users           | `verification_deadline_at` (`pending_users_ttl`) | TTL (0s), partial: `status in ["pending_verification", "invited"]` | 015 (superseded 014's `status = "pending_verification"`) |
 | _migrations     | `version`                                    | unique             | runner    |
 
 A tag filter with a date sort (`tags=…&sort=created_at`) is served entirely by the 012

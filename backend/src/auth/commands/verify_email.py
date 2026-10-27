@@ -23,7 +23,9 @@ class VerifyEmailHandler(CommandHandler[VerifyEmailCommand, None]):
         self._verification_token_repo = verification_token_repo
 
     async def handle(self, command: VerifyEmailCommand) -> None:
-        doc = await self._verification_token_repo.consume(hash_token(command.token))
+        # Peek, not consume: the token is retired by the status flip below (and deleted
+        # after it), so an invite token posted here cannot burn the invite.
+        doc = await self._verification_token_repo.peek(hash_token(command.token))
         if doc is None:
             raise InvalidVerificationTokenError()
 
@@ -33,8 +35,9 @@ class VerifyEmailHandler(CommandHandler[VerifyEmailCommand, None]):
 
         user_id: str = doc["user_id"]
         if not await self._write_repo.mark_email_verified(user_id, now):
-            # The account was purged (never-verified TTL) or deleted. Same answer as
-            # an unknown token — don't reveal which case occurred.
+            # Purged (never-verified TTL), deleted, already confirmed, or not a sign-up
+            # account at all (an invite token). Same answer as an unknown token —
+            # don't reveal which case occurred.
             raise InvalidVerificationTokenError()
         # Used and unused alike: nothing about a confirmed address needs to linger.
         await self._verification_token_repo.delete_all_for_user(user_id)

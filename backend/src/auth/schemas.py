@@ -99,6 +99,22 @@ class ResendVerificationResponse(AppSchema):
     detail: str = "If this account is awaiting confirmation, a new link has been sent."
 
 
+class InviteLookupResponse(AppSchema):
+    email: str
+
+
+class AcceptInviteRequest(AppSchema):
+    token: str = Field(min_length=1)
+    password: Password = Field(min_length=MIN_PASSWORD_LENGTH, max_length=MAX_PASSWORD_LENGTH)
+    first_name: PersonName
+    last_name: PersonName
+    consents: ConsentVersions
+
+
+class AcceptInviteResponse(AppSchema):
+    detail: str = "Your account is ready. You can now sign in."
+
+
 class LoginRequest(AppSchema):
     email: NormalizedEmail
     # Capped like a new password so a giant body never reaches the hasher, but with no
@@ -130,16 +146,6 @@ class UserResponse(AppSchema):
     # "active" when the stored document has no status (pre-verification accounts).
     status: UserStatus = UserStatus.ACTIVE
     email_verified_at: datetime | None = None
-    credits: int = 0
-    is_superadmin: bool = False
-    created_at: datetime
-    updated_at: datetime
-
-
-class AdminUserResponse(AppSchema):
-    id: PyObjectId = Field(alias="_id")
-    email: str
-    display_name: str | None = None
     credits: int = 0
     is_superadmin: bool = False
     created_at: datetime

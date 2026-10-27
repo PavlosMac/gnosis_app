@@ -1,7 +1,6 @@
 from datetime import UTC, datetime, timedelta
-from typing import Any
 
-from src.auth.models import User, UserStatus
+from src.auth.models import User, UserStatus, build_consents, build_display_name
 from src.auth.repository import (
     AuthReadRepository,
     AuthWriteRepository,
@@ -56,20 +55,14 @@ class RegisterUserHandler(CommandHandler[RegisterUserCommand, str]):
             command.password, email=email, first_name=first_name, last_name=last_name
         )
         now = datetime.now(UTC)
-        consents: dict[str, dict[str, Any]] = {
-            "terms": {"version": command.terms_version, "accepted_at": now},
-            "privacy": {"version": command.privacy_version, "accepted_at": now},
-        }
 
         user = User(
             email=email,
             password_hash=hash_password(command.password),
-            # Every existing consumer reads display_name, so derive it rather than
-            # make them all learn first/last.
-            display_name=f"{first_name} {last_name}",
+            display_name=build_display_name(first_name, last_name),
             first_name=first_name,
             last_name=last_name,
-            consents=consents,
+            consents=build_consents(command.terms_version, command.privacy_version, now),
             # No session until the emailed link is confirmed (hard gate).
             status=UserStatus.PENDING_VERIFICATION,
             verification_deadline_at=now + timedelta(days=settings.pending_account_ttl_days),

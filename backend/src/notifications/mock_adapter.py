@@ -9,6 +9,8 @@ class MockEmailAdapter(EmailPort):
         self.sent_password_resets: list[dict[str, str]] = []
         self.sent_email_verifications: list[dict[str, str]] = []
         self.sent_support_requests: list[dict[str, Any]] = []
+        self.sent_invites: list[dict[str, str]] = []
+        self.sent_admin_messages: list[dict[str, str]] = []
 
     async def send_password_reset(self, to: str, reset_link: str) -> None:
         self.sent_password_resets.append({"to": to, "reset_link": reset_link})
@@ -35,6 +37,12 @@ class MockEmailAdapter(EmailPort):
                 "submitted_at": submitted_at,
             }
         )
+
+    async def send_invite(self, to: str, invite_link: str) -> None:
+        self.sent_invites.append({"to": to, "invite_link": invite_link})
+
+    async def send_admin_message(self, to: str, subject: str, message: str) -> None:
+        self.sent_admin_messages.append({"to": to, "subject": subject, "message": message})
 
     async def close(self) -> None:
         return None

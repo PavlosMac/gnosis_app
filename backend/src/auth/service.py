@@ -22,6 +22,7 @@ from src.core.security import (
     create_access_token,
     create_refresh_token,
     decode_token,
+    ensure_utc,
     generate_url_token,
     hash_token,
     verify_password,
@@ -98,6 +99,21 @@ class TooManyVerificationRequestsError(AppError):
         )
 
 
+class InvalidInviteTokenError(AppError):
+    def __init__(self) -> None:
+        super().__init__(status_code=400, detail="Invalid or already used invitation link")
+
+
+class ExpiredInviteTokenError(AppError):
+    def __init__(self) -> None:
+        super().__init__(status_code=410, detail="Invitation link has expired")
+
+
+class TooManyInviteRequestsError(AppError):
+    def __init__(self) -> None:
+        super().__init__(status_code=429, detail="Too many requests, please try again later")
+
+
 class InvalidPasswordError(ForbiddenError):
     """Re-authentication for a destructive action failed. 403, not 401: the caller is
     authenticated, and clients treat a 401 as an expired session to refresh and retry."""
@@ -152,6 +168,46 @@ async def issue_verification_email(
         # Log and carry on: the account already exists, so a 5xx would leave it
         # half-created and 409 on retry. Resend is the recovery path.
         logger.error("verification email delivery failed", user_id=user_id, exc_info=True)
+
+
+async def issue_invite_email(
+    *,
+    user_id: str,
+    email: str,
+    token_repo: OneTimeTokenRepository,
+    email_port: EmailPort,
+) -> None:
+    """Rotate the invited account's token and mail the link. Unlike
+    issue_verification_email this lets EmailDeliveryError propagate: the superadmin is
+    watching the response and resends from the UI, and the account stays in place."""
+    raw_token = generate_url_token()
+    ttl = timedelta(days=app_settings.invite_ttl_days)
+    await token_repo.invalidate_all_for_user(user_id)
+    await token_repo.store(hash_token(raw_token), user_id, expires_at=datetime.now(UTC) + ttl)
+
+    invite_link = f"{app_settings.frontend_base_url}/accept-invite?token={raw_token}"
+    await email_port.send_invite(to=email, invite_link=invite_link)
+
+
+async def load_invite(
+    token: str,
+    *,
+    token_repo: OneTimeTokenRepository,
+    read_repo: AuthReadRepository,
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    """The unused token document and its still-invited user, or the 400/410 the
+    invitee should see. Reads only — the caller decides whether to consume."""
+    token_doc = await token_repo.peek(hash_token(token))
+    if token_doc is None:
+        raise InvalidInviteTokenError()
+    if ensure_utc(token_doc["expires_at"]) < datetime.now(UTC):
+        raise ExpiredInviteTokenError()
+    # Verification tokens share the collection: a sign-up confirmation link must not
+    # open the invite form, and a purged or already-accepted account is "invalid".
+    user_doc = await read_repo.find_by_id(token_doc["user_id"])
+    if user_doc is None or user_status(user_doc) is not UserStatus.INVITED:
+        raise InvalidInviteTokenError()
+    return token_doc, user_doc
 
 
 def effective_budget_usd(user: dict[str, Any]) -> float:
@@ -224,7 +280,9 @@ class AuthService:
             raise InvalidCredentialsError()
 
         user = User.from_document(doc)
-        if not verify_password(password, user.password_hash):
+        # An invited account has no hash yet; same answer as a wrong password so the
+        # response does not say which it was.
+        if user.password_hash is None or not verify_password(password, user.password_hash):
             raise InvalidCredentialsError()
 
         # After the password check: only someone who holds the password learns that
@@ -247,7 +305,8 @@ class AuthService:
         doc = await self._read_repo.find_by_id(user_id)
         if doc is None:
             raise UnauthorizedError()
-        if not verify_password(password, doc["password_hash"]):
+        password_hash = doc.get("password_hash")
+        if password_hash is None or not verify_password(password, password_hash):
             raise InvalidPasswordError()
 
     async def refresh_tokens(self, refresh_token: str) -> TokenResponse:
