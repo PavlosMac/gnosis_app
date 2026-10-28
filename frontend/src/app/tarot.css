@@ -455,3 +455,35 @@
   .tree-node__ring { transition: none; }
   .tree-popup { animation: none; }
 }
+
+/* --- Oracle orrery: interpretation loading state ----------------------------- */
+/* Plain CSS (not Tailwind utilities) so a long-running dev server can't miss it.
+   Each body sets --orbit-radius / --orbit-duration / --orbit-direction inline; its
+   inline transform is the resting pose that shows when the animation is disabled. */
+
+@keyframes orreryOrbit {
+  from {
+    transform: rotate(0deg) translateX(var(--orbit-radius)) rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg) translateX(var(--orbit-radius)) rotate(-360deg);
+  }
+}
+
+.orrery-body {
+  animation: orreryOrbit var(--orbit-duration) linear infinite;
+  animation-direction: var(--orbit-direction, normal);
+}
+
+.orrery-caption {
+  animation: fadeIn 0.6s ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .orrery-body,
+  .orrery-caption,
+  .oracle-orrery .animate-twinkle,
+  .oracle-orrery .animate-orb-pulse {
+    animation: none !important;
+  }
+}
