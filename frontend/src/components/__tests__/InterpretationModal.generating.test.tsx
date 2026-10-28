@@ -35,17 +35,18 @@ const render = (autoGenerate: boolean) =>
   );
 
 describe("InterpretationModal generating state", () => {
-  it("shows the orrery instead of a spinner while the oracle works", () => {
+  it("shows the looping card shuffle instead of a spinner while the oracle works", () => {
     // autoGenerate opens straight in the generating state (effects do not run here)
     const html = render(true);
-    expect(html).toContain("oracle-orrery");
+    expect(html.match(/shuffle-card--loop/g)?.length).toBe(10);
     expect(html).toContain("The Oracle consults the stars...");
     expect(html).not.toContain("animate-spin");
+    expect(html).not.toContain("shuffle-container"); // no 4.5 s fade-out here
   });
 
-  it("does not render the orrery while waiting for confirmation", () => {
+  it("does not render the shuffle while waiting for confirmation", () => {
     const html = render(false);
     expect(html).toContain("Consult the Oracle");
-    expect(html).not.toContain("oracle-orrery");
+    expect(html).not.toContain("shuffle-card");
   });
 });

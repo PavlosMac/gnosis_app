@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback, useRef, useTransition } from "
 import Link from "next/link";
 import SanctumModal from "@/components/SanctumModal";
 import InterpretationDisplay from "@/components/InterpretationDisplay";
-import OracleOrrery from "@/components/OracleOrrery";
+import ShuffleOrbit from "@/components/ShuffleOrbit";
 import { generateInterpretation } from "@/app/user/interpret/actions";
 import { loginHrefFor } from "@/lib/auth-return-path";
 import type { CardVisuals } from "@/components/SpreadCards";
@@ -166,7 +166,20 @@ const InterpretationModal: React.FC<InterpretationModalProps> = React.memo(({
   return (
     <SanctumModal title="Interpretation" subtitle={subtitle} size="lg" onClose={handleClose}>
       {/* GENERATING STATE */}
-      {modalState === "generating" && <OracleOrrery />}
+      {modalState === "generating" && (
+        <div role="status" className="flex flex-col items-center py-8">
+          <ShuffleOrbit loop />
+          <p className="mt-8 text-[#d4af37]/80 text-lg tracking-wider" style={CINZEL}>
+            The Oracle consults the stars...
+          </p>
+          <p
+            className="text-sm text-[#e6d5b8]/60 mt-2"
+            style={{ fontFamily: "'Crimson Pro', serif" }}
+          >
+            A large reading can take a little while.
+          </p>
+        </div>
+      )}
 
       {/* ERROR STATE (generate failed) */}
       {modalState === "error" && (

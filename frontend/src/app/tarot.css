@@ -156,28 +156,43 @@
   animation: pulse-slow 3s ease-in-out infinite;
 }
 
-/* Shuffle Animation */
+/* Shuffle Animation — ShuffleOrbit sets --orbit-radius on each card; the keyframes read it
+   so the inline placement and the animation can't drift apart. */
 @keyframes clockwiseShuffle {
   0% {
-    transform: rotate(0deg) translateX(80px) rotate(0deg);
+    transform: rotate(0deg) translateX(var(--orbit-radius)) rotate(0deg);
   }
   100% {
-    transform: rotate(360deg) translateX(80px) rotate(-360deg);
+    transform: rotate(360deg) translateX(var(--orbit-radius)) rotate(-360deg);
   }
 }
 
 @keyframes shuffleFadeIn {
   0% {
     opacity: 0;
-    transform: scale(0.5) rotate(0deg) translateX(80px);
+    transform: scale(0.5) rotate(0deg) translateX(var(--orbit-radius));
   }
   20% {
     opacity: 1;
-    transform: scale(1) rotate(0deg) translateX(80px);
+    transform: scale(1) rotate(0deg) translateX(var(--orbit-radius));
   }
   100% {
     opacity: 1;
-    transform: scale(1) rotate(360deg) translateX(80px);
+    transform: scale(1) rotate(360deg) translateX(var(--orbit-radius));
+  }
+}
+
+/* Loop only: opacity for the repeating cycle, so a card fades out at the end of a pass
+   instead of popping back to its start. It must match shuffleFadeIn's 20% fade-in. */
+@keyframes shuffleCycleFade {
+  0% {
+    opacity: 0;
+  }
+  20%, 88% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
   }
 }
 
@@ -206,12 +221,29 @@
   animation: shuffleFadeIn 5s ease-in-out forwards;
 }
 
+/* The interpretation wait: the original shuffle, repeated. Every card has the same period,
+   so the inline stagger (animation-delay) keeps the chase going in every cycle. `backwards`
+   keeps a card hidden until its first turn. */
+.shuffle-card--loop {
+  animation: shuffleFadeIn 5s ease-in-out infinite backwards,
+    shuffleCycleFade 5s ease-in-out infinite backwards;
+}
+
 .shuffle-container {
   animation: shuffleFadeOut 0.5s ease-out 4.5s forwards;
 }
 
 .shuffle-center-symbol {
   animation: centerPulse 1s ease-in-out infinite;
+}
+
+/* Reduced motion: no orbit, no pulse — the cards rest as a ring at their inline slots */
+@media (prefers-reduced-motion: reduce) {
+  .shuffle-card,
+  .shuffle-card--loop,
+  .shuffle-center-symbol {
+    animation: none;
+  }
 }
 
 /* Card sizing — mobile-first, desktop override */
@@ -454,36 +486,4 @@
 @media (prefers-reduced-motion: reduce) {
   .tree-node__ring { transition: none; }
   .tree-popup { animation: none; }
-}
-
-/* --- Oracle orrery: interpretation loading state ----------------------------- */
-/* Plain CSS (not Tailwind utilities) so a long-running dev server can't miss it.
-   Each body sets --orbit-radius / --orbit-duration / --orbit-direction inline; its
-   inline transform is the resting pose that shows when the animation is disabled. */
-
-@keyframes orreryOrbit {
-  from {
-    transform: rotate(0deg) translateX(var(--orbit-radius)) rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg) translateX(var(--orbit-radius)) rotate(-360deg);
-  }
-}
-
-.orrery-body {
-  animation: orreryOrbit var(--orbit-duration) linear infinite;
-  animation-direction: var(--orbit-direction, normal);
-}
-
-.orrery-caption {
-  animation: fadeIn 0.6s ease-out both;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .orrery-body,
-  .orrery-caption,
-  .oracle-orrery .animate-twinkle,
-  .oracle-orrery .animate-orb-pulse {
-    animation: none !important;
-  }
 }
