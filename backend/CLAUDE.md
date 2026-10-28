@@ -20,6 +20,8 @@ Tarot reading API backend with user signup and AI-powered interpretations. Built
 make install        # uv sync
 make dev            # native fallback: uvicorn --reload on :8000, needs compose Mongo up (localhost:27019). Normal path is root `make dev`
 make test           # pytest -v
+make test-load      # the `load` concurrency tests (excluded from `make test`), with a latency summary
+make load-live      # 100 real requests against a spawned uvicorn + compose Mongo + fake OpenAI (scripts/load_interpretations.py)
 make lint           # ruff check src/ tests/ scripts/
 make typecheck      # pyright src/ scripts/
 make format         # ruff format + ruff check --fix
@@ -166,6 +168,7 @@ Before opening a PR, if the diff touches any of these:
 - Unit tests: handler-level (`test_commands.py`) | Integration: HTTP-level (`test_router.py`)
 - Test names: `test_<action>_<condition>`
 - All fixtures in `tests/conftest.py`
+- `tests/load/` is marked `load` and deselected by default (`addopts` in `pyproject.toml`); `make test-load` runs it
 
 ## Key Files
 Read these before searching. Grep/Glob for anything not listed here.

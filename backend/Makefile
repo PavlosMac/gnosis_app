@@ -1,4 +1,4 @@
-.PHONY: dev test lint format typecheck install docker-up docker-down migrate docker-prod-up docker-prod-down prompt-doc prompt-doc-check docs-check
+.PHONY: dev test test-load load-live lint format typecheck install docker-up docker-down migrate docker-prod-up docker-prod-down prompt-doc prompt-doc-check docs-check
 
 install:
 	uv sync
@@ -8,6 +8,12 @@ dev:
 
 test:
 	uv run pytest -v
+
+test-load:
+	uv run pytest -m load -v tests/load
+
+load-live:
+	uv run python -m scripts.load_interpretations --requests 100 --latency 2.0
 
 lint:
 	uv run ruff check src/ tests/ scripts/

@@ -148,6 +148,14 @@ never be the reason a user can't get their reading.
 - **One path bypasses this doc entirely:** `POST /api/v1/llm/interpret`
   (superadmin-only, `src/llm/router.py`) calls the adapter directly — no reservation,
   no ledger, no persistence. Spend there shows up only in the adapter's usage logs.
+- **The in-flight cap is per process.** `OpenAIAdapter`'s semaphore
+  (`openai_max_concurrent`, default 10) and its acquire timeout
+  (`openai_acquire_timeout_seconds`, 30 s → **503**) live in one uvicorn worker; prod
+  runs exactly one (`backend/Dockerfile`), so that is the real ceiling. Under a burst,
+  the reservation is taken *before* the semaphore is acquired, so a 503 releases it —
+  a refused user ends at `$0`. Measured on 2026-10-28 with the load tests below: 100
+  users at a 2 s provider latency complete in ~21 s (10 batches); with cap 5 and a 3 s
+  acquire timeout, 10 succeed and 90 get 503.
 
 ## Quick file map
 
@@ -170,3 +178,11 @@ never be the reason a user can't get their reading.
   the gate wired into the full generate flow (`# --- Budget gate ---`), including the
   persist-failure, settle-failure, and concurrency tests.
 - `tests/llm/test_pricing.py` — price-table resolution and the worst-case clamp.
+- `tests/load/test_interpretation_load.py` — 100 concurrent requests through the real
+  route, auth, gate and `OpenAIAdapter` (only the provider client is a sleeping fake):
+  all-succeed-under-the-cap, saturation → 503 with reservations released, one user
+  hitting the budget → 402, and a 100-way idempotent storm on one reading. Marked
+  `load`, excluded from `make test`; run `make test-load` for the latency summary.
+- `scripts/load_interpretations.py` — the same against a real uvicorn, the compose
+  Mongo and the real SDK pointed at `scripts/fake_openai.py`; `make load-live`, or see
+  the script's docstring for the saturation and single-user variants.
