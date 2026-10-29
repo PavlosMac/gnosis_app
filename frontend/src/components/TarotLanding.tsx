@@ -216,9 +216,9 @@ const TarotLanding: React.FC = () => {
 
               {/* Grand enter button */}
               <div className="inline-flex items-center gap-3 px-8 py-4 rounded-lg
-                              border border-[#d4af37]/50 bg-gradient-to-r from-[#d4af37]/15 via-[#d4af37]/10 to-[#d4af37]/15
+                              border border-[#d4af37]/50 bg-[#0a0015]/40 bg-gradient-to-r from-[#d4af37]/15 via-[#d4af37]/10 to-[#d4af37]/15
                               group-hover:border-[#d4af37] group-hover:bg-[#d4af37]/25
-                              transition-all duration-500 backdrop-blur-sm">
+                              transition-all duration-500">
                 <span
                   className="text-base text-[#d4af37] tracking-widest uppercase
                              group-hover:text-[#ffd700] transition-colors"

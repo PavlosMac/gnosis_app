@@ -43,7 +43,7 @@ const InterpretationSection: React.FC<InterpretationSectionProps> = ({
     <>
       {interpretation ? (
         <>
-          <div className="rounded-2xl border border-[#d4af37]/20 bg-gradient-to-b from-[#1a0033]/80 to-[#0a0015]/80 backdrop-blur-sm p-5 sm:p-8">
+          <div className="rounded-2xl border border-[#d4af37]/20 bg-gradient-to-b from-[#1a0033]/90 to-[#0a0015]/90 p-5 sm:p-8">
             <InterpretationDisplay
               question={question}
               narrative={interpretation.reading}
@@ -63,7 +63,7 @@ const InterpretationSection: React.FC<InterpretationSectionProps> = ({
           </div>
         </>
       ) : (
-        <div className="rounded-2xl border border-[#d4af37]/20 bg-gradient-to-b from-[#1a0033]/80 to-[#0a0015]/80 backdrop-blur-sm p-5 sm:p-8">
+        <div className="rounded-2xl border border-[#d4af37]/20 bg-gradient-to-b from-[#1a0033]/90 to-[#0a0015]/90 p-5 sm:p-8">
           <SpreadCards cardVisuals={cardVisuals} />
           <div className="mt-8 flex justify-center">
             <button

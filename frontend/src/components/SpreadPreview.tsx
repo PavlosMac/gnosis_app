@@ -177,7 +177,7 @@ const SpreadPreview: React.FC<SpreadPreviewProps> = ({ reading, pillarLabels }) 
     // Keyed by spread so the panel re-mounts (and re-animates) on selection change
     <div
       key={reading.name}
-      className="animate-fadeIn relative rounded-xl border-2 border-[#d4af37]/30 backdrop-blur-sm shadow-2xl
+      className="animate-fadeIn relative rounded-xl border-2 border-[#d4af37]/30 shadow-2xl
                  w-full max-w-xs h-full px-4 py-5"
       style={{ background: "linear-gradient(135deg, rgba(26,0,51,0.95), rgba(45,27,78,0.95))" }}
     >

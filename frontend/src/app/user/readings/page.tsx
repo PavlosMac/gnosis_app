@@ -176,7 +176,7 @@ const ReadingsPage = async ({
                   key={reading._id}
                   href={readingHref(reading._id, ctx)}
                   className="group block rounded-xl border border-[#d4af37]/15 bg-gradient-to-b from-[#1a0033]/80 to-[#0a0015]/80
-                             backdrop-blur-sm p-5 sm:p-6 transition-all duration-300
+                             p-5 sm:p-6 transition-all duration-300
                              hover:border-[#d4af37]/40 hover:shadow-lg hover:shadow-[#d4af37]/5"
                 >
                   {/* Top row: spread type + date */}

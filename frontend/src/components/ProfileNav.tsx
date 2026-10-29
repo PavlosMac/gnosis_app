@@ -18,7 +18,7 @@ interface ProfileNavMenuProps {
 /** The dropdown's contents, split out so they can be rendered (and tested)
     without the open/closed state of the button */
 export const ProfileNavMenu = ({ user, onNavigate }: ProfileNavMenuProps) => (
-  <div className="absolute top-12 right-0 min-w-[180px] bg-[#0a0015]/95 backdrop-blur-sm border border-[#d4af37]/20 rounded-lg shadow-xl py-2 font-[Cinzel,serif]">
+  <div className="absolute top-12 right-0 min-w-[180px] bg-[#0a0015]/95 border border-[#d4af37]/20 rounded-lg shadow-xl py-2 font-[Cinzel,serif]">
     {user ? (
       <>
         <div className="px-4 py-2 text-[#d4af37]/50 text-xs truncate border-b border-[#d4af37]/10 mb-1">

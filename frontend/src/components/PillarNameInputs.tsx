@@ -99,7 +99,7 @@ const PillarNameInputs: React.FC<PillarNameInputsProps> = ({ names, onChange }) 
                   aria-label={`${caption} name`}
                   onChange={(e) => onChange(key, e.target.value)}
                   onKeyDown={(e) => { if (e.key === "Enter" && isUnlocked) toggleLock(key, defaultName); }}
-                  className={`w-full border-2 rounded-lg pl-4 pr-10 py-3 bg-[#1a0033]/80 backdrop-blur-sm text-base sm:text-lg
+                  className={`w-full border-2 rounded-lg pl-4 pr-10 py-3 bg-[#1a0033]/80 text-base sm:text-lg
                               transition-all focus:outline-none
                               ${isUnlocked
                                 ? "border-[#d4af37]/50 text-[#e6d5b8] focus:border-[#d4af37] focus:ring-2 focus:ring-[#d4af37]/30 shadow-[0_0_12px_rgba(212,175,55,0.25)]"

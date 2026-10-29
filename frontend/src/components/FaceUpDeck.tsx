@@ -46,7 +46,7 @@ const FaceUpDeck: React.FC<FaceUpDeckProps> = React.memo(({
       {/* Sticky tray — progress, picked cards, actions */}
       <div
         className="sticky top-0 z-10 -mx-1 sm:mx-0 mb-3 sm:mb-6 px-2 sm:px-4 py-3 sm:py-4 rounded-b-lg sm:rounded-lg
-                   border-b sm:border border-[#d4af37]/30 backdrop-blur-sm shadow-lg"
+                   border-b sm:border border-[#d4af37]/30 shadow-lg"
         style={{ background: 'linear-gradient(180deg, rgba(26,0,51,0.97) 0%, rgba(45,27,78,0.95) 100%)' }}
       >
         <p

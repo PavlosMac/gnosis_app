@@ -1,8 +1,7 @@
-"use client";
 import TarotLanding from "@/components/TarotLanding";
 import { Cinzel, Crimson_Pro } from "next/font/google";
-import { useMemo } from "react";
 import "./tarot.css";
+import Starfield from "@/components/Starfield";
 
 const cinzel = Cinzel({
   subsets: ["latin"],
@@ -17,42 +16,11 @@ const crimsonPro = Crimson_Pro({
 });
 
 export default function TarotPage() {
-  // Generate star positions once to avoid hydration mismatch
-  const stars = useMemo(
-    () =>
-      [...Array(100)].map((_, i) => ({
-        left: `${(i * 7.3 + 13) % 100}%`,
-        top: `${(i * 11.7 + 23) % 100}%`,
-        animationDelay: `${(i * 0.37) % 3}s`,
-        animationDuration: `${2 + (i * 0.29) % 2}s`,
-      })),
-    []
-  );
-
   return (
     <main
       className={`min-h-screen relative overflow-hidden ${cinzel.variable} ${crimsonPro.variable}`}
     >
-      {/* Mystical starfield background */}
-      <div className="fixed inset-0 bg-gradient-to-b from-[#0a0015] via-[#1a0033] to-[#2d1b4e]">
-        {/* Animated stars */}
-        <div className="absolute inset-0 opacity-60">
-          {stars.map((star, i) => (
-            <div
-              key={i}
-              className="absolute w-1 h-1 bg-white rounded-full animate-twinkle"
-              style={star}
-            />
-          ))}
-        </div>
-
-        {/* Constellation overlay */}
-        <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_30%_20%,rgba(212,175,55,0.15),transparent_50%)]" />
-        <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_70%_60%,rgba(138,43,226,0.15),transparent_50%)]" />
-
-        {/* Vignette */}
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,rgba(0,0,0,0.7)_100%)]" />
-      </div>
+      <Starfield />
 
       {/* Content */}
       <div className="relative z-10 flex flex-col items-center justify-start pt-10 px-4 pb-10">

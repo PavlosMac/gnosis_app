@@ -144,7 +144,7 @@ const ReadingsFilterPanel = ({
       </div>
 
       {expanded && (
-        <div className="mt-6 rounded-xl border border-[#d4af37]/20 bg-gradient-to-b from-[#1a0033]/60 to-[#0a0015]/60 backdrop-blur-sm p-5 sm:p-6 flex flex-col gap-5">
+        <div className="mt-6 rounded-xl border border-[#d4af37]/20 bg-gradient-to-b from-[#1a0033]/80 to-[#0a0015]/80 p-5 sm:p-6 flex flex-col gap-5">
           <div>
             <p
               className="text-xs text-[#d4af37]/60 tracking-widest uppercase mb-2"

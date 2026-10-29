@@ -40,7 +40,7 @@ npm run lint
 - Dark mystical theme with Egyptian/esoteric aesthetics
 - Custom fonts: Cinzel (headers), Crimson Pro (body)
 - Golden accent color (#d4af37)
-- Animated starfield backgrounds
+- Static starfield background (`src/components/Starfield.tsx`); nothing in the background animates
 - Custom CSS animations in `tarot.css`
 - **All new code must be responsive** — use Tailwind breakpoint utilities (`sm:`, `md:`, `lg:`) for mobile and tablet layouts
 - **All CSS should render similarly between Safari and Chrome — both browsers are supported equally.** When a rendering difference is reported, verify computed styles in the affected browser before changing code; past incidents were stale dev-server CSS (a long-running `npm run dev` misses newly-introduced Tailwind utilities — the class is in the markup but computes to nothing) rather than engine differences

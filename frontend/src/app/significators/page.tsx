@@ -131,7 +131,7 @@ export default function SignificatorsPage() {
                   setDay(e.target.value.replace(/\D/g, "").slice(0, 2));
                   setError(null);
                 }}
-                className="border-2 border-[#d4af37]/50 rounded-lg px-3 py-3 bg-[#1a0033]/80 text-[#e6d5b8] text-lg text-center backdrop-blur-sm
+                className="border-2 border-[#d4af37]/50 rounded-lg px-3 py-3 bg-[#1a0033]/80 text-[#e6d5b8] text-lg text-center
                            focus:outline-none focus:border-[#d4af37] focus:ring-2 focus:ring-[#d4af37]/30 transition-all
                            w-16"
                 style={{ fontFamily: "'Crimson Pro', serif" }}
@@ -151,7 +151,7 @@ export default function SignificatorsPage() {
                   setMonth(e.target.value.replace(/\D/g, "").slice(0, 2));
                   setError(null);
                 }}
-                className="border-2 border-[#d4af37]/50 rounded-lg px-3 py-3 bg-[#1a0033]/80 text-[#e6d5b8] text-lg text-center backdrop-blur-sm
+                className="border-2 border-[#d4af37]/50 rounded-lg px-3 py-3 bg-[#1a0033]/80 text-[#e6d5b8] text-lg text-center
                            focus:outline-none focus:border-[#d4af37] focus:ring-2 focus:ring-[#d4af37]/30 transition-all
                            w-16"
                 style={{ fontFamily: "'Crimson Pro', serif" }}
@@ -171,7 +171,7 @@ export default function SignificatorsPage() {
                   setYear(e.target.value.replace(/\D/g, "").slice(0, 4));
                   setError(null);
                 }}
-                className="border-2 border-[#d4af37]/50 rounded-lg px-3 py-3 bg-[#1a0033]/80 text-[#e6d5b8] text-lg text-center backdrop-blur-sm
+                className="border-2 border-[#d4af37]/50 rounded-lg px-3 py-3 bg-[#1a0033]/80 text-[#e6d5b8] text-lg text-center
                            focus:outline-none focus:border-[#d4af37] focus:ring-2 focus:ring-[#d4af37]/30 transition-all
                            w-24"
                 style={{ fontFamily: "'Crimson Pro', serif" }}

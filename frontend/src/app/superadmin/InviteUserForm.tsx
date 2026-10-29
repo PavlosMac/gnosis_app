@@ -15,7 +15,7 @@ const InviteUserForm = () => {
   return (
     <form
       action={formAction}
-      className="mb-8 rounded-2xl border border-[#d4af37]/20 bg-gradient-to-b from-[#1a0033]/80 to-[#0a0015]/80 backdrop-blur-sm p-5 sm:p-6"
+      className="mb-8 rounded-2xl border border-[#d4af37]/20 bg-gradient-to-b from-[#1a0033]/80 to-[#0a0015]/80 p-5 sm:p-6"
     >
       <label
         htmlFor="invite-email"

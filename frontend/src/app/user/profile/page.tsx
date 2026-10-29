@@ -52,7 +52,7 @@ const ProfilePage = async () => {
         </div>
 
         {/* Dashboard card */}
-        <div className="relative overflow-hidden rounded-2xl border border-[#d4af37]/20 bg-gradient-to-b from-[#1a0033]/80 to-[#0a0015]/80 backdrop-blur-sm">
+        <div className="relative overflow-hidden rounded-2xl border border-[#d4af37]/20 bg-gradient-to-b from-[#1a0033]/90 to-[#0a0015]/90">
           <OrnateFrame size="sm" />
           <div className="relative grid grid-cols-1 md:grid-cols-2">
             {/* Vertical divider (≥ md) */}

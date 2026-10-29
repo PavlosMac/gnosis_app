@@ -59,7 +59,7 @@ describe("ArticleSection framed", () => {
     const panel = framed.match(/<div class="([^"]*rounded-2xl[^"]*)"><p>body<\/p><\/div>/);
     expect(panel).not.toBeNull();
     const classes = panel![1].split(/\s+/);
-    for (const c of ["border", "border-[#d4af37]/20", "bg-gradient-to-b", "from-[#1a0033]/80", "to-[#0a0015]/80", "p-5", "sm:p-8"]) {
+    for (const c of ["border", "border-[#d4af37]/20", "bg-gradient-to-b", "from-[#1a0033]/90", "to-[#0a0015]/90", "p-5", "sm:p-8"]) {
       expect(classes).toContain(c);
     }
   });

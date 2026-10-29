@@ -51,6 +51,7 @@ or in the three `CLAUDE.md` files, and CI runs it.
 | [`2026-09-10-sse-streaming-interpretations.md`](plans/2026-09-10-sse-streaming-interpretations.md) | Not started. Stream the interpretation; add request duration and `request_id` logging. |
 | [`2026-09-21-user-accounting-ledger.md`](plans/2026-09-21-user-accounting-ledger.md) | Agreed, not started. Admin-set model and prices, monthly budget period, per-spread cost table, superadmin ledger UI. |
 | [`2026-09-29-readings-sort-index.md`](plans/2026-09-29-readings-sort-index.md) | Deferred. Compound index for spread + tags + date sort; trigger inside. |
+| [`2026-10-29-frontend-animation-load.md`](plans/2026-10-29-frontend-animation-load.md) | In progress. Cut browser load on old laptops: backdrop blur, starfield, border-flow, remove the budget chalice. |
 
 ## Notes
 

@@ -55,7 +55,7 @@ const SanctumModal = ({ title, subtitle, size = "sm", onClose, children }: Sanct
       role="dialog"
       aria-modal="true"
     >
-      <div className="absolute inset-0 bg-black/80 backdrop-blur-sm z-0" onClick={onClose} />
+      <div className="absolute inset-0 bg-black/90 z-0" onClick={onClose} />
 
       <div
         className={`relative z-10 w-full mx-4 my-8 ${PANEL_SIZE[size]} rounded-xl border-2 border-[#d4af37]/40 shadow-2xl`}

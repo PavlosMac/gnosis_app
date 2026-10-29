@@ -42,7 +42,7 @@ export default function GuidePage() {
             <li key={chapter.slug}>
               <Link
                 href={`/guide/${chapter.slug}`}
-                className="block h-full rounded-2xl border border-[#d4af37]/20 bg-gradient-to-b from-[#1a0033]/80 to-[#0a0015]/80 backdrop-blur-sm p-5 hover:border-[#d4af37]/60 transition-colors"
+                className="block h-full rounded-2xl border border-[#d4af37]/20 bg-gradient-to-b from-[#1a0033]/80 to-[#0a0015]/80 p-5 hover:border-[#d4af37]/60 transition-colors"
               >
                 <div className="flex items-center gap-3 mb-2">
                   <span className="text-[#d4af37]/70 text-xl" aria-hidden>

@@ -28,7 +28,7 @@ const LastReadingCard = ({ reading }: { reading: ReadingDetail }) => (
   <Link
     href={readingHref(reading._id, null)}
     className="group block rounded-xl border border-[#d4af37]/15 bg-gradient-to-b from-[#1a0033]/80 to-[#0a0015]/80
-               backdrop-blur-sm p-5 transition-all duration-300
+               p-5 transition-all duration-300
                hover:border-[#d4af37]/40 hover:shadow-lg hover:shadow-[#d4af37]/5"
   >
     <div className="flex items-center justify-between gap-4">

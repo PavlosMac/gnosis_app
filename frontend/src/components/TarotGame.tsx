@@ -426,7 +426,7 @@ export default function TarotGame({ user, mode = 'draw' }: TarotGameProps) {
             <div className="w-full max-w-md flex flex-col items-center">
               <select
                 id="reading-select"
-                className="w-full border-2 border-[#d4af37]/50 rounded-lg px-6 py-3 bg-[#1a0033]/80 text-[#e6d5b8] text-lg backdrop-blur-sm
+                className="w-full border-2 border-[#d4af37]/50 rounded-lg px-6 py-3 bg-[#1a0033]/80 text-[#e6d5b8] text-lg
                            focus:outline-none focus:border-[#d4af37] focus:ring-2 focus:ring-[#d4af37]/30 transition-all cursor-pointer"
                 style={{ fontFamily: "'Crimson Pro', serif" }}
                 value={selectedReading.name}
@@ -528,7 +528,7 @@ export default function TarotGame({ user, mode = 'draw' }: TarotGameProps) {
                   value={userQuestion}
                   onChange={(e) => setUserQuestion(e.target.value)}
                   aria-label="Your question"
-                  className="w-full resize-y min-h-[5rem] border-2 border-[#d4af37]/50 rounded-lg px-4 py-3 bg-[#1a0033]/80 text-[#e6d5b8] text-lg leading-relaxed backdrop-blur-sm
+                  className="w-full resize-y min-h-[5rem] border-2 border-[#d4af37]/50 rounded-lg px-4 py-3 bg-[#1a0033]/80 text-[#e6d5b8] text-lg leading-relaxed
                              focus:outline-none focus:border-[#d4af37] focus:ring-2 focus:ring-[#d4af37]/30 transition-all placeholder:text-[#e6d5b8]/50"
                   style={{ fontFamily: "'Crimson Pro', serif" }}
                 />
@@ -601,7 +601,7 @@ export default function TarotGame({ user, mode = 'draw' }: TarotGameProps) {
                         field.setValue(e.target.value.replace(/\D/g, "").slice(0, field.maxLength));
                         setBirthdateError(null);
                       }}
-                      className={`border-2 border-[#d4af37]/50 rounded-lg px-3 py-3 bg-[#1a0033]/80 text-[#e6d5b8] text-lg text-center backdrop-blur-sm
+                      className={`border-2 border-[#d4af37]/50 rounded-lg px-3 py-3 bg-[#1a0033]/80 text-[#e6d5b8] text-lg text-center
                                  focus:outline-none focus:border-[#d4af37] focus:ring-2 focus:ring-[#d4af37]/30 transition-all ${field.width}`}
                       style={{ fontFamily: "'Crimson Pro', serif" }}
                     />
@@ -796,9 +796,9 @@ export default function TarotGame({ user, mode = 'draw' }: TarotGameProps) {
            role="dialog"
            aria-modal="true"
            aria-labelledby="oracle-info-title">
-        <div className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+        <div className="absolute inset-0 bg-black/85"
              onClick={() => setShowOracleInfo(false)} />
-        <div className="relative max-w-lg w-full px-6 py-8 border border-[#d4af37]/30 rounded-xl bg-[#0a0015]/95 backdrop-blur-md shadow-2xl"
+        <div className="relative max-w-lg w-full px-6 py-8 border border-[#d4af37]/30 rounded-xl bg-[#0a0015]/95 shadow-2xl"
              style={{ fontFamily: "'Crimson Pro', serif" }}>
           <button
             type="button"

@@ -1,8 +1,9 @@
 "use client";
-import React, { useMemo } from "react";
+import React from "react";
 import Link from "next/link";
 import { Cinzel, Crimson_Pro } from "next/font/google";
 import "@/app/tarot.css";
+import Starfield from "@/components/Starfield";
 
 // Shared font instances - prevents re-instantiation across pages
 const cinzel = Cinzel({
@@ -28,15 +29,6 @@ interface TarotPageLayoutProps {
   contentClassName?: string;
 }
 
-// Generate deterministic star positions (avoids hydration mismatch)
-const generateStars = () =>
-  [...Array(100)].map((_, i) => ({
-    left: `${(i * 7.3 + 13) % 100}%`,
-    top: `${(i * 11.7 + 23) % 100}%`,
-    animationDelay: `${(i * 0.37) % 3}s`,
-    animationDuration: `${2 + (i * 0.29) % 2}s`,
-  }));
-
 const TarotPageLayout: React.FC<TarotPageLayoutProps> = ({
   children,
   showBackButton = true,
@@ -45,30 +37,11 @@ const TarotPageLayout: React.FC<TarotPageLayoutProps> = ({
   scrollable = false,
   contentClassName = "pt-10 px-4 pb-10",
 }) => {
-  // Memoize stars to prevent recalculation
-  const stars = useMemo(generateStars, []);
-
   return (
     <main
       className={`min-h-screen relative ${scrollable ? 'overflow-y-auto' : 'overflow-hidden'} ${cinzel.variable} ${crimsonPro.variable}`}
     >
-      {/* Mystical starfield background */}
-      <div className="fixed inset-0 bg-gradient-to-b from-[#0a0015] via-[#1a0033] to-[#2d1b4e] pointer-events-none">
-        {/* Animated stars */}
-        <div className="absolute inset-0 opacity-60">
-          {stars.map((star, i) => (
-            <div
-              key={i}
-              className="absolute w-1 h-1 bg-white rounded-full animate-twinkle"
-              style={star}
-            />
-          ))}
-        </div>
-        {/* Ambient glow effects */}
-        <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_30%_20%,rgba(212,175,55,0.15),transparent_50%)]" />
-        <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_70%_60%,rgba(138,43,226,0.15),transparent_50%)]" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,rgba(0,0,0,0.7)_100%)]" />
-      </div>
+      <Starfield />
 
       {/* Content */}
       <div className={`relative z-10 flex flex-col items-center justify-start ${contentClassName}`}>

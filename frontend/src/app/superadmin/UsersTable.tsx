@@ -53,7 +53,7 @@ const UsersTable = ({ users, currentUserId }: UsersTableProps) => {
 
   return (
     <>
-      <div className="rounded-2xl border border-[#d4af37]/20 bg-gradient-to-b from-[#1a0033]/80 to-[#0a0015]/80 backdrop-blur-sm overflow-hidden">
+      <div className="rounded-2xl border border-[#d4af37]/20 bg-gradient-to-b from-[#1a0033]/80 to-[#0a0015]/80 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead>
