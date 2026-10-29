@@ -1,7 +1,7 @@
 # Frontend animation load: remove what is not needed
 
 Status: approved 2026-10-29; revised the same day (static starfield, static landing rims, card
-thumbnails added as Part 6). Parts 1 and 2 shipped. Parts 3-6 not started.
+thumbnails added as Part 6). Parts 1-3 shipped. Parts 4-6 not started.
 
 ## Context
 
@@ -52,7 +52,7 @@ branches unprompted. Keep scope lean; reuse existing visuals; add nothing new vi
   one-shot entrances; `motion-reduce:animate-none` on the two 404 spinners.
 - Test: `Starfield.test.tsx` (count, no animation, determinism, brightness range, CSS).
 
-## Part 3: Landing and 404 page static
+## Part 3: Landing and 404 page static (shipped)
 
 Revised from "border-flow on hover only": make every infinite animation on these two pages
 static instead. Simpler, and no touch-versus-mouse inconsistency. Visible change: the rims

@@ -26,18 +26,14 @@ export default function NotFound() {
       <div className="relative z-10 flex flex-col items-center justify-center px-4 text-center animate-fadeIn">
         {/* Mystical symbol */}
         <div className="relative mb-8">
-          <div className="w-32 h-32 rounded-full border-2 border-[#d4af37]/30 flex items-center justify-center animate-glow-pulse">
+          <div className="w-32 h-32 rounded-full border-2 border-[#d4af37]/30 flex items-center justify-center">
             <div className="w-24 h-24 rounded-full border border-[#d4af37]/20 flex items-center justify-center">
               <span className="text-6xl text-[#d4af37]/60 font-[var(--font-cinzel)]">?</span>
             </div>
           </div>
-          {/* Orbiting dots */}
-          <div className="absolute inset-0 animate-spin motion-reduce:animate-none" style={{ animationDuration: "20s" }}>
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-2 h-2 bg-[#d4af37]/40 rounded-full" />
-          </div>
-          <div className="absolute inset-0 animate-spin motion-reduce:animate-none" style={{ animationDuration: "15s", animationDirection: "reverse" }}>
-            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1.5 h-1.5 bg-purple-400/40 rounded-full" />
-          </div>
+          {/* Two resting dots on the ring */}
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 w-2 h-2 bg-[#d4af37]/40 rounded-full" />
+          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 w-1.5 h-1.5 bg-purple-400/40 rounded-full" />
         </div>
 
         {/* 404 text */}
@@ -66,7 +62,7 @@ export default function NotFound() {
           className="group relative px-8 py-3 overflow-hidden rounded-lg transition-all duration-300"
         >
           {/* Button background */}
-          <div className="absolute inset-0 bg-gradient-to-r from-[#d4af37]/20 via-[#f4d03f]/20 to-[#d4af37]/20 animate-border-flow" />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#d4af37]/20 via-[#f4d03f]/20 to-[#d4af37]/20" />
           <div className="absolute inset-[1px] bg-[#1a0033]/90 rounded-lg" />
 
           {/* Button content */}

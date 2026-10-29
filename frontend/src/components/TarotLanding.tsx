@@ -20,13 +20,12 @@ const ArticleCard: React.FC<ArticleCardProps> = ({ href, symbol, title, body, ct
     href={href}
     className="group relative overflow-hidden rounded-2xl
                bg-gradient-to-br from-[#0a0015] via-[#1a0033] to-[#2d1b4e]
-               p-1 transition-all duration-700
-               hover:shadow-[0_0_80px_rgba(212,175,55,0.3)]
+               p-1 transition-shadow duration-300
+               hover:shadow-[0_0_40px_rgba(212,175,55,0.3)]
                focus:outline-none focus:ring-2 focus:ring-[#d4af37]/50"
   >
     <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-[#d4af37]/40 via-[#8b5cf6]/40 to-[#d4af37]/40
-                    opacity-60 group-hover:opacity-100 transition-opacity duration-500
-                    animate-border-flow" />
+                    opacity-60 group-hover:opacity-100 transition-opacity duration-500" />
 
     <div className="relative rounded-xl bg-gradient-to-br from-[#0a0015] via-[#1a0033] to-[#2d1b4e]
                     p-6 h-full">
@@ -131,14 +130,13 @@ const TarotLanding: React.FC = () => {
           href="/reading"
           className="group relative overflow-hidden rounded-2xl
                      bg-gradient-to-br from-[#0a0015] via-[#1a0033] to-[#2d1b4e]
-                     p-1 transition-all duration-700 block mb-8
-                     hover:shadow-[0_0_100px_rgba(212,175,55,0.4)]
+                     p-1 transition-shadow duration-300 block mb-8
+                     hover:shadow-[0_0_50px_rgba(212,175,55,0.4)]
                      focus:outline-none focus:ring-2 focus:ring-[#d4af37]/50"
         >
-          {/* Animated golden border */}
+          {/* Golden border */}
           <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-[#d4af37]/60 via-[#ffd700]/60 to-[#d4af37]/60
-                          opacity-70 group-hover:opacity-100 transition-opacity duration-500
-                          animate-border-flow-fast" />
+                          opacity-70 group-hover:opacity-100 transition-opacity duration-500" />
 
           <div className="relative rounded-xl bg-gradient-to-br from-[#0a0015] via-[#1a0033] to-[#2d1b4e]
                           py-12 px-8 overflow-hidden">
@@ -148,7 +146,7 @@ const TarotLanding: React.FC = () => {
               <div className="relative w-64 h-64 md:w-80 md:h-80">
                 <div className="absolute inset-0 rounded-full bg-gradient-to-br from-[#d4af37]/5 via-[#8b5cf6]/8 to-transparent
                                 group-hover:from-[#d4af37]/15 group-hover:via-[#8b5cf6]/15
-                                transition-all duration-700 animate-orb-pulse" />
+                                transition-all duration-500" />
                 <div className="absolute inset-8 rounded-full bg-gradient-to-tl from-[#d4af37]/5 to-transparent
                                 group-hover:from-[#d4af37]/20 transition-all duration-500" />
               </div>
@@ -165,8 +163,7 @@ const TarotLanding: React.FC = () => {
               {/* Glowing icon */}
               <div className="relative mb-6 w-24 h-24 flex items-center justify-center">
                 <div className="absolute inset-0 rounded-full bg-[#d4af37]/10
-                                group-hover:bg-[#d4af37]/25 transition-all duration-500
-                                animate-glow-pulse" />
+                                group-hover:bg-[#d4af37]/25 transition-all duration-500" />
                 <div className="absolute inset-0 rounded-full border-2 border-[#d4af37]/30
                                 group-hover:border-[#d4af37]/70 group-hover:scale-110
                                 transition-all duration-500" />
@@ -240,14 +237,13 @@ const TarotLanding: React.FC = () => {
             href="/significators"
             className="group relative overflow-hidden rounded-2xl
                        bg-gradient-to-br from-[#0a0015] via-[#1a0033] to-[#2d1b4e]
-                       p-1 transition-all duration-700
-                       hover:shadow-[0_0_80px_rgba(212,175,55,0.3)]
+                       p-1 transition-shadow duration-300
+                       hover:shadow-[0_0_40px_rgba(212,175,55,0.3)]
                        focus:outline-none focus:ring-2 focus:ring-[#d4af37]/50"
           >
-            {/* Animated border */}
+            {/* Border */}
             <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-[#d4af37]/40 via-[#8b5cf6]/40 to-[#d4af37]/40
-                            opacity-60 group-hover:opacity-100 transition-opacity duration-500
-                            animate-border-flow" />
+                            opacity-60 group-hover:opacity-100 transition-opacity duration-500" />
 
             <div className="relative rounded-xl bg-gradient-to-br from-[#0a0015] via-[#1a0033] to-[#2d1b4e]
                             p-6 h-full">
@@ -275,7 +271,7 @@ const TarotLanding: React.FC = () => {
               <div className="relative mb-4 w-12 h-12 flex items-center justify-center">
                 <div className="absolute inset-0 rounded-full bg-gradient-to-br from-[#8b5cf6]/20 to-[#d4af37]/20
                                 group-hover:from-[#8b5cf6]/40 group-hover:to-[#d4af37]/40
-                                transition-all duration-500 animate-pulse-slow" />
+                                transition-all duration-500" />
                 <div className="absolute inset-1 rounded-full border border-[#d4af37]/30
                                 group-hover:border-[#d4af37]/60 transition-colors" />
                 <span className="text-2xl text-[#d4af37] relative z-10

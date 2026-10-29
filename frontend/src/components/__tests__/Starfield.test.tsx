@@ -47,9 +47,9 @@ describe("tarot.css after the static starfield", () => {
 
   it("stops the decorative loops under prefers-reduced-motion", () => {
     const blocks = [...css.matchAll(/@media \(prefers-reduced-motion: reduce\) \{[\s\S]*?\n\}\n/g)].map((m) => m[0]);
-    const decorative = blocks.find((b) => b.includes(".animate-border-flow"));
+    const decorative = blocks.find((b) => b.includes(".reading-card-reveal"));
     expect(decorative).toBeDefined();
-    for (const cls of [".animate-glow-pulse", ".animate-fadeIn", ".reading-card-reveal"]) {
+    for (const cls of [".animate-fadeIn", ".tarot-card-container", ".reading-card-reveal"]) {
       expect(decorative).toContain(cls);
     }
     expect(decorative).toMatch(/animation:\s*none\s*!important/);

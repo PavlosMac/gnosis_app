@@ -8,6 +8,11 @@ vi.mock("next/link", () => ({
     React.createElement("a", { href, ...rest }, children),
 }));
 
+vi.mock("next/font/google", () => ({
+  Cinzel: () => ({ className: "", variable: "" }),
+  Crimson_Pro: () => ({ className: "", variable: "" }),
+}));
+
 const { default: TarotLanding } = await import("@/components/TarotLanding");
 const { AuthProvider } = await import("@/app/providers/auth-provider");
 
@@ -33,5 +38,28 @@ describe("TarotLanding card grid", () => {
     for (let i = 1; i < hrefs.length; i++) expect(hrefs[i]).toBeGreaterThan(hrefs[i - 1]);
     expect(html.match(/>Article</g) ?? []).toHaveLength(3);
     expect(html).toContain("About Tarot Divinations");
+  });
+});
+
+describe("TarotLanding idle cost", () => {
+  it("runs no infinite animation while the visitor reads", () => {
+    const classes = html.match(/animate-[a-zA-Z-]+/g) ?? [];
+    expect(classes.filter((c) => c !== "animate-fadeIn")).toEqual([]);
+  });
+
+  it("transitions only the hover shadow on the cards, and keeps it modest", () => {
+    expect(html).not.toContain("transition-all duration-700");
+    expect(html).not.toMatch(/shadow-\[0_0_(80|100)px/);
+    expect(html.match(/transition-shadow duration-300/g)?.length).toBeGreaterThanOrEqual(5);
+  });
+});
+
+describe("NotFound idle cost", () => {
+  it("runs no infinite animation", async () => {
+    const { default: NotFound } = await import("@/app/not-found");
+    const page = renderToStaticMarkup(<NotFound />);
+    const classes = page.match(/animate-[a-zA-Z-]+/g) ?? [];
+    expect(classes.filter((c) => c !== "animate-fadeIn")).toEqual([]);
+    expect(page).not.toContain("animationDuration");
   });
 });

@@ -80,66 +80,6 @@
   animation: fadeIn 0.8s ease-out;
 }
 
-/* Landing page animations */
-@keyframes border-flow {
-  0%, 100% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-}
-
-@keyframes orb-pulse {
-  0%, 100% {
-    transform: scale(1);
-    opacity: 0.6;
-  }
-  50% {
-    transform: scale(1.1);
-    opacity: 1;
-  }
-}
-
-@keyframes glow-pulse {
-  0%, 100% {
-    opacity: 0.6;
-  }
-  50% {
-    opacity: 1;
-  }
-}
-
-@keyframes pulse-slow {
-  0%, 100% {
-    opacity: 0.6;
-  }
-  50% {
-    opacity: 1;
-  }
-}
-
-.animate-border-flow {
-  background-size: 200% 200%;
-  animation: border-flow 3s ease infinite;
-}
-
-.animate-border-flow-fast {
-  background-size: 200% 200%;
-  animation: border-flow 2s ease infinite;
-}
-
-.animate-orb-pulse {
-  animation: orb-pulse 4s ease-in-out infinite;
-}
-
-.animate-glow-pulse {
-  animation: glow-pulse 3s ease-in-out infinite;
-}
-
-.animate-pulse-slow {
-  animation: pulse-slow 3s ease-in-out infinite;
-}
 
 /* Shuffle Animation — ShuffleOrbit sets --orbit-radius on each card; the keyframes read it
    so the inline placement and the animation can't drift apart. */
@@ -476,11 +416,6 @@
 /* Reduced motion for the decorative loops and one-shot entrances. Appended as its own
    block: ShuffleOrbit.test.tsx matches the first reduced-motion block in this file. */
 @media (prefers-reduced-motion: reduce) {
-  .animate-border-flow,
-  .animate-border-flow-fast,
-  .animate-orb-pulse,
-  .animate-glow-pulse,
-  .animate-pulse-slow,
   .animate-fadeIn,
   .tarot-card-container,
   .reading-card-reveal {
