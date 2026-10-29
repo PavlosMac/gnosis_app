@@ -61,7 +61,7 @@ This file stores project constants, configuration, and frequently-needed **non-s
 - `/user/profile/settings` - Account settings: contact support, Agreements rows, reset password, delete-account link
 - `/user/profile/manage-consent` - Review / re-record acceptance at any time
 - `/user/profile/delete-account` - Self-service account deletion (exempt from the onboarding gate)
-- `/user/profile` - "Your Sanctum" dashboard (account + "Remaining Readings" chalice, no currency shown; readings summary; `GET /api/v1/dashboard`)
+- `/user/profile` - "Your Sanctum" dashboard (account details with an empty slot reserved for a card visual, no budget or currency shown; readings summary; `GET /api/v1/dashboard` still supplies the budget to `AccountPanel`)
 - `/user/readings`, `/user/readings/[id]` - Readings journal list (filters via URL params) and detail
 - `/user/manual-reading` - Manual interpretation entry
 - `/superadmin` - User list with status, invite-by-email, per-row Email and Delete (superadmin only; linked from the ☥ menu for the superadmin)

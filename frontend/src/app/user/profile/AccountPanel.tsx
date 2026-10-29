@@ -1,7 +1,5 @@
 import Link from "next/link";
 import { Settings } from "lucide-react";
-import BudgetChalice from "@/components/BudgetChalice";
-import { chaliceCaption, chaliceFill } from "@/lib/profile-dashboard";
 
 export const ProfileRow = ({ label, value }: { label: string; value: string }) => (
   <div className="flex items-center justify-between gap-4">
@@ -40,13 +38,9 @@ interface AccountPanelProps {
 }
 
 const AccountPanel = ({ name, email, budget }: AccountPanelProps) => {
-  // Chalice and caption stand or fall together: a non-finite figure hides both
-  // rather than leaving a "$NaN" caption under an empty space
-  const usableBudget =
-    budget && chaliceFill(budget.remainingUsd, budget.budgetUsd) !== null
-      ? budget
-      : null;
-  const caption = usableBudget ? chaliceCaption(usableBudget.remainingUsd) : null;
+  // `budget` is kept on the props (and the dashboard still fetches it) for the tarot card
+  // visual that will take the slot below; nothing reads it yet.
+  void budget;
 
   return (
     <div className="flex flex-col p-5 sm:p-8">
@@ -57,39 +51,15 @@ const AccountPanel = ({ name, email, budget }: AccountPanelProps) => {
         <ProfileRow label="Email" value={email} />
       </div>
 
-      {/* Oracle budget as a chalice: the fill level is the whole message, no
-          currency. It takes the panel's free height and centres in it. */}
+      {/* Reserved for a tarot card visual. The budget chalice that stood here was five
+          infinite SVG animations under a drop-shadow filter; the slot keeps its size so
+          the two-panel layout does not shift when the card arrives. */}
       <div className="flex-1 flex flex-col items-center justify-center py-8">
-        <span
-          className="text-[#d4af37]/70 text-xs tracking-[0.25em] uppercase mb-3"
-          style={{ fontFamily: "'Cinzel', serif" }}
-        >
-          Remaining Readings
-        </span>
-        {usableBudget ? (
-          <>
-            <BudgetChalice
-              remainingUsd={usableBudget.remainingUsd}
-              budgetUsd={usableBudget.budgetUsd}
-              maxWidth={200}
-            />
-            {caption && (
-              <p
-                className="text-[#e6d5b8]/80 text-base mt-3 text-center"
-                style={{ fontFamily: "'Crimson Pro', serif" }}
-              >
-                {caption}
-              </p>
-            )}
-          </>
-        ) : (
-          <p
-            className="text-[#e6d5b8]/40 text-sm italic text-center"
-            style={{ fontFamily: "'Crimson Pro', serif" }}
-          >
-            The oracle&rsquo;s ledger is unavailable
-          </p>
-        )}
+        <div
+          aria-hidden="true"
+          data-testid="tally-card-slot"
+          className="aspect-[2/3] w-full max-w-[200px] rounded-xl border border-[#d4af37]/10"
+        />
       </div>
 
       <div style={{ marginTop: "auto" }}>

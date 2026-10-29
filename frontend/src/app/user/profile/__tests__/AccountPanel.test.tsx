@@ -15,22 +15,22 @@ const render = (budget: { remainingUsd: number; budgetUsd: number } | null) =>
   );
 
 describe("AccountPanel", () => {
-  it("labels the chalice Remaining Readings and prints no currency", () => {
-    const html = render({ remainingUsd: 1.26, budgetUsd: 3 });
-    expect(html).toContain("Remaining Readings");
-    expect(html).not.toContain("Oracle Chalice");
-    expect(html).not.toContain("$");
-    expect(html).not.toContain("remains");
+  it("keeps an empty, decorative card-shaped slot where the chalice stood, with no currency", () => {
+    for (const budget of [{ remainingUsd: 1.26, budgetUsd: 3 }, { remainingUsd: 0, budgetUsd: 3 }, null]) {
+      const html = render(budget);
+      expect(html).toMatch(/data-testid="tally-card-slot"[^>]*class="[^"]*aspect-\[2\/3\][^"]*max-w-\[200px\]/);
+      expect(html).toMatch(/<div aria-hidden="true" data-testid="tally-card-slot"[^>]*><\/div>/);
+      expect(html).not.toContain("$");
+      expect(html).not.toContain("Remaining Readings");
+      expect(html).not.toContain("chalice");
+      expect(html).not.toContain("ledger");
+    }
   });
 
-  it("lets the chalice fill and centre the free height, drawn larger", () => {
-    const html = render({ remainingUsd: 1.26, budgetUsd: 3 });
-    expect(html).toMatch(/class="[^"]*flex-1[^"]*justify-center[^"]*"[^>]*>\s*<span[^>]*>Remaining Readings/);
-    expect(html).toContain("max-width:200px");
-  });
-
-  it("still says when the chalice runs dry", () => {
-    expect(render({ remainingUsd: 0, budgetUsd: 3 })).toContain("The chalice runs dry");
+  it("lets the slot centre in the panel's free height", () => {
+    expect(render({ remainingUsd: 1, budgetUsd: 3 })).toMatch(
+      /class="[^"]*flex-1[^"]*justify-center[^"]*"[^>]*>\s*<div aria-hidden="true" data-testid="tally-card-slot"/,
+    );
   });
 
   it("links to Account settings instead of holding the account actions", () => {

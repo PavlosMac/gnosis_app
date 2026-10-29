@@ -166,6 +166,8 @@ Each decision should include:
 - Layout-critical spacing on the new page uses inline styles / `tarot.css` classes rather than novel Tailwind utilities, because the dev server (even freshly started) served CSS lacking several of them.
 - When plans/subscriptions arrive, the account panel gains a row; the chalice semantics (remaining/budget) are unchanged.
 
+**Amendment (2026-10-29):** the chalice was removed on Pavlos's decision as part of the frontend animation-load work. It was five infinite SVG animations under a `drop-shadow` filter on a page people leave open. The slot stays, empty and card-proportioned, for a tarot card visual to come; `AccountPanel` still receives `budget` and the pure helpers in `profile-dashboard.ts` remain as inputs for it. The dashboard endpoint and the rest of this ADR are unchanged. The profile now shows nothing about the budget; the interpretation modal's "Remaining Oracle budget" line is the only user-facing figure.
+
 
 ### ADR-009: Transactional Email via Resend, Sent Exclusively by the FastAPI Backend (2026-09-15)
 

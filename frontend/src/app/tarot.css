@@ -250,51 +250,8 @@
   }
 }
 
-/* --- Profile dashboard: budget chalice + layout helpers ---------------------- */
+/* --- Profile dashboard layout helpers ---------------------------------------- */
 /* Plain CSS (not Tailwind utilities) so a long-running dev server can't miss it. */
-
-@keyframes chaliceWave {
-  from { transform: translateX(0); }
-  to   { transform: translateX(-120px); }
-}
-
-@keyframes chaliceWaveR {
-  from { transform: translateX(-120px); }
-  to   { transform: translateX(0); }
-}
-
-@keyframes chaliceShimmer {
-  0%   { transform: translateX(-40px); opacity: 0; }
-  15%  { opacity: 1; }
-  85%  { opacity: 1; }
-  100% { transform: translateX(160px); opacity: 0; }
-}
-
-@keyframes chaliceGlow {
-  0%, 100% { opacity: 0.45; }
-  50%      { opacity: 0.9; }
-}
-
-@keyframes chaliceRise {
-  from { transform: translateY(60px); }
-  to   { transform: translateY(0); }
-}
-
-.chalice-wave       { animation: chaliceWave 6s linear infinite; }
-.chalice-wave--slow { animation: chaliceWaveR 9s linear infinite; }
-.chalice-shimmer    { animation: chaliceShimmer 5s ease-in-out infinite; }
-.chalice-glow       { animation: chaliceGlow 4s ease-in-out infinite; }
-.chalice-rise       { animation: chaliceRise 1.4s ease-out both; }
-
-@media (prefers-reduced-motion: reduce) {
-  .chalice-wave,
-  .chalice-wave--slow,
-  .chalice-shimmer,
-  .chalice-glow,
-  .chalice-rise {
-    animation: none !important;
-  }
-}
 
 /* Two-panel sanctum card: vertical divider ≥ md, horizontal hairline below */
 .sanctum-divider { display: none; }

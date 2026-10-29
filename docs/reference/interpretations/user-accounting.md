@@ -114,7 +114,7 @@ Paths are from the repo root. Symbols, not line numbers, so this survives edits.
 | `frontend/src/app/user/profile/actions.ts` | `getDashboard` | Fetches the dashboard. |
 | `frontend/src/components/InterpretationModal.tsx` | remaining-budget line | "Saved to your journal · Remaining Oracle budget $X". |
 | `frontend/src/app/user/readings/[id]/InterpretationSection.tsx` | token label | "Model: … · N tokens", where N is input plus output added together. Cost and the split are never shown, which is why the label looks cheaper than the bill. |
-| `frontend/src/components/BudgetChalice.tsx`, `frontend/src/app/user/profile/AccountPanel.tsx`, `frontend/src/lib/profile-dashboard.ts` | `chaliceFill`, `chaliceState`, `chaliceCaption`, `chaliceTitle` | The "Remaining Readings" chalice. The profile shows no currency: the fill level is remaining/budget, the only caption is "The chalice runs dry", and the accessible title gives the percentage (kept within 1..99, "full" where the chalice is drawn full, "runs dry" only at zero). |
+| `frontend/src/app/user/profile/AccountPanel.tsx`, `frontend/src/lib/profile-dashboard.ts` | `budget` prop; `chaliceFill`, `chaliceState`, `chaliceCaption`, `chaliceTitle` | The profile shows nothing about the budget since 2026-10-29: the "Remaining Readings" chalice was removed (browser load) and an empty slot waits for a tarot card visual. `AccountPanel` still receives `budget` from the dashboard fetch, and the pure fill/state/caption helpers stay in `profile-dashboard.ts` as inputs for that visual; delete them if it does not use them. |
 | `frontend/src/lib/api-client.ts` | `SAFE_MESSAGES[402]` | "Your Oracle budget is exhausted." The only budget-exhausted handling; no dedicated UI state. |
 | `frontend/src/app/superadmin/page.tsx` | | Users table. No spend or budget column. |
 
@@ -150,7 +150,7 @@ cached input tokens, and reasoning tokens on the user aggregate.
 | `backend/tests/interpretations/test_router.py` | 402 body. |
 | `backend/tests/dashboard/test_queries.py`, `test_router.py` | Remaining budget on the dashboard. |
 | `backend/tests/llm/test_adapter.py`, `test_lean_prompt.py` | Usage extraction, truncation mapping, completion-cap derivation and clamp, word budgets. |
-| `frontend/src/lib/__tests__/profile-dashboard.test.ts`, `frontend/src/components/__tests__/BudgetChalice.test.tsx` | Chalice fill, state, caption, formatting. |
+| `frontend/src/lib/__tests__/profile-dashboard.test.ts` | Fill, state, caption and formatting helpers (no longer rendered anywhere). |
 
 Untested: `POST /llm/interpret`, the frontend 402 message, `remainingBudgetUsd` plumbing, the
 token label.
@@ -164,7 +164,7 @@ token label.
 | [`../database/production-mongo-commands.md`](../database/production-mongo-commands.md) | Live | Ad-hoc spend queries (per month from the ledger, lifetime per user). |
 | [`../prompts/lean-prompt-architecture.md`](../prompts/lean-prompt-architecture.md) §5a | Live | The original design rationale for the ledger and gate. |
 | [`../../plans/2026-09-10-sse-streaming-interpretations.md`](../../plans/2026-09-10-sse-streaming-interpretations.md) | Plan | Would move settle and release into a background task; must be reconciled with this doc if started. |
-| ADR-004 / ADR-005 / ADR-008 in [`../../notes/decisions.md`](../../notes/decisions.md) | Live | Server-owned word budget, the one-endpoint response shape, the chalice. |
+| ADR-004 / ADR-005 / ADR-008 in [`../../notes/decisions.md`](../../notes/decisions.md) | Live | Server-owned word budget, the one-endpoint response shape, the dashboard (its chalice was removed 2026-10-29, see the note under ADR-008). |
 
 ## 7. Known gaps
 

@@ -1,7 +1,7 @@
 # Frontend animation load: remove what is not needed
 
 Status: approved 2026-10-29; revised the same day (static starfield, static landing rims, card
-thumbnails added as Part 6). Parts 1-4 shipped. Parts 5-6 not started.
+thumbnails added as Part 6). Parts 1-5 shipped. Part 6 not started.
 
 ## Context
 
@@ -80,7 +80,7 @@ no longer shimmer anywhere; the user has accepted this.
   and `margin-top` with `{isSignificators && (<div className="animate-fadeIn">...</div>)}`;
   drop the `-mt-5` hack and `disabled` toggle.
 
-## Part 5: Remove the budget chalice, keep an empty container
+## Part 5: Remove the budget chalice, keep an empty container (shipped)
 
 The user will add a tarot card visual in this slot later. The chalice is five infinite SVG
 animations plus a `drop-shadow` filter, so removing it is itself a load win.
