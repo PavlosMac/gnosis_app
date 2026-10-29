@@ -71,17 +71,18 @@ const ShuffledDeck: React.FC<ShuffledDeckProps> = React.memo(({ numCards, select
                                   opacity-0 sm:group-hover:opacity-100 group-active:opacity-100 transition-opacity duration-500" />
                 </div>
 
-                {/* Front face (card image) */}
-                <div className="card-flip-face card-flip-front absolute inset-0 rounded-sm overflow-hidden border border-[#d4af37] shadow-[0_0_10px_rgba(212,175,55,0.4)] sm:shadow-[0_0_15px_rgba(212,175,55,0.4)] bg-[#f5f5dc]">
-                  {selected && (
+                {/* Front face (card image): mounted only once chosen, so the 78 unflipped
+                    cards carry no second face or glow shadow */}
+                {selected && (
+                  <div className="card-flip-face card-flip-front absolute inset-0 rounded-sm overflow-hidden border border-[#d4af37] shadow-[0_0_10px_rgba(212,175,55,0.4)] sm:shadow-[0_0_15px_rgba(212,175,55,0.4)] bg-[#f5f5dc]">
                     <img
                       src={selected.imageUrl}
                       alt={selected.name}
                       className={`w-full h-full object-cover ${selected.reversed ? 'rotate-180' : ''}`}
                       loading="eager"
                     />
-                  )}
-                </div>
+                  </div>
+                )}
               </div>
             </button>
           );

@@ -1,7 +1,7 @@
 # Frontend animation load: remove what is not needed
 
 Status: approved 2026-10-29; revised the same day (static starfield, static landing rims, card
-thumbnails added as Part 6). Parts 1-3 shipped. Parts 4-6 not started.
+thumbnails added as Part 6). Parts 1-4 shipped. Parts 5-6 not started.
 
 ## Context
 
@@ -70,7 +70,7 @@ no longer shimmer anywhere; the user has accepted this.
 - Check `TarotLanding.layout.test.tsx` and `ShuffleOrbit.test.tsx` for assertions on the old
   classes; update `Starfield.test.tsx`'s reduced-motion check if the class list shrinks.
 
-## Part 4: Small removals
+## Part 4: Small removals (shipped)
 
 - Deck cards: delete `will-change: transform` from `.card-flip-inner` (`tarot.css:266`);
   in `ShuffledDeck.tsx:75` mount the front face (and its glow shadow) only when `selected`.

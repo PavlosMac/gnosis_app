@@ -176,11 +176,8 @@ const ReadingsFilterPanel = ({
             />
           </div>
 
-          <div
-            className={`grid transition-[grid-template-rows,margin-top] duration-300 ease-in-out
-              ${isSignificators ? "grid-rows-[1fr] mt-0" : "grid-rows-[0fr] -mt-5"}`}
-          >
-            <div className="overflow-hidden min-h-0">
+          {isSignificators && (
+            <div className="animate-fadeIn">
               <label
                 htmlFor="birth-date-filter"
                 className="block text-xs text-[#d4af37]/60 tracking-widest uppercase mb-2"
@@ -193,7 +190,6 @@ const ReadingsFilterPanel = ({
                 type="date"
                 value={birthDate}
                 onChange={(e) => setBirthDate(e.target.value)}
-                disabled={!isSignificators}
                 style={{ colorScheme: "dark", fontFamily: "'Crimson Pro', serif" }}
                 className="w-full px-4 py-3 rounded-lg bg-[#0a0015]/60 border border-[#d4af37]/20
                            text-[#e6d5b8] text-sm
@@ -201,7 +197,7 @@ const ReadingsFilterPanel = ({
                            transition-all duration-300"
               />
             </div>
-          </div>
+          )}
 
           <div className="flex items-center gap-3">
             <button
