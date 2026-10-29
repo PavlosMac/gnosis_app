@@ -1,5 +1,5 @@
 import React, { useMemo } from "react";
-import { MANUAL_DECK_ORDER } from "@/lib/cards";
+import { MANUAL_DECK_ORDER, cardThumbUrl } from "@/lib/cards";
 import { displayPositionName } from "@/lib/relationship-spread";
 import type { SelectedCard } from "@/types/reading";
 
@@ -66,7 +66,7 @@ const FaceUpDeck: React.FC<FaceUpDeckProps> = React.memo(({
               className="flex items-center gap-3 pl-1.5 pr-3 py-1.5 rounded-lg border border-[#d4af37]/40 bg-[#0a0015]/60"
             >
               <img
-                src={card.imageUrl}
+                src={cardThumbUrl(card)}
                 alt=""
                 className={`w-12 h-[76px] sm:w-14 sm:h-[90px] object-cover rounded-sm border border-[#d4af37]/60 transition-transform duration-300 ${card.reversed ? 'rotate-180' : ''}`}
                 loading="eager"
@@ -158,7 +158,7 @@ const FaceUpDeck: React.FC<FaceUpDeckProps> = React.memo(({
                   className={`${CARD_FRAME} ${disabled ? '' : 'sm:group-hover:scale-115 group-active:scale-95'} ${selected ? CARD_FRAME_SELECTED : CARD_FRAME_IDLE}`}
                 >
                   <img
-                    src={card.imageUrl}
+                    src={cardThumbUrl(card)}
                     alt=""
                     className={`w-full h-full object-cover ${selected ? 'opacity-50' : ''}`}
                     loading="lazy"

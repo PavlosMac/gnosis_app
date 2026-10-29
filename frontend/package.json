@@ -5,6 +5,7 @@
   "scripts": {
     "legal:registry": "node scripts/generate-legal-registry.mjs",
     "guide:webp": "node scripts/guide-shot-to-webp.mjs",
+    "cards:thumbs": "node scripts/card-thumbs.mjs",
     "predev": "npm run legal:registry",
     "dev": "next dev --turbopack",
     "prebuild": "npm run legal:registry",

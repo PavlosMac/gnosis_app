@@ -1,5 +1,16 @@
 import { TarotCardData } from "@/types/models";
 
+/** Where `npm run cards:thumbs` writes the 144x240 picker thumbnails (under public/). */
+export const CARD_THUMB_DIR = "/cards/thumbs";
+
+/**
+ * The local thumbnail for a card, for places that draw it small (the manual picker's
+ * 78-card grid and tray). Same basename as the full image, so one script keeps them in
+ * step. Everywhere a card is shown at reading size keeps `imageUrl`.
+ */
+export const cardThumbUrl = (card: Pick<TarotCardData, "imageUrl">): string =>
+  `${CARD_THUMB_DIR}/${card.imageUrl.slice(card.imageUrl.lastIndexOf("/") + 1)}`;
+
 export const TAROT_DECK: TarotCardData[] = [
   // Major Arcana
   { idx: 0, name: "The Fool", imageUrl: "https://steve-p.org/cards/small/sm_RWSa-T-00.webp", meaning: "New beginnings, innocence", reversedMeaning: "Recklessness, risk-taking" },

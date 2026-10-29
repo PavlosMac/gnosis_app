@@ -39,6 +39,7 @@ or in the three `CLAUDE.md` files, and CI runs it.
 | [`prompts/experiments/`](reference/prompts/experiments/) | backend | Frozen sample readings from `scripts/lean_prompt_test.py`, cited by the architecture doc |
 | [`readings/search-and-tags.md`](reference/readings/search-and-tags.md) | both | Reading tags and the filter panel, with dated amendments |
 | [`readings/free-limit-cta.md`](reference/readings/free-limit-cta.md) | frontend | Per-browser free-use counters for `/reading` and `/significators` and the sign-up nudge panel |
+| [`frontend/browser-load.md`](reference/frontend/browser-load.md) | frontend | What must stay static or small (no idle animation, no backdrop blur, card thumbnails), the empty profile slot, how to measure |
 | [`guide/user-guide.md`](reference/guide/user-guide.md) | frontend | The `/guide` hub and chapters (MDX), the `Shot` screenshot component, and how to capture and convert a screenshot |
 | [`support/contact-support.md`](reference/support/contact-support.md) | both | The support endpoint contract and the profile-page modal |
 | [`frontend/src/content/legal/README.md`](../frontend/src/content/legal/README.md) | frontend | How Terms / Privacy versions are named and registered (lives next to the content) |
@@ -51,7 +52,6 @@ or in the three `CLAUDE.md` files, and CI runs it.
 | [`2026-09-10-sse-streaming-interpretations.md`](plans/2026-09-10-sse-streaming-interpretations.md) | Not started. Stream the interpretation; add request duration and `request_id` logging. |
 | [`2026-09-21-user-accounting-ledger.md`](plans/2026-09-21-user-accounting-ledger.md) | Agreed, not started. Admin-set model and prices, monthly budget period, per-spread cost table, superadmin ledger UI. |
 | [`2026-09-29-readings-sort-index.md`](plans/2026-09-29-readings-sort-index.md) | Deferred. Compound index for spread + tags + date sort; trigger inside. |
-| [`2026-10-29-frontend-animation-load.md`](plans/2026-10-29-frontend-animation-load.md) | In progress. Cut browser load on old laptops: backdrop blur, starfield, border-flow, remove the budget chalice. |
 
 ## Notes
 
