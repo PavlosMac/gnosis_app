@@ -32,6 +32,7 @@ or in the three `CLAUDE.md` files, and CI runs it.
 | [`deployment/mongodb-backup.md`](reference/deployment/mongodb-backup.md) | ops | Backup container, cron line, restore test, B2 + Atlas targets |
 | [`email/email-service.md`](reference/email/email-service.md) | backend | `EmailPort` and adapters, Resend setup, reset / verification / support flows end to end |
 | [`interpretations/usage-and-budget-flow.md`](reference/interpretations/usage-and-budget-flow.md) | backend | The generate flow step by step, usage ledger, budget gate |
+| [`interpretations/openai-request-config.md`](reference/interpretations/openai-request-config.md) | backend | OpenAI concurrency/timeout settings, what a burst does, ordered plan for raising the cap |
 | [`interpretations/user-accounting.md`](reference/interpretations/user-accounting.md) | both | Map of everything that prices, reserves, debits or displays LLM spend; data shapes; known gaps |
 | [`prompts/lean-prompt-architecture.md`](reference/prompts/lean-prompt-architecture.md) | backend | Design reasoning for the lean prompt (implemented), with amendments |
 | [`prompts/prompt-reference.md`](reference/prompts/prompt-reference.md) | backend | The current prompts. Sections 3–4 are generated (`make -C backend prompt-doc`; CI fails if stale) |

@@ -115,6 +115,32 @@ An id that matches nothing in the table is priced at the table's most expensive 
 (with a warning logged) rather than failing the reading — a price-table gap should
 never be the reason a user can't get their reading.
 
+### Observed cost per reading
+
+Measured on 2026-10-29 from the `interpretations.usage` ledger in the dev database:
+27 priced readings, all real OpenAI calls on `gpt-5.4` (`$2.50` in / `$15.00` out per
+1M tokens, `medium` reasoning). A typical reading used ~630 prompt tokens and ~1,100
+completion tokens, of which ~370 were hidden reasoning tokens billed at the output rate.
+Output tokens dominate, so the spreads with the largest word budgets cost the most.
+
+| Spread | Readings | Avg cost | Max |
+|---|---|---|---|
+| Tree of Life | 2 | $0.046 | $0.055 |
+| Significators | 3 | $0.034 | $0.039 |
+| Relationship Reading | 4 | $0.034 | $0.043 |
+| Fire, Water, Air, Earth | 2 | $0.012 | $0.012 |
+| Career Reading | 2 | $0.009 | $0.014 |
+| Past, Present, Future | 6 | $0.009 | $0.011 |
+| Open Question (1 to 3 cards) | 4 | $0.008 | $0.009 |
+| Two Card | 2 | $0.006 | $0.006 |
+| Single Card | 2 | $0.004 | $0.004 |
+
+Overall average: **about $0.02 per reading**. The one `gpt-5.4-mini` reading in the
+ledger cost `$0.005` for the same token volume, roughly 4x cheaper. To refresh these
+numbers, aggregate `interpretations.usage.cost_usd` grouped by the joined reading's
+`spread_type` (see
+[`production-mongo-commands.md`](../database/production-mongo-commands.md) for shell access).
+
 ## Need to know
 
 - **A `budget_usd: 0` override must be checked with `is not None`, never `or`.** `0 or
