@@ -17,8 +17,11 @@ must stay removed. There is no measured before/after figure; see "Measuring" to 
   pages that used to carry their own starfield render it.
 - **No `backdrop-blur`.** Scrims and panels are near-opaque tints instead (`/85` to `/95`).
   Blur over a full-screen background is the single most expensive effect in the app.
-- **No `will-change`** on repeated elements. The 78 deck cards used to pin a compositor
-  layer each. A deck card mounts its front face and glow shadow only once chosen.
+- **No resting `will-change`** on repeated elements. The 78 deck cards used to pin a
+  compositor layer each. Now only a hovered, pressed or flipped card gets one (`tarot.css`,
+  next to `.card-flip-inner`). A deck card mounts its front face and glow shadow only once
+  chosen, and `ShuffledDeck` preloads the card image on pointer enter/down so the face
+  is not empty while it flips.
 - **Hover effects transition one property.** Landing cards use `transition-shadow
   duration-300` with a 40-50 px shadow, not `transition-all duration-700` at 80-100 px.
 - **Reveal with mount/unmount, not animated layout.** The readings filter panel shows the

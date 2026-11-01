@@ -194,6 +194,14 @@
   transform: rotateY(180deg);
 }
 
+/* Promote a card to its own layer only while it is about to move (hovered, pressed) or
+   once flipped. Never on all 78 at rest. */
+.group:hover > .card-flip-inner,
+.group:active > .card-flip-inner,
+.card-flip-inner.card-flipped {
+  will-change: transform;
+}
+
 .card-flip-face {
   backface-visibility: hidden;
 }

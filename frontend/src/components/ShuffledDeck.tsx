@@ -26,6 +26,12 @@ const ShuffledDeck: React.FC<ShuffledDeckProps> = React.memo(({ numCards, select
     onSelectCard({ ...shuffledDeck[idx], idx, reversed });
   };
 
+  // The front face mounts on pick, so warm the image cache once the pointer reaches a card
+  const preloadFace = (idx: number) => {
+    const url = shuffledDeck[idx]?.imageUrl;
+    if (url) new Image().src = url;
+  };
+
   return (
     <div ref={deckRef} className="w-full px-1 sm:px-1 flex items-start">
       <div className="flex flex-wrap justify-center gap-x-[2px] gap-y-[2px] sm:gap-y-[1px] mx-auto w-full max-w-[400px] sm:max-w-[856px]" style={{ perspective: '600px' }}>
@@ -36,6 +42,8 @@ const ShuffledDeck: React.FC<ShuffledDeckProps> = React.memo(({ numCards, select
               key={idx}
               className={`relative group ${selected ? 'selected' : ''} overflow-visible z-0 active:z-50 sm:hover:z-50 transition-[z-index] duration-0`}
               onClick={() => handleSelect(idx)}
+              onPointerEnter={() => preloadFace(idx)}
+              onPointerDown={() => preloadFace(idx)}
               disabled={!!selected || selectedCards.length >= numCards}
               aria-label={`Pick card ${idx + 1}`}
             >
