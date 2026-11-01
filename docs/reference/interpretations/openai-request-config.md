@@ -57,7 +57,10 @@ Real gpt-5.4 latency has **not been measured**; the load tests
 ## Plan, in order
 
 1. **Do nothing until the logs show queueing.** A beta of ~10 users never fills 10
-   slots; the single-request path is what to measure first.
+   slots; the single-request path is what to measure first. One cheap change to
+   consider now: lower `OPENAI_MAX_RETRIES` to 1 or 0. The SDK's backoff (jittered,
+   honours `Retry-After`) runs *while the slot is held*; for a waiting user a fast
+   429/503 beats a slow one and frees the slot.
 2. **Measure real latency.** Grep prod logs for `openai call completed` and read
    `duration_s`. If calls approach 100 s, the Cloudflare tunnel's 100 s origin
    timeout returns a 524 to the browser while the backend still completes, charges
@@ -70,6 +73,23 @@ Real gpt-5.4 latency has **not been measured**; the load tests
    Set `OPENAI_MAX_CONCURRENT` to that, restart, watch for `openai call failed` with
    `LLMRateLimitError`. If those appear, the provider is the limit and a higher cap
    only converts 503s into 429s.
-6. **Only then** consider structural changes: a per-user in-flight limit, or the
-   streaming plan (`docs/plans/2026-09-10-sse-streaming-interpretations.md`) which
-   also removes the 100 s wall-clock problem.
+6. **Only then** consider structural changes:
+   - **Token-bucket admission** instead of the fixed semaphore, if logs show provider
+     429s while slots are still free. The provider's real limit is tokens per minute,
+     not concurrent calls, and spreads differ ~8× in size (1 card vs 11): a fixed cap
+     of 10 wastes capacity on small spreads and risks 429s on large ones. The adapter
+     already computes the per-request completion cap at admission; a bucket refilled
+     at the org's TPM/RPM and debited by that cap is the OpenAI cookbook's
+     `api_request_parallel_processor` pattern.
+   - A per-user in-flight limit.
+   - The streaming plan (`docs/plans/2026-09-10-sse-streaming-interpretations.md`),
+     which also removes the 100 s wall-clock problem.
+
+## Why not the batch-processing patterns
+
+The usual "thousands of requests" guides (semaphore + long exponential backoff,
+pause the whole queue after a 429, retry queue) assume a batch job where nobody is
+waiting and delay is free. Here a person is watching the shuffle and a budget
+reservation is held for the duration, so anything past ~30 s is a failure whether or
+not the request eventually succeeds. Fail fast (503/429) and let the idempotent
+retry do the recovery; retry less, not more.
