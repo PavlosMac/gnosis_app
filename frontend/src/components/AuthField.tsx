@@ -1,5 +1,8 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
+import { Eye, EyeOff } from "lucide-react";
+
 /** Control styling shared by every auth input and textarea */
 export const AUTH_CONTROL_CLASS = `w-full px-4 py-3 rounded-lg bg-[#0a0015]/60 border border-[#d4af37]/20
   text-[#e6d5b8] placeholder-[#e6d5b8]/20 text-sm
@@ -62,19 +65,31 @@ const AuthField = ({
   hint,
 }: AuthFieldProps) => (
   <AuthFieldFrame name={name} label={label} error={error}>
-    <input
-      id={name}
-      name={name}
-      type={type}
-      placeholder={placeholder}
-      required={required}
-      autoComplete={autoComplete}
-      maxLength={maxLength}
-      defaultValue={defaultValue}
-      aria-describedby={hint ? `${name}-hint` : undefined}
-      className={AUTH_CONTROL_CLASS}
-      style={AUTH_CONTROL_STYLE}
-    />
+    {type === "password" ? (
+      <PasswordInput
+        name={name}
+        placeholder={placeholder}
+        required={required}
+        autoComplete={autoComplete}
+        maxLength={maxLength}
+        defaultValue={defaultValue}
+        aria-describedby={hint ? `${name}-hint` : undefined}
+      />
+    ) : (
+      <input
+        id={name}
+        name={name}
+        type={type}
+        placeholder={placeholder}
+        required={required}
+        autoComplete={autoComplete}
+        maxLength={maxLength}
+        defaultValue={defaultValue}
+        aria-describedby={hint ? `${name}-hint` : undefined}
+        className={AUTH_CONTROL_CLASS}
+        style={AUTH_CONTROL_STYLE}
+      />
+    )}
     {hint && (
       <p id={`${name}-hint`} className="text-xs text-[#e6d5b8]/40" style={AUTH_CONTROL_STYLE}>
         {hint}
@@ -82,6 +97,85 @@ const AuthField = ({
     )}
   </AuthFieldFrame>
 );
+
+type PasswordInputProps = Omit<
+  React.InputHTMLAttributes<HTMLInputElement>,
+  "id" | "type" | "className" | "style"
+> & { name: string };
+
+interface PasswordControlProps extends PasswordInputProps {
+  revealed: boolean;
+  onToggle: () => void;
+  /** Lets the stateful wrapper find the enclosing form */
+  wrapperRef?: React.Ref<HTMLDivElement>;
+}
+
+/** A password box with an eye button at its right edge that reveals the text.
+    Presentational: `revealed` is owned by the caller so both states render
+    without a DOM. The input's `name`/`id` never change, so the submitted
+    field is the same whether or not the text is showing. */
+export const PasswordControl = ({
+  name,
+  revealed,
+  onToggle,
+  wrapperRef,
+  ...rest
+}: PasswordControlProps) => (
+  <div ref={wrapperRef} className="relative">
+    <input
+      {...rest}
+      id={name}
+      name={name}
+      type={revealed ? "text" : "password"}
+      // A revealed password is a text field: keep the keyboard and browser
+      // from capitalising, correcting or spell-checking (and sending) it
+      autoCapitalize="off"
+      autoCorrect="off"
+      spellCheck={false}
+      className={`${AUTH_CONTROL_CLASS} pr-12`}
+      style={AUTH_CONTROL_STYLE}
+    />
+    <button
+      type="button"
+      onClick={onToggle}
+      // Keep focus and the caret in the input when the eye is clicked
+      onMouseDown={(e) => e.preventDefault()}
+      title={revealed ? "Hide password" : "Show password"}
+      aria-label={revealed ? "Hide password" : "Show password"}
+      aria-pressed={revealed}
+      className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded text-[#d4af37]/50
+                 hover:text-[#d4af37] focus:outline-none focus-visible:text-[#d4af37]
+                 focus-visible:ring-1 focus-visible:ring-[#d4af37]/40 transition-colors duration-300"
+    >
+      {revealed ? <EyeOff size={18} aria-hidden /> : <Eye size={18} aria-hidden />}
+    </button>
+  </div>
+);
+
+/** Starts hidden on every mount; the eye toggles it. Submitting the form hides
+    it again: a server-action form stays mounted after an error, and the retry
+    should not be typed in the clear. */
+const PasswordInput = (props: PasswordInputProps) => {
+  const [revealed, setRevealed] = useState(false);
+  const wrapperRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const form = wrapperRef.current?.closest("form");
+    if (!form) return;
+    const hide = () => setRevealed(false);
+    form.addEventListener("submit", hide);
+    return () => form.removeEventListener("submit", hide);
+  }, []);
+
+  return (
+    <PasswordControl
+      {...props}
+      wrapperRef={wrapperRef}
+      revealed={revealed}
+      onToggle={() => setRevealed((r) => !r)}
+    />
+  );
+};
 
 interface AuthCheckboxProps {
   name: string;
