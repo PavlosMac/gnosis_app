@@ -7,54 +7,6 @@ import {
   type LegalDocumentId,
 } from "@/lib/legal-versions";
 
-/**
- * How full the chalice is, 0..1 — null when the figures can't yield a level
- * (non-finite or negative). A budget of exactly $0 is a real state (an account
- * capped by an admin) and reads as a dry chalice, not as missing data.
- */
-export const chaliceFill = (
-  remaining: number | undefined,
-  budget: number | undefined
-): number | null => {
-  if (
-    typeof remaining !== "number" ||
-    typeof budget !== "number" ||
-    !Number.isFinite(remaining) ||
-    !Number.isFinite(budget) ||
-    budget < 0
-  )
-    return null;
-  if (budget === 0) return 0;
-  return Math.min(1, Math.max(0, remaining / budget));
-};
-
-export type ChaliceState = "full" | "partial" | "low" | "empty";
-
-export const chaliceState = (fraction: number): ChaliceState => {
-  if (fraction <= 0) return "empty";
-  if (fraction < 0.2) return "low";
-  if (fraction >= 0.98) return "full";
-  return "partial";
-};
-
-const DRY_CAPTION = "The chalice runs dry";
-
-/** The line under the chalice: only the dry state is worth words — the profile
-    shows no currency, the fill level says the rest */
-export const chaliceCaption = (remaining: number): string | null =>
-  remaining <= 0 ? DRY_CAPTION : null;
-
-/** The chalice's accessible title, from the 0..1 fill fraction. It follows the
-    drawn state: dry only at zero, full where the chalice is drawn full, and a
-    percentage kept inside 1..99 so a sliver never reads "0%". */
-export const chaliceTitle = (fraction: number): string => {
-  const state = chaliceState(fraction);
-  if (state === "empty") return "Remaining readings: the chalice runs dry";
-  if (state === "full") return "Remaining readings: the chalice is full";
-  const percent = Math.min(99, Math.max(1, Math.round(fraction * 100)));
-  return `Remaining readings: the chalice is ${percent}% full`;
-};
-
 /** "10 Sept 2026" — the readings journal's date format */
 export const formatReadingDate = (iso: string): string =>
   new Date(iso).toLocaleDateString("en-GB", {

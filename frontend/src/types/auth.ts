@@ -11,6 +11,9 @@ export interface User {
   email: string;
   firstName: string | null;
   lastName: string | null;
+  /** ISO "YYYY-MM-DD"; null for accounts created before it was required
+      (legacy, seeded, invited-but-not-accepted). Feeds the profile's card of the day */
+  birthDate: string | null;
   /** Accepted legal-document versions. `undefined` = the backend predates
       consent (the key is always present once it ships, `{}` for legacy users) */
   consents?: UserConsents;
@@ -35,6 +38,7 @@ export interface MeResponse {
   email: string;
   first_name?: string | null;
   last_name?: string | null;
+  birth_date?: string | null;
   consents?: UserConsents;
   /** Absent on a backend that predates email verification — treated as active */
   status?: UserStatus;
@@ -65,6 +69,7 @@ export interface LoginFormState extends AuthFormState {
 export interface RegisterEchoValues {
   firstName: string;
   lastName: string;
+  birthDate: string;
   email: string;
   acceptTerms: boolean;
   acceptPrivacy: boolean;
@@ -91,6 +96,7 @@ export interface DeleteAccountFormState extends AuthFormState {}
 export interface AcceptInviteEchoValues {
   firstName: string;
   lastName: string;
+  birthDate: string;
   acceptTerms: boolean;
   acceptPrivacy: boolean;
 }
@@ -142,6 +148,7 @@ export interface UserResponse {
   email: string;
   first_name?: string | null;
   last_name?: string | null;
+  birth_date?: string | null;
   consents?: UserConsents;
   status?: UserStatus;
   email_verified_at?: string | null;
@@ -163,6 +170,7 @@ export const mapMeResponseToUser = (me: MeResponse): User => ({
   email: me.email,
   firstName: me.first_name ?? null,
   lastName: me.last_name ?? null,
+  birthDate: me.birth_date ?? null,
   consents: me.consents,
   status: me.status ?? "active",
   emailVerifiedAt: me.email_verified_at ?? null,
@@ -269,6 +277,7 @@ export const mapUserResponseToUser = (u: UserResponse): User => ({
   email: u.email,
   firstName: u.first_name ?? null,
   lastName: u.last_name ?? null,
+  birthDate: u.birth_date ?? null,
   consents: u.consents,
   status: u.status ?? "active",
   emailVerifiedAt: u.email_verified_at ?? null,

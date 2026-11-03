@@ -48,9 +48,17 @@ interface AuthFieldProps {
   autoComplete?: string;
   maxLength?: number;
   defaultValue?: string;
+  /** Bounds for a `type="date"` control. Keep `max` static (or absent): a
+      render-time "today" differs between server and client */
+  min?: string;
+  max?: string;
   /** Muted guidance under the input, e.g. the password rules */
   hint?: string;
 }
+
+// A date control's picker icon is drawn by the browser in the page's colour
+// scheme; on the dark panels it is invisible without this
+const DATE_CONTROL_STYLE = { ...AUTH_CONTROL_STYLE, colorScheme: "dark" } as const;
 
 const AuthField = ({
   name,
@@ -62,6 +70,8 @@ const AuthField = ({
   autoComplete,
   maxLength,
   defaultValue,
+  min,
+  max,
   hint,
 }: AuthFieldProps) => (
   <AuthFieldFrame name={name} label={label} error={error}>
@@ -85,9 +95,11 @@ const AuthField = ({
         autoComplete={autoComplete}
         maxLength={maxLength}
         defaultValue={defaultValue}
+        min={min}
+        max={max}
         aria-describedby={hint ? `${name}-hint` : undefined}
         className={AUTH_CONTROL_CLASS}
-        style={AUTH_CONTROL_STYLE}
+        style={type === "date" ? DATE_CONTROL_STYLE : AUTH_CONTROL_STYLE}
       />
     )}
     {hint && (

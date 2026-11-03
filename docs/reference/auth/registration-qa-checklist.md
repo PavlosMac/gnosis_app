@@ -24,7 +24,8 @@ A password that passes the rules, for use below: `plum-harbour-lantern-42`.
 
 ## 1. Public legal pages
 
-- [ ] `/legal/terms` and `/legal/privacy` render, each with a version line dated 2026-10-04.
+- [ ] `/legal/terms` and `/legal/privacy` render, each with a version line showing its current
+      version (the newest dated file in `frontend/src/content/legal/<doc>/`).
 - [ ] `/legal/terms/2026-10-04` renders the same Terms.
 - [ ] `/legal/terms/1999-01-01` and `/legal/nope` give a 404.
 - [ ] On `/`, the footer shows "Begin your journey", Terms and Privacy links.
@@ -39,8 +40,13 @@ A password that passes the rules, for use below: `plum-harbour-lantern-42`.
 - [ ] The profile menu (logged out) shows only "Login" (no "Sign up", no "Guide"). The login page links to registration when it is open, and that link opens `/user/register`.
 - [ ] The password field shows the hint "At least 12 characters. Avoid common passwords
       and your own name or email."
-- [ ] Submit with both boxes unticked. Each box shows its own error, and the names and
-      email you typed are still there.
+- [ ] The "Date of birth" field is a native date control with a visible picker icon on the
+      dark panel. Its hint says you must be 18 or older and that it is used for your card of
+      the day.
+- [ ] Submit with both boxes unticked. Each box shows its own error, and the names, date of
+      birth and email you typed are still there.
+- [ ] Submit with a date of birth 17 years ago. The field shows "You must be 18 or older to
+      create an account". A date before 1900 and an empty field each show their own message.
 - [ ] Click "Terms and Conditions" in the label. The document opens in a modal. Closing it
       leaves the form intact. Same for "Privacy Policy".
 - [ ] Submit with mismatched passwords. The error appears on the confirm field.
@@ -54,7 +60,7 @@ On the register form, with everything else valid:
 - [ ] `123456789012` → the same "too common" message.
 - [ ] A password containing your first name, e.g. `plum-<firstname>-harbour` → "Password
       must not contain your name or email address".
-- [ ] After each refusal, the names, email and ticked boxes are still there.
+- [ ] After each refusal, the names, date of birth, email and ticked boxes are still there.
 - [ ] `plum-harbour-lantern-42` → "Check Your Email" with the 24-hour and 7-day wording.
       No session cookies are set.
 
@@ -81,7 +87,7 @@ On the register form, with everything else valid:
 - [ ] The profile shows "First Last".
 - [ ] "Account settings" in the left panel opens `/user/profile/settings`.
 - [ ] There, the Agreements block shows two rows with today's date. Each title opens
-      version 2026-10-04 of that document in a modal; Close returns you to the page.
+      the current version of that document in a modal; Close returns you to the page.
 - [ ] "Delete account" appears at the foot of that page, set apart in red.
 
 ## 7. Self-service consent

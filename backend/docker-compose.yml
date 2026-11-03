@@ -36,7 +36,7 @@ services:
     environment:
       - MONGODB_URI=mongodb://mongodb:27017
     command: >
-      sh -c ".venv/bin/python -m scripts.seed_superadmin dev@gnosisesoterica.de devpassword12345 &&
+      sh -c ".venv/bin/python -m scripts.seed_superadmin dev@gnosisesoterica.de devpassword12345 --birth-date 1990-06-15 &&
              .venv/bin/uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload"
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/v1/health')"]

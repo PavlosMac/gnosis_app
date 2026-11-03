@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import UTC, date, datetime, timedelta
 from typing import Annotated, Self
 
 from pydantic import AfterValidator, EmailStr, Field, model_validator
@@ -49,6 +49,40 @@ def _strip_person_name(value: str) -> str:
 
 PersonName = Annotated[str, Field(max_length=100), AfterValidator(_strip_person_name)]
 
+MIN_ACCOUNT_AGE_YEARS = 18
+MIN_BIRTH_YEAR = 1900
+
+
+def _eighteenth_birthday(birth_date: date) -> date:
+    year = birth_date.year + MIN_ACCOUNT_AGE_YEARS
+    try:
+        return birth_date.replace(year=year)
+    except ValueError:  # born on Feb 29: comes of age on Mar 1 of a common year
+        return date(year, 3, 1)
+
+
+def _check_birth_date(value: date) -> date:
+    # Pydantic already refused malformed and impossible dates ("1990-02-30"). The
+    # frontend mirrors these rules in zod (it drops pydantic's 422 detail), so this is
+    # the defence, not the message the user sees.
+    # The user typed a date from their own calendar, which can be a day ahead of the
+    # server's UTC date (UTC+14 at most), so compare against UTC today plus one day:
+    # otherwise someone turning 18 today, or entering today's date, is wrongly refused.
+    today = datetime.now(UTC).date() + timedelta(days=1)
+    if value > today:
+        raise ValueError("must not be in the future")
+    if value.year < MIN_BIRTH_YEAR:
+        raise ValueError(f"must be {MIN_BIRTH_YEAR} or later")
+    if _eighteenth_birthday(value) > today:
+        raise ValueError(f"you must be {MIN_ACCOUNT_AGE_YEARS} or older to create an account")
+    return value
+
+
+# Required at sign-up (register, accept-invite): Terms §6 already demands 18+, and the
+# profile's card of the day is derived from it. Optional on read — legacy, seeded and
+# invited accounts have none.
+BirthDate = Annotated[date, AfterValidator(_check_birth_date)]
+
 
 class ConsentVersions(AppSchema):
     terms: ConsentVersion
@@ -76,6 +110,7 @@ class RegisterRequest(AppSchema):
     password: Password = Field(min_length=MIN_PASSWORD_LENGTH, max_length=MAX_PASSWORD_LENGTH)
     first_name: PersonName
     last_name: PersonName
+    birth_date: BirthDate
     consents: ConsentVersions
 
 
@@ -108,6 +143,7 @@ class AcceptInviteRequest(AppSchema):
     password: Password = Field(min_length=MIN_PASSWORD_LENGTH, max_length=MAX_PASSWORD_LENGTH)
     first_name: PersonName
     last_name: PersonName
+    birth_date: BirthDate
     consents: ConsentVersions
 
 
@@ -139,6 +175,9 @@ class UserResponse(AppSchema):
     email: str
     first_name: str | None = None
     last_name: str | None = None
+    # None for accounts created before 2026-11-03 and for seeded ones; serialised as
+    # the ISO date string.
+    birth_date: date | None = None
     # Always present ({} for legacy users) — the frontend reads an absent key as
     # "backend predates consent" and skips its re-consent gate.
     consents: dict[str, ConsentRecord] = Field(default_factory=dict)
@@ -165,6 +204,7 @@ class UserIdentity(AppSchema):
 class UserReadModel(UserIdentity):
     first_name: str | None = None
     last_name: str | None = None
+    birth_date: date | None = None
     consents: dict[str, ConsentRecord] = Field(default_factory=dict)
     status: UserStatus = UserStatus.ACTIVE
     email_verified_at: datetime | None = None

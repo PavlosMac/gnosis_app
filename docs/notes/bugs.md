@@ -62,3 +62,16 @@ Use bullet lists for simplicity. Older entries can be manually removed when they
 - **Cause:** `validation_exception_handler` in `src/core/exceptions.py` logged and returned `exc.errors()` unfiltered; Pydantic's `input` (and sometimes `ctx`) holds the submitted value. Found by the password-hashing audit.
 - **Fix:** the handler drops `input` and `ctx` from each error, logs only `(loc, type)` pairs, and returns `loc`, `type`, `msg`. Tests: `tests/core/test_exceptions.py` (sentinel password absent from log and response). The frontend never read either field.
 - **Prevention:** never log or return `exc.errors()` raw. Any new handler over request bodies must go through this one. Logs written before this fix may still hold passwords.
+
+- **2026-11-03 — Significators: a day number of 22 shows the Ace of Pentacles.** *Open.*
+- **Symptom:** `getDayNumber(22)` on `/significators` (born on the 22nd) returns `TAROT_DECK[22]`, the first minor card, as the Day Number card.
+- **Cause:** `reduceToMajorArcana` in `frontend/src/lib/significators.ts` stops reducing at `MAJOR_ARCANA_THRESHOLD` (22), so 22 passes through unreduced and `getCardByIndex(22)` lands one past the major arcana (indices 0..21).
+- **Fix:** not applied. The profile's card of the day (`lib/personal-numbers.ts`, ADR-019) maps 22 to The Fool and does not share the helper. Decide whether the significators chart should do the same (22 -> The Fool) or reduce 22 to 4 (The Emperor), then fix and pin with a test.
+- **Prevention:** any lookup by numerology number must be bounded to the major arcana (`MAJOR_ARCANA_MAX_INDEX`).
+
+- **2026-11-03 — Readings list: "Begin a Reading" went to the home page.** *Fixed.*
+- **Symptom:** with no saved readings, `/user/readings` shows the first-time CTA; clicking it opened `/` instead of the Oracle at `/reading`.
+- **Cause:** the empty-state `Link` in `frontend/src/app/user/readings/page.tsx` had `href="/"`, left from when the Oracle lived on the landing page. The profile's "New reading" button and the filter panel already pointed at `/reading`.
+- **Fix:** `href="/reading"`.
+- **Prevention:** every "new reading" entry point should use the same target; the landing page is the portal, not the Oracle.
+

@@ -1,5 +1,5 @@
 import time
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
 
 from src.core.config import settings
 from src.core.security import hash_password, hash_token
@@ -48,12 +48,51 @@ async def test_register_returns_201_detail_and_no_tokens(client, mock_email, moc
     assert doc["verification_deadline_at"] is not None
 
 
-async def test_register_missing_names_or_consents_is_422(client):
-    for missing in ("first_name", "last_name", "consents"):
+async def test_register_missing_names_birth_date_or_consents_is_422(client):
+    for missing in ("first_name", "last_name", "birth_date", "consents"):
         body = make_register_body()
         del body[missing]
         resp = await client.post(REGISTER, json=body)
         assert resp.status_code == 422, missing
+
+
+def _years_ago(years: int) -> str:
+    today = date.today()
+    try:
+        return today.replace(year=today.year - years).isoformat()
+    except ValueError:  # today is Feb 29
+        return today.replace(year=today.year - years, day=28).isoformat()
+
+
+async def test_register_rejects_an_unusable_birth_date(client):
+    cases = {
+        "malformed": "15/06/1990",
+        "impossible": "1990-02-30",
+        "future": (date.today() + timedelta(days=1)).isoformat(),
+        "under 18": _years_ago(17),
+        "before 1900": "1899-12-31",
+    }
+    for label, value in cases.items():
+        resp = await client.post(REGISTER, json=make_register_body(birth_date=value))
+        assert resp.status_code == 422, label
+
+
+async def test_register_accepts_a_user_whose_calendar_is_a_day_ahead(client, mock_db):
+    # Turns 18 "tomorrow" by the server's UTC date, i.e. today for a user east of UTC.
+    tomorrow = date.today() + timedelta(days=1)
+    value = tomorrow.replace(year=tomorrow.year - 18, day=28 if (tomorrow.month, tomorrow.day) == (2, 29) else tomorrow.day).isoformat()
+
+    resp = await client.post(REGISTER, json=make_register_body(birth_date=value))
+
+    assert resp.status_code == 201, resp.text
+
+
+async def test_register_accepts_an_eighteenth_birthday_today(client, mock_db):
+    resp = await client.post(REGISTER, json=make_register_body(birth_date=_years_ago(18)))
+
+    assert resp.status_code == 201, resp.text
+    doc = await mock_db["users"].find_one({"email": "user@example.com"})
+    assert doc["birth_date"] == _years_ago(18)
 
 
 async def test_register_whitespace_only_name_is_422(client):

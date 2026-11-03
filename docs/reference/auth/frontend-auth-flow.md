@@ -16,7 +16,7 @@ JWT authentication via an external FastAPI backend. Tokens are stored in httpOnl
 | `src/app/layout.tsx` | Root server layout — fetches the user and the `REGISTRATION_ENABLED` flag, passes both to `AuthProvider` |
 | `src/app/user/layout.tsx` | The onboarding gate for `/user/*`: redirects a logged-in user to `/accept-terms` (or `/verify-email`) when something is outstanding. Does not fetch for `AuthProvider` — the root layout does |
 | `src/app/verify-email/` | Email confirmation page, Confirm and resend actions (public) |
-| `src/app/accept-invite/` | Accept a superadmin invite: names, password, consents against the emailed token (public, app root, not gated by `REGISTRATION_ENABLED`) |
+| `src/app/accept-invite/` | Accept a superadmin invite: names, birth date, password, consents against the emailed token (public, app root, not gated by `REGISTRATION_ENABLED`) |
 | `src/app/superadmin/` | The admin page: user list, invite form, email and delete modals; every action re-checks `isSuperadmin` |
 | `src/app/accept-terms/` | Re-consent interstitial and action |
 | `src/app/user/profile/settings/` | Account settings: contact support, the Agreements rows (each opens the accepted version in `LegalDocumentModal`, rendered on demand by the `loadAgreementDocument` server action so the page ships no legal text), one-click password reset, link to deletion. The agreements and delete pages' back buttons return here |
@@ -315,11 +315,12 @@ existing "refresh failed → logout" middleware path (diagram 5) cleans it up.
 ```
 Browser            Next.js actions              FastAPI                    Email
   | submit form  ---> register()                                              |
-  |   firstName, lastName, email, password,                                   |
+  |   firstName, lastName, birthDate, email, password,                        |
   |   acceptTerms, acceptPrivacy                                              |
-  |                  zod registerSchema (boxes must be "on")                  |
+  |                  zod registerSchema (boxes must be "on"; birthDate is     |
+  |                    YYYY-MM-DD, a real date, 1900+, not future, 18+)       |
   |                  POST /auth/register {email, password, first_name,        |
-  |                    last_name, consents: CURRENT_VERSIONS}  ------------>  |
+  |                    last_name, birth_date, consents: CURRENT_VERSIONS} --> |
   |                                          user created, status             |
   |                                          pending_verification  ---------> | link
   |                  <-- 201 {detail}  (no tokens)                            |
@@ -383,10 +384,10 @@ Superadmin /superadmin        Next.js actions            FastAPI                
                                page: publicFetch GET /auth/invite?token=  (peek only)
                                  200 {email} -> form with "Invitation for <email>"
                                  400 / 410   -> dead-link panel, no form
-                                                                                         submit names, password, consents
+                                                                                         submit names, birth date, password, consents
                                acceptInvite()  zod acceptInviteSchema (no email field)
                                POST /auth/accept-invite {token, password, first_name,
-                                 last_name, consents: CURRENT_VERSIONS}
+                                 last_name, birth_date, consents: CURRENT_VERSIONS}
                                  <-- 200 (no tokens) | 400 / 410 dead link
                                      | 422 weak_password -> field error, link still usable
                                                                                          <-- "Your account is ready" -> /user/login

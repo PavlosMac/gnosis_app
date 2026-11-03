@@ -1,4 +1,4 @@
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
 
 from src.auth.models import User, UserStatus, build_consents
 from src.auth.repository import (
@@ -18,6 +18,7 @@ class RegisterUserCommand(BaseCommand):
     password: str
     first_name: str
     last_name: str
+    birth_date: date
     # Accepted legal-document versions; each is stamped with accepted_at = now.
     terms_version: str
     privacy_version: str
@@ -61,6 +62,7 @@ class RegisterUserHandler(CommandHandler[RegisterUserCommand, str]):
             password_hash=hash_password(command.password),
             first_name=first_name,
             last_name=last_name,
+            birth_date=command.birth_date,
             consents=build_consents(command.terms_version, command.privacy_version, now),
             # No session until the emailed link is confirmed (hard gate).
             status=UserStatus.PENDING_VERIFICATION,

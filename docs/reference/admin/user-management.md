@@ -34,7 +34,7 @@ verify-email.
 | `POST /users/{id}/email` | `{subject ≤200, message ≤5000}` | `200 {detail: "Email sent"}` | 401, 403, 404, 422; **502** |
 | `DELETE /users/{id}` | | `204` | 401, 403, 404; 409 when `{id}` is the admin's own account |
 | `GET /auth/invite?token=` | | `200 {email}` | 400 unknown, used, or not an invite token; 410 expired; 429 per-IP throttle |
-| `POST /auth/accept-invite` | `{token, password, first_name, last_name, consents: {terms, privacy}}` | `200 {detail}`, no tokens | 400, 410, 429 per-IP throttle; `422 {detail, code: "weak_password"}` (the link is not consumed) |
+| `POST /auth/accept-invite` | `{token, password, first_name, last_name, birth_date, consents: {terms, privacy}}` | `200 {detail}`, no tokens | 400, 410, 429 per-IP throttle; `422 {detail, code: "weak_password"}` (the link is not consumed) |
 | `GET /users` | | items now carry `status` | |
 
 ## The invite flow
@@ -58,11 +58,11 @@ Admin                 FastAPI                                   Invitee
                                                                  opens the link
                        GET /auth/invite?token=   peek (never consumes) -> {email} / 400 / 410
                                                                  page shows "Invitation for <email>"
-                                                                 types names, password, ticks consents
+                                                                 types names, birth date, password, ticks consents
                        POST /auth/accept-invite
                          load_invite (peek, expiry, status must be "invited")
                          validate_new_password            -> 422 keeps the link usable
-                         activate_invited: password_hash, names, consents
+                         activate_invited: password_hash, names, birth_date, consents
                            (accepted_at = now), status "active", email_verified_at = now,
                            $unset verification_deadline_at   (guarded on status "invited":
                            this is what makes the link single-use; -> 400 if raced)

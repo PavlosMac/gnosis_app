@@ -19,6 +19,7 @@ Source: `src/auth/models.py`
 | password_hash      | str             | optional only while `status` is `invited` (set when the invite is accepted). Every reader treats absence as "wrong password" |
 | first_name         | str             | optional (absent on accounts created before 2026-10-04) |
 | last_name          | str             | optional (as above)                     |
+| birth_date         | str (ISO date)  | optional (absent on accounts created before 2026-11-03, on invited ones until accepted, and on seeded ones unless the seed sets it). Required at register / accept-invite; 18+ enforced by `BirthDate` in `src/auth/schemas.py` |
 | consents           | sub-doc         | optional; `{terms: {version, accepted_at}, privacy: {version, accepted_at}}`. `version` is the frontend's dated MDX filename, stored unvalidated. Readers treat absent as `{}` |
 | status             | str             | `invited` \| `pending_verification` \| `active`. **Absent means active** (no backfill) — `user_status()` in `src/auth/models.py`. `invited` = superadmin invite not yet accepted: no password, names or consents |
 | email_verified_at  | datetime        | optional; set when the emailed link is confirmed |

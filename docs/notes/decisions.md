@@ -168,6 +168,8 @@ Each decision should include:
 
 **Amendment (2026-10-29):** the chalice was removed on Pavlos's decision as part of the frontend animation-load work. It was five infinite SVG animations under a `drop-shadow` filter on a page people leave open. The slot stays, empty and card-proportioned, for a tarot card visual to come; `AccountPanel` still receives `budget` and the pure helpers in `profile-dashboard.ts` remain as inputs for it. The dashboard endpoint and the rest of this ADR are unchanged. The profile now shows nothing about the budget; the interpretation modal's "Remaining Oracle budget" line is the only user-facing figure.
 
+**Amendment (2026-11-03):** the slot is now filled by the personal day card (ADR-019). `budget` and the chalice helpers are gone; the endpoint still returns the budget fields.
+
 
 ### ADR-009: Transactional Email via Resend, Sent Exclusively by the FastAPI Backend (2026-09-15)
 
@@ -417,3 +419,31 @@ Each decision should include:
 - A future prompt trim must keep the scoping sentence, not only the identity sentence; `test_lean_prompt.py` pins both
 - Not yet checked against a live model (dev stack bills OpenAI)
 - Reference: `docs/reference/prompts/lean-prompt-architecture.md`
+
+
+### ADR-019: Personal Day Card from the Account Birth Date (2026-11-03)
+
+**Context:**
+- The profile's Tally panel had kept an empty card-proportioned slot since the chalice was removed (ADR-008 amendment). Pavlos wanted a tarot card there: the querent's personal **day** number, from formulas ported from another project of his, with month and year ready to show later
+- Nothing in the system knew a user's birth date (it existed only on significator readings)
+
+**Decision:**
+- **Birth date is required at sign-up** (register and accept-invite), optional on read: legacy, seeded and invited accounts have none and keep the empty slot. No edit UI, no backfill. Stored as the ISO string, same as `readings.birth_date`
+- **Minimum age 18**, checked in zod (the message the user sees) and in the backend validator (`BirthDate`, defence only: the frontend drops pydantic's 422 detail). Terms §6 already required it; the date lets us enforce it. A Feb 29 birth comes of age on Mar 1
+- **New Privacy Policy version 2026-11-03** listing the date of birth; existing users re-consent through the gate (ADR-012). **No new Terms version**: §7's list of required details is non-exhaustive and the obligation (accuracy) is unchanged; the data inventory belongs to the Privacy Policy. Noted for the lawyer review
+- **Formulas ported exactly** (`src/lib/personal-numbers.ts`): year = reduce(digits(birth day) + digits(birth month) + digits(current year)); month = reduce(year + m) where m is the current month, or the next one from the 21st (December wraps to January); day = reduce(day of month + month). `reduce` keeps the master numbers 11 and 22. Cards: 1..21 by major arcana index, **22 is The Fool**
+- **Computed client-side on the user's local date** (ADR-011 stance: numerology is frontend work; the backend only stores the date). `TallyCard` reads the clock after mount; the server render is the empty slot, so hydration matches and the server's timezone never matters
+- **Month and year are computed but not rendered**; showing them is a render change only
+- **Reuse `TarotCard`** for the visual (ADR-016 § reuse existing visuals), with its one-shot entrance; nothing animates idle (browser-load rules)
+
+**Alternatives Considered:**
+- Make the birth date optional at sign-up -> Rejected: the card is the point of collecting it, and the age check needs it
+- Reuse `reduceToMajorArcana` / `getDayNumber` from `lib/significators.ts` -> Rejected: they map 22 to `TAROT_DECK[22]` (the Ace of Pentacles); logged as a bug, not fixed here
+- A "reduce" button to collapse a master number -> Rejected: masters are kept by design
+- Compute "today" on the server -> Rejected: the server's date differs from the user's around midnight and causes hydration mismatches
+
+**Consequences:**
+- Deploying the backend without the frontend breaks registration (the form would not send the field); the two commits ship together
+- Legacy accounts cannot get a card until a birth-date edit exists (out of scope)
+- The dev seed skips an existing superadmin; a dev volume seeded before 2026-11-03 needs the one-line update in `dev-users.md`
+- Reference: `docs/reference/frontend/browser-load.md` § "The card of the day on the profile"; `docs/reference/auth/registration-verification-and-consent.md` § "Names and consent"

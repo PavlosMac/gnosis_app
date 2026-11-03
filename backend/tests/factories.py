@@ -33,6 +33,8 @@ def make_usage(
 
 
 DEFAULT_PASSWORD = "securepassword123"
+# Well over 18 at any plausible test date; the wire format is the ISO date string.
+DEFAULT_BIRTH_DATE = "1990-06-15"
 
 
 def make_register_body(
@@ -40,15 +42,18 @@ def make_register_body(
     password: str = DEFAULT_PASSWORD,
     first_name: str = "Test",
     last_name: str = "User",
+    birth_date: str = DEFAULT_BIRTH_DATE,
     terms: str = "2026-10-04",
     privacy: str = "2026-10-04",
 ) -> dict:
-    """A valid POST /auth/register body — names and both consents are required."""
+    """A valid POST /auth/register body — names, birth date and both consents are
+    required."""
     return {
         "email": email,
         "password": password,
         "first_name": first_name,
         "last_name": last_name,
+        "birth_date": birth_date,
         "consents": {"terms": terms, "privacy": privacy},
     }
 
@@ -88,6 +93,7 @@ def make_accept_invite_body(
     password: str = DEFAULT_PASSWORD,
     first_name: str = "Invited",
     last_name: str = "Seeker",
+    birth_date: str = DEFAULT_BIRTH_DATE,
     terms: str = "2026-10-04",
     privacy: str = "2026-10-13",
 ) -> dict:
@@ -97,6 +103,7 @@ def make_accept_invite_body(
         "password": password,
         "first_name": first_name,
         "last_name": last_name,
+        "birth_date": birth_date,
         "consents": {"terms": terms, "privacy": privacy},
     }
 

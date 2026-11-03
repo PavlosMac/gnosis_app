@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { isValidDate } from "@/lib/dateValidation";
 import {
   MAX_PASSWORD_LENGTH,
   MIN_PASSWORD_LENGTH,
@@ -22,6 +23,50 @@ const nameField = (label: string) =>
     .trim()
     .min(1, `${label} is required`)
     .max(100, `${label} must be at most 100 characters`);
+
+// Required at sign-up; the backend applies the same rules (BirthDate in
+// backend/src/auth/schemas.py) but the frontend drops its 422 detail, so every
+// message the user sees comes from here. A date input posts "YYYY-MM-DD".
+export const MIN_ACCOUNT_AGE_YEARS = 18;
+export const MIN_BIRTH_YEAR = 1900;
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
+const UNDERAGE_MESSAGE = `You must be ${MIN_ACCOUNT_AGE_YEARS} or older to create an account`;
+
+const dateParts = (iso: string) => {
+  const [year, month, day] = iso.split("-").map(Number);
+  return { year, month, day };
+};
+
+// Local calendar dates, so the comparison matches what the user typed rather
+// than a UTC shift of it. Born on Feb 29: comes of age on Mar 1 of a common year
+// (new Date rolls Feb 29 forward on its own).
+const isUnderage = (iso: string, today: Date) => {
+  const { year, month, day } = dateParts(iso);
+  const eighteenth = new Date(year + MIN_ACCOUNT_AGE_YEARS, month - 1, day);
+  return eighteenth > today;
+};
+
+// One check reporting the first problem: zod 4 runs every check even after an
+// earlier one failed, and a blank field must show one message, not five
+export const birthDateProblem = (iso: string, today = new Date()): string | null => {
+  if (!iso) return "Date of birth is required";
+  if (!ISO_DATE.test(iso)) return "Enter your date of birth as a full date";
+  const { year, month, day } = dateParts(iso);
+  // Before isValidDate: new Date(50, 0, 1) is 1950, so years 0001-0099 would
+  // otherwise be reported as "not a real date"
+  if (year < MIN_BIRTH_YEAR) return `Year must be ${MIN_BIRTH_YEAR} or later`;
+  if (!isValidDate(day, month, year)) return "That is not a real date";
+  if (new Date(year, month - 1, day) > today) return "Date of birth cannot be in the future";
+  if (isUnderage(iso, today)) return UNDERAGE_MESSAGE;
+  return null;
+};
+
+const birthDateField = z
+  .string({ error: "Date of birth is required" })
+  .superRefine((iso, ctx) => {
+    const message = birthDateProblem(iso);
+    if (message) ctx.addIssue({ code: "custom", message });
+  });
 
 // A ticked checkbox posts "on"; an unticked one is absent (null from FormData)
 const tickedBox = (message: string) => z.literal("on", { error: message });
@@ -52,6 +97,7 @@ export const registerSchema = z
   .object({
     firstName: nameField("First name"),
     lastName: nameField("Last name"),
+    birthDate: birthDateField,
     email: emailField,
     password: passwordField,
     confirmPassword: z.string(),
@@ -73,6 +119,7 @@ export const acceptInviteSchema = z
     token: z.string().min(1, "Missing invitation token"),
     firstName: nameField("First name"),
     lastName: nameField("Last name"),
+    birthDate: birthDateField,
     password: passwordField,
     confirmPassword: z.string(),
     acceptTerms: tickedBox("You must accept the Terms and Conditions"),

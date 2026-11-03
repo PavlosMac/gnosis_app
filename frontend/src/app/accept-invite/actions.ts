@@ -25,6 +25,7 @@ export const acceptInvite = async (
   const values: AcceptInviteEchoValues = {
     firstName: String(formData.get("firstName") ?? ""),
     lastName: String(formData.get("lastName") ?? ""),
+    birthDate: String(formData.get("birthDate") ?? ""),
     acceptTerms: formData.get("acceptTerms") === "on",
     acceptPrivacy: formData.get("acceptPrivacy") === "on",
   };
@@ -33,6 +34,7 @@ export const acceptInvite = async (
     token: formData.get("token"),
     firstName: formData.get("firstName"),
     lastName: formData.get("lastName"),
+    birthDate: formData.get("birthDate"),
     password: formData.get("password"),
     confirmPassword: formData.get("confirmPassword"),
     acceptTerms: formData.get("acceptTerms"),
@@ -54,6 +56,7 @@ export const acceptInvite = async (
       password: parsed.data.password,
       first_name: parsed.data.firstName,
       last_name: parsed.data.lastName,
+      birth_date: parsed.data.birthDate,
       // The accepted versions come from the server-side registry, never from
       // the form: a client cannot record acceptance of a version it was not shown
       consents: { terms: CURRENT_VERSIONS.terms, privacy: CURRENT_VERSIONS.privacy },

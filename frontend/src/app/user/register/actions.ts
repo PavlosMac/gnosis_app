@@ -22,6 +22,7 @@ export const register = async (
   const values: RegisterEchoValues = {
     firstName: String(formData.get("firstName") ?? ""),
     lastName: String(formData.get("lastName") ?? ""),
+    birthDate: String(formData.get("birthDate") ?? ""),
     email: String(formData.get("email") ?? ""),
     acceptTerms: formData.get("acceptTerms") === "on",
     acceptPrivacy: formData.get("acceptPrivacy") === "on",
@@ -30,6 +31,7 @@ export const register = async (
   const parsed = registerSchema.safeParse({
     firstName: formData.get("firstName"),
     lastName: formData.get("lastName"),
+    birthDate: formData.get("birthDate"),
     email: formData.get("email"),
     password: formData.get("password"),
     confirmPassword: formData.get("confirmPassword"),
@@ -49,6 +51,7 @@ export const register = async (
       password: parsed.data.password,
       first_name: parsed.data.firstName,
       last_name: parsed.data.lastName,
+      birth_date: parsed.data.birthDate,
       // The accepted versions come from the server-side registry, never from
       // the form: a client cannot record acceptance of a version it was not shown
       consents: { terms: CURRENT_VERSIONS.terms, privacy: CURRENT_VERSIONS.privacy },

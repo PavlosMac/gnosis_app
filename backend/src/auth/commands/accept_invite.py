@@ -1,4 +1,4 @@
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 
 import structlog
 
@@ -23,6 +23,7 @@ class AcceptInviteCommand(BaseCommand):
     password: str
     first_name: str
     last_name: str
+    birth_date: date
     terms_version: str
     privacy_version: str
     # Throttle key. None (handler-level tests) skips the per-IP limit.
@@ -72,6 +73,7 @@ class AcceptInviteHandler(CommandHandler[AcceptInviteCommand, None]):
             password_hash=hash_password(command.password),
             first_name=first_name,
             last_name=last_name,
+            birth_date=command.birth_date,
             consents=build_consents(command.terms_version, command.privacy_version, now),
             activated_at=now,
         )

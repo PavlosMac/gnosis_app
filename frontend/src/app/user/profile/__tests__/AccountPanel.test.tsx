@@ -9,40 +9,41 @@ vi.mock("next/link", () => ({
 
 const { default: AccountPanel } = await import("@/app/user/profile/AccountPanel");
 
-const render = (budget: { remainingUsd: number; budgetUsd: number } | null) =>
-  renderToStaticMarkup(
-    <AccountPanel name="Ada" budget={budget} />
-  );
+const render = (birthDate: string | null = "1990-05-01") =>
+  renderToStaticMarkup(<AccountPanel name="Ada" birthDate={birthDate} />);
 
 describe("AccountPanel", () => {
   it("shows the first name alone, with no label and no email", () => {
-    const html = render({ remainingUsd: 1, budgetUsd: 3 });
+    const html = render();
     expect(html).toMatch(/<p [^>]*title="Ada"[^>]*>Ada<\/p>/);
     expect(html).not.toContain("@");
     expect(html).not.toMatch(/>Name</);
     expect(html).not.toMatch(/>Email</);
   });
 
-  it("keeps an empty, decorative card-shaped slot where the chalice stood, with no currency", () => {
-    for (const budget of [{ remainingUsd: 1.26, budgetUsd: 3 }, { remainingUsd: 0, budgetUsd: 3 }, null]) {
-      const html = render(budget);
+  it("renders the empty card-shaped slot on the server, with or without a birth date", () => {
+    // TallyCard only draws the card after mount (the user's local date), so the
+    // static render is the same empty slot either way: no hydration mismatch
+    for (const birthDate of ["1990-05-01", null]) {
+      const html = render(birthDate);
       expect(html).toMatch(/data-testid="tally-card-slot"[^>]*class="[^"]*aspect-\[2\/3\][^"]*max-w-\[200px\]/);
       expect(html).toMatch(/<div aria-hidden="true" data-testid="tally-card-slot"[^>]*><\/div>/);
       expect(html).not.toContain("$");
       expect(html).not.toContain("Remaining Readings");
       expect(html).not.toContain("chalice");
       expect(html).not.toContain("ledger");
+      expect(html).not.toContain("Card of the Day");
     }
   });
 
   it("lets the slot centre in the panel's free height", () => {
-    expect(render({ remainingUsd: 1, budgetUsd: 3 })).toMatch(
+    expect(render()).toMatch(
       /class="[^"]*flex-1[^"]*justify-center[^"]*"[^>]*>\s*<div aria-hidden="true" data-testid="tally-card-slot"/,
     );
   });
 
   it("links to Account settings instead of holding the account actions", () => {
-    const html = render({ remainingUsd: 1, budgetUsd: 3 });
+    const html = render();
     expect(html).toContain('href="/user/profile/settings"');
     expect(html).toContain("Account settings");
     expect(html).not.toContain("Contact support");
@@ -51,7 +52,7 @@ describe("AccountPanel", () => {
   });
 
   it("no longer carries the Agreements block", () => {
-    const html = render({ remainingUsd: 1, budgetUsd: 3 });
+    const html = render();
     expect(html).not.toContain("Agreements");
     expect(html).not.toContain("/user/profile/manage-consent");
   });

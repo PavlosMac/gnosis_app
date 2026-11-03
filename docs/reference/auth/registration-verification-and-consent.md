@@ -14,7 +14,7 @@ side: [`frontend-auth-flow.md`](frontend-auth-flow.md). Email plumbing:
 
 | Value | Meaning |
 |---|---|
-| `invited` | Created by a superadmin invite; no password, names or consents until the emailed link is accepted. Cannot hold a session; login answers 401 and forgot-password sends nothing. See [`../admin/user-management.md`](../admin/user-management.md). |
+| `invited` | Created by a superadmin invite; no password, names, birth date or consents until the emailed link is accepted. Cannot hold a session; login answers 401 and forgot-password sends nothing. See [`../admin/user-management.md`](../admin/user-management.md). |
 | `pending_verification` | Registered; the emailed link has not been confirmed. Cannot hold a session. |
 | `active` | May log in. |
 
@@ -37,14 +37,14 @@ side: [`frontend-auth-flow.md`](frontend-auth-flow.md). Email plumbing:
 
 | Endpoint | Request | Success | Errors |
 |---|---|---|---|
-| `POST /auth/register` | `{email, password, first_name, last_name, consents: {terms, privacy}}` | `201 {detail}`, no tokens | 409 duplicate email; 422, including `{detail, code: "weak_password"}`; 429 |
+| `POST /auth/register` | `{email, password, first_name, last_name, birth_date, consents: {terms, privacy}}` | `201 {detail}`, no tokens | 409 duplicate email; 422, including `{detail, code: "weak_password"}`; 429 |
 | `POST /auth/reset-password` | `{token, new_password}` | `200 {detail}` | 400, 410; `422 {detail, code: "weak_password"}` (the link is not consumed) |
 | `POST /auth/login` | `{email, password}` | `200 TokenResponse` | 401; `403 {detail, code: "email_not_verified"}`; 429 |
 | `POST /auth/verify-email` | `{token}` | `200 {detail}`, no tokens | 400 invalid / used / account gone / not a pending account (e.g. an invite token), 410 expired |
 | `POST /auth/resend-verification` | `{email}` | `200 {detail}` always | 429 |
 | `POST /auth/consent` (bearer) | `{terms?, privacy?}`, at least one key | `200 UserResponse` | 401, 422 |
 | `DELETE /auth/me` (bearer) | `{password}` | `204`, no body | 401 unauthenticated or account gone; `403 {detail, code: "invalid_password"}`; 422; 429 |
-| `GET /auth/me` (bearer) | | adds `first_name`, `last_name`, `consents` (`{}` for legacy users), `status`, `email_verified_at` | 401; 403 when the status may not hold a session |
+| `GET /auth/me` (bearer) | | adds `first_name`, `last_name`, `birth_date` (`null` when absent), `consents` (`{}` for legacy users), `status`, `email_verified_at` | 401; 403 when the status may not hold a session |
 
 `AppError` carries an optional `code`; the global handler adds `"code"` to the body only
 when it is set. The frontend branches on `code`, never on `detail` text.
@@ -99,6 +99,19 @@ addresses (data was expendable): such an account cannot be found until it is re-
 - `first_name` and `last_name` are required (1–100, stripped). Legacy users have neither.
   There is no `display_name`: it was removed on 2026-11-03; old documents may still carry the
   key, nothing reads it. The UI shows the first name (profile) or "First Last" (nav, admin list).
+- `birth_date` is required at sign-up (register and accept-invite) since 2026-11-03 and
+  optional on read: legacy, seeded and invited accounts have none, and `GET /auth/me`
+  returns `null` for them. There is no edit endpoint and no backfill. Wire and storage
+  format is the ISO string `"YYYY-MM-DD"` (same as `readings.birth_date`); `User`
+  parses it to a `date` and never stores a date object.
+  `BirthDate` (`src/auth/schemas.py`) refuses, with 422: a malformed or impossible date
+  (pydantic), a date in the future, a year before 1900, and anyone under 18 on the day
+  of the request (the 18th birthday itself passes; a Feb 29 birth comes of age on
+  Mar 1). Terms §6 already requires 18+; this check enforces it. The frontend mirrors
+  the rules in zod because it drops pydantic's 422 detail, so the backend validator is
+  the defence, not the message the user sees. It feeds the profile's card of the day
+  (frontend-computed numerology) and is listed in the Privacy Policy; it is not sent to
+  OpenAI.
 - `consents` on the user is `{"terms": {version, accepted_at}, "privacy": {version,
   accepted_at}}`. Registration stamps both with `accepted_at = now`.
 - **The backend does not validate versions.** A version is the dated MDX filename the

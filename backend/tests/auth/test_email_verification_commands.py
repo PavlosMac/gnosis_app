@@ -1,4 +1,4 @@
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
 
 import pytest
 
@@ -63,6 +63,7 @@ COMMAND = RegisterUserCommand(
     password="testpassword123",
     first_name="Ada",
     last_name="Lovelace",
+    birth_date=date(1990, 6, 15),
     terms_version="2026-10-04",
     privacy_version="2026-10-04",
 )

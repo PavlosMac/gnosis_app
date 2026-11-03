@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Settings } from "lucide-react";
+import TallyCard from "./TallyCard";
 
 export const SectionLabel = ({ children }: { children: React.ReactNode }) => (
   <h2
@@ -11,17 +12,13 @@ export const SectionLabel = ({ children }: { children: React.ReactNode }) => (
 );
 
 interface AccountPanelProps {
-  /** Already resolved: first name, else display name, else "Seeker" */
+  /** Already resolved: first name, else "Seeker" */
   name: string;
-  /** null when the ledger could not be fetched */
-  budget: { remainingUsd: number; budgetUsd: number } | null;
+  /** ISO "YYYY-MM-DD"; null for accounts created before it was required */
+  birthDate: string | null;
 }
 
-const AccountPanel = ({ name, budget }: AccountPanelProps) => {
-  // `budget` is kept on the props (and the dashboard still fetches it) for the tarot card
-  // visual that will take the slot below; nothing reads it yet.
-  void budget;
-
+const AccountPanel = ({ name, birthDate }: AccountPanelProps) => {
   return (
     <div className="flex flex-col p-5 sm:p-8">
       <SectionLabel>Tally</SectionLabel>
@@ -45,15 +42,11 @@ const AccountPanel = ({ name, budget }: AccountPanelProps) => {
         </div>
       </div>
 
-      {/* Reserved for a tarot card visual. The budget chalice that stood here was five
-          infinite SVG animations under a drop-shadow filter; the slot keeps its size so
-          the two-panel layout does not shift when the card arrives. */}
+      {/* The personal day card, drawn client-side from the account birth date and the
+          user's local date. Until then (and for accounts without a date) it is the empty
+          card-proportioned frame, so the two-panel layout never shifts. */}
       <div className="flex-1 flex flex-col items-center justify-center py-8">
-        <div
-          aria-hidden="true"
-          data-testid="tally-card-slot"
-          className="aspect-[2/3] w-full max-w-[200px] rounded-xl border border-[#d4af37]/10"
-        />
+        <TallyCard birthDate={birthDate} />
       </div>
 
       <div style={{ marginTop: "auto" }}>

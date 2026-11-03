@@ -17,6 +17,7 @@ const form = (overrides: Record<string, string | null> = {}) => {
     token: "raw-token",
     firstName: "Ada",
     lastName: "Lovelace",
+    birthDate: "1990-06-15",
     password: "securepassword123",
     confirmPassword: "securepassword123",
     acceptTerms: "on",
@@ -55,6 +56,7 @@ describe("acceptInvite", () => {
       password: "securepassword123",
       first_name: "Ada",
       last_name: "Lovelace",
+      birth_date: "1990-06-15",
       consents: { terms: "2026-10-04", privacy: "2026-10-13" },
     });
   });
@@ -76,7 +78,13 @@ describe("acceptInvite", () => {
     });
     const state = await acceptInvite({ success: false, }, form());
     expect(state.fieldErrors?.password).toEqual(["That password is too common."]);
-    expect(state.values).toEqual({ firstName: "Ada", lastName: "Lovelace", acceptTerms: true, acceptPrivacy: true });
+    expect(state.values).toEqual({
+      firstName: "Ada",
+      lastName: "Lovelace",
+      birthDate: "1990-06-15",
+      acceptTerms: true,
+      acceptPrivacy: true,
+    });
   });
 
   it("fails validation locally without calling the API", async () => {

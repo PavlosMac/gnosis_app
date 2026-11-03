@@ -33,8 +33,9 @@ describe("ProfileNavMenu (logged in)", () => {
     const user = {
       id: "1",
       email: "ada@example.com",
-        firstName: "Ada",
+      firstName: "Ada",
       lastName: "Lovelace",
+      birthDate: null,
       status: "active" as const,
       emailVerifiedAt: null,
       credits: 0,
@@ -58,6 +59,7 @@ describe("ProfileNavMenu (superadmin)", () => {
     email: "ada@example.com",
     firstName: "Ada",
     lastName: "Lovelace",
+    birthDate: null,
     status: "active" as const,
     emailVerifiedAt: null,
     credits: 0,

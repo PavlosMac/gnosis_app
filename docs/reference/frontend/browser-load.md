@@ -39,15 +39,22 @@ must stay removed. There is no measured before/after figure; see "Measuring" to 
 - **`prefers-reduced-motion`** has one appended block at the end of `tarot.css` for the
   remaining decorative classes and one-shot entrances; add new classes there.
 
-## The empty slot on the profile
+## The card of the day on the profile
 
-The Tally panel (`AccountPanel.tsx`) keeps a card-proportioned, `aria-hidden` empty frame
-where the budget chalice stood (five infinite SVG animations under a `drop-shadow` filter).
-A tarot card visual is planned for it. `AccountPanel` still receives `budget` from the
-dashboard fetch and the pure helpers in `src/lib/profile-dashboard.ts` remain as inputs;
-delete them if the visual does not use them. The guide's profile screenshot
-(`public/guide/your-profile/01-profile.webp`) still shows the chalice and needs a retake.
-See the amendment under ADR-008 in [`decisions.md`](../../notes/decisions.md).
+The Tally panel (`AccountPanel.tsx`) shows the seeker's personal day card where the budget
+chalice stood (five infinite SVG animations under a `drop-shadow` filter). `TallyCard.tsx`
+is a client component: it reads the browser clock once after mount and hands the account
+birth date and that local date to `personalNumbers()` (`src/lib/personal-numbers.ts`),
+which maps the day number to a major arcana card (ADR-019). The server render, the first
+client render, and every render for an account without a birth date are the same
+card-proportioned, `aria-hidden` empty frame, so hydration never mismatches and the
+two-panel layout never shifts. The card is the existing `TarotCard` (reuse, ADR-016 §
+visuals): its entrance is the one-shot `cardAppear`, already in the reduced-motion block;
+its hover glow transitions opacity only, and its wrapper now transitions `transform` only
+(it used `transition-all`). Nothing animates while idle. The chalice helpers in
+`profile-dashboard.ts` and the `budget` prop are gone; the dashboard endpoint still returns
+the budget fields (API contract unchanged). The guide's profile screenshot
+(`public/guide/your-profile/01-profile.webp`) still shows the empty slot and needs a retake.
 
 ## Measuring
 
@@ -62,4 +69,5 @@ Docker and the Next dev server spin the fan on their own.
 ## Tests
 
 `Starfield.test.tsx`, `TarotLanding.layout.test.tsx` (idle-cost blocks for the landing and
-404 pages), `AccountPanel.test.tsx`, `card-thumbs.test.ts`.
+404 pages), `AccountPanel.test.tsx`, `TallyCard.test.tsx` (empty slot on the server, card
+after mount), `personal-numbers.test.ts`, `card-thumbs.test.ts`.

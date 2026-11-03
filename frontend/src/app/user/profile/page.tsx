@@ -17,10 +17,6 @@ const ProfilePage = async () => {
 
   if (!user) redirect("/user/login");
 
-  const budget = dash.ok
-    ? { remainingUsd: dash.data.remainingBudgetUsd, budgetUsd: dash.data.budgetUsd }
-    : null;
-
   const summary: ReadingsSummary | null = dash.ok
     ? {
         total: dash.data.totalReadings,
@@ -69,7 +65,7 @@ const ProfilePage = async () => {
               }}
             />
 
-            <AccountPanel name={greetingName(user)} budget={budget} />
+            <AccountPanel name={greetingName(user)} birthDate={user.birthDate} />
 
             {/* Horizontal divider (< md) */}
             <div

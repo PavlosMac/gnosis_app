@@ -96,6 +96,18 @@ const AcceptInviteForm = ({ token, email, problem, terms, privacy }: AcceptInvit
               required
             />
             <AuthField
+              name="birthDate"
+              type="date"
+              label="Date of birth"
+              placeholder=""
+              error={state.fieldErrors?.birthDate?.[0]}
+              autoComplete="bday"
+              min="1900-01-01"
+              defaultValue={state.values?.birthDate}
+              hint="You must be 18 or older. Used for your card of the day on your profile."
+              required
+            />
+            <AuthField
               name="password"
               type="password"
               label="Password"

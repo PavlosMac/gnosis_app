@@ -12,6 +12,7 @@ import {
 const VALID = {
   firstName: "Ada",
   lastName: "Lovelace",
+  birthDate: "1990-06-15",
   email: "ada@example.com",
   password: "securepassword123",
   confirmPassword: "securepassword123",
@@ -60,6 +61,67 @@ describe("registerSchema", () => {
 
   it("has no displayName field any more", () => {
     expect("displayName" in registerSchema.parse({ ...VALID, displayName: "x" })).toBe(false);
+  });
+});
+
+// Local calendar date, like the server action's clock
+const isoDate = (d: Date) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+const yearsAgo = (years: number) => {
+  const d = new Date();
+  d.setFullYear(d.getFullYear() - years);
+  return isoDate(d);
+};
+const tomorrow = () => {
+  const d = new Date();
+  d.setDate(d.getDate() + 1);
+  return isoDate(d);
+};
+
+describe.each([
+  ["registerSchema", registerSchema, VALID],
+  [
+    "acceptInviteSchema",
+    acceptInviteSchema,
+    { token: "raw-token", ...VALID, email: undefined },
+  ],
+] as const)("birth date on %s", (_name, schema, valid) => {
+  const errors = (input: unknown) => {
+    const parsed = schema.safeParse(input);
+    return parsed.success ? {} : parsed.error.flatten().fieldErrors;
+  };
+
+  it("accepts an ISO date", () => {
+    expect(schema.safeParse(valid).success).toBe(true);
+    expect(schema.parse(valid).birthDate).toBe("1990-06-15");
+  });
+
+  it("is required", () => {
+    expect(errors({ ...valid, birthDate: null }).birthDate).toEqual(["Date of birth is required"]);
+    expect(errors({ ...valid, birthDate: "" }).birthDate).toEqual(["Date of birth is required"]);
+  });
+
+  it("refuses anything but YYYY-MM-DD and impossible calendar dates", () => {
+    expect(errors({ ...valid, birthDate: "15/06/1990" }).birthDate).toBeDefined();
+    expect(errors({ ...valid, birthDate: "1990-02-30" }).birthDate).toBeDefined();
+  });
+
+  it("refuses the future and years before 1900", () => {
+    expect(errors({ ...valid, birthDate: tomorrow() }).birthDate).toBeDefined();
+    expect(errors({ ...valid, birthDate: "1899-12-31" }).birthDate).toBeDefined();
+  });
+
+  it("reports a year below 1900 as such, even for years 0001-0099", () => {
+    expect(errors({ ...valid, birthDate: "0050-01-01" }).birthDate).toEqual([
+      "Year must be 1900 or later",
+    ]);
+  });
+
+  it("requires 18 years: a 17-year-old fails, an 18th birthday today passes", () => {
+    expect(errors({ ...valid, birthDate: yearsAgo(17) }).birthDate).toEqual([
+      "You must be 18 or older to create an account",
+    ]);
+    expect(schema.safeParse({ ...valid, birthDate: yearsAgo(18) }).success).toBe(true);
   });
 });
 
@@ -152,6 +214,7 @@ describe("acceptInviteSchema", () => {
     token: "raw-token",
     firstName: "Ada",
     lastName: "Lovelace",
+    birthDate: "1990-06-15",
     password: "securepassword123",
     confirmPassword: "securepassword123",
     acceptTerms: "on",

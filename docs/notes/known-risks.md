@@ -8,6 +8,7 @@ to Resolved with the date. Bugs with a known cause go in [`bugs.md`](bugs.md) in
 - Pre-hijacking: someone can register another person's email with their own password. If the owner clicks the confirmation link, the account activates with that password.
 - Spoofable address off Cloudflare: where the frontend is reachable without Cloudflare, a caller can send its own forwarded address and dodge the rate limits.
 - Duplicated figures: the 24-hour and 7-day wording in the UI mirrors backend settings by hand.
+- No birth date for existing accounts: legacy, seeded and pre-2026-11-03 invited users cannot set one (no profile or admin path), so they keep the empty card-of-the-day frame, and the 18+ check applies only to new sign-ups.
 
 ## Resolved
 

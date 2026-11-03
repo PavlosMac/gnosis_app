@@ -321,6 +321,7 @@ async def test_get_me_returns_empty_consents_for_a_legacy_document(client, mock_
     assert data["consents"] == {}
     assert data["first_name"] is None
     assert data["last_name"] is None
+    assert data["birth_date"] is None
 
 
 async def test_register_with_names_and_consents_shows_on_me(client, mock_email):
@@ -348,6 +349,7 @@ async def test_register_with_names_and_consents_shows_on_me(client, mock_email):
 
     assert data["first_name"] == "Ada"
     assert data["last_name"] == "Lovelace"
+    assert data["birth_date"] == "1990-06-15"
     assert "display_name" not in data
     assert data["consents"]["terms"]["version"] == "2026-09-30"
     assert "accepted_at" in data["consents"]["privacy"]

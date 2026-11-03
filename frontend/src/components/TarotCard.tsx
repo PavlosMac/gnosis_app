@@ -50,7 +50,7 @@ const TarotCard: React.FC<TarotCardProps> = React.memo(({ card, showMeaning = tr
                         group-hover:opacity-50 blur transition-opacity duration-500" />
         
         {/* Card itself */}
-        <div className={`relative ${small ? 'w-20 h-32 sm:w-28 sm:h-44' : 'w-40 h-64'} transition-all duration-500 
+        <div className={`relative ${small ? 'w-20 h-32 sm:w-28 sm:h-44' : 'w-40 h-64'} transition-transform duration-500 
                         ${card.reversed ? 'rotate-180' : ''}`}
              style={{
                transformStyle: 'preserve-3d',

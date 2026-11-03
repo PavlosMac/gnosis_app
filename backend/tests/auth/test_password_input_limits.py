@@ -14,6 +14,7 @@ VALID_REGISTER = {
     "email": "a@example.com",
     "first_name": "Ada",
     "last_name": "Byron",
+    "birth_date": "1990-06-15",
     "consents": {"terms": "2026-09-30", "privacy": "2026-09-30"},
 }
 

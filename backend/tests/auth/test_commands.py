@@ -1,4 +1,4 @@
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
 
 import pytest
 
@@ -26,6 +26,7 @@ def _command(email: str, **overrides) -> RegisterUserCommand:
         "password": "testpassword123",
         "first_name": "Command",
         "last_name": "User",
+        "birth_date": date(1990, 6, 15),
         "terms_version": "2026-10-04",
         "privacy_version": "2026-10-04",
         **overrides,
@@ -46,6 +47,8 @@ async def test_register_user_command(mock_db):
     assert doc["first_name"] == "Command"
     assert doc["last_name"] == "User"
     assert "display_name" not in doc
+    # Stored as the ISO string, like readings.birth_date — never a date/datetime object.
+    assert doc["birth_date"] == "1990-06-15"
     assert doc["credits"] == 0
     assert doc["status"] == "pending_verification"
 

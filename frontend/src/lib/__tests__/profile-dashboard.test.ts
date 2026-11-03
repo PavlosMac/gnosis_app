@@ -1,9 +1,5 @@
 import { describe, it, expect } from "vitest";
 import {
-  chaliceFill,
-  chaliceState,
-  chaliceCaption,
-  chaliceTitle,
   formatReadingDate,
   truncateQuestion,
   tagHref,
@@ -11,74 +7,6 @@ import {
   greetingName,
   fullName,
 } from "@/lib/profile-dashboard";
-
-describe("chaliceFill", () => {
-  it("is the remaining/budget ratio", () => {
-    expect(chaliceFill(1.5, 3)).toBe(0.5);
-    expect(chaliceFill(3, 3)).toBe(1);
-  });
-
-  it("clamps overspend and over-credit into 0..1", () => {
-    expect(chaliceFill(-0.2, 3)).toBe(0);
-    expect(chaliceFill(4, 3)).toBe(1);
-  });
-
-  it("is null when the figures can't yield a level", () => {
-    expect(chaliceFill(undefined, 3)).toBeNull();
-    expect(chaliceFill(1, undefined)).toBeNull();
-    expect(chaliceFill(1, -1)).toBeNull();
-    expect(chaliceFill(Number.NaN, 3)).toBeNull();
-    expect(chaliceFill(1, Number.POSITIVE_INFINITY)).toBeNull();
-  });
-
-  it("treats a $0-capped account as a dry chalice, not missing data", () => {
-    expect(chaliceFill(0, 0)).toBe(0);
-    expect(chaliceFill(1, 0)).toBe(0);
-  });
-});
-
-describe("chaliceState", () => {
-  it("maps thresholds", () => {
-    expect(chaliceState(0)).toBe("empty");
-    expect(chaliceState(-1)).toBe("empty");
-    expect(chaliceState(0.1)).toBe("low");
-    expect(chaliceState(0.2)).toBe("partial");
-    expect(chaliceState(0.97)).toBe("partial");
-    expect(chaliceState(0.98)).toBe("full");
-    expect(chaliceState(1)).toBe("full");
-  });
-});
-
-describe("chaliceCaption", () => {
-  it("says nothing while something remains — no currency on the profile", () => {
-    expect(chaliceCaption(2.41)).toBeNull();
-  });
-
-  it("marks the dry chalice", () => {
-    expect(chaliceCaption(0)).toBe("The chalice runs dry");
-    expect(chaliceCaption(-0.1)).toBe("The chalice runs dry");
-  });
-});
-
-describe("chaliceTitle", () => {
-  it("describes the fill level as a percentage for assistive tech", () => {
-    expect(chaliceTitle(0.5)).toBe("Remaining readings: the chalice is 50% full");
-  });
-
-  it("never says 0% while something remains", () => {
-    expect(chaliceTitle(0.004)).toBe("Remaining readings: the chalice is 1% full");
-  });
-
-  it("says full wherever the chalice is drawn full", () => {
-    expect(chaliceTitle(1)).toBe("Remaining readings: the chalice is full");
-    expect(chaliceTitle(0.98)).toBe("Remaining readings: the chalice is full");
-    expect(chaliceTitle(0.97)).toBe("Remaining readings: the chalice is 97% full");
-  });
-
-  it("names the dry chalice", () => {
-    expect(chaliceTitle(0)).toBe("Remaining readings: the chalice runs dry");
-  });
-});
 
 describe("formatReadingDate", () => {
   it("renders en-GB day short-month year", () => {

@@ -137,7 +137,7 @@ const ReadingsPage = async ({
               No readings yet. The cards await your first question.
             </p>
             <Link
-              href="/"
+              href="/reading"
               className="px-8 py-3 bg-gradient-to-br from-[#d4af37] to-[#b8942f] text-[#1a0033] rounded-lg
                          font-bold hover:scale-105 active:scale-95 transition-all duration-300
                          border border-[#d4af37]/50 shadow-lg"
