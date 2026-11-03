@@ -13,3 +13,10 @@ body {
   background: var(--background);
   color: var(--foreground);
 }
+
+/* Edge draws its own reveal/clear buttons in text inputs; the password box has
+   its own eye button, so hide the native ones to avoid two icons */
+input::-ms-reveal,
+input::-ms-clear {
+  display: none;
+}
