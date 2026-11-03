@@ -45,7 +45,7 @@ async def test_register_user_command(mock_db):
     assert doc is not None
     assert doc["first_name"] == "Command"
     assert doc["last_name"] == "User"
-    assert doc["display_name"] == "Command User"
+    assert "display_name" not in doc
     assert doc["credits"] == 0
     assert doc["status"] == "pending_verification"
 

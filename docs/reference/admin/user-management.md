@@ -15,7 +15,7 @@ the payment step exists.
 
 `/superadmin` (layout redirects anyone else to `/user/profile`; the ☥ menu shows the link to
 the superadmin only). Above the table, one field: **Invite a seeker**. The table lists every
-account with Email, Name, Status (Invited / Pending verification / Active), Joined, and the
+account with Email, Name (first and last), Status (Invited / Pending verification / Active), Joined, and the
 row actions **Resend invite** (invited rows only), **Email** and **Delete** (not on the
 admin's own row). Email and Delete open a `SanctumModal`; Delete is type-`DELETE`-to-confirm.
 
@@ -62,7 +62,7 @@ Admin                 FastAPI                                   Invitee
                        POST /auth/accept-invite
                          load_invite (peek, expiry, status must be "invited")
                          validate_new_password            -> 422 keeps the link usable
-                         activate_invited: password_hash, names, display_name, consents
+                         activate_invited: password_hash, names, consents
                            (accepted_at = now), status "active", email_verified_at = now,
                            $unset verification_deadline_at   (guarded on status "invited":
                            this is what makes the link single-use; -> 400 if raced)

@@ -40,7 +40,7 @@ ConsentVersion = Annotated[str, Field(min_length=1, max_length=32)]
 
 def _strip_person_name(value: str) -> str:
     # min_length checks the raw string, so a whitespace-only name ("   ") would
-    # otherwise pass and leave the account with a blank display_name.
+    # otherwise pass and leave the account with a blank name.
     stripped = value.strip()
     if not stripped:
         raise ValueError("must not be blank")
@@ -137,7 +137,6 @@ class RefreshTokenRequest(AppSchema):
 class UserResponse(AppSchema):
     id: PyObjectId = Field(alias="_id")
     email: str
-    display_name: str | None = None
     first_name: str | None = None
     last_name: str | None = None
     # Always present ({} for legacy users) — the frontend reads an absent key as
@@ -159,7 +158,6 @@ class UserIdentity(AppSchema):
 
     id: PyObjectId = Field(alias="_id")
     email: str
-    display_name: str | None = None
     is_superadmin: bool = False
     created_at: datetime
 

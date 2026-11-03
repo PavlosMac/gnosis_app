@@ -12,5 +12,4 @@ devpassword12345
 - Seeded automatically by the dev compose `api` service command on every
   `docker compose up` (`scripts/seed_superadmin.py`, idempotent — skips if the email
   exists). It does **not** exist in production.
-- To seed outside Docker: `uv run python -m scripts.seed_superadmin <email> <password>
-  [display_name]`. Against a running `gnosis-api` container: `scripts/seed_superadmin.sh`.
+- To seed outside Docker: `uv run python -m scripts.seed_superadmin <email> <password>`. Against a running `gnosis-api` container: `scripts/seed_superadmin.sh`.

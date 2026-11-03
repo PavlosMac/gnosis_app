@@ -101,7 +101,6 @@ async def test_find_dashboard_fields_omits_password_hash(mock_db):
     user_id = await _insert_user(
         mock_db,
         password_hash="argon2$secret",
-        display_name="Pav",
         budget_usd=2.0,
         usage={"cost_usd": 0.5, "prompt_tokens": 10},
     )
@@ -111,7 +110,6 @@ async def test_find_dashboard_fields_omits_password_hash(mock_db):
     assert doc is not None
     assert "password_hash" not in doc
     assert doc["email"] == f"{user_id}@example.com"
-    assert doc["display_name"] == "Pav"
     assert doc["budget_usd"] == 2.0
     assert doc["usage"]["cost_usd"] == 0.5
 

@@ -11,10 +11,18 @@ const { default: AccountPanel } = await import("@/app/user/profile/AccountPanel"
 
 const render = (budget: { remainingUsd: number; budgetUsd: number } | null) =>
   renderToStaticMarkup(
-    <AccountPanel name="Seeker" email="s@example.com" budget={budget} />
+    <AccountPanel name="Ada" budget={budget} />
   );
 
 describe("AccountPanel", () => {
+  it("shows the first name alone, with no label and no email", () => {
+    const html = render({ remainingUsd: 1, budgetUsd: 3 });
+    expect(html).toMatch(/<p [^>]*title="Ada"[^>]*>Ada<\/p>/);
+    expect(html).not.toContain("@");
+    expect(html).not.toMatch(/>Name</);
+    expect(html).not.toMatch(/>Email</);
+  });
+
   it("keeps an empty, decorative card-shaped slot where the chalice stood, with no currency", () => {
     for (const budget of [{ remainingUsd: 1.26, budgetUsd: 3 }, { remainingUsd: 0, budgetUsd: 3 }, null]) {
       const html = render(budget);

@@ -26,8 +26,14 @@ const { default: AccountSettingsCard } = await import(
 
 describe("AccountSettingsCard", () => {
   const html = renderToStaticMarkup(
-    <AccountSettingsCard consents={undefined} />
+    <AccountSettingsCard email="ada@example.com" consents={undefined} />
   );
+
+  it("shows which account is signed in, above the support row", () => {
+    expect(html).toContain("Signed in as");
+    expect(html).toContain("ada@example.com");
+    expect(html.indexOf("ada@example.com")).toBeLessThan(html.indexOf("Contact support"));
+  });
 
   it("offers contact support", () => {
     expect(html).toContain("Contact support");

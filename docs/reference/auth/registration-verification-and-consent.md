@@ -96,8 +96,9 @@ addresses (data was expendable): such an account cannot be found until it is re-
 
 ## Names and consent
 
-- `first_name` and `last_name` are required (1–100, stripped). `display_name` is derived
-  as `"First Last"` so every existing consumer keeps working. Legacy users have neither.
+- `first_name` and `last_name` are required (1–100, stripped). Legacy users have neither.
+  There is no `display_name`: it was removed on 2026-11-03; old documents may still carry the
+  key, nothing reads it. The UI shows the first name (profile) or "First Last" (nav, admin list).
 - `consents` on the user is `{"terms": {version, accepted_at}, "privacy": {version,
   accepted_at}}`. Registration stamps both with `accepted_at = now`.
 - **The backend does not validate versions.** A version is the dated MDX filename the

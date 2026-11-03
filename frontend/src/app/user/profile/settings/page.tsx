@@ -13,7 +13,7 @@ const AccountSettingsPage = async () => {
   const user = await getCurrentUser();
   if (!user) redirect("/user/login");
 
-  return <AccountSettingsCard consents={user.consents} />;
+  return <AccountSettingsCard email={user.email} consents={user.consents} />;
 };
 
 export default AccountSettingsPage;

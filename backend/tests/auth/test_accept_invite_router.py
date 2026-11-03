@@ -91,7 +91,7 @@ async def test_accept_activates_the_account_and_login_works(
     assert doc["status"] == "active"
     assert doc["first_name"] == "Invited"
     assert doc["last_name"] == "Seeker"
-    assert doc["display_name"] == "Invited Seeker"
+    assert "display_name" not in doc
     assert doc["consents"]["terms"]["version"] == "2026-10-04"
     assert doc["consents"]["privacy"]["version"] == "2026-10-13"
     assert doc["email_verified_at"] is not None

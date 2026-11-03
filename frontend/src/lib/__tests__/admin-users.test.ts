@@ -4,7 +4,8 @@ import { mapAdminUserResponse, type AdminUserResponse } from "@/types/auth";
 const ROW: AdminUserResponse = {
   _id: "64b7f0c2e4b0a1b2c3d4e5f6",
   email: "guest@example.com",
-  display_name: null,
+  first_name: "Gus",
+  last_name: "Guest",
   status: "invited",
   credits: 0,
   is_superadmin: false,
@@ -17,7 +18,8 @@ describe("mapAdminUserResponse", () => {
     const user = mapAdminUserResponse(ROW);
     expect(user.id).toBe("64b7f0c2e4b0a1b2c3d4e5f6");
     expect(user.status).toBe("invited");
-    expect(user.displayName).toBeNull();
+    expect(user.firstName).toBe("Gus");
+    expect(user.lastName).toBe("Guest");
     expect(user.isSuperadmin).toBe(false);
   });
 

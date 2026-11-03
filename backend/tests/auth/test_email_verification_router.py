@@ -70,7 +70,7 @@ async def test_register_strips_padded_names(client, mock_db):
     doc = await mock_db["users"].find_one({"email": "user@example.com"})
     assert doc["first_name"] == "Ada"
     assert doc["last_name"] == "Lovelace"
-    assert doc["display_name"] == "Ada Lovelace"
+    assert "display_name" not in doc
 
 
 async def test_register_stores_no_refresh_token(client, mock_db):

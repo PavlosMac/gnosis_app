@@ -17,7 +17,6 @@ Source: `src/auth/models.py`
 | _id                | ObjectId        | PK                                      |
 | email              | str             | unique; stored lower-cased (every writer folds it, `find_by_email` folds the query) |
 | password_hash      | str             | optional only while `status` is `invited` (set when the invite is accepted). Every reader treats absence as "wrong password" |
-| display_name       | str             | optional; derived as `"First Last"` at registration |
 | first_name         | str             | optional (absent on accounts created before 2026-10-04) |
 | last_name          | str             | optional (as above)                     |
 | consents           | sub-doc         | optional; `{terms: {version, accepted_at}, privacy: {version, accepted_at}}`. `version` is the frontend's dated MDX filename, stored unvalidated. Readers treat absent as `{}` |

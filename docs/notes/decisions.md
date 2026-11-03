@@ -204,6 +204,7 @@ Each decision should include:
 - Identity (email + user_id) is always resolved from the JWT server-side — the frontend never sends it, mirroring the 2026-09-14 rule that user email never comes from client input
 - Frontend: "Contact support" modal on the profile page (subject + message, zod 3–200/10–5000 — limits pinned by test to `docs/reference/support/contact-support.md`); the AccountPanel's manual-interpretation row was replaced by it, and manual entry moved to a plain text link ("Read with your own deck? Record that reading here") at the foot of the readings list and in its empty state — an icon-only button with a tooltip was tried first and judged too cryptic for the feature
 - Amended 2026-09-21: the spot right of the "Filter Readings" toggle now holds an icon-only "New reading" button (`PlayingCards`, same as the profile page). This does not reverse the point above: the cryptic part was manual entry, which keeps its text hint
+- Amended 2026-11-03: the profile page's "New reading" and "All readings" buttons now carry a visible text label beside the icon instead of the `sanctum-tip` tooltip (the profile has the room; the readings-list button stays icon-only)
 - No ticket persistence or threading — email relay only
 
 **Alternatives Considered:**

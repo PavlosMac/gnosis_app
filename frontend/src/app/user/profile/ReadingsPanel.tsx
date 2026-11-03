@@ -24,6 +24,16 @@ const SubLabel = ({ children }: { children: React.ReactNode }) => (
   </h3>
 );
 
+/** A button label: one line always, so the pair stays level in the narrow two-column layout */
+const ActionLabel = ({ children }: { children: React.ReactNode }) => (
+  <span
+    className="text-sm tracking-[0.12em] uppercase whitespace-nowrap"
+    style={{ fontFamily: "'Cinzel', serif" }}
+  >
+    {children}
+  </span>
+);
+
 const LastReadingCard = ({ reading }: { reading: ReadingDetail }) => (
   <Link
     href={readingHref(reading._id, null)}
@@ -139,12 +149,6 @@ const ReadingsPanel = ({ summary }: ReadingsPanelProps) => (
           >
             {summary.total}
           </div>
-          <div
-            className="text-[#e6d5b8]/50 text-sm tracking-[0.2em] uppercase mt-1"
-            style={{ fontFamily: "'Cinzel', serif" }}
-          >
-            Reading{summary.total !== 1 ? "s" : ""}
-          </div>
         </div>
 
         {/* Last reading */}
@@ -179,31 +183,27 @@ const ReadingsPanel = ({ summary }: ReadingsPanelProps) => (
       </p>
     )}
 
-    {/* Actions: icon-only buttons; the tooltip is a real element (not a pseudo-element)
-        so every engine shows it on hover/focus, and aria-label carries the name */}
+    {/* Actions: icon + visible label. Inline gap, like the column above, so the spacing
+        never depends on a dev-server Tailwind build that lacks the utility */}
     <div className="sanctum-actions" style={{ marginTop: "auto", paddingTop: "2rem" }}>
       <Link
         href="/reading"
-        aria-label="New reading"
-        className="sanctum-tip flex-1 inline-flex items-center justify-center px-6 py-3 bg-gradient-to-br from-[#d4af37] to-[#b8942f] text-[#1a0033] rounded-lg
+        className="flex-1 inline-flex items-center justify-center px-4 py-3 bg-gradient-to-br from-[#d4af37] to-[#b8942f] text-[#1a0033] rounded-lg
                    font-bold hover:scale-105 active:scale-95 transition-all duration-300
                    border border-[#d4af37]/50 shadow-lg"
+        style={{ gap: "0.6rem" }}
       >
-        <PlayingCards size={22} strokeWidth={1.75} aria-hidden="true" />
-        <span className="sanctum-tip__label" aria-hidden="true">
-          New reading
-        </span>
+        <PlayingCards size={20} strokeWidth={1.75} aria-hidden="true" />
+        <ActionLabel>New reading</ActionLabel>
       </Link>
       <Link
         href={listHref(null)}
-        aria-label="All readings"
-        className="sanctum-tip flex-1 inline-flex items-center justify-center px-6 py-3 rounded-lg border border-[#d4af37]/30 text-[#d4af37]
+        className="flex-1 inline-flex items-center justify-center px-4 py-3 rounded-lg border border-[#d4af37]/30 text-[#d4af37]
                    hover:border-[#d4af37]/60 hover:bg-[#d4af37]/10 transition-all duration-300"
+        style={{ gap: "0.6rem" }}
       >
-        <PlayingCardsFan size={22} strokeWidth={1.75} aria-hidden="true" />
-        <span className="sanctum-tip__label" aria-hidden="true">
-          All readings
-        </span>
+        <PlayingCardsFan size={20} strokeWidth={1.75} aria-hidden="true" />
+        <ActionLabel>All readings</ActionLabel>
       </Link>
     </div>
   </div>

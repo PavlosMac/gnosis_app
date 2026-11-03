@@ -9,7 +9,6 @@ export type UserStatus = "invited" | "pending_verification" | "active";
 export interface User {
   id: string;
   email: string;
-  displayName: string | null;
   firstName: string | null;
   lastName: string | null;
   /** Accepted legal-document versions. `undefined` = the backend predates
@@ -34,7 +33,6 @@ export interface TokenResponse {
 export interface MeResponse {
   _id: string;
   email: string;
-  display_name: string | null;
   first_name?: string | null;
   last_name?: string | null;
   consents?: UserConsents;
@@ -142,7 +140,6 @@ export interface AuthContextValue {
 export interface UserResponse {
   id: string;
   email: string;
-  display_name: string | null;
   first_name?: string | null;
   last_name?: string | null;
   consents?: UserConsents;
@@ -164,7 +161,6 @@ export interface PaginatedResponse<T> {
 export const mapMeResponseToUser = (me: MeResponse): User => ({
   id: me._id,
   email: me.email,
-  displayName: me.display_name,
   firstName: me.first_name ?? null,
   lastName: me.last_name ?? null,
   consents: me.consents,
@@ -182,7 +178,6 @@ export const mapMeResponseToUser = (me: MeResponse): User => ({
 export interface DashboardUserResponse {
   _id: string;
   email: string;
-  display_name: string | null;
   is_superadmin: boolean;
   created_at: string;
 }
@@ -202,7 +197,6 @@ export interface DashboardResponse {
 export interface DashboardUser {
   id: string;
   email: string;
-  displayName: string | null;
   isSuperadmin: boolean;
   createdAt: string;
 }
@@ -223,11 +217,10 @@ export const mapDashboardResponse = (d: DashboardResponse): Dashboard => ({
     ? {
         id: d.user._id,
         email: d.user.email,
-        displayName: d.user.display_name,
         isSuperadmin: d.user.is_superadmin,
         createdAt: d.user.created_at,
       }
-    : { id: "", email: "", displayName: null, isSuperadmin: false, createdAt: "" },
+    : { id: "", email: "", isSuperadmin: false, createdAt: "" },
   budgetUsd: d.budget_usd,
   remainingBudgetUsd: d.remaining_budget_usd,
   totalReadings: d.total_readings,
@@ -242,7 +235,8 @@ export const mapDashboardResponse = (d: DashboardResponse): Dashboard => ({
 export interface AdminUserResponse {
   _id: string;
   email: string;
-  display_name: string | null;
+  first_name?: string | null;
+  last_name?: string | null;
   status?: UserStatus;
   credits: number;
   is_superadmin: boolean;
@@ -253,7 +247,8 @@ export interface AdminUserResponse {
 export interface AdminUser {
   id: string;
   email: string;
-  displayName: string | null;
+  firstName: string | null;
+  lastName: string | null;
   status: UserStatus;
   isSuperadmin: boolean;
   createdAt: string;
@@ -262,7 +257,8 @@ export interface AdminUser {
 export const mapAdminUserResponse = (u: AdminUserResponse): AdminUser => ({
   id: u._id,
   email: u.email,
-  displayName: u.display_name,
+  firstName: u.first_name ?? null,
+  lastName: u.last_name ?? null,
   status: u.status ?? "active",
   isSuperadmin: u.is_superadmin,
   createdAt: u.created_at,
@@ -271,7 +267,6 @@ export const mapAdminUserResponse = (u: AdminUserResponse): AdminUser => ({
 export const mapUserResponseToUser = (u: UserResponse): User => ({
   id: u.id,
   email: u.email,
-  displayName: u.display_name,
   firstName: u.first_name ?? null,
   lastName: u.last_name ?? null,
   consents: u.consents,

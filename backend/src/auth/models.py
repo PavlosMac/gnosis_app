@@ -33,12 +33,6 @@ def build_consents(
     }
 
 
-def build_display_name(first_name: str, last_name: str) -> str:
-    """Every existing consumer reads display_name, so it is derived from the names
-    rather than making them all learn first/last."""
-    return f"{first_name} {last_name}"
-
-
 class User:
     def __init__(
         self,
@@ -46,7 +40,6 @@ class User:
         # None only while the account is INVITED; every reader of the hash must treat
         # absence as "wrong password" (see AuthService), never as a 500.
         password_hash: str | None,
-        display_name: str | None = None,
         first_name: str | None = None,
         last_name: str | None = None,
         consents: dict[str, dict[str, Any]] | None = None,
@@ -65,7 +58,6 @@ class User:
         self.id = id
         self.email = email
         self.password_hash = password_hash
-        self.display_name = display_name
         self.first_name = first_name
         self.last_name = last_name
         # Per legal document: {"terms": {"version", "accepted_at"}, "privacy": {...}}
@@ -101,8 +93,6 @@ class User:
             doc["password_hash"] = self.password_hash
         if self.id:
             doc["_id"] = ObjectId(self.id)
-        if self.display_name is not None:
-            doc["display_name"] = self.display_name
         if self.first_name is not None:
             doc["first_name"] = self.first_name
         if self.last_name is not None:
@@ -127,7 +117,6 @@ class User:
             id=str(doc["_id"]),
             email=doc["email"],
             password_hash=doc.get("password_hash"),
-            display_name=doc.get("display_name"),
             first_name=doc.get("first_name"),
             last_name=doc.get("last_name"),
             consents=doc.get("consents"),

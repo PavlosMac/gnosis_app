@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { logout } from '@/app/user/logout/actions';
 import { useAuth } from '@/app/providers/auth-provider';
+import { fullName } from '@/lib/profile-dashboard';
 import type { User } from '@/types/auth';
 
 const MENU_LINK_CLASS =
@@ -22,7 +23,7 @@ export const ProfileNavMenu = ({ user, onNavigate }: ProfileNavMenuProps) => (
     {user ? (
       <>
         <div className="px-4 py-2 text-[#d4af37]/50 text-xs truncate border-b border-[#d4af37]/10 mb-1">
-          {user.displayName ?? user.email}
+          {fullName(user) ?? user.email}
         </div>
         <Link href="/user/profile" onClick={onNavigate} className={MENU_LINK_CLASS}>
           Profile

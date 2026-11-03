@@ -1,6 +1,6 @@
 from datetime import UTC, datetime, timedelta
 
-from src.auth.models import User, UserStatus, build_consents, build_display_name
+from src.auth.models import User, UserStatus, build_consents
 from src.auth.repository import (
     AuthReadRepository,
     AuthWriteRepository,
@@ -59,7 +59,6 @@ class RegisterUserHandler(CommandHandler[RegisterUserCommand, str]):
         user = User(
             email=email,
             password_hash=hash_password(command.password),
-            display_name=build_display_name(first_name, last_name),
             first_name=first_name,
             last_name=last_name,
             consents=build_consents(command.terms_version, command.privacy_version, now),

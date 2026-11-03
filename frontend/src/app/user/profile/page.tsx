@@ -3,7 +3,7 @@ import { enforceOnboarding } from "@/lib/onboarding-gate";
 import TarotPageLayout from "@/components/TarotPageLayout";
 import OrnateFrame from "@/components/OrnateFrame";
 import { getCurrentUser } from "@/lib/session";
-import { accountName } from "@/lib/profile-dashboard";
+import { greetingName } from "@/lib/profile-dashboard";
 import { getDashboard } from "./actions";
 import AccountPanel from "./AccountPanel";
 import ReadingsPanel from "./ReadingsPanel";
@@ -69,11 +69,7 @@ const ProfilePage = async () => {
               }}
             />
 
-            <AccountPanel
-              name={accountName(user)}
-              email={user.email}
-              budget={budget}
-            />
+            <AccountPanel name={greetingName(user)} budget={budget} />
 
             {/* Horizontal divider (< md) */}
             <div

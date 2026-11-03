@@ -348,6 +348,6 @@ async def test_register_with_names_and_consents_shows_on_me(client, mock_email):
 
     assert data["first_name"] == "Ada"
     assert data["last_name"] == "Lovelace"
-    assert data["display_name"] == "Ada Lovelace"
+    assert "display_name" not in data
     assert data["consents"]["terms"]["version"] == "2026-09-30"
     assert "accepted_at" in data["consents"]["privacy"]

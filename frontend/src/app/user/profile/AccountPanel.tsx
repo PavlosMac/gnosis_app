@@ -1,25 +1,6 @@
 import Link from "next/link";
 import { Settings } from "lucide-react";
 
-export const ProfileRow = ({ label, value }: { label: string; value: string }) => (
-  <div className="flex items-center justify-between gap-4">
-    <span
-      className="text-[#e6d5b8]/60 text-sm tracking-wider uppercase shrink-0"
-      style={{ fontFamily: "'Cinzel', serif" }}
-    >
-      {label}
-    </span>
-    {/* minWidth 0 lets a flex child shrink below its nowrap text so `truncate` can ellipsize */}
-    <span
-      className="text-[#e6d5b8] text-sm truncate text-right"
-      style={{ fontFamily: "'Crimson Pro', serif", minWidth: 0 }}
-      title={value}
-    >
-      {value}
-    </span>
-  </div>
-);
-
 export const SectionLabel = ({ children }: { children: React.ReactNode }) => (
   <h2
     className="text-[#d4af37]/80 text-xs tracking-[0.3em] uppercase text-center mb-6"
@@ -30,14 +11,13 @@ export const SectionLabel = ({ children }: { children: React.ReactNode }) => (
 );
 
 interface AccountPanelProps {
-  /** Already resolved: display name, else first + last, else "Seeker" */
+  /** Already resolved: first name, else display name, else "Seeker" */
   name: string;
-  email: string;
   /** null when the ledger could not be fetched */
   budget: { remainingUsd: number; budgetUsd: number } | null;
 }
 
-const AccountPanel = ({ name, email, budget }: AccountPanelProps) => {
+const AccountPanel = ({ name, budget }: AccountPanelProps) => {
   // `budget` is kept on the props (and the dashboard still fetches it) for the tarot card
   // visual that will take the slot below; nothing reads it yet.
   void budget;
@@ -46,9 +26,23 @@ const AccountPanel = ({ name, email, budget }: AccountPanelProps) => {
     <div className="flex flex-col p-5 sm:p-8">
       <SectionLabel>Tally</SectionLabel>
 
-      <div className="space-y-4">
-        <ProfileRow label="Name" value={name} />
-        <ProfileRow label="Email" value={email} />
+      {/* The seeker's first name, set like a title: no label, no email */}
+      <div className="text-center">
+        <p
+          className="text-2xl text-[#e6d5b8] tracking-[0.15em] truncate"
+          style={{
+            fontFamily: "'Cinzel', serif",
+            textShadow: "0 0 20px rgba(212,175,55,0.25)",
+          }}
+          title={name}
+        >
+          {name}
+        </p>
+        <div className="flex items-center justify-center gap-2 mt-3" aria-hidden="true">
+          <div className="w-8 h-px bg-gradient-to-r from-transparent to-[#d4af37]/40" />
+          <span className="text-[#d4af37]/50 text-xs">✦</span>
+          <div className="w-8 h-px bg-gradient-to-l from-transparent to-[#d4af37]/40" />
+        </div>
       </div>
 
       {/* Reserved for a tarot card visual. The budget chalice that stood here was five

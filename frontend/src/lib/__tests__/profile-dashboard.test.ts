@@ -8,7 +8,8 @@ import {
   truncateQuestion,
   tagHref,
   agreementRowModel,
-  accountName,
+  greetingName,
+  fullName,
 } from "@/lib/profile-dashboard";
 
 describe("chaliceFill", () => {
@@ -155,11 +156,19 @@ describe("agreementRowModel", () => {
   });
 });
 
-describe("accountName", () => {
-  it("prefers the display name, then first + last, then Seeker", () => {
-    expect(accountName({ displayName: "Ada L", firstName: "Ada", lastName: "Lovelace" })).toBe("Ada L");
-    expect(accountName({ displayName: null, firstName: "Ada", lastName: "Lovelace" })).toBe("Ada Lovelace");
-    expect(accountName({ displayName: null, firstName: "Ada", lastName: null })).toBe("Ada");
-    expect(accountName({ displayName: null, firstName: null, lastName: null })).toBe("Seeker");
+describe("greetingName", () => {
+  it("is the first name, else Seeker", () => {
+    expect(greetingName({ firstName: "Ada" })).toBe("Ada");
+    expect(greetingName({ firstName: "  " })).toBe("Seeker");
+    expect(greetingName({ firstName: null })).toBe("Seeker");
+  });
+});
+
+describe("fullName", () => {
+  it("joins the parts that exist and is null when there are none", () => {
+    expect(fullName({ firstName: "Ada", lastName: "Lovelace" })).toBe("Ada Lovelace");
+    expect(fullName({ firstName: " Ada ", lastName: null })).toBe("Ada");
+    expect(fullName({ firstName: null, lastName: "Lovelace" })).toBe("Lovelace");
+    expect(fullName({ firstName: " ", lastName: undefined })).toBeNull();
   });
 });

@@ -11,7 +11,8 @@ from src.core.types import PyObjectId
 class AdminUserResponse(AppSchema):
     id: PyObjectId = Field(alias="_id")
     email: str
-    display_name: str | None = None
+    first_name: str | None = None
+    last_name: str | None = None
     status: UserStatus = UserStatus.ACTIVE
     credits: int = 0
     is_superadmin: bool = False

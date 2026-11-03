@@ -71,15 +71,19 @@ export const truncateQuestion = (text: string | null, max = 120): string | null 
 /** The readings list filtered to one tag — shared serializer, so it can't drift */
 export const tagHref = (tag: string): string => listHref({ page: 1, tags: tag });
 
-/** The profile's Name row: the display name, else first + last, else "Seeker" */
-export const accountName = (user: {
-  displayName: string | null;
-  firstName: string | null;
-  lastName: string | null;
-}): string =>
-  user.displayName ||
-  [user.firstName, user.lastName].filter(Boolean).join(" ") ||
-  "Seeker";
+/** The Sanctum's greeting: the first name, else "Seeker" */
+export const greetingName = (user: { firstName: string | null }): string =>
+  user.firstName?.trim() || "Seeker";
+
+/** "First Last" from whichever parts exist; null when the account has neither */
+export const fullName = (user: {
+  firstName?: string | null;
+  lastName?: string | null;
+}): string | null =>
+  [user.firstName, user.lastName]
+    .map((part) => part?.trim())
+    .filter(Boolean)
+    .join(" ") || null;
 
 export interface AgreementRow {
   id: LegalDocumentId;

@@ -5,7 +5,7 @@ from typing import Any
 from bson import ObjectId
 from pymongo import ReturnDocument
 
-from src.auth.models import UserStatus, build_display_name
+from src.auth.models import UserStatus
 from src.database.base_repository import BaseReadRepository, BaseWriteRepository
 from src.database.collections.constants import (
     EMAIL_VERIFICATION_TOKENS_COLLECTION,
@@ -141,7 +141,6 @@ class AuthWriteRepository(BaseWriteRepository):
                     "password_hash": password_hash,
                     "first_name": first_name,
                     "last_name": last_name,
-                    "display_name": build_display_name(first_name, last_name),
                     "consents": consents,
                     "status": str(UserStatus.ACTIVE),
                     "email_verified_at": activated_at,
@@ -171,7 +170,6 @@ class AuthReadRepository(BaseReadRepository):
             user_id,
             projection={
                 "email": 1,
-                "display_name": 1,
                 "is_superadmin": 1,
                 "created_at": 1,
                 "budget_usd": 1,

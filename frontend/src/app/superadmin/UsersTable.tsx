@@ -4,6 +4,7 @@ import { useActionState, useCallback, useState } from "react";
 import { inviteUser } from "./actions";
 import EmailUserModal from "./EmailUserModal";
 import DeleteUserModal from "./DeleteUserModal";
+import { fullName } from "@/lib/profile-dashboard";
 import type { AdminUser, InviteUserFormState, UserStatus } from "@/types/auth";
 
 const HEADINGS = ["Email", "Name", "Status", "Joined", ""] as const;
@@ -82,7 +83,7 @@ const UsersTable = ({ users, currentUserId }: UsersTableProps) => {
                     )}
                   </td>
                   <td className="px-4 sm:px-6 py-3 text-[#e6d5b8]/80 text-sm" style={BODY}>
-                    {user.displayName || "—"}
+                    {fullName(user) ?? "—"}
                   </td>
                   <td
                     className={`px-4 sm:px-6 py-3 text-sm whitespace-nowrap ${STATUS_CLASS[user.status]}`}
