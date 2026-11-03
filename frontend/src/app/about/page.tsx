@@ -91,9 +91,9 @@ export default function AboutPage() {
               bigger spreads. The <span className="text-[#d4af37]">Oracle Interpretation</span> is
               an advanced reading interpreter. LLMs are particularly good
               at analysing Tarot spreads because of their ability to understand context and pattern
-              recognition. However, take these with a pinch of salt. Do not take them literally - or expect to point you in the correct direction. We believe that 
-              these interpreations do not need to be completely accurate. Nonetheless they will open the door to stimulate your own imagintation.
-              After all the Tarot should be considered a tool of the imagination. It is your journey and only your imagination can take you on it.
+              recognition. However, take these with a pinch of salt. We believe that 
+              these interpretions do not need to be completely accurate - more that they open your own imagintation.
+              After all the Tarot should be considered a tool of the imagination. It is your journey and only your inner being can take you on it.
             </P>
             <P>
               The guide can be used to get the most out the application{" "}
@@ -159,13 +159,12 @@ export default function AboutPage() {
         <ArticleSection framed title="Oracle Interpretations" symbol="☉">
           <Body>
             <P>
-              After much experimentation we are happy with the ability of OpenAI&apos;s GPT models
-              to synthesise card data into meaningful interpretations. Frontier models are trained
+              After much experimentation with OpenAI&apos;s GPT models, we have choosen to use their LLM to run our Oracle Interpreter. Frontier models are trained
               on vast datasets, and this includes occult and esoteric material.
             </P>
             <P>
-              Although we are not in favour of using AI everywhere, we found that it can give high value reading
-              interpretations, both in text quality and speed. So this is what we use for our Oracle Interpretations data.
+              We found that an advanced LLM can give high value readings, both in text quality and speed. Having the LLM interpret
+              gives a good starting point for the querent to continue pondering their reading.
               However, we would like to remind users that receiving a reading synthesis from a person will never measure
               against an interpretation from an LLM and hence our interpretations should be taken with &lsquo;a pinch of salt&rsquo;.
             </P>
