@@ -159,19 +159,18 @@ export default function AboutPage() {
         <ArticleSection framed title="Oracle Interpretations" symbol="☉">
           <Body>
             <P>
-              After much experimentation with OpenAI&apos;s GPT models, we have choosen to use their LLM to run our Oracle Interpreter. Frontier models are trained
-              on vast datasets, and this includes occult and esoteric material.
+              After much experimentation with OpenAI&apos;s GPT models, we have choosen to use their LLM to run our Oracle Interpreter - one of the core features of the platform. Frontier models are trained
+              on vast datasets including occult and esoteric material.
             </P>
             <P>
               We found that an advanced LLM can give high value readings, both in text quality and speed. Having the LLM interpret
               gives a good starting point for the querent to continue pondering their reading.
-              However, we would like to remind users that receiving a reading synthesis from a person will never measure
+              However, we would like to remind users that receiving a reading interpreted from a person will never measure
               against an interpretation from an LLM and hence our interpretations should be taken with &lsquo;a pinch of salt&rsquo;.
             </P>
             <P>
-              It&apos;s up to users to deduce the meaning from the interpretations in an effort to eventually and
-              ultimately become the true Reader of their own spreads. Quick reading information,
-              not a wait of days, is the core of our platform: curate meaningful readings, see the
+              It&apos;s up to users to deduce meaning from their own interpretations and
+              ultimately become the true Reader of their own spreads. Start curating meaningful readings, see the
               patterns and experience the magic.
             </P>
           </Body>
@@ -180,10 +179,10 @@ export default function AboutPage() {
         <ArticleSection framed title="Significators" symbol="⚝">
           <Body>
             <P>
-              The Significators spread is the personal Tarot chart and takes a birthday as its
+              The Significators spread is another core feature of the platform. It is a persons Tarot chart and takes a birthday as
               input. From that particular day we can deduce a number of significant cards which
               reference core character, challenges, strengths and destiny. Like an astrological
-              chart, the Significators chart highlights the attributes and personal traits of the
+              chart, the Significator chart highlights the attributes and personal traits of the
               person born on that day.
             </P>
             <P>

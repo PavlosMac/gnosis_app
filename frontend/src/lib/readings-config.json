@@ -118,7 +118,7 @@
             },
             {
                 "name": "day number",
-                "description": "The querant's birth day. Everyone is born on a numbered day. Perhaps this has important information about life and destiny. Convert it to a Major Arcana card and find out."
+                "description": "The querant's birth day. Everyone is born on a numbered day. Convert it to a Major Arcana card and find out."
             },
             {
                 "name": "decanate",
@@ -126,7 +126,7 @@
             },
             {
                 "name": "court royal",
-                "description": "The Golden Dawn court card (Knight, Queen or King) ruling the decan of the querant's birth date. Each rules 20 degrees of one sign to 20 degrees of the next. It shows the querant's personality type and the character through which the other significators are lived out."
+                "description": "The Golden Dawn court card (Knight, Queen or King) ruling the decan of the querant's birth date. Each rules 20 degrees of one sign to 20 degrees of the next. The court royals give important information with regards character."
             }
         ]
     }
