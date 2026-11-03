@@ -396,3 +396,23 @@ Each decision should include:
 - Two new `EmailPort` methods; every adapter (including the two test-only subclasses) implements them
 - `AdminUserResponse` carries `status`; the frontend maps the admin listing through `mapAdminUserResponse` (the old mapper read `id` instead of the `_id` alias, so row ids were `undefined`)
 - Reference: `docs/reference/admin/user-management.md`
+
+### ADR-018: The System Prompt Tells the Model It Is "the Oracle", Scoped to Being Addressed (2026-11-02)
+
+**Context:**
+- The product calls the interpreter "the Oracle" ("Living Oracle", "LO"), and querents write that name into their questions. Without a rule the model read it as a third party and reported what "the Oracle" would say. A first wording ("anything named … Oracle", "an abbreviation such as LO") also caught real third parties: a job at Oracle, a friend called Lo, a loan officer.
+
+**Decision:**
+- One `_ORACLE_IDENTITY` block, first in `_SITUATIONAL_FRAME` (Standard and Tree of Life, the only variants that carry a question; Significators and Relationship get none)
+- It applies only when the question addresses or asks about the Oracle, gives a worked example, reads a same-named company, place or person as written, and has a question about the model answered briefly in its own voice before the reading
+- Static, not gated on the request having a question: the system prompt stays a stable prefix, at the cost of a few dozen tokens on question-less readings
+
+**Alternatives Considered:**
+- Alias list (Oracle, LO, Living Oracle) -> Rejected: brittle against every phrasing a querent invents
+- Unconditional "any mention means you" -> Rejected: the false positives above
+- Add the block only when `request.question` is set -> Rejected: varies the system prompt per request for little saving
+
+**Consequences:**
+- A future prompt trim must keep the scoping sentence, not only the identity sentence; `test_lean_prompt.py` pins both
+- Not yet checked against a live model (dev stack bills OpenAI)
+- Reference: `docs/reference/prompts/lean-prompt-architecture.md`

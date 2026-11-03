@@ -51,6 +51,10 @@ One call per interpretation, same port (`LLMPort`), same error mapping:
 
 ```
 system  = IDENTITY            master Rider–Waite reader, own knowledge + numerology/astrology
+        + ORACLE_IDENTITY     the app calls the reader "the Oracle": when the question
+                              addresses it (Oracle / LO / "… Oracle") it means the model, never a
+                              third party; a company, place or person sharing the name is read
+                              as written; a question about the model gets a brief honest answer
         + QUESTION_ANALYSIS   subject, parties, kind of answer sought;
                               open or absent question → more interpretive freedom
         + ORIENTATION         reversal = blocked / delayed / internalized / shadow

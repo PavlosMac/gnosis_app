@@ -14,7 +14,8 @@ of character), `Tree of Life` (the three-pillar temporal structure baked in) and
 `Relationship Reading` (3×3 pillar structure; no question axis — the template supplies
 the frame, and addressing is a prose conditional since any custom names arrive already
 substituted into the position strings). For every variant the position meanings arrive
-per card from the frontend. Reversed guidance appears in every situational variant.
+per card from the frontend. Reversed guidance appears in every situational variant, and the
+two variants that carry a question are told that "the Oracle" in it means the model itself.
 """
 
 import math
@@ -64,8 +65,28 @@ the spread itself set the agenda."""
 _REVERSAL_GUIDANCE = """Honor each card's orientation. A reversal is not simple negation: read it as the card's energy \
 blocked, delayed, internalized or in shadow — whichever the question and position make apt."""
 
-# The situational splice shared by Standard and Tree of Life.
-_QUESTION_REVERSAL = _QUESTION_ANALYSIS + "\n\n" + _REVERSAL_GUIDANCE
+# The product calls the interpreter "the Oracle", and querents write that name into
+# their questions ("what can the oracle tell me about…", "LO", "… oracle"). Without
+# this the model reads it as a third party and reports what "the Oracle" would say.
+# The name is also common outside the app (a job at Oracle, a friend called Lo), so the
+# rule applies only where the querent addresses or asks about the reader.
+_ORACLE_IDENTITY = """The querent consults you through an application that calls you the \
+Oracle. When the question addresses or asks about the Oracle — "the Oracle", "the Living \
+Oracle", the abbreviation "LO", or another name ending in "Oracle" used to refer to the \
+reader — it means you. Never speak of the Oracle as a third party or report what it would \
+say: "What can the Oracle tell me about my job?" means "What do the cards say about my job?". \
+A question about you yourself ("how reliable are you, Oracle?") gets a brief, honest answer \
+in your own voice before the reading. A person, place, company or product that merely shares \
+the name (a job at Oracle, the oracle of Delphi, a friend called Lo) is just that: read it as \
+written."""
+
+# The situational frame shared by Standard and Tree of Life — the only two variants that
+# carry a question, so the only two that need the Oracle identity. It is static (not
+# gated on whether this request has a question) to keep the system prompt a stable,
+# cacheable prefix; the cost is a few dozen tokens on question-less readings.
+_SITUATIONAL_FRAME = (
+    _ORACLE_IDENTITY + "\n\n" + _QUESTION_ANALYSIS + "\n\n" + _REVERSAL_GUIDANCE
+)
 
 _CLOSING_INSTRUCTIONS = """Write about {total_words} words — treat that as a ceiling, not a target to exceed. Address \
 the querent directly. Every sentence must earn its place: no textbook boilerplate, no \
@@ -79,7 +100,7 @@ correspondences. You may also draw on the allied mystical arts of numerology and
 where they aid the interpretation.
 
 """
-    + _QUESTION_REVERSAL
+    + _SITUATIONAL_FRAME
     + """
 
 Read each card through its position. A stated position meaning governs the card's scope; where \
@@ -142,7 +163,7 @@ correspondences. You may also draw on the allied mystical arts of numerology, as
 the Kabbalah, which matter especially here.
 
 """
-    + _QUESTION_REVERSAL
+    + _SITUATIONAL_FRAME
     + """
 
 This spread maps the situation onto the eleven zones of the Tree of Life. Each card arrives \

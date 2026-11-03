@@ -167,6 +167,42 @@ def test_system_prompt_states_budget_as_ceiling():
     assert "a ceiling, not a target to exceed" in prompt
 
 
+def test_system_prompt_tells_the_model_it_is_the_oracle():
+    """The app calls the interpreter "the Oracle" and querents write that name into their
+    questions ("what can the oracle tell me about…", "LO"). Both situational templates
+    tell the model that name means itself, so it never reports what "the Oracle" would say
+    as if it were a third party."""
+    for spread_name in ("Past-Present-Future", "Tree of Life"):
+        prompt = build_system_prompt(_make_system_request(spread_name))
+        assert "calls you the Oracle" in prompt
+        assert "means you" in prompt
+
+
+def test_oracle_identity_is_scoped_to_addressing_the_reader():
+    """"Oracle" and "Lo" also name companies, places and people, so the rule is conditioned
+    on the querent addressing the reader, carries a worked example, and says what to do
+    with a question about the model itself."""
+    for spread_name in ("Past-Present-Future", "Tree of Life"):
+        prompt = build_system_prompt(_make_system_request(spread_name))
+        assert "used to refer to the reader" in prompt
+        assert "a job at Oracle" in prompt
+        assert "a friend called Lo" in prompt
+        assert "is just that: read it as written" in prompt
+        assert '"What can the Oracle tell me about my job?" means' in prompt
+        assert "A question about you yourself" in prompt
+
+
+def test_oracle_identity_precedes_question_analysis_and_reversal_guidance():
+    """Identity first, so the question is already read as addressed to the model when it
+    is analysed; reversal guidance last, as before."""
+    for spread_name in ("Past-Present-Future", "Tree of Life"):
+        prompt = build_system_prompt(_make_system_request(spread_name))
+        identity = prompt.index("calls you the Oracle")
+        analysis = prompt.index("First determine what the question asks")
+        reversal = prompt.index("Honor each card's orientation")
+        assert identity < analysis < reversal
+
+
 def test_question_analysis_flows_straight_into_reversal_guidance():
     """No intent axis exists: question analysis and reversal guidance sit exactly one
     blank line apart in both situational templates — no paragraph gap, no placeholder."""
@@ -226,6 +262,7 @@ def test_significators_omits_question_analysis():
     """A fixed character chart has no question axis — the portrait is its own subject."""
     prompt = build_system_prompt(_make_system_request("Significators"))
     assert "what the question asks" not in prompt
+    assert "calls you the Oracle" not in prompt
 
 
 def test_significators_user_prompt_has_no_question_line():
@@ -314,6 +351,7 @@ def test_relationship_states_purpose_in_place_of_a_question():
     interpretive frame a question would."""
     prompt = build_system_prompt(_relationship_request())
     assert "what the question asks" not in prompt
+    assert "calls you the Oracle" not in prompt
     assert "relationship between two people" in prompt
     assert "the spread itself sets the agenda" in prompt
 
