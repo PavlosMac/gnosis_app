@@ -52,6 +52,7 @@ or in the three `CLAUDE.md` files, and CI runs it.
 | [`2026-09-10-sse-streaming-interpretations.md`](plans/2026-09-10-sse-streaming-interpretations.md) | Not started. Stream the interpretation; add request duration and `request_id` logging. |
 | [`2026-09-21-user-accounting-ledger.md`](plans/2026-09-21-user-accounting-ledger.md) | Agreed, not started. Admin-set model and prices, monthly budget period, per-spread cost table, superadmin ledger UI. |
 | [`2026-09-29-readings-sort-index.md`](plans/2026-09-29-readings-sort-index.md) | Deferred. Compound index for spread + tags + date sort; trigger inside. |
+| [`2026-11-03-birth-date-and-personal-day-card.md`](plans/2026-11-03-birth-date-and-personal-day-card.md) | Agreed, not started. Required birth date at sign-up, new privacy version, personal day/month/year numbers, day card in the profile Tally slot. |
 
 ## Notes
 
