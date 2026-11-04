@@ -60,7 +60,6 @@ const InterpretationModal: React.FC<InterpretationModalProps> = React.memo(({
     autoGenerate ? "generating" : "confirm"
   );
   const [interpretation, setInterpretation] = useState<Interpretation | null>(null);
-  const [remainingBudget, setRemainingBudget] = useState<number | null>(null);
   const [errorMessage, setErrorMessage] = useState("");
   // Set when a request came back unauthenticated: retrying cannot succeed, so
   // the UI offers a plain login round-trip back to the reading page instead
@@ -117,7 +116,6 @@ const InterpretationModal: React.FC<InterpretationModalProps> = React.memo(({
           return;
         }
         setInterpretation(result.data);
-        setRemainingBudget(result.remainingBudgetUsd);
         setModalState("result");
       } else {
         setErrorMessage(result.error);
@@ -218,14 +216,12 @@ const InterpretationModal: React.FC<InterpretationModalProps> = React.memo(({
             >
               ✦ Done ✦
             </button>
-            {remainingBudget !== null && (
-              <p
-                className="text-xs text-[#e6d5b8]/40"
-                style={{ fontFamily: "'Crimson Pro', serif" }}
-              >
-                Saved to your journal · Remaining Oracle budget ${remainingBudget.toFixed(2)}
-              </p>
-            )}
+            <p
+              className="text-xs text-[#e6d5b8]/40"
+              style={{ fontFamily: "'Crimson Pro', serif" }}
+            >
+              Saved to your journal
+            </p>
           </div>
         </div>
       )}

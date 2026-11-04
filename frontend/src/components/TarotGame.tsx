@@ -687,34 +687,23 @@ export default function TarotGame({ user, mode = 'draw' }: TarotGameProps) {
             {game.phase === 'reading' && (
               <div ref={readingRef} className="mt-10 flex justify-center animate-fadeIn">
                 <div className="flex flex-col">
-                  {/* Saving needs an account */}
+                  <Reading
+                    selectedCards={selectedCards}
+                    positions={effectivePositions}
+                    question={selectedReading.showQuestion ? userQuestion : undefined}
+                    isComplete={isReadingComplete}
+                    significatorResult={completedReading?.significatorResult}
+                  />
+
+                  {/* Saving needs an account — the control sits centred under the cards */}
                   {isReadingComplete && isLoggedIn && (
-                    <div className="self-end flex items-center gap-2 mb-3">
-                      <div className="flex flex-col items-end">
-                        {!savedReadingId && (
-                          <span
-                            className="text-[10px] sm:text-xs text-[#d4af37]/60 text-right"
-                            style={{ fontFamily: "'Cinzel', serif" }}
-                          >
-                            {savingReading ? "Saving..." : "Save reading"}
-                          </span>
-                        )}
-                        {saveReadingError && (
-                          <span
-                            className="text-[10px] sm:text-xs text-red-400 text-right max-w-[11rem]"
-                            style={{ fontFamily: "'Crimson Pro', serif" }}
-                          >
-                            {saveReadingError}
-                          </span>
-                        )}
-                      </div>
+                    <div className="flex flex-col items-center gap-2 mt-8 px-4">
                       <button
                         type="button"
                         onClick={saveReading}
                         disabled={savingReading || !!savedReadingId}
-                        title={savedReadingId ? "Saved to Journal" : undefined}
                         aria-label={savedReadingId ? "Saved to Journal" : "Save this reading"}
-                        className={`shrink-0 p-2 rounded-lg border transition-all duration-300
+                        className={`shrink-0 p-3 rounded-lg border transition-all duration-300
                           ${savedReadingId
                             ? 'border-[#d4af37] bg-gradient-to-br from-[#d4af37] to-[#b8942f] text-[#1a0033]'
                             : 'border-[#d4af37]/40 text-[#d4af37]/70 hover:text-[#d4af37] hover:border-[#d4af37] bg-[#1a0033]/70'}
@@ -729,18 +718,26 @@ export default function TarotGame({ user, mode = 'draw' }: TarotGameProps) {
                           />
                         </svg>
                       </button>
+                      {/* Always rendered with a fixed height so saving never shifts the layout */}
+                      <span
+                        className="h-4 text-xs text-[#d4af37]/60 tracking-widest"
+                        style={{ fontFamily: "'Cinzel', serif" }}
+                        aria-live="polite"
+                      >
+                        {savedReadingId ? "Saved to Journal" : savingReading ? "Saving..." : "Save reading"}
+                      </span>
+                      {saveReadingError && (
+                        <span
+                          className="text-xs text-red-400 text-center max-w-xs"
+                          style={{ fontFamily: "'Crimson Pro', serif" }}
+                        >
+                          {saveReadingError}
+                        </span>
+                      )}
                     </div>
                   )}
 
-                  <Reading
-                    selectedCards={selectedCards}
-                    positions={effectivePositions}
-                    question={selectedReading.showQuestion ? userQuestion : undefined}
-                    isComplete={isReadingComplete}
-                    significatorResult={completedReading?.significatorResult}
-                  />
-
-                  {/* A visitor gets a separate login button under the cards, not the save ribbon */}
+                  {/* A visitor gets a login button under the cards instead */}
                   {isReadingComplete && !isLoggedIn && !isManual && (
                     <div className="flex justify-center mt-8">
                       <button
@@ -772,16 +769,32 @@ export default function TarotGame({ user, mode = 'draw' }: TarotGameProps) {
                   ✦ New Reading ✦
                 </button>
 
-                {savedReadingId && (
-                  <button
-                    className="px-8 sm:px-10 py-3 sm:py-4 bg-gradient-to-br from-[#8a2be2]/80 to-[#5a1a9e]/80 text-[#e6d5b8] rounded-lg
-                               shadow-lg hover:shadow-[#8a2be2]/40 transition-all duration-300 font-bold text-base sm:text-lg
-                               hover:scale-105 active:scale-95 border border-[#8a2be2]/40 animate-fadeIn"
-                    style={{ fontFamily: "'Cinzel', serif", letterSpacing: '0.1em' }}
-                    onClick={() => setShowInterpretModal(true)}
-                  >
-                    ✦ Oracle Interpretation ✦
-                  </button>
+                {/* Interpretation needs an account and a saved reading */}
+                {isLoggedIn && (
+                  <div className="flex flex-col items-center gap-2">
+                    <button
+                      type="button"
+                      disabled={!savedReadingId}
+                      aria-describedby={savedReadingId ? undefined : "oracle-save-hint"}
+                      className="px-8 sm:px-10 py-3 sm:py-4 bg-gradient-to-br from-[#8a2be2]/80 to-[#5a1a9e]/80 text-[#e6d5b8] rounded-lg
+                                 shadow-lg hover:shadow-[#8a2be2]/40 transition-all duration-300 font-bold text-base sm:text-lg
+                                 hover:scale-105 active:scale-95 border border-[#8a2be2]/40
+                                 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:active:scale-100 disabled:hover:shadow-lg"
+                      style={{ fontFamily: "'Cinzel', serif", letterSpacing: '0.1em' }}
+                      onClick={() => setShowInterpretModal(true)}
+                    >
+                      ✦ Oracle Interpretation ✦
+                    </button>
+                    {!savedReadingId && (
+                      <p
+                        id="oracle-save-hint"
+                        className="text-xs sm:text-sm text-[#e6d5b8]/60 text-center"
+                        style={{ fontFamily: "'Crimson Pro', serif" }}
+                      >
+                        Save the reading first to consult the Oracle.
+                      </p>
+                    )}
+                  </div>
                 )}
               </div>
             )}

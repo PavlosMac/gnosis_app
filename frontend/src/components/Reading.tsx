@@ -107,16 +107,6 @@ const Reading: React.FC<ReadingProps> = React.memo(({
             <span className="text-[#d4af37] text-xl">✦</span>
             <div className="w-12 h-0.5 bg-gradient-to-l from-transparent to-[#d4af37]/50" />
           </div>
-
-          {/* Interpretation hint */}
-          <div className="text-center mt-6 px-4">
-            <p
-              className="text-[#e6d5b8]/70 text-sm italic max-w-2xl mx-auto"
-              style={{ fontFamily: "'Crimson Pro', serif" }}
-            >
-              Now you have a rich, pictographic reading to meditate on.
-            </p>
-          </div>
         </>
       )}
     </div>
