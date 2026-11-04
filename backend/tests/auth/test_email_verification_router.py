@@ -80,7 +80,9 @@ async def test_register_rejects_an_unusable_birth_date(client):
 async def test_register_accepts_a_user_whose_calendar_is_a_day_ahead(client, mock_db):
     # Turns 18 "tomorrow" by the server's UTC date, i.e. today for a user east of UTC.
     tomorrow = date.today() + timedelta(days=1)
-    value = tomorrow.replace(year=tomorrow.year - 18, day=28 if (tomorrow.month, tomorrow.day) == (2, 29) else tomorrow.day).isoformat()
+    # Feb 29 has no counterpart 18 years back (the year isn't a leap year), so use the 28th.
+    day = 28 if (tomorrow.month, tomorrow.day) == (2, 29) else tomorrow.day
+    value = tomorrow.replace(year=tomorrow.year - 18, day=day).isoformat()
 
     resp = await client.post(REGISTER, json=make_register_body(birth_date=value))
 
