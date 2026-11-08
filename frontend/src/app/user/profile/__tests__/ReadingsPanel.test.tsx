@@ -26,7 +26,15 @@ describe("ReadingsPanel", () => {
 
   it("labels the two actions with visible text instead of a tooltip", () => {
     expect(html).toMatch(/<a href="\/reading"[^>]*>.*New reading.*<\/a>/);
-    expect(html).toMatch(/<a href="\/user\/readings[^"]*"[^>]*>.*All readings.*<\/a>/);
+    expect(html).toMatch(/<a href="\/user\/readings[^"]*"[^>]*>.*Past readings.*<\/a>/);
     expect(html).not.toContain("sanctum-tip");
+  });
+
+  it("puts past readings before new reading", () => {
+    const past = html.indexOf('href="/user/readings');
+    const fresh = html.indexOf('href="/reading"');
+    expect(past).toBeGreaterThan(-1);
+    expect(fresh).toBeGreaterThan(-1);
+    expect(past).toBeLessThan(fresh);
   });
 });

@@ -187,6 +187,15 @@ const ReadingsPanel = ({ summary }: ReadingsPanelProps) => (
         never depends on a dev-server Tailwind build that lacks the utility */}
     <div className="sanctum-actions" style={{ marginTop: "auto", paddingTop: "2rem" }}>
       <Link
+        href={listHref(null)}
+        className="flex-1 inline-flex items-center justify-center px-4 py-3 rounded-lg border border-[#d4af37]/30 text-[#d4af37]
+                   hover:border-[#d4af37]/60 hover:bg-[#d4af37]/10 transition-all duration-300"
+        style={{ gap: "0.6rem" }}
+      >
+        <PlayingCardsFan size={20} strokeWidth={1.75} aria-hidden="true" />
+        <ActionLabel>Past readings</ActionLabel>
+      </Link>
+      <Link
         href="/reading"
         className="flex-1 inline-flex items-center justify-center px-4 py-3 bg-gradient-to-br from-[#d4af37] to-[#b8942f] text-[#1a0033] rounded-lg
                    font-bold hover:scale-105 active:scale-95 transition-all duration-300
@@ -195,15 +204,6 @@ const ReadingsPanel = ({ summary }: ReadingsPanelProps) => (
       >
         <PlayingCards size={20} strokeWidth={1.75} aria-hidden="true" />
         <ActionLabel>New reading</ActionLabel>
-      </Link>
-      <Link
-        href={listHref(null)}
-        className="flex-1 inline-flex items-center justify-center px-4 py-3 rounded-lg border border-[#d4af37]/30 text-[#d4af37]
-                   hover:border-[#d4af37]/60 hover:bg-[#d4af37]/10 transition-all duration-300"
-        style={{ gap: "0.6rem" }}
-      >
-        <PlayingCardsFan size={20} strokeWidth={1.75} aria-hidden="true" />
-        <ActionLabel>All readings</ActionLabel>
       </Link>
     </div>
   </div>

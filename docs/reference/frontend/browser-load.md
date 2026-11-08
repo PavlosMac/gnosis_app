@@ -41,7 +41,7 @@ must stay removed. There is no measured before/after figure; see "Measuring" to 
 
 ## The card of the day on the profile
 
-The Tally panel (`AccountPanel.tsx`) shows the seeker's personal day card where the budget
+The account panel (`AccountPanel.tsx`) shows the seeker's personal day card where the budget
 chalice stood (five infinite SVG animations under a `drop-shadow` filter). `TallyCard.tsx`
 is a client component: it reads the browser clock once after mount and hands the account
 birth date and that local date to `personalNumbers()` (`src/lib/personal-numbers.ts`),

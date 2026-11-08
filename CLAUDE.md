@@ -54,6 +54,7 @@ and the two side `CLAUDE.md` files. `make docs-check` verifies every relative li
 | Why something is the way it is | [`decisions.md`](docs/notes/decisions.md) (ADRs) |
 | Ports, URLs, env flags, accounts | [`key-facts.md`](docs/notes/key-facts.md) |
 | Known bugs and open risks | [`bugs.md`](docs/notes/bugs.md), [`known-risks.md`](docs/notes/known-risks.md) |
+| Security audit, dependency advisories, hunting risky code | [`security-watchlist.md`](docs/notes/security-watchlist.md) (checklist, recipes, excursion log) |
 | What is planned but not built | [`docs/plans/`](docs/plans/) — one file per plan, status at the top |
 
 ### Project notes protocol

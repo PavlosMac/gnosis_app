@@ -13,6 +13,35 @@ decides how many of those may have an OpenAI request open at once. The rest wait
 FIFO order, costing almost nothing. Prod runs one uvicorn worker
 (`backend/Dockerfile`), so the per-process cap is the real ceiling.
 
+```
+ browsers ──► Next.js server ──► uvicorn  (1 worker; accepts every connection)
+                                    │
+                                    ▼
+  ┌───────────────────── one asyncio event loop ─────────────────────────┐
+  │                                                                      │
+  │  one coroutine per POST /readings/{id}/interpretation                │
+  │  r1 … r100: reserve budget, then ask the semaphore for a slot        │
+  │                                                                      │
+  │  asyncio.Semaphore(OPENAI_MAX_CONCURRENT = 10)                       │
+  │                                                                      │
+  │  FIFO wait queue   (parked coroutines, no threads, ~free)            │
+  │  ┌─────┬─────┬─────┬─────┬──────┐                                    │
+  │  │ r11 │ r12 │ r13 │ ... │ r100 │ ◄── newest joins at the back       │
+  │  └──┬──┴─────┴─────┴─────┴──────┘                                    │
+  │     │  oldest moves up when a slot frees                             │
+  │     │  waited > OPENAI_ACQUIRE_TIMEOUT_SECONDS (30) ──► 503, refund   │
+  │     ▼                                                                │
+  │  in-flight slots (10)                                                │
+  │  ┌────┬────┬────┬────┬────┬────┬────┬────┬────┬─────┐                │
+  │  │ r1 │ r2 │ r3 │ r4 │ r5 │ r6 │ r7 │ r8 │ r9 │ r10 │                │
+  │  └──┬─┴────┴────┴────┴────┴────┴────┴────┴────┴─────┘                │
+  │     │  each holds its slot for the whole call, retries included      │
+  └─────┼────────────────────────────────────────────────────────────────┘
+        ▼
+     OpenAI    OPENAI_TIMEOUT_SECONDS (120) per attempt ──► 504
+               OPENAI_MAX_RETRIES (2) further attempts on the same slot
+```
+
 ## The settings
 
 All in `Settings` (`backend/src/core/config.py`), overridable by env var on the Pi

@@ -2,15 +2,6 @@ import Link from "next/link";
 import { Settings } from "lucide-react";
 import TallyCard from "./TallyCard";
 
-export const SectionLabel = ({ children }: { children: React.ReactNode }) => (
-  <h2
-    className="text-[#d4af37]/80 text-xs tracking-[0.3em] uppercase text-center mb-6"
-    style={{ fontFamily: "'Cinzel', serif" }}
-  >
-    ✦ {children} ✦
-  </h2>
-);
-
 interface AccountPanelProps {
   /** Already resolved: first name, else "Seeker" */
   name: string;
@@ -20,9 +11,7 @@ interface AccountPanelProps {
 
 const AccountPanel = ({ name, birthDate }: AccountPanelProps) => {
   return (
-    <div className="flex flex-col p-5 sm:p-8">
-      <SectionLabel>Tally</SectionLabel>
-
+    <section aria-label="Your account" className="flex flex-col p-5 sm:p-8">
       {/* The seeker's first name, set like a title: no label, no email */}
       <div className="text-center">
         <p
@@ -54,10 +43,10 @@ const AccountPanel = ({ name, birthDate }: AccountPanelProps) => {
         <div className="pt-4 border-t border-[#d4af37]/10">
           <Link
             href="/user/profile/settings"
-            className="w-full flex items-center justify-between group"
+            className="w-full flex items-center justify-end gap-2 group"
           >
             <span
-              className="text-[#e6d5b8]/60 text-sm tracking-wider uppercase group-hover:text-[#d4af37] transition-colors"
+              className="text-[#e6d5b8]/60 text-xs tracking-wider uppercase group-hover:text-[#d4af37] transition-colors"
               style={{ fontFamily: "'Cinzel', serif" }}
             >
               Account settings
@@ -71,7 +60,7 @@ const AccountPanel = ({ name, birthDate }: AccountPanelProps) => {
           </Link>
         </div>
       </div>
-    </div>
+    </section>
   );
 };
 

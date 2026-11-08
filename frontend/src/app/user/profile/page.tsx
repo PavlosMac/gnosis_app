@@ -38,7 +38,7 @@ const ProfilePage = async () => {
               textShadow: "0 0 30px rgba(212,175,55,0.4)",
             }}
           >
-            The Sanctum
+            Your Sanctum
           </h1>
           <div className="flex items-center justify-center gap-3 mt-3">
             <div className="w-12 h-px bg-gradient-to-r from-transparent to-[#d4af37]/40" />

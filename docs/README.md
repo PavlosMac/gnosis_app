@@ -62,3 +62,4 @@ or in the three `CLAUDE.md` files, and CI runs it.
 | [`issues.md`](notes/issues.md) | Dated work log: what shipped, status |
 | [`key-facts.md`](notes/key-facts.md) | Ports, routes, URLs, env flags, accounts (non-secret) |
 | [`known-risks.md`](notes/known-risks.md) | Accepted or unmitigated risks in shipped code; move to Resolved when fixed |
+| [`security-watchlist.md`](notes/security-watchlist.md) | Vulnerability classes for this stack mapped to code, grep recipes, dated advisory status, and the log of each security excursion |
