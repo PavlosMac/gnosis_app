@@ -113,7 +113,6 @@ Paths are from the repo root. Symbols, not line numbers, so this survives edits.
 | `frontend/src/app/user/interpret/actions.ts` | `generateInterpretation` | Server action; carries `remainingBudgetUsd`. |
 | `frontend/src/app/user/profile/actions.ts` | `getDashboard` | Fetches the dashboard. |
 | `frontend/src/components/InterpretationModal.tsx` | result footer | "Saved to your journal" only; the remaining budget is no longer shown to the user (removed 2026-11-04). The server action still returns `remainingBudgetUsd`, unused in the UI. |
-| `frontend/src/app/user/readings/[id]/InterpretationSection.tsx` | token label | "Model: … · N tokens", where N is input plus output added together. Cost and the split are never shown, which is why the label looks cheaper than the bill. |
 | `frontend/src/app/user/profile/AccountPanel.tsx`, `frontend/src/lib/profile-dashboard.ts` | `budget` prop; `chaliceFill`, `chaliceState`, `chaliceCaption`, `chaliceTitle` | The profile shows nothing about the budget since 2026-10-29: the "Remaining Readings" chalice was removed (browser load) and an empty slot waits for a tarot card visual. `AccountPanel` still receives `budget` from the dashboard fetch, and the pure fill/state/caption helpers stay in `profile-dashboard.ts` as inputs for that visual; delete them if it does not use them. |
 | `frontend/src/lib/api-client.ts` | `SAFE_MESSAGES[402]` | "Your Oracle budget is exhausted." The only budget-exhausted handling; no dedicated UI state. |
 | `frontend/src/app/superadmin/page.tsx` | | Users table. No spend or budget column. |

@@ -37,8 +37,6 @@ const InterpretationSection: React.FC<InterpretationSectionProps> = ({
     router.refresh();
   }, [router]);
 
-  const usage = interpretation?.usage ?? null;
-
   return (
     <>
       {interpretation ? (
@@ -49,17 +47,6 @@ const InterpretationSection: React.FC<InterpretationSectionProps> = ({
               narrative={interpretation.reading}
               cardVisuals={cardVisuals}
             />
-          </div>
-          <div className="mt-4 text-xs text-[#e6d5b8]/30 text-center sm:text-left">
-            <span style={{ fontFamily: "'Crimson Pro', serif" }}>
-              Model: {interpretation.model}
-              {usage && (
-                <>
-                  {" "}&middot;{" "}
-                  {(usage.prompt_tokens + usage.completion_tokens).toLocaleString()} tokens
-                </>
-              )}
-            </span>
           </div>
         </>
       ) : (

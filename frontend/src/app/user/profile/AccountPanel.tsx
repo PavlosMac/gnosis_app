@@ -43,7 +43,7 @@ const AccountPanel = ({ name, birthDate }: AccountPanelProps) => {
         <div className="pt-4 border-t border-[#d4af37]/10">
           <Link
             href="/user/profile/settings"
-            className="w-full flex items-center justify-end gap-2 group"
+            className="w-full flex items-center justify-center gap-2 group"
           >
             <span
               className="text-[#e6d5b8]/60 text-xs tracking-wider uppercase group-hover:text-[#d4af37] transition-colors"

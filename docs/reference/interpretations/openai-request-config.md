@@ -42,6 +42,36 @@ FIFO order, costing almost nothing. Prod runs one uvicorn worker
                OPENAI_MAX_RETRIES (2) further attempts on the same slot
 ```
 
+### Uvicorn, workers and coroutines
+
+A worker is a whole Python process with its own event loop. Within one loop,
+coroutines take turns on a single thread: `await` hands the thread back while the
+coroutine waits on I/O, so hundreds can be in flight while only one runs.
+
+```
+ uvicorn --workers N     (prod: N = 1, backend/Dockerfile)
+   │
+   ├── worker 1 ─ one Python process, one thread, one event loop
+   │              one Semaphore(10), one Mongo pool, one OpenAI client
+   │
+   └── worker 2 ─ only if N = 2: a second process with its own loop and its
+                  own Semaphore(10) → 20 in flight, nothing coordinating them
+
+
+ one event loop, one thread: only one coroutine runs at any instant
+
+ time ────────────────────────────────────────────────────────────────────►
+
+ r1     ██─ await openai ───────────────────────────────────────██ done
+ r2       ██─ await mongo ─██─ await openai ─────────────────────────██ done
+ r3         ██─ await semaphore (queued, slot busy) ──────────██─ await openai ─ …
+ login                ████████████ argon2 hash: CPU work, no await
+                        ▲ loop frozen: r1, r2, r3 cannot resume until it ends
+
+ ██  running on the CPU (microseconds to a few milliseconds)
+ ─   waiting on I/O: the thread is free for every other coroutine
+```
+
 ## The settings
 
 All in `Settings` (`backend/src/core/config.py`), overridable by env var on the Pi
@@ -122,3 +152,34 @@ waiting and delay is free. Here a person is watching the shuffle and a budget
 reservation is held for the duration, so anything past ~30 s is a failure whether or
 not the request eventually succeeds. Fail fast (503/429) and let the idempotent
 retry do the recovery; retry less, not more.
+
+
+Going from 10 to 20 is safe on the Pi side and touches nothing in Mongo, uvicorn or memory. What it does change is your exposure to OpenAI's limits. Here is what to check or adjust, in order.
+
+1. Your OpenAI tier's tokens-per-minute limit. Check before changing anything.
+Each in-flight request reserves its completion cap against the org's TPM at admission, up to 10,000 tokens. Twenty in flight can reserve about 200,000 tokens at once. If your tier's TPM for the model is below that, raising the cap converts fast 503s into slow 429s with no gain. The safe ceiling is in the doc: TPM ÷ 10,000 ÷ minutes per call. Read the figure from r Limits for the model in use.
+
+2. OPENAI_MAX_RETRIES, currently 2. Lower to 0 or 1.
+With twice the slots, 429s from the provider become more likelyh one with backoff while holding the slot. A retrying call canhold a slot for three attempts of up to 120 seconds. The doc already recommends lowering this regardless; at 20 it matters more.
+
+3. OPENAI_MAX_TOKENS, currently 10,000. Consider lowering.
+This is the per-request reservation against TPM and the worst-case cost per call. Only the largest spreads derive anything near it. If the logs show
+completion tokens well under it, a lower ceiling lets more requTPM. The adapter warns when a cap gets clamped, so you will seeif you go too low.
+
+4. OPENAI_ACQUIRE_TIMEOUT_SECONDS, currently 30. Leave it.
+The queue drains twice as fast, so fewer requests hit the cutof
+
+5. Spend exposure. The semaphore is also a soft brake on org-wicall at gpt-5.4 output pricing is about $0.15, so a full batch of 20 is about $3 of exposure against an observed average of $0.02 per reading. Per-user budgets still cap each account at $3. Acceptable.
+
+Nothing to change
+
+- Mongo pool: the Motor default is 100 connections, and each reshort and not held during the call.
+- Uvicorn: no concurrency limit configured, and idle coroutines are free.
+- The load tests pass the cap explicitly per scenario, so they
+
+Where the value lives
+
+- Set OPENAI_MAX_CONCURRENT=20 in .env.gnosis.prod on the Pi and recreate the api container. Or change the default in src/core/config.py and rebuild, which also needs the .env.example comment.
+- Update openai-request-config.md: the burst table assumes cap ed labels the slots as 10.
+
+After the change, grep the prod logs for openai call failed with LLMRateLimitError. If those appear, the provider is the limit and the cap should come back down to what step 1 gave you.
