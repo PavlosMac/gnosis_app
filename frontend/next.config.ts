@@ -51,6 +51,10 @@ const securityHeaders = [
 const nextConfig: NextConfig = {
   output: 'standalone',
 
+  // Agent guidance lives in the root CLAUDE.md files and .claude/; stop `next dev`
+  // from writing its own managed block into frontend/AGENTS.md.
+  agentRules: false,
+
   // .mdx is used for the versioned legal documents (src/content/legal) and the guide chapters (src/content/guide)
   pageExtensions: ['ts', 'tsx', 'md', 'mdx'],
 

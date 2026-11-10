@@ -38,12 +38,12 @@ Resolved versions from `frontend/package-lock.json` and `backend/uv.lock`.
 
 | Layer | Component | Installed | Notes |
 |---|---|---|---|
-| Frontend | Next.js (App Router, Turbopack, `proxy.ts`) | 16.1.6 | Bundles its own React Server Components runtime (`react-server-dom-turbopack`) |
-| | React / React DOM | 19.2.4 | |
-| | zod | 4.3.6 | All server-action input validation |
-| | sharp | 0.34.5 | Image optimisation at build and in `next/image` |
+| Frontend | Next.js (App Router, Turbopack, `proxy.ts`) | 16.4.6 (2026-11-10) | Bundles its own React Server Components runtime (`react-server-dom-turbopack`) |
+| | React / React DOM | 19.3.1 (2026-11-10) | |
+| | zod | 4.6.7 (2026-11-10) | All server-action input validation |
+| | sharp | 0.35.5 (2026-11-10) | Image optimisation at build and in `next/image` |
 | | framer-motion, lucide-react, MDX 3 | current | MDX renders only repo-owned content (`src/content/`) |
-| | Node.js runtime image | `node:20-alpine` | **Node 20 reached end of life 2026-04-30**: no security patches |
+| | Node.js runtime image | `node:24-alpine` (2026-11-10) | LTS until 2028-04 |
 | Backend | FastAPI / Starlette | 0.135.1 / 0.52.1 | |
 | | uvicorn / h11 | 0.42.0 / 0.16.0 | h11 ≥ 0.16.0 carries the 2025 request-smuggling fix |
 | | motor / pymongo | 3.7.1 / 4.16.0 | |
@@ -64,16 +64,23 @@ Resolved versions from `frontend/package-lock.json` and `backend/uv.lock`.
 "Reaches us" is the judgement of whether the vulnerable path is exercised here; everything
 listed should still be upgraded on the next dependency pass.
 
-### Frontend (`npm audit`: 1 critical, 12 high, 5 moderate, 1 low)
+### Frontend
 
-| Package | Fix in | Reaches us | What |
+**2026-11-10: `npm audit` reports 0 vulnerabilities** after next 16.1.6 → 16.4.6, react
+19.2.4 → 19.3.1, sharp 0.34.5 → 0.35.5, zod 4.3.6 → 4.6.7, vitest → 4.1.12 and
+`npm audit fix` on the build tooling. A later `minimatch` advisory (GHSA-g3hv-75wg-m249,
+fixed in 11.0.1) hit the `typescript-eslint` 8.72.2 tree the same day, with no newer
+`typescript-eslint` to take; `package.json` `overrides` pins that one copy to minimatch
+^11.0.1. Drop the override once `typescript-eslint` ships a release that depends on a fixed
+minimatch. The 2026-11-05 state, kept for the record:
+
+| Package | Fix in | Reached us | What |
 |---|---|---|---|
-| **next 16.1.6** | **> 16.4.0** (the two newest advisories cover `<= 16.4.0`) | **Yes** | ~40 advisories since 16.1.6, among them: middleware/proxy bypass (segment-prefetch routes, dynamic-route param injection, Turbopack single locale); **null-origin bypass of Server Actions CSRF check**; Server Actions DoS and unbounded payload; RSC DoS (CVE-2026-23869 family, bundled runtime); cache poisoning of RSC responses and self-hosted SSG/ISR; **Image Optimization: DoS, SSRF, and unauthenticated RCE via SVG and AVIF**; HTTP request smuggling in rewrites; `use cache` RCE. This app has an auth proxy, server actions, `next/image` with a `remotePatterns` entry, and self-hosts: most of these apply. |
-| react / react-dom 19.2.4 | 19.2.5 | Partly | RSC DoS fixes; the runtime that matters is the one bundled in `next`, so the Next upgrade is the real fix |
+| next 16.1.6 | > 16.4.0 | Yes | ~40 advisories since 16.1.6, among them: middleware/proxy bypass (segment-prefetch routes, dynamic-route param injection, Turbopack single locale); null-origin bypass of Server Actions CSRF check; Server Actions DoS and unbounded payload; RSC DoS (CVE-2026-23869 family, bundled runtime); cache poisoning of RSC responses and self-hosted SSG/ISR; Image Optimization: DoS, SSRF, and unauthenticated RCE via SVG and AVIF; HTTP request smuggling in rewrites; `use cache` RCE |
+| react / react-dom 19.2.4 | 19.2.5 | Partly | RSC DoS fixes; the runtime that matters is the one bundled in `next` |
 | sharp 0.34.5 | 0.35.5 | Yes | libvips, libheif, librsvg CVEs in the image loaders used by `next/image` |
-| zod 4.3.6 | 4.6.6 | Yes | Memory exhaustion validating oversized constrained collections; zod runs on every server-action input |
-| vitest / vite / @vitest/mocker | 4.1.12 / 8.1.6 | Dev only | Path traversal, code injection in mocks; not shipped |
-| postcss, browserslist, brace-expansion, minimatch, picomatch, js-yaml, flatted, nanoid, source-map-js, ajv, @babel/core | various | Build/tooling | DoS and file-read classes in build-time tooling; relevant only to CI and dev machines |
+| zod 4.3.6 | 4.6.6 | Yes | Memory exhaustion validating oversized constrained collections |
+| vitest, vite, postcss, browserslist, brace-expansion, minimatch, picomatch, js-yaml, flatted, nanoid, source-map-js, ajv, @babel/core | various | Dev/build only | DoS and file-read classes in tooling |
 
 ### Backend (`pip-audit`)
 
@@ -92,7 +99,7 @@ listed should still be upgraded on the next dependency pass.
 
 | Image | Status | Action |
 |---|---|---|
-| `node:20-alpine` (all three frontend stages) | **EOL 2026-04-30** | Move to `node:22-alpine` or `node:24-alpine`; check `sharp` prebuilt binaries for the new ABI |
+| `node:24-alpine` (all three frontend stages) | Supported (LTS to 2028-04) | Was `node:20-alpine` (EOL 2026-04-30) until 2026-11-10 |
 | `ghcr.io/astral-sh/uv:latest` | Unpinned | Pin a version tag so a build is reproducible and a compromised tag cannot land silently |
 | `python:3.12-slim`, `mongo:7` | Supported | Re-check at each excursion |
 
@@ -387,6 +394,19 @@ major-tag pinned. Pinning to a commit SHA removes the tag-retargeting risk.
 ---
 
 ## 5. Excursion log
+
+### 2026-11-10 — Part 1 of the baseline fixes: frontend upgrade
+
+Upgraded next 16.1.6 → 16.4.6, react/react-dom → 19.3.1, sharp → 0.35.5, zod → 4.6.7,
+`@next/mdx` and `eslint-config-next` → 16.4.6, vitest → 4.1.12; `npm audit fix` cleared
+the tooling advisories. `npm audit` now reports 0. Frontend Docker stages moved from
+`node:20-alpine` to `node:24-alpine`; `@types/node` → ^24 and `engines.node >=24` so
+local, CI and the image agree. One `next.config.ts` change: `agentRules: false` (new in
+16.4; without it `next dev` writes a managed block into `frontend/AGENTS.md`, which this
+repo deliberately does not have). Remove it if Next is ever downgraded below 16.4. Verified: `tsc` clean, 487 vitest tests,
+`next build`, and the live stack (anonymous redirect, public pages, authenticated profile,
+readings and superadmin pages, proxy refresh-cookie path). Production needs the image
+rebuilt and pushed (`frontend/deploy-to-pi.sh`) to pick this up.
 
 ### 2026-11-05 — baseline (document created)
 

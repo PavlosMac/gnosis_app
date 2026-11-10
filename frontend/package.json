@@ -18,28 +18,36 @@
   "dependencies": {
     "@mdx-js/loader": "^3.1.1",
     "@mdx-js/react": "^3.1.1",
-    "@next/mdx": "^16.3.8",
+    "@next/mdx": "^16.4.6",
     "@types/mdx": "^2.0.14",
     "framer-motion": "^12.6.2",
     "lucide-react": "^1.45.0",
-    "next": "^16.1.6",
-    "react": "^19.1.0",
-    "react-dom": "^19.1.0",
+    "next": "^16.4.6",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
     "server-only": "^0.0.1",
-    "zod": "^4.3.6"
+    "zod": "^4.6.7"
+  },
+  "engines": {
+    "node": ">=24"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4",
-    "@types/node": "^20",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
+    "@types/node": "^24.19.2",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
     "eslint": "^9.27.0",
-    "eslint-config-next": "^16.1.6",
-    "sharp": "^0.34.5",
+    "eslint-config-next": "^16.4.6",
+    "sharp": "^0.35.5",
     "tailwindcss": "^4",
     "typescript": "^5",
     "vitest": "^4.1.10"
   },
-  "type": "module"
+  "type": "module",
+  "overrides": {
+    "@typescript-eslint/typescript-estree": {
+      "minimatch": "^11.0.1"
+    }
+  }
 }
