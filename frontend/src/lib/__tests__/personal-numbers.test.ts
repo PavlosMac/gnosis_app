@@ -8,6 +8,7 @@ import {
   reduceKeepingMasters,
   sumDigits,
 } from "@/lib/personal-numbers";
+import { reduceToMajorArcana } from "@/lib/significators";
 
 const BIRTH = { year: 1990, month: 5, day: 1 };
 
@@ -32,6 +33,21 @@ describe("reduceKeepingMasters", () => {
     expect(reduceKeepingMasters(22)).toBe(22);
     expect(reduceKeepingMasters(29)).toBe(11);
     expect(reduceKeepingMasters(38)).toBe(11);
+  });
+});
+
+describe("reduceToMajorArcana", () => {
+  it("leaves 1..22 as they are, so every major arcana card is reachable", () => {
+    expect(reduceToMajorArcana(5)).toBe(5);
+    expect(reduceToMajorArcana(12)).toBe(12);
+    expect(reduceToMajorArcana(21)).toBe(21);
+    expect(reduceToMajorArcana(22)).toBe(22);
+  });
+
+  it("reduces by digit sum only above 22", () => {
+    expect(reduceToMajorArcana(23)).toBe(5);
+    expect(reduceToMajorArcana(29)).toBe(11);
+    expect(reduceToMajorArcana(53)).toBe(8);
   });
 });
 
@@ -75,9 +91,22 @@ describe("personalMonth", () => {
 });
 
 describe("personalDay", () => {
-  it("is the reduced sum of the day of the month and the personal month", () => {
-    // day 3 + month 9 = 12 -> 3
-    expect(personalDay(BIRTH, { year: 2026, month: 11, day: 3 })).toBe(3);
+  // The personal month for BIRTH in November 2026 (before the 21st) is 9
+  it("is the day of the month plus the personal month, kept whole up to 22", () => {
+    // 3 + 9 = 12: The Hanged Man, not reduced to 3
+    expect(personalDay(BIRTH, { year: 2026, month: 11, day: 3 })).toBe(12);
+    // 12 + 9 = 21: The World
+    expect(personalDay(BIRTH, { year: 2026, month: 11, day: 12 })).toBe(21);
+    // 13 + 9 = 22: The Fool
+    expect(personalDay(BIRTH, { year: 2026, month: 11, day: 13 })).toBe(22);
+  });
+
+  it("reduces by digit sum only above 22", () => {
+    // 14 + 9 = 23 -> 5: The Hierophant
+    expect(personalDay(BIRTH, { year: 2026, month: 11, day: 14 })).toBe(5);
+    // year 1 + 5 + sum(2030) = 11 (kept); from the 21st the month looks to November:
+    // 11 + 11 = 22 (kept); day 31 + 22 = 53 -> 8: Strength
+    expect(personalDay(BIRTH, { year: 2030, month: 10, day: 31 })).toBe(8);
   });
 });
 
@@ -87,7 +116,7 @@ describe("personalNumbers", () => {
     expect(result).not.toBeNull();
     expect(result!.year).toMatchObject({ number: 7, card: { name: "The Chariot" } });
     expect(result!.month).toMatchObject({ number: 9, card: { name: "The Hermit" } });
-    expect(result!.day).toMatchObject({ number: 3, card: { name: "The Empress" } });
+    expect(result!.day).toMatchObject({ number: 12, card: { name: "The Hanged Man" } });
   });
 
   it("is null for a blank or unparsable date", () => {

@@ -1,4 +1,4 @@
-.PHONY: dev test test-load load-live lint format typecheck install docker-up docker-down migrate docker-prod-up docker-prod-down prompt-doc prompt-doc-check docs-check
+.PHONY: dev test test-load load-live lint format typecheck install docker-up docker-down migrate docker-prod-up docker-prod-down card-meanings-load prompt-doc prompt-doc-check docs-check
 
 install:
 	uv sync
@@ -33,6 +33,9 @@ docker-down:
 
 migrate:
 	uv run python -m src.migrations.runner
+
+card-meanings-load:
+	docker compose exec api .venv/bin/python -m src.cards.loader
 
 docker-prod-up:
 	docker compose -f docker-compose.prod.yml up -d

@@ -156,6 +156,30 @@ only over-throttle, never under-throttle.
 | created_at | datetime | attempt time; window counts are `>=` this          |
 | expires_at | datetime | TTL index; `created_at` + window                   |
 
+### major_arcana_meanings
+Source: `src/cards/` (read repository, `GET /api/v1/cards/major-arcana/{number}`, login required).
+One generated write-up per major arcana card, shown in the card-of-the-day dialog. The text is
+the same for every user. Migration 016 creates the index only; the rows are upserted by
+`src.cards.loader` at every API start (`lifespan` in `src/main.py`), and on demand with
+`make -C backend card-meanings-load`, from the committed `src/lib/cards/major_arcana_meanings.json`, which
+`scripts/major_arcana_meanings.py` generated once offline; nothing writes it at request time.
+The loader refuses a file with a bad or duplicate `number` or an empty text field.
+Two paragraphs only: there is no reversed reading for a card of the day (decided 2026-11-10).
+
+| Field        | Type     | Notes                                                                  |
+|--------------|----------|------------------------------------------------------------------------|
+| _id          | ObjectId | PK                                                                     |
+| number       | int      | unique; frontend deck index, 0 = The Fool .. 21 = The World            |
+| name         | str      | the frontend spelling ("Judgement", "The World")                       |
+| slug         | str      |                                                                        |
+| upright      | str      | paragraph 1                                                            |
+| shadow       | str      | paragraph 2                                                            |
+| word_count, model, effort, generated_at | | generation metadata; not exposed by the API |
+| updated_at   | datetime | set on every upsert                                                    |
+
+A card missing from the collection answers 404; the dialog then shows "This card's meaning has
+not been written yet."
+
 ### _migrations
 Managed by `src/migrations/runner.py`. Fields: `version` (unique), `description`, `applied_at`.
 
@@ -173,7 +197,7 @@ password_reset_attempts is keyed by email, user id or client IP (with a limiter 
 
 ## Indexes
 
-Owned by migrations. Current state after 001–015:
+Owned by migrations. Current state after 001–016:
 
 | Collection      | Index                                        | Options            | Migration |
 |-----------------|----------------------------------------------|--------------------|-----------|
@@ -199,6 +223,7 @@ Owned by migrations. Current state after 001–015:
 | email_verification_tokens | `user_id`                          |                    | 013       |
 | email_verification_tokens | `expires_at`                       | TTL (0s)           | 013       |
 | users           | `verification_deadline_at` (`pending_users_ttl`) | TTL (0s), partial: `status in ["pending_verification", "invited"]` | 015 (superseded 014's `status = "pending_verification"`) |
+| major_arcana_meanings | `number` (`number_unique`)             | unique             | 016       |
 | _migrations     | `version`                                    | unique             | runner    |
 
 A tag filter with a date sort (`tags=…&sort=created_at`) is served entirely by the 012

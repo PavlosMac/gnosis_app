@@ -43,6 +43,13 @@ from src.auth.repository import (
     ThrottleRepository,
 )
 from src.auth.router import router as auth_router
+from src.cards.loader import load_meanings
+from src.cards.queries.get_major_arcana_meaning_by_number import (
+    GetMajorArcanaMeaningByNumberHandler,
+    GetMajorArcanaMeaningByNumberQuery,
+)
+from src.cards.repository import MajorArcanaMeaningReadRepository
+from src.cards.router import router as cards_router
 from src.core.config import settings
 from src.core.exceptions import (
     AppError,
@@ -221,6 +228,10 @@ def _wire_mediator(
             user_read_repo, reading_read_repo, user_tags_read_repo, interpretation_read_repo
         ),
     )
+    mediator.register_query(
+        GetMajorArcanaMeaningByNumberQuery,
+        GetMajorArcanaMeaningByNumberHandler(MajorArcanaMeaningReadRepository(db)),
+    )
     mediator.register_command(
         GenerateInterpretationCommand,
         GenerateInterpretationHandler(
@@ -243,6 +254,11 @@ async def lifespan(app: FastAPI):
     logger.info("starting up", app=settings.app_name, env=settings.app_env)
     await connect_to_mongo()
     await run_migrations(get_database())
+    # The card-of-the-day texts ship in the image (src/lib/cards/major_arcana_meanings.json)
+    # and are upserted on every start, so a deploy that regenerates them needs no migration
+    # and no manual step on the Pi; 22 replace_one calls cost nothing.
+    seeded = await load_meanings(get_database())
+    logger.info("card meanings seeded", count=seeded)
 
     app.state.refresh_token_repo = RefreshTokenRepository(get_database())
     if settings.openai_api_key:
@@ -315,3 +331,4 @@ app.include_router(readings_router, prefix="/api/v1")
 app.include_router(interpretations_router, prefix="/api/v1")
 app.include_router(dashboard_router, prefix="/api/v1")
 app.include_router(support_router, prefix="/api/v1")
+app.include_router(cards_router, prefix="/api/v1")

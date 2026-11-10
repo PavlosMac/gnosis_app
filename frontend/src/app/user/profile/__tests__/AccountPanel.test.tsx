@@ -2,6 +2,9 @@ import React from "react";
 import { describe, it, expect, vi } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
 
+// TallyCard's dialog calls a server action; the action module pulls in server-only
+// code, so it is replaced (the action has its own test)
+vi.mock("@/app/user/profile/actions", () => ({ getMajorArcanaMeaning: vi.fn() }));
 vi.mock("next/link", () => ({
   default: ({ href, children, ...rest }: { href: string; children: React.ReactNode }) =>
     React.createElement("a", { href, ...rest }, children),

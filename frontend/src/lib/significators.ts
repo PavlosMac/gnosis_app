@@ -6,6 +6,7 @@ import {
   MAJOR_ARCANA_THRESHOLD,
   SINGLE_DIGIT_MAX,
   FOOL_INDEX,
+  FOOL_NUMEROLOGY_VALUE,
   FOOL_ROOT,
 } from "@/constants";
 import {
@@ -55,13 +56,14 @@ export const getRelatedMajorArcana = (num: number): TarotCardData[] => {
 };
 
 /**
- * Day Number: Day of month reduced to Major Arcana index
+ * Day Number: Day of month reduced to Major Arcana index. 22 is shown as 22 but is
+ * The Fool (index 0); index 22 would be the first minor card.
  */
 export const getDayNumber = (day: number): { number: number; card: TarotCardData } => {
   const reduced = reduceToMajorArcana(day);
   return {
     number: reduced,
-    card: getCardByIndex(reduced),
+    card: getCardByIndex(reduced === FOOL_NUMEROLOGY_VALUE ? FOOL_INDEX : reduced),
   };
 };
 

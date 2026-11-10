@@ -434,11 +434,12 @@ Each decision should include:
 - **Formulas ported exactly** (`src/lib/personal-numbers.ts`): year = reduce(digits(birth day) + digits(birth month) + digits(current year)); month = reduce(year + m) where m is the current month, or the next one from the 21st (December wraps to January); day = reduce(day of month + month). `reduce` keeps the master numbers 11 and 22. Cards: 1..21 by major arcana index, **22 is The Fool**
 - **Computed client-side on the user's local date** (ADR-011 stance: numerology is frontend work; the backend only stores the date). `TallyCard` reads the clock after mount; the server render is the empty slot, so hydration matches and the server's timezone never matters
 - **Month and year are computed but not rendered**; showing them is a render change only
+- **Amended by ADR-020 (2026-11-10):** the day number is no longer reduced with `reduce` (masters kept); it is kept whole up to 22. Year and month are unchanged
 - **Reuse `TarotCard`** for the visual (ADR-016 § reuse existing visuals), with its one-shot entrance; nothing animates idle (browser-load rules)
 
 **Alternatives Considered:**
 - Make the birth date optional at sign-up -> Rejected: the card is the point of collecting it, and the age check needs it
-- Reuse `reduceToMajorArcana` / `getDayNumber` from `lib/significators.ts` -> Rejected: they map 22 to `TAROT_DECK[22]` (the Ace of Pentacles); logged as a bug, not fixed here
+- Reuse `reduceToMajorArcana` / `getDayNumber` from `lib/significators.ts` -> Rejected: they map 22 to `TAROT_DECK[22]` (the Ace of Pentacles); logged as a bug, not fixed here. *Reversed by ADR-020: the reducer is fine, the bug is in the significators lookup*
 - A "reduce" button to collapse a master number -> Rejected: masters are kept by design
 - Compute "today" on the server -> Rejected: the server's date differs from the user's around midnight and causes hydration mismatches
 
@@ -447,3 +448,22 @@ Each decision should include:
 - Legacy accounts cannot get a card until a birth-date edit exists (out of scope)
 - The dev seed skips an existing superadmin; a dev volume seeded before 2026-11-03 needs the one-line update in `dev-users.md`
 - Reference: `docs/reference/frontend/browser-load.md` § "The card of the day on the profile"; `docs/reference/auth/registration-verification-and-consent.md` § "Names and consent"
+
+### ADR-020: The Personal Day Number Is Kept Whole Up to 22 (2026-11-10)
+
+**Context:**
+- ADR-019 reduced the day with `reduceKeepingMasters`: sum to a single digit, except 11 and 22. A raw day sum (day of month + personal month, 2..53) of 10, 12..21 was therefore folded to 1..9, so The Wheel of Fortune, The Hanged Man, Death and the other cards numbered 10 and 12..21 could never come up as the card of the day
+- The significators chart already stops reducing at 22 (`MAJOR_ARCANA_THRESHOLD`), so every major arcana card is reachable there
+
+**Decision:**
+- The **day** number is kept whole up to 22 and digit-summed only above 22 (23 -> 5, 29 -> 11, 53 -> 8). Same function as the significators chart (`reduceToMajorArcana` in `lib/significators.ts`), imported rather than copied. Example: a raw sum of 12 is now The Hanged Man (12), not The Empress (3)
+- The **year** and the **month** are unchanged: single digit, keeping the master numbers 11 and 22. The month feeds the day sum, so its rule still matters
+- 22 is still The Fool (`cardForPersonalNumber` maps it to `FOOL_INDEX`). The `bugs.md` significators bug (22 -> `TAROT_DECK[22]`) lives in the significators card lookup, not in the shared reducer, so sharing the reducer is safe
+
+**Alternatives Considered:**
+- Keep ADR-019's rule -> Rejected: only 11 of the 22 cards (1..9, 11, and The Fool via 22) could ever come up, which defeats a card of the day
+- Copy the reducer into `personal-numbers.ts` -> Rejected: two identical loops drift
+
+**Consequences:**
+- Supersedes ADR-019's "`reduce` keeps the master numbers" for the day only
+- The same account can see a different card of the day than it did before this change on days whose raw sum is 10 or 12..21; nothing is stored, so there is nothing to migrate

@@ -36,6 +36,8 @@ interface SanctumModalProps {
 
 const SanctumModal = ({ title, subtitle, size = "sm", onClose, children }: SanctumModalProps) => {
   useEffect(() => {
+    // Hand focus back to whatever opened the dialog when it closes
+    const opener = document.activeElement;
     document.body.style.overflow = "hidden";
 
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -46,6 +48,7 @@ const SanctumModal = ({ title, subtitle, size = "sm", onClose, children }: Sanct
     return () => {
       document.body.style.overflow = "";
       window.removeEventListener("keydown", handleKeyDown);
+      if (opener instanceof HTMLElement) opener.focus();
     };
   }, [onClose]);
 

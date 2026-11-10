@@ -45,7 +45,7 @@ The account panel (`AccountPanel.tsx`) shows the seeker's personal day card wher
 chalice stood (five infinite SVG animations under a `drop-shadow` filter). `TallyCard.tsx`
 is a client component: it reads the browser clock once after mount and hands the account
 birth date and that local date to `personalNumbers()` (`src/lib/personal-numbers.ts`),
-which maps the day number to a major arcana card (ADR-019). The server render, the first
+which maps the day number to a major arcana card (ADR-019, ADR-020: the day number is kept whole up to 22, so every major arcana card can come up). The server render, the first
 client render, and every render for an account without a birth date are the same
 card-proportioned, `aria-hidden` empty frame, so hydration never mismatches and the
 two-panel layout never shifts. The card is the existing `TarotCard` (reuse, ADR-016 §

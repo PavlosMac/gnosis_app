@@ -180,6 +180,17 @@ export const mapMeResponseToUser = (me: MeResponse): User => ({
   updatedAt: me.updated_at,
 });
 
+// --- Card meanings: GET /api/v1/cards/major-arcana/{number} ---
+
+/** The generated write-up for one major arcana card. `number` is the deck index
+    (0 = The Fool .. 21 = The World), matching `TarotCardData.idx` */
+export interface MajorArcanaMeaningResponse {
+  number: number;
+  name: string;
+  upright: string;
+  shadow: string;
+}
+
 // --- Profile dashboard: GET /api/v1/dashboard ---
 
 /** The account slice the dashboard endpoint embeds (no credits/updated_at) */

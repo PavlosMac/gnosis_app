@@ -8,6 +8,10 @@ vi.mock("next/image", () => ({
     React.createElement("img", { alt: String(props.alt ?? "") }),
 }));
 
+// TallyCard's dialog calls a server action; the action module pulls in server-only
+// code, so it is replaced (the action has its own test)
+vi.mock("@/app/user/profile/actions", () => ({ getMajorArcanaMeaning: vi.fn() }));
+
 const { default: TallyCard, TallyCardView } = await import("@/app/user/profile/TallyCard");
 
 const TODAY = { year: 2026, month: 11, day: 3 };
@@ -19,8 +23,16 @@ describe("TallyCardView", () => {
     const html = renderToStaticMarkup(<TallyCardView birthDate="1990-05-01" today={TODAY} />);
     expect(html).toMatch(/data-testid="tally-card"/);
     expect(html).toContain("Card of the Day");
-    expect(html).toContain("The Empress");
+    expect(html).toContain("The Hanged Man");
     expect(html).not.toContain("tally-card-slot");
+  });
+
+  it("makes the card a button that opens the meaning dialog", () => {
+    const html = renderToStaticMarkup(<TallyCardView birthDate="1990-05-01" today={TODAY} />);
+    expect(html).toMatch(
+      /<button type="button"[^>]*aria-haspopup="dialog"[^>]*aria-label="About The Hanged Man"/
+    );
+    expect(html).toContain("Tap the card to read it");
   });
 
   it("renders exactly the empty slot before today is known (the server render)", () => {

@@ -3,16 +3,21 @@
  * mapped to a major arcana card. Frontend-computed like the significators chart
  * (ADR-011); the backend only stores the birth date.
  *
- * Not shared with `lib/significators.ts`: its `reduceToMajorArcana` lets 22
- * through to `TAROT_DECK[22]` (the Ace of Pentacles, see bugs.md). Here the
- * master numbers 11 and 22 are kept and 22 is The Fool.
+ * Two reduction rules (ADR-019, amended by ADR-020): the year and the month
+ * reduce to a single digit keeping the master numbers 11 and 22; the day, the
+ * number that picks the card, is kept whole up to 22 and reduced by digit sum
+ * only above that (23 -> 5), so every major arcana card can come up. The day
+ * uses `reduceToMajorArcana` from the significators chart. 22 is The Fool in
+ * both.
  */
+import { FOOL_INDEX, FOOL_NUMEROLOGY_VALUE } from "@/constants";
 import type { DateParts } from "@/lib/dateValidation";
 import { isValidDate } from "@/lib/dateValidation";
+import { reduceToMajorArcana } from "@/lib/significators";
 import { getCardByIndex } from "@/services/cardLookup";
 import type { TarotCardData } from "@/types/models";
 
-const MASTER_NUMBERS = new Set([11, 22]);
+const MASTER_NUMBERS = new Set([11, FOOL_NUMEROLOGY_VALUE]);
 /** From this day of the month the personal month looks ahead to the next month */
 const MONTH_ROLLOVER_DAY = 21;
 
@@ -42,11 +47,11 @@ export const personalMonth = (birth: DateParts, today: DateParts): number => {
 };
 
 export const personalDay = (birth: DateParts, today: DateParts): number =>
-  reduceKeepingMasters(today.day + personalMonth(birth, today));
+  reduceToMajorArcana(today.day + personalMonth(birth, today));
 
-/** 1..21 are the major arcana by index; 22 (a master number) is The Fool */
+/** 1..21 are the major arcana by index; 22 is The Fool */
 export const cardForPersonalNumber = (n: number): TarotCardData =>
-  getCardByIndex(n === 22 ? 0 : n);
+  getCardByIndex(n === FOOL_NUMEROLOGY_VALUE ? FOOL_INDEX : n);
 
 export interface PersonalNumber {
   number: number;

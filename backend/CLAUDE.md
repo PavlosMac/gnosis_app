@@ -28,6 +28,7 @@ make format         # ruff format + ruff check --fix
 make docker-up      # docker compose up — foreground (project `gnosis`: MongoDB:27019 + API:8001, seeds dev superadmin)
 make docker-down    # docker compose down
 make migrate        # run pending DB migrations
+make card-meanings-load  # upsert src/lib/cards/major_arcana_meanings.json into Mongo, run inside the api container (src.cards.loader; same command in prod)
 make docker-prod-up    # docker compose -f docker-compose.prod.yml up -d
 make docker-prod-down  # docker compose -f docker-compose.prod.yml down
 make prompt-doc     # regenerate the generated regions of ../docs/reference/prompts/prompt-reference.md

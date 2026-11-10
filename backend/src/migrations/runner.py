@@ -26,7 +26,8 @@ async def run_migrations(db: AsyncIOMotorDatabase) -> None:
     pending = [m for m in discover_migrations() if m.version not in applied]
 
     if not pending:
-        logger.info("migrations up to date")
+        # Zero-padded strings, so max() is the newest version the database has recorded
+        logger.info("migrations up to date", version=max(applied, default=None))
         return
 
     for migration in pending:
@@ -42,6 +43,8 @@ async def run_migrations(db: AsyncIOMotorDatabase) -> None:
             }
         )
         logger.info("migration applied", version=migration.version)
+
+    logger.info("migrations applied", count=len(pending), version=pending[-1].version)
 
 
 if __name__ == "__main__":

@@ -1,5 +1,6 @@
 "use server";
 
+import { MAJOR_ARCANA_MAX_INDEX } from "@/constants";
 import { authenticatedFetch } from "@/lib/api-client";
 import { requestPasswordResetEmail } from "@/lib/password-reset";
 import { getCurrentUser } from "@/lib/session";
@@ -9,6 +10,7 @@ import type {
   Dashboard,
   DashboardResponse,
   ForgotPasswordFormState,
+  MajorArcanaMeaningResponse,
   MessageResponse,
 } from "@/types/auth";
 import { mapDashboardResponse } from "@/types/auth";
@@ -99,4 +101,36 @@ export const contactSupport = async (
   });
   if (!result.ok) return { success: false, error: result.message, values };
   return { success: true };
+};
+
+export type MajorArcanaMeaningResult =
+  | { ok: true; data: MajorArcanaMeaningResponse }
+  | { ok: false; error: string };
+
+/**
+ * The card-of-the-day write-up for one major arcana card, by deck index (0 is The
+ * Fool). The backend answers 404 until the meanings have been loaded, which the
+ * modal shows as a plain sentence rather than an error.
+ */
+export const getMajorArcanaMeaning = async (index: number): Promise<MajorArcanaMeaningResult> => {
+  const user = await getCurrentUser();
+  if (!user) return { ok: false, error: "You must be logged in." };
+  if (!Number.isInteger(index) || index < 0 || index > MAJOR_ARCANA_MAX_INDEX) {
+    return { ok: false, error: "Not a major arcana card." };
+  }
+
+  const result = await authenticatedFetch<MajorArcanaMeaningResponse>(
+    `/api/v1/cards/major-arcana/${index}`,
+    { method: "GET" }
+  );
+  if (!result.ok) {
+    return {
+      ok: false,
+      error:
+        result.status === 404
+          ? "This card's meaning has not been written yet."
+          : (result.message ?? "The card's meaning could not be reached."),
+    };
+  }
+  return { ok: true, data: result.data };
 };
