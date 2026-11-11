@@ -65,6 +65,8 @@ export default function TarotGame({ user, mode = 'draw' }: TarotGameProps) {
   const [showPreview, setShowPreview] = useState(false);
   useEffect(() => {
     try {
+      // Deliberate post-mount read (see above): reading storage during render would mismatch hydration.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       if (localStorage.getItem("tarot:spread-preview-open") === "true") setShowPreview(true);
     } catch { /* storage unavailable — keep default */ }
   }, []);

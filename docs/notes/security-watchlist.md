@@ -44,15 +44,15 @@ Resolved versions from `frontend/package-lock.json` and `backend/uv.lock`.
 | | sharp | 0.35.5 (2026-11-10) | Image optimisation at build and in `next/image` |
 | | framer-motion, lucide-react, MDX 3 | current | MDX renders only repo-owned content (`src/content/`) |
 | | Node.js runtime image | `node:24-alpine` (2026-11-10) | LTS until 2028-04 |
-| Backend | FastAPI / Starlette | 0.135.1 / 0.52.1 | |
+| Backend | FastAPI / Starlette | 0.135.1 / 1.10.0 (2026-11-10) | FastAPI kept at 0.135.1 by choice: 0.137–0.162 carry twelve breaking-change releases; its `starlette>=0.46.0` floor has no ceiling |
 | | uvicorn / h11 | 0.42.0 / 0.16.0 | h11 ≥ 0.16.0 carries the 2025 request-smuggling fix |
-| | motor / pymongo | 3.7.1 / 4.16.0 | |
-| | PyJWT | 2.12.1 | HS256 only, single-entry `algorithms=[...]`, no `PyJWKClient` |
+| | motor / pymongo | 3.7.1 / 4.19.0 (2026-11-10) | motor is deprecated (critical fixes until 2027-05); the PyMongo async API is the migration target |
+| | PyJWT | 2.15.1 (2026-11-10) | HS256 only, single-entry `algorithms=[...]`, no `PyJWKClient` |
 | | pwdlib[argon2] / argon2-cffi | 0.3.0 / 25.1.0 | |
-| | pydantic / pydantic-settings | 2.12.5 / 2.13.1 | |
+| | pydantic / pydantic-settings | 2.12.5 / 2.16.2 (2026-11-10) | |
 | | python-multipart | 0.0.32 | Installed but **no `Form`/`UploadFile` endpoint exists** |
 | | openai / anthropic / resend / mollie | 2.30.0 / 1.2.0 / 2.44.0 / 1.10.2 | Outbound TLS depends on `certifi` |
-| | certifi / urllib3 / anyio / dnspython | 2026.2.25 / 2.7.0 / 4.12.1 / 2.8.0 | |
+| | certifi / urllib3 / anyio / dnspython | 2026.10.23 / 2.8.0 / 4.16.0 / 2.9.2 (2026-11-10) | `pyproject.toml` pins floors for pyjwt, pydantic-settings, starlette and certifi |
 | | Python image | `python:3.12-slim` | 3.12 supported until 2028-10 |
 | Data | MongoDB | `mongo:7` | EOL 2027-08-31 (extended by MongoDB in 2025) |
 | Edge | Cloudflare tunnel → Next.js → API (compose network only) | | Mongo bound to `127.0.0.1` on the Pi |
@@ -82,9 +82,13 @@ minimatch. The 2026-11-05 state, kept for the record:
 | zod 4.3.6 | 4.6.6 | Yes | Memory exhaustion validating oversized constrained collections |
 | vitest, vite, postcss, browserslist, brace-expansion, minimatch, picomatch, js-yaml, flatted, nanoid, source-map-js, ajv, @babel/core | various | Dev/build only | DoS and file-read classes in tooling |
 
-### Backend (`pip-audit`)
+### Backend
 
-| Package | Fix in | Reaches us | What |
+**2026-11-10: `pip-audit` reports no known vulnerabilities** after `uv lock --upgrade-package` on
+starlette, pyjwt, pymongo, certifi, urllib3, anyio, dnspython and pydantic-settings, with FastAPI
+left at 0.135.1. The 2026-11-05 state, kept for the record:
+
+| Package | Fix in | Reached us | What |
 |---|---|---|---|
 | **starlette 0.52.1** | 1.3.1 (needs a FastAPI release that allows it) | Partly | `Host` header and request path used unvalidated in `request.url` (we never read `request.url` or `url_for`; links come from `frontend_base_url`); `request.form()` limits ignored (no form endpoints); Windows-only `StaticFiles` SSRF (n/a) |
 | **pyjwt 2.12.1** | 2.15.0 | Low | Nearly all advisories are in `PyJWKClient` or mixed symmetric/asymmetric `algorithms=` lists, neither used here. Still relevant: non-Base64URL characters accepted in signature segments; `is_pem_format` ReDoS on attacker-supplied keys (ours is a fixed secret) |
@@ -100,7 +104,7 @@ minimatch. The 2026-11-05 state, kept for the record:
 | Image | Status | Action |
 |---|---|---|
 | `node:24-alpine` (all three frontend stages) | Supported (LTS to 2028-04) | Was `node:20-alpine` (EOL 2026-04-30) until 2026-11-10 |
-| `ghcr.io/astral-sh/uv:latest` | Unpinned | Pin a version tag so a build is reproducible and a compromised tag cannot land silently |
+| `ghcr.io/astral-sh/uv:0.13.7` | Pinned (2026-11-10) | Was `uv:latest`; bump the tag deliberately at each excursion |
 | `python:3.12-slim`, `mongo:7` | Supported | Re-check at each excursion |
 
 ---
@@ -141,10 +145,12 @@ grep -rn "z\.string()" frontend/src/lib/validation | grep -v "max("
 
 **F3. Open redirect via return paths.** `from` on `/user/login` is user-controlled and
 replayed by `redirect()` after login (`src/app/user/login/actions.ts`,
-`src/lib/auth-return-path.ts`). The current test, `/^\/(?!\/)/`, rejects `//evil.com` but
-accepts `/\evil.com`, which the WHATWG URL parser resolves to `https://evil.com/`
-(verified with `new URL("/\\evil.com", origin)`). Safe: reject backslashes too, or parse
-with `new URL(value, origin)` and require `origin` to match.
+`src/lib/auth-return-path.ts`). Until 2026-11-10 the check was a regex that let
+`/\evil.com` through (the WHATWG parser reads `\` as `/`). It now resolves the value with
+`new URL(value, probeOrigin)` and requires the origin to be unchanged, with backslash, tab
+and newline rejected outright; `auth-return-path.test.ts` pins the off-origin cases. Safe:
+every `redirect()` with a non-literal target goes through `isSafeReturnPath`, and no new
+return-path parameter appears without the same check.
 
 ```bash
 grep -rn "redirect(" frontend/src --include='*.ts' --include='*.tsx' | grep -v 'redirect("/'   # any redirect whose target is not a literal
@@ -359,10 +365,10 @@ grep -n -A1 "ports:" backend/docker-compose.prod.yml backend/docker-compose.yml
 grep -n "role" backend/mongo/init-user.js
 ```
 
-**I2. Containers.** Frontend runs as `nextjs` (non-root). The API Dockerfile sets no
-`USER`, so uvicorn runs as root inside the container. `uv:latest` is unpinned. Safe: a
-non-root user in both images, pinned base-image tags, images rebuilt after every
-dependency fix (`certifi` in particular).
+**I2. Containers.** Both images run unprivileged: the frontend as `nextjs`, the API as
+`api` (uid 1001, since 2026-11-10). The `uv` builder stage is pinned to a version tag. Safe:
+`USER` present in both Dockerfiles, no `latest` tag anywhere, images rebuilt and pushed after
+every dependency fix (`certifi` in particular).
 
 ```bash
 grep -n -e "^FROM" -e "^USER" backend/Dockerfile frontend/Dockerfile
@@ -378,11 +384,13 @@ encrypted at rest at the off-site target and the restore test still runs.
 
 ### 4.4 Process and supply chain
 
-**P1. No automated audit.** CI (`.github/workflows/ci.yml`) runs backend lint and tests
-only: no `npm audit`, no `pip-audit`, no frontend lint or tests, and no Dependabot or
-Renovate. Everything in §3 was invisible until run by hand. Safe: an audit step on both
-sides in CI (allowing dev-only tooling advisories to be triaged, not auto-failed) and a
-weekly dependency-update bot.
+**P1. Automated audit.** Since 2026-11-10 CI runs on both sides: `ci.yml` (docs links, backend
+lint, tests and `pip-audit==2.10.1` on the runtime export, `uv` pinned to 0.13.7) and
+`ci-frontend.yml` (its own workflow so each side only runs on its own changes: lint, `tsc`,
+vitest and `npm audit --omit=dev --audit-level=high`). Dev-only tooling advisories are triaged
+by hand in §1. Still missing: a dependency-update bot (Dependabot or Renovate); GitHub Actions
+are pinned by major tag (`@v4`, `@v5`), not commit SHA. Safe: the audit steps stay unconditional, never
+`continue-on-error`; an ignored advisory carries an `--ignore-vuln` with a comment.
 
 **P2. Lockfile discipline.** `npm ci` and `uv sync --frozen` are used in the images:
 good. Safe: no `npm install` in Dockerfiles or CI; no `--no-verify`; `pre-commit` hook
@@ -394,6 +402,36 @@ major-tag pinned. Pinning to a commit SHA removes the tag-retargeting risk.
 ---
 
 ## 5. Excursion log
+
+### 2026-11-10 — Part 4 of the baseline fixes: hardening
+
+API Dockerfile: `uv` pinned to 0.13.7, new `api` system user, `USER api`; rebuilt dev
+container runs as uid 1001 and is healthy. CI: a separate `ci-frontend.yml` (Node 24, `npm ci`,
+lint, `tsc`, vitest, `npm audit --omit=dev --audit-level=high`) and a pinned `pip-audit` step on
+the backend job. `next lint` → `eslint .` via the official codemod (`eslint.config.mjs` now
+imports `eslint-config-next` directly; `@eslint/eslintrc` dropped). The 13 errors that
+surfaced were fixed (empty-interface aliases in `src/types/auth.ts` became type aliases; four
+deliberate post-mount `setState` effects carry a scoped disable with the reason; `AuthProvider`
+re-syncs `initialUser` during render); 18 `exhaustive-deps`/unused-var warnings remain.
+
+### 2026-11-10 — Part 3 of the baseline fixes: backend bumps
+
+starlette 0.52.1 → 1.10.0, pyjwt → 2.15.1, pymongo → 4.19.0, certifi → 2026.10.23, urllib3
+→ 2.8.0, anyio → 4.16.0, dnspython → 2.9.2, pydantic-settings → 2.16.2; floors added to
+`pyproject.toml`. FastAPI stays at 0.135.1 on purpose (see §2). Starlette 1.x types every
+exception handler on `Exception` and the ASGI `send` message as `Message`, so `main.py`
+casts the three handler registrations and `middleware.py` types its send wrapper; no
+behaviour change. Verified: 555 tests, ruff clean, pyright clean apart from the pre-existing
+`google.genai` import in `scripts/card_meanings.py`, `pip-audit` clean, and the rebuilt dev
+API container (health, login, versions inside the image). Production needs the API image
+rebuilt and pushed (`backend/deploy-to-pi.sh`) for certifi to take effect.
+
+### 2026-11-10 — Part 2 of the baseline fixes: open redirect
+
+`isSafeReturnPath` now uses the URL parser as the oracle (see F3). Red-green: the new test
+failed on `/\evil.com` against the old regex and passes against the fix; full suite 492
+green. `frontend/CLAUDE.md` gained a pointer to the version-matched Next docs under
+`node_modules/next/dist/docs/` and a note that `agentRules` is off.
 
 ### 2026-11-10 — Part 1 of the baseline fixes: frontend upgrade
 

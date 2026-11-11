@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useState, useCallback, useEffect } from "react";
+import { createContext, useContext, useState, useCallback } from "react";
 import type { User, AuthContextValue } from "@/types/auth";
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -20,9 +20,13 @@ export const AuthProvider = ({
 }: AuthProviderProps) => {
   const [user, setUser] = useState<User | null>(initialUser);
 
-  useEffect(() => {
+  // A new server-rendered user (after login/logout navigation) replaces local state.
+  // Adjusted during render rather than in an effect, so no stale frame is painted.
+  const [seenInitialUser, setSeenInitialUser] = useState(initialUser);
+  if (initialUser !== seenInitialUser) {
+    setSeenInitialUser(initialUser);
     setUser(initialUser);
-  }, [initialUser]);
+  }
 
   const clearUser = useCallback(() => setUser(null), []);
 

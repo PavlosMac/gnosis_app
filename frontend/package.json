@@ -11,7 +11,7 @@
     "prebuild": "npm run legal:registry",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "eslint .",
     "pretest": "npm run legal:registry",
     "test": "vitest run"
   },
@@ -32,7 +32,6 @@
     "node": ">=24"
   },
   "devDependencies": {
-    "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^24.19.2",
     "@types/react": "^19.3.0",

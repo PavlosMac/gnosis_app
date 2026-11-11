@@ -58,6 +58,8 @@ const AnimatedCardSection: React.FC<AnimatedCardSectionProps> = ({
   }, [cards, showRelated]);
 
   useEffect(() => {
+    // Deliberate: draw the first set on mount, then on the interval.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     refreshCards();
     const timer = setInterval(refreshCards, interval);
     return () => {

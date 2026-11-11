@@ -7,11 +7,12 @@ vi.mock("next/link", () => ({
     React.createElement("a", { href, "data-next-link": "", ...rest }, children),
 }));
 
-const { useMDXComponents } = await import("@/mdx-components");
+// Renamed: it is a plain getter in tests, not a hook, so rules-of-hooks must not apply.
+const { useMDXComponents: getMdxComponents } = await import("@/mdx-components");
 const { guideComponents } = await import("@/components/guide/guide-components");
 
 const link = (href: string) => {
-  const A = useMDXComponents().a as React.FC<{ href: string; children: string }>;
+  const A = getMdxComponents().a as React.FC<{ href: string; children: string }>;
   return renderToStaticMarkup(<A href={href}>text</A>);
 };
 
@@ -37,7 +38,7 @@ describe("shared MDX link", () => {
 
 describe("MDX component maps", () => {
   it("keeps the guide-only elements out of the shared map the legal documents use", () => {
-    const shared = useMDXComponents();
+    const shared = getMdxComponents();
     for (const key of ["h3", "blockquote", "Gold", "Callout", "Shot"]) {
       expect(shared).not.toHaveProperty(key);
       expect(guideComponents).toHaveProperty(key);

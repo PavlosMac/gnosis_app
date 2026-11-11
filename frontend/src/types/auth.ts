@@ -75,7 +75,7 @@ export interface RegisterEchoValues {
   acceptPrivacy: boolean;
 }
 
-export interface RegisterFormState extends AuthFormState<RegisterEchoValues> {}
+export type RegisterFormState = AuthFormState<RegisterEchoValues>;
 
 export interface VerifyEmailFormState extends AuthFormState {
   /** Set when the verification token itself was rejected (400/410) — the page
@@ -83,14 +83,14 @@ export interface VerifyEmailFormState extends AuthFormState {
   tokenProblem?: "invalid" | "expired";
 }
 
-export interface ResendVerificationFormState extends AuthFormState<{ email: string }> {}
+export type ResendVerificationFormState = AuthFormState<{ email: string }>;
 
 export interface ConsentFormState extends AuthFormState {
   /** Shown beside a successful save, e.g. when a box was left unticked */
   notice?: string;
 }
 
-export interface DeleteAccountFormState extends AuthFormState {}
+export type DeleteAccountFormState = AuthFormState;
 
 /** What the accept-invite form echoes back on failure. Never the passwords. */
 export interface AcceptInviteEchoValues {
@@ -113,17 +113,16 @@ export interface InviteLookupResponse {
 
 // --- Superadmin actions ---
 
-export interface InviteUserFormState extends AuthFormState<{ email: string }> {}
-export interface EmailUserFormState
-  extends AuthFormState<{ subject: string; message: string }> {}
-export interface DeleteUserFormState extends AuthFormState {}
+export type InviteUserFormState = AuthFormState<{ email: string }>;
+export type EmailUserFormState = AuthFormState<{ subject: string; message: string }>;
+export type DeleteUserFormState = AuthFormState;
 
 /** `{"detail": "..."}` body returned by register / verify-email / resend */
 export interface DetailResponse {
   detail: string;
 }
-export interface ForgotPasswordFormState extends AuthFormState {}
-export interface ContactSupportFormState extends AuthFormState<ContactSupportInput> {}
+export type ForgotPasswordFormState = AuthFormState;
+export type ContactSupportFormState = AuthFormState<ContactSupportInput>;
 
 export interface ResetPasswordFormState extends AuthFormState {
   /** Set when the reset token itself was rejected (400/410) — the page renders

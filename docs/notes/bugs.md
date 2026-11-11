@@ -75,3 +75,8 @@ Use bullet lists for simplicity. Older entries can be manually removed when they
 - **Fix:** `href="/reading"`.
 - **Prevention:** every "new reading" entry point should use the same target; the landing page is the portal, not the Oracle.
 
+
+- **2026-11-10 — Open redirect through the login `?from=` return path**
+  - `isSafeReturnPath` (`frontend/src/lib/auth-return-path.ts`) accepted anything matching `/^\/(?!\/)/`, meant to allow only same-origin paths. The WHATWG URL parser treats `\` as `/` in http(s) URLs and strips tabs and newlines before parsing, so `/\evil.com` passed the regex and, used in `redirect()` after login, resolved to `https://evil.com/`. A crafted `/user/login?from=/\evil.com` link would send a user off-site the moment they signed in. Found by the 2026-11-05 security excursion (watchlist F3), verified with `new URL("/\\evil.com", origin)`.
+  - Fix: the value must be a string starting with `/` with no backslash, tab or newline, and resolving it against a probe origin with `new URL()` must leave the origin unchanged. The browser's own parser is the oracle, so every such quirk is covered, not just the known one.
+  - Prevention: `auth-return-path.test.ts` lists the off-origin encodings and round-trips `loginHrefFor` through the query string; the watchlist F3 recipe greps for any new `redirect()` whose target is not a literal.

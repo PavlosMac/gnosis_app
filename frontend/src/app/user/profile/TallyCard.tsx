@@ -72,8 +72,11 @@ const TallyCard = ({ birthDate }: TallyCardProps) => {
   const close = useCallback(() => setOpen(null), []);
 
   useEffect(() => {
+    // Deliberate post-mount read: the server must render without a date (hydration-safe).
+    /* eslint-disable react-hooks/set-state-in-effect */
     const now = new Date();
     setToday({ year: now.getFullYear(), month: now.getMonth() + 1, day: now.getDate() });
+    /* eslint-enable react-hooks/set-state-in-effect */
   }, []);
 
   return (

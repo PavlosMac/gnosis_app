@@ -1,10 +1,12 @@
 from contextlib import asynccontextmanager
+from typing import cast
 
 import structlog
 from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from openai import AsyncOpenAI
+from starlette.types import ExceptionHandler
 
 from src.auth.commands.accept_invite import AcceptInviteCommand, AcceptInviteHandler
 from src.auth.commands.confirm_password_reset import (
@@ -319,8 +321,13 @@ app = FastAPI(
 
 app.add_middleware(AccessLogMiddleware)
 app.add_middleware(RequestIDMiddleware)
-app.add_exception_handler(RequestValidationError, validation_exception_handler)
-app.add_exception_handler(AppError, app_exception_handler)
+# Starlette types every handler on the base Exception; ours are typed on the class they
+# are registered for, which is what Starlette dispatches to them. The cast keeps the
+# precise signatures where the handlers live.
+app.add_exception_handler(
+    RequestValidationError, cast(ExceptionHandler, validation_exception_handler)
+)
+app.add_exception_handler(AppError, cast(ExceptionHandler, app_exception_handler))
 app.add_exception_handler(Exception, unhandled_exception_handler)
 
 app.include_router(health_router, prefix="/api/v1")

@@ -30,7 +30,7 @@ This file stores project constants, configuration, and frequently-needed **non-s
 - Start everything: `make dev` from the repo root (compose Mongo + API, native Next.js)
 - Frontend only: `npm run dev` (needs `.env.local`, see `.env.example`)
 - Build: `npm run build`
-- Lint: `npm run lint` (broken: `next lint` was removed in Next 16; use `npx tsc --noEmit`)
+- Lint: `npm run lint` (`eslint .`, flat config; 0 errors, run in CI) and `npx tsc --noEmit`
 - Tests: `npm test` (regenerates the legal registry first)
 
 ## Styling
