@@ -52,9 +52,6 @@ export const TallyCardView = ({ birthDate, today, onOpen }: TallyCardViewProps) 
       >
         <TarotCard card={day.card} showMeaning={false} />
       </button>
-      <p className="text-[#e6d5b8]/40 text-[11px] tracking-[0.15em] uppercase" style={CINZEL}>
-        Tap the card to read it
-      </p>
     </div>
   );
 };
