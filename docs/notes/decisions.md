@@ -492,5 +492,4 @@ Each decision should include:
 **Consequences:**
 - The endpoint has no rate limit; it is a single indexed read of static text
 - A regenerated card overwrites its text with no history other than git
-- Reference: `docs/reference/database/model-references.md` § `spread_card_meanings`; plan (until the frontend ships) `docs/plans/2026-11-17-spread-card-meanings.md`
-
+- Reference: `docs/reference/database/model-references.md` § `spread_card_meanings`, `docs/reference/readings/spread-card-meanings.md` (the frontend); plan (until the browser check and text edits are done) `docs/plans/2026-11-17-spread-card-meanings.md`

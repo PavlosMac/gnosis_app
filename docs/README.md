@@ -38,6 +38,7 @@ or in the three `CLAUDE.md` files, and CI runs it.
 | [`prompts/prompt-reference.md`](reference/prompts/prompt-reference.md) | backend | The current prompts. Sections 3–4 are generated (`make -C backend prompt-doc`; CI fails if stale) |
 | [`prompts/experiments/`](reference/prompts/experiments/) | backend | Frozen sample readings from `scripts/lean_prompt_test.py`, cited by the architecture doc |
 | [`readings/search-and-tags.md`](reference/readings/search-and-tags.md) | both | Reading tags and the filter panel, with dated amendments |
+| [`readings/spread-card-meanings.md`](reference/readings/spread-card-meanings.md) | frontend | Clicking a card in a spread opens its stored meaning: where, the stable-handler pattern, resolve by name |
 | [`readings/free-limit-cta.md`](reference/readings/free-limit-cta.md) | frontend | Per-browser free-use counters for `/reading` and `/significators` and the sign-up nudge panel |
 | [`frontend/browser-load.md`](reference/frontend/browser-load.md) | frontend | What must stay static or small (no idle animation, no backdrop blur, card thumbnails), the empty profile slot, how to measure |
 | [`guide/user-guide.md`](reference/guide/user-guide.md) | frontend | The `/guide` hub and chapters (MDX), the `Shot` screenshot component, and how to capture and convert a screenshot |

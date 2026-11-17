@@ -43,6 +43,7 @@ and the two side `CLAUDE.md` files. `make docs-check` verifies every relative li
 | Interpretations, LLM calls, usage and budget | [`usage-and-budget-flow.md`](docs/reference/interpretations/usage-and-budget-flow.md), [`user-accounting.md`](docs/reference/interpretations/user-accounting.md), [`openai-request-config.md`](docs/reference/interpretations/openai-request-config.md) |
 | Prompts | [`lean-prompt-architecture.md`](docs/reference/prompts/lean-prompt-architecture.md), [`prompt-reference.md`](docs/reference/prompts/prompt-reference.md) (generated: `make -C backend prompt-doc`) |
 | Readings, tags, search | [`search-and-tags.md`](docs/reference/readings/search-and-tags.md) |
+| Clicking a card in a spread (card meaning dialog) | [`spread-card-meanings.md`](docs/reference/readings/spread-card-meanings.md) |
 | Free-use limit, sign-up nudge | [`free-limit-cta.md`](docs/reference/readings/free-limit-cta.md) |
 | Email: reset, verification, support relay | [`email-service.md`](docs/reference/email/email-service.md) |
 | Animations, CSS effects, card images, browser load | [`browser-load.md`](docs/reference/frontend/browser-load.md) |

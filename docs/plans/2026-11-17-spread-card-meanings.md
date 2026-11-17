@@ -101,7 +101,7 @@ with `make card-meanings-load`.
 - `SpreadCardMeaningModal({ card, reversed, position, positionDescription, onClose })`:
   resolves the deck index with `findCardByNameSafe(card.name)` (**never `card.idx`** — the draw
   flow (`ShuffledDeck.tsx`) and `SpreadCards.tsx` overwrite it). Title = card name
-  (+ " (Reversed)"), subtitle = position · description, small card shown in its orientation.
+  (+ " (Reversed)"), subtitle = position name, the description as a wrapping paragraph above the text (2026-11-17: it truncated in the one-line header), small card shown in its orientation.
   Uses `SanctumModal`.
 - Type `SpreadCardMeaningResponse` in `src/types/`.
 - Tests mirroring `CardMeaningModal.test.tsx` and `getMajorArcanaMeaning.test.ts`
@@ -111,7 +111,8 @@ with `make card-meanings-load`.
 
 - `src/components/TarotCard.tsx`: optional `onSelect`; when set, render inside a
   `<button type="button" aria-haspopup="dialog" aria-label="About {name}">` as
-  `TallyCardView` does. No prop → unchanged `div`.
+  `TallyCardView` does (as built: `span`s inside, label gains " (reversed)"; see the
+  reference doc). No prop → unchanged `div`.
 - Thread an optional `onCardSelect(card, position)` through `Reading.tsx` (default row),
   `KabbalahLayout.tsx`, `RelationshipLayout.tsx`, and `SpreadCards.tsx`. Not
   `SignificatorsLayout` / `SignificatorGroups`.
