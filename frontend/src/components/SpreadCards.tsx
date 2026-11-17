@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import TarotCard from "@/components/TarotCard";
 import KabbalahLayout from "@/components/KabbalahLayout";
 import RelationshipLayout from "@/components/RelationshipLayout";
@@ -101,55 +101,56 @@ const SignificatorGroups: React.FC<SpreadCardsProps> = ({ cardVisuals }) => {
  * Positions come from `cardVisuals`' own keys — the single source of truth for
  * "which positions does this spread have", so callers can't derive a mismatched list. */
 const SpreadCards: React.FC<SpreadCardsProps> = ({ cardVisuals, onCardSelect }) => {
-  const positions = Object.keys(cardVisuals);
+  const positions = useMemo(() => Object.keys(cardVisuals), [cardVisuals]);
+  // Resolved cards are built once per spread so the memoised TarotCards see stable props.
+  // `idx` is the slot number for the layouts (they overwrite it anyway); the row keeps the deck's own
+  const placed = useMemo(
+    () =>
+      positions.flatMap((position, i) => {
+        const visual = cardVisuals[position];
+        if (!visual) return [];
+        const card = { ...visual.card, reversed: visual.reversed };
+        return [{ position, card, slotCard: { ...card, idx: i } as SelectedCard }];
+      }),
+    [positions, cardVisuals]
+  );
+  const slotCards = useMemo(() => placed.map((p) => p.slotCard), [placed]);
+  const placedPositions = useMemo(() => placed.map((p) => p.position), [placed]);
+  // The one handler every card shares: it adds the stored position description
+  const handleSelect = useMemo<SpreadCardSelectHandler | undefined>(
+    () =>
+      onCardSelect &&
+      ((selection) =>
+        onCardSelect({
+          ...selection,
+          positionDescription: cardVisuals[selection.position ?? ""]?.description,
+        })),
+    [onCardSelect, cardVisuals]
+  );
+
   const isTree = isTreeOfLife(positions);
   if (isSignificators(positions)) {
     return <SignificatorGroups cardVisuals={cardVisuals} />;
   }
   if (isTree || isRelationship(positions)) {
-    const selectedCards = positions.map((position, i) => {
-      const visual = cardVisuals[position];
-      return visual ? ({ ...visual.card, idx: i, reversed: visual.reversed } as SelectedCard) : undefined;
-    });
     // Kabbalah looks cards up by name and Relationship by pillar suffix, so skipping unresolved cards is safe
-    const known = selectedCards.flatMap((c, i) => (c ? [{ card: c, position: positions[i] }] : []));
     const Layout = isTree ? KabbalahLayout : RelationshipLayout;
-    return (
-      <Layout
-        selectedCards={known.map((k) => k.card)}
-        positions={known.map((k) => k.position)}
-        onCardSelect={
-          onCardSelect &&
-          ((selection) =>
-            onCardSelect({
-              ...selection,
-              positionDescription: cardVisuals[selection.position ?? ""]?.description,
-            }))
-        }
-      />
-    );
+    return <Layout selectedCards={slotCards} positions={placedPositions} onCardSelect={handleSelect} />;
   }
   return (
     <div className="flex flex-wrap justify-center gap-6">
       {positions.map((position) => {
         const visual = cardVisuals[position];
+        const card = placed.find((p) => p.position === position)?.card;
         return (
           <div key={position} className="flex flex-col items-center gap-2">
-            {visual && (
+            {visual && card && (
               <TarotCard
-                card={{ ...visual.card, reversed: visual.reversed }}
+                card={card}
                 small={true}
                 showMeaning={false}
-                onSelect={
-                  onCardSelect &&
-                  (() =>
-                    onCardSelect({
-                      card: visual.card,
-                      reversed: visual.reversed,
-                      position,
-                      positionDescription: visual.description,
-                    }))
-                }
+                position={position}
+                onSelect={handleSelect}
               />
             )}
             <span

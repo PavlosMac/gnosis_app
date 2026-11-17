@@ -72,10 +72,8 @@ const RelationshipLayout: React.FC<RelationshipLayoutProps> = ({
                 card={card}
                 small={true}
                 showMeaning={false}
-                onSelect={
-                  onCardSelect &&
-                  (() => onCardSelect({ card, reversed: card.reversed, position: positions[i] }))
-                }
+                position={positions[i]}
+                onSelect={onCardSelect}
               />
             </div>
           );

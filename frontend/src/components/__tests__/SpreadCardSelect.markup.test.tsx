@@ -46,6 +46,28 @@ describe("TarotCard as a button", () => {
     expect(html).toMatch(/^<button type="button"[^>]*aria-haspopup="dialog"[^>]*aria-label="About Card 0"/);
     expect(html.match(/tarot-card-container/g)).toHaveLength(1);
   });
+
+  it("holds only phrasing content inside the button", () => {
+    const html = renderToStaticMarkup(<TarotCard card={fakeCards(1)[0]} onSelect={noop} />);
+
+    expect(html).not.toMatch(/<(div|h\d|p)[\s>]/);
+  });
+
+  it("keeps the plain card's heading and blocks", () => {
+    const html = renderToStaticMarkup(<TarotCard card={fakeCards(1)[0]} />);
+
+    expect(html).toContain("<h3");
+  });
+
+  it("announces a reversed card as reversed", () => {
+    const upright = renderToStaticMarkup(<TarotCard card={fakeCards(1)[0]} onSelect={noop} />);
+    const reversed = renderToStaticMarkup(
+      <TarotCard card={{ ...fakeCards(1)[0], reversed: true }} onSelect={noop} />
+    );
+
+    expect(upright).toContain('aria-label="About Card 0"');
+    expect(reversed).toContain('aria-label="About Card 0 (reversed)"');
+  });
 });
 
 describe("the live spread", () => {

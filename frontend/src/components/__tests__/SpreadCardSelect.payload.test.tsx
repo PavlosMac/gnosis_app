@@ -6,11 +6,23 @@ import type { TarotCardData } from "@/types/models";
 import type { SelectedCard, SpreadCardSelection } from "@/types/reading";
 
 // There is no DOM to click in, so TarotCard is replaced by a recorder: each rendered card
-// leaves its onSelect here, and the test calls it as a click would.
-const rendered: { name: string; onSelect?: () => void }[] = [];
+// leaves a click here that reports what the real card reports (its own card, orientation
+// and position) to the onSelect it was given.
+const rendered: { name: string; click?: () => void }[] = [];
 vi.mock("@/components/TarotCard", () => ({
-  default: ({ card, onSelect }: { card: TarotCardData; onSelect?: () => void }) => {
-    rendered.push({ name: card.name, onSelect });
+  default: ({
+    card,
+    position,
+    onSelect,
+  }: {
+    card: TarotCardData;
+    position?: string;
+    onSelect?: (s: SpreadCardSelection) => void;
+  }) => {
+    rendered.push({
+      name: card.name,
+      click: onSelect && (() => onSelect({ card, reversed: card.reversed ?? false, position })),
+    });
     return null;
   },
 }));
@@ -24,7 +36,7 @@ const positionsOf = (name: string) =>
 const card = (name: string, idx: number, reversed = false): SelectedCard =>
   ({ idx, name, imageUrl: "", meaning: "", reversed }) as SelectedCard;
 
-const click = (name: string) => rendered.find((r) => r.name === name)!.onSelect!();
+const click = (name: string) => rendered.find((r) => r.name === name)!.click!();
 
 describe("what a clicked spread card reports", () => {
   const selections: SpreadCardSelection[] = [];

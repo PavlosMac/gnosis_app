@@ -15,6 +15,7 @@ const {
   clearSpreadMeaningCache,
   deckIndexForCard,
   loadSpreadMeaning,
+  spreadDialogDescription,
   spreadDialogSubtitle,
   spreadDialogTitle,
   spreadMeaningParagraphs,
@@ -58,14 +59,23 @@ describe("spread dialog text", () => {
     expect(spreadDialogTitle({ card: QUEEN, reversed: true })).toBe("Queen of Swords (Reversed)");
   });
 
-  it("builds the subtitle from the position and its description", () => {
+  it("builds the subtitle from the position name alone", () => {
     const base = { card: QUEEN, reversed: false };
 
-    expect(spreadDialogSubtitle({ ...base, position: "Past", positionDescription: "What led here" })).toBe(
-      "Past · What led here"
-    );
-    expect(spreadDialogSubtitle({ ...base, position: "Card 1", positionDescription: "" })).toBe("Card 1");
+    expect(spreadDialogSubtitle({ ...base, position: "Past" })).toBe("Past");
+    expect(spreadDialogSubtitle({ ...base, position: " Chesed" })).toBe("Chesed");
+    expect(spreadDialogSubtitle({ ...base, position: "" })).toBeUndefined();
     expect(spreadDialogSubtitle(base)).toBeUndefined();
+  });
+
+  it("keeps the whole position description, trimmed, for the body", () => {
+    const base = { card: QUEEN, reversed: false };
+    const long =
+      "Subconscious temperament. The dominant psychic complex. What is hidden. Secret desires. Fears. Worries. Self-image.";
+
+    expect(spreadDialogDescription({ ...base, positionDescription: `${long}\n` })).toBe(long);
+    expect(spreadDialogDescription({ ...base, positionDescription: "  " })).toBeUndefined();
+    expect(spreadDialogDescription(base)).toBeUndefined();
   });
 });
 

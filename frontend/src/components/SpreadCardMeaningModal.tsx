@@ -37,14 +37,14 @@ export const spreadMeaningParagraphs = (meaning: SpreadCardMeaningResponse): str
 export const spreadDialogTitle = ({ card, reversed }: SpreadCardSelection): string =>
   reversed ? `${card.name} (Reversed)` : card.name;
 
-export const spreadDialogSubtitle = ({
-  position,
+/** The position's name only: the header is one truncated line, and the description (up to
+    ~270 characters on the Tree of Life) is shown whole in the body instead */
+export const spreadDialogSubtitle = ({ position }: SpreadCardSelection): string | undefined =>
+  (position && displayPositionName(position).trim()) || undefined;
+
+export const spreadDialogDescription = ({
   positionDescription,
-}: SpreadCardSelection): string | undefined =>
-  [position && displayPositionName(position), positionDescription]
-    .map((part) => part?.trim())
-    .filter(Boolean)
-    .join(" · ") || undefined;
+}: SpreadCardSelection): string | undefined => positionDescription?.trim() || undefined;
 
 interface SpreadCardMeaningModalProps {
   selection: SpreadCardSelection;
@@ -56,6 +56,7 @@ interface SpreadCardMeaningModalProps {
     The text is the same for an upright and a reversed card; the card is drawn as it fell. */
 const SpreadCardMeaningModal = ({ selection, onClose }: SpreadCardMeaningModalProps) => {
   const state = useCardMeaning(spreadMeanings, deckIndexForCard(selection.card));
+  const description = spreadDialogDescription(selection);
 
   return (
     <SanctumModal
@@ -64,6 +65,14 @@ const SpreadCardMeaningModal = ({ selection, onClose }: SpreadCardMeaningModalPr
       size="lg"
       onClose={onClose}
     >
+      {description && (
+        <p
+          className="px-6 pt-6 text-sm sm:text-base italic leading-relaxed text-[#e6d5b8]/70"
+          style={{ fontFamily: "'Crimson Pro', serif" }}
+        >
+          {description}
+        </p>
+      )}
       <CardMeaningBody
         card={{ ...selection.card, reversed: selection.reversed }}
         state={state}

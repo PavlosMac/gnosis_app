@@ -15,6 +15,7 @@ export interface SpreadCardSelection {
   reversed: boolean;
   /** The position's key in the spread ("Past", "Kether", "Card 1") */
   position?: string;
+  /** What the position asks of the reader, from the spread config; shown in the dialog */
   positionDescription?: string;
 }
 

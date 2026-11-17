@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useCallback } from "react";
 import TarotCard from "./TarotCard";
 import type { SelectedCard, SpreadCardSelectHandler } from "@/types/reading";
 
@@ -46,9 +46,8 @@ const CardSlot: React.FC<CardSlotProps> = ({ card, position, onCardSelect }) => 
         card={card}
         small={true}
         showMeaning={false}
-        onSelect={
-          onCardSelect && (() => onCardSelect({ card, reversed: card.reversed, position }))
-        }
+        position={position}
+        onSelect={onCardSelect}
       />
     </div>
   );
@@ -65,14 +64,16 @@ const KabbalahLayout: React.FC<KabbalahLayoutProps> = ({
 
   // The layout names its slots canonically ("Chesed"); callers key their position data by
   // the spread's own string (which may carry stray whitespace), so hand that one back
-  const handleSelect: SpreadCardSelectHandler | undefined =
-    onCardSelect &&
-    ((selection) => {
+  const handleSelect = useCallback<SpreadCardSelectHandler>(
+    (selection) => {
       const raw = positions.find(
         (p) => p.trim().toLowerCase() === selection.position?.toLowerCase()
       );
-      onCardSelect({ ...selection, position: raw ?? selection.position });
-    });
+      onCardSelect?.({ ...selection, position: raw ?? selection.position });
+    },
+    [positions, onCardSelect]
+  );
+  const slotHandler = onCardSelect && handleSelect;
 
   return (
     <div className="w-full">
@@ -80,24 +81,24 @@ const KabbalahLayout: React.FC<KabbalahLayoutProps> = ({
       <div className="flex flex-col items-center gap-2 md:gap-4">
         {/* Row 1: Kether (Crown) */}
         <div className="flex justify-center">
-          <CardSlot card={getCard("Kether")} position="Kether" pillar="middle" onCardSelect={handleSelect} />
+          <CardSlot card={getCard("Kether")} position="Kether" pillar="middle" onCardSelect={slotHandler} />
         </div>
 
         {/* Row 2: Binah - Chokmah */}
         <div className="flex justify-center gap-8 md:gap-24">
-          <CardSlot card={getCard("Binah")} position="Binah" pillar="left" onCardSelect={handleSelect} />
-          <CardSlot card={getCard("Chokmah")} position="Chokmah" pillar="right" onCardSelect={handleSelect} />
+          <CardSlot card={getCard("Binah")} position="Binah" pillar="left" onCardSelect={slotHandler} />
+          <CardSlot card={getCard("Chokmah")} position="Chokmah" pillar="right" onCardSelect={slotHandler} />
         </div>
 
         {/* Row 3: Daath (Hidden/Knowledge) */}
         <div className="flex justify-center opacity-80">
-          <CardSlot card={getCard("Daath")} position="Daath" pillar="middle" onCardSelect={handleSelect} />
+          <CardSlot card={getCard("Daath")} position="Daath" pillar="middle" onCardSelect={slotHandler} />
         </div>
 
         {/* Row 4: Geburah - Chesed */}
         <div className="flex justify-center gap-8 md:gap-24">
-          <CardSlot card={getCard("Geburah")} position="Geburah" pillar="left" onCardSelect={handleSelect} />
-          <CardSlot card={getCard("Chesed")} position="Chesed" pillar="right" onCardSelect={handleSelect} />
+          <CardSlot card={getCard("Geburah")} position="Geburah" pillar="left" onCardSelect={slotHandler} />
+          <CardSlot card={getCard("Chesed")} position="Chesed" pillar="right" onCardSelect={slotHandler} />
         </div>
 
         {/* Row 5: Tiphereth (Beauty) */}
@@ -105,24 +106,25 @@ const KabbalahLayout: React.FC<KabbalahLayoutProps> = ({
           <CardSlot
             card={getCard("Tiphereth")}
             position="Tiphereth"
-            pillar="middle" onCardSelect={handleSelect}
+            pillar="middle"
+            onCardSelect={slotHandler}
           />
         </div>
 
         {/* Row 6: Hod - Netzach */}
         <div className="flex justify-center gap-8 md:gap-24">
-          <CardSlot card={getCard("Hod")} position="Hod" pillar="left" onCardSelect={handleSelect} />
-          <CardSlot card={getCard("Netzach")} position="Netzach" pillar="right" onCardSelect={handleSelect} />
+          <CardSlot card={getCard("Hod")} position="Hod" pillar="left" onCardSelect={slotHandler} />
+          <CardSlot card={getCard("Netzach")} position="Netzach" pillar="right" onCardSelect={slotHandler} />
         </div>
 
         {/* Row 7: Yesod (Foundation) */}
         <div className="flex justify-center">
-          <CardSlot card={getCard("Yesod")} position="Yesod" pillar="middle" onCardSelect={handleSelect} />
+          <CardSlot card={getCard("Yesod")} position="Yesod" pillar="middle" onCardSelect={slotHandler} />
         </div>
 
         {/* Row 8: Malkuth (Kingdom) */}
         <div className="flex justify-center">
-          <CardSlot card={getCard("Malkuth")} position="Malkuth" pillar="middle" onCardSelect={handleSelect} />
+          <CardSlot card={getCard("Malkuth")} position="Malkuth" pillar="middle" onCardSelect={slotHandler} />
         </div>
       </div>
 

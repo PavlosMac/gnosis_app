@@ -103,10 +103,8 @@ const Reading: React.FC<ReadingProps> = React.memo(({
                   card={card}
                   small={false}
                   showMeaning={isComplete}
-                  onSelect={
-                    onCardSelect &&
-                    (() => onCardSelect({ card, reversed: card.reversed, position: positions[i] }))
-                  }
+                  position={positions[i]}
+                  onSelect={onCardSelect}
                 />
               </div>
             ))}
