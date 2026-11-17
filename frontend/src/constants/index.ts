@@ -3,6 +3,8 @@
 // Major Arcana
 export const MAJOR_ARCANA_COUNT = 22;
 export const MAJOR_ARCANA_MAX_INDEX = 21;
+/** Last index of the full 78-card deck (King of Swords) */
+export const DECK_MAX_INDEX = 77;
 
 // The Fool is card 0 but numerologically treated as 22
 export const FOOL_INDEX = 0;

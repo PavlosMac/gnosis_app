@@ -190,6 +190,16 @@ export interface MajorArcanaMeaningResponse {
   shadow: string;
 }
 
+/** The general meaning of one card of the full deck, shown when a card in a spread is
+    clicked. `number` is the deck index (0 = The Fool .. 77 = King of Swords); `meaning`
+    is plain prose, paragraphs separated by a blank line, the same for an upright and a
+    reversed card */
+export interface SpreadCardMeaningResponse {
+  number: number;
+  name: string;
+  meaning: string;
+}
+
 // --- Profile dashboard: GET /api/v1/dashboard ---
 
 /** The account slice the dashboard endpoint embeds (no credits/updated_at) */
