@@ -5,7 +5,10 @@ still gets the rows."""
 
 from fastapi import FastAPI
 
-from src.database.collections.constants import MAJOR_ARCANA_MEANINGS_COLLECTION
+from src.database.collections.constants import (
+    MAJOR_ARCANA_MEANINGS_COLLECTION,
+    SPREAD_CARD_MEANINGS_COLLECTION,
+)
 from src.main import lifespan
 
 
@@ -19,8 +22,12 @@ async def test_startup_seeds_all_22_card_meanings(mock_db, monkeypatch):
     async with lifespan(FastAPI()):
         docs = [d async for d in mock_db[MAJOR_ARCANA_MEANINGS_COLLECTION].find({})]
 
+        spread = [d async for d in mock_db[SPREAD_CARD_MEANINGS_COLLECTION].find({})]
+
     assert sorted(d["number"] for d in docs) == list(range(22))
     assert all(d["upright"] and d["shadow"] for d in docs)
+    assert sorted(d["number"] for d in spread) == list(range(78))
+    assert all(d["meaning"] for d in spread)
 
 
 async def test_startup_seed_is_idempotent_across_restarts(mock_db, monkeypatch):
@@ -36,3 +43,4 @@ async def test_startup_seed_is_idempotent_across_restarts(mock_db, monkeypatch):
         pass
 
     assert await mock_db[MAJOR_ARCANA_MEANINGS_COLLECTION].count_documents({}) == 22
+    assert await mock_db[SPREAD_CARD_MEANINGS_COLLECTION].count_documents({}) == 78

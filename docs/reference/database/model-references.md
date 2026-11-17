@@ -180,6 +180,31 @@ Two paragraphs only: there is no reversed reading for a card of the day (decided
 A card missing from the collection answers 404; the dialog then shows "This card's meaning has
 not been written yet."
 
+### spread_card_meanings
+Source: `src/cards/` (read repository, `GET /api/v1/cards/spread/{number}`, **public**: the
+reading page is open to visitors and the text holds no user data). One general meaning per
+card of the full deck, shown when a card in a spread is clicked, on the live reading and on a
+saved one. The same text is shown whether the card fell upright or reversed; each text covers
+the card's shadow side. Same lifecycle as `major_arcana_meanings`: migration 017 creates the
+index only, and the rows are upserted by `src.cards.loader` at every API start and with
+`make -C backend card-meanings-load`, from the committed `src/lib/cards/spread_card_meanings.json`.
+`scripts/spread_card_meanings.py` generated that file offline from a prompt and the card name
+alone (no source data); a regenerated card replaces its text. The loader refuses a bad or
+duplicate `number` or an empty `meaning`.
+
+| Field        | Type     | Notes                                                                  |
+|--------------|----------|------------------------------------------------------------------------|
+| _id          | ObjectId | PK                                                                     |
+| number       | int      | unique; frontend deck index, 0 = The Fool .. 21 = The World, then Pentacles from 22, Wands 36, Cups 50, Swords 64 (Ace..Ten, Page, Knight, Queen, King) |
+| name         | str      | the frontend spelling ("Judgement", "Page of Wands")                   |
+| slug         | str      |                                                                        |
+| meaning      | str      | plain prose, two or three paragraphs separated by a blank line; no markdown |
+| word_count, model, effort, generated_at | | generation metadata; not exposed by the API |
+| updated_at   | datetime | set on every upsert                                                    |
+
+A card missing from the collection answers 404; the dialog then shows "This card's meaning has
+not been written yet."
+
 ### _migrations
 Managed by `src/migrations/runner.py`. Fields: `version` (unique), `description`, `applied_at`.
 
@@ -197,7 +222,7 @@ password_reset_attempts is keyed by email, user id or client IP (with a limiter 
 
 ## Indexes
 
-Owned by migrations. Current state after 001–016:
+Owned by migrations. Current state after 001–017:
 
 | Collection      | Index                                        | Options            | Migration |
 |-----------------|----------------------------------------------|--------------------|-----------|
@@ -224,6 +249,7 @@ Owned by migrations. Current state after 001–016:
 | email_verification_tokens | `expires_at`                       | TTL (0s)           | 013       |
 | users           | `verification_deadline_at` (`pending_users_ttl`) | TTL (0s), partial: `status in ["pending_verification", "invited"]` | 015 (superseded 014's `status = "pending_verification"`) |
 | major_arcana_meanings | `number` (`number_unique`)             | unique             | 016       |
+| spread_card_meanings  | `number` (`number_unique`)             | unique             | 017       |
 | _migrations     | `version`                                    | unique             | runner    |
 
 A tag filter with a date sort (`tags=…&sort=created_at`) is served entirely by the 012

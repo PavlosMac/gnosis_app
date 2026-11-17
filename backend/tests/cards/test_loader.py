@@ -2,8 +2,18 @@ import json
 
 import pytest
 
-from src.cards.loader import MEANINGS_PATH, load_meanings, read_meanings, upsert_meaning
-from src.database.collections.constants import MAJOR_ARCANA_MEANINGS_COLLECTION
+from src.cards.loader import (
+    MEANINGS_PATH,
+    SPREAD_CARDS,
+    load_all_meanings,
+    load_meanings,
+    read_meanings,
+    upsert_meaning,
+)
+from src.database.collections.constants import (
+    MAJOR_ARCANA_MEANINGS_COLLECTION,
+    SPREAD_CARD_MEANINGS_COLLECTION,
+)
 
 
 def _entry(number: int, name: str, upright: str = "Open air.") -> dict:
@@ -94,3 +104,70 @@ def test_read_meanings_rejects_a_duplicate_number(tmp_path):
 
 def test_the_shipped_file_is_valid_and_complete():
     assert [e["number"] for e in read_meanings()] == list(range(22))
+
+
+# --- spread card meanings (the second set, same loader) ---
+
+
+def _spread_entry(number: int, name: str, meaning: str = "One.\n\nTwo.") -> dict:
+    return {
+        "number": number,
+        "name": name,
+        "slug": name.lower().replace(" ", "-"),
+        "meaning": meaning,
+        "word_count": 2,
+        "model": "gpt-test",
+        "effort": "medium",
+        "generated_at": "2026-11-17T00:00:00Z",
+    }
+
+
+def test_spread_path_points_into_the_shipped_lib():
+    assert SPREAD_CARDS.path.parts[-4:] == ("src", "lib", "cards", "spread_card_meanings.json")
+
+
+async def test_load_spread_meanings_goes_to_its_own_collection(mock_db, tmp_path):
+    path = tmp_path / "s.json"
+    _write(path, [_spread_entry(0, "The Fool"), _spread_entry(77, "King of Swords")])
+
+    assert await load_meanings(mock_db, path, SPREAD_CARDS) == 2
+
+    assert await mock_db[SPREAD_CARD_MEANINGS_COLLECTION].count_documents({}) == 2
+    assert await mock_db[MAJOR_ARCANA_MEANINGS_COLLECTION].count_documents({}) == 0
+    doc = await mock_db[SPREAD_CARD_MEANINGS_COLLECTION].find_one({"number": 77})
+    assert doc["meaning"] == "One.\n\nTwo."
+
+
+@pytest.mark.parametrize(
+    ("entry", "message"),
+    [
+        (_spread_entry(78, "Nope"), "spread card meaning has a bad number"),
+        ({**_spread_entry(40, "Five of Wands"), "meaning": " "}, "no meaning"),
+        # a day-card entry (upright/shadow) is not a spread entry
+        (_entry(3, "The Empress"), "no meaning"),
+    ],
+)
+def test_read_spread_meanings_rejects_a_malformed_entry(tmp_path, entry, message):
+    path = tmp_path / "s.json"
+    _write(path, [entry])
+
+    with pytest.raises(ValueError, match=message):
+        read_meanings(path, SPREAD_CARDS)
+
+
+def test_read_meanings_accepts_number_22_only_for_the_spread_set(tmp_path):
+    path = tmp_path / "s.json"
+    _write(path, [_spread_entry(22, "Ace of Pentacles")])
+
+    assert len(read_meanings(path, SPREAD_CARDS)) == 1
+
+
+def test_the_shipped_spread_file_is_valid_and_complete():
+    assert [e["number"] for e in read_meanings(spec=SPREAD_CARDS)] == list(range(78))
+
+
+async def test_load_all_meanings_seeds_both_collections(mock_db):
+    counts = await load_all_meanings(mock_db)
+
+    assert counts == {MAJOR_ARCANA_MEANINGS_COLLECTION: 22, SPREAD_CARD_MEANINGS_COLLECTION: 78}
+    assert await mock_db[SPREAD_CARD_MEANINGS_COLLECTION].count_documents({}) == 78

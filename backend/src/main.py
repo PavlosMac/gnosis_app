@@ -45,12 +45,19 @@ from src.auth.repository import (
     ThrottleRepository,
 )
 from src.auth.router import router as auth_router
-from src.cards.loader import load_meanings
+from src.cards.loader import load_all_meanings
 from src.cards.queries.get_major_arcana_meaning_by_number import (
     GetMajorArcanaMeaningByNumberHandler,
     GetMajorArcanaMeaningByNumberQuery,
 )
-from src.cards.repository import MajorArcanaMeaningReadRepository
+from src.cards.queries.get_spread_card_meaning_by_number import (
+    GetSpreadCardMeaningByNumberHandler,
+    GetSpreadCardMeaningByNumberQuery,
+)
+from src.cards.repository import (
+    MajorArcanaMeaningReadRepository,
+    SpreadCardMeaningReadRepository,
+)
 from src.cards.router import router as cards_router
 from src.core.config import settings
 from src.core.exceptions import (
@@ -234,6 +241,10 @@ def _wire_mediator(
         GetMajorArcanaMeaningByNumberQuery,
         GetMajorArcanaMeaningByNumberHandler(MajorArcanaMeaningReadRepository(db)),
     )
+    mediator.register_query(
+        GetSpreadCardMeaningByNumberQuery,
+        GetSpreadCardMeaningByNumberHandler(SpreadCardMeaningReadRepository(db)),
+    )
     mediator.register_command(
         GenerateInterpretationCommand,
         GenerateInterpretationHandler(
@@ -256,11 +267,12 @@ async def lifespan(app: FastAPI):
     logger.info("starting up", app=settings.app_name, env=settings.app_env)
     await connect_to_mongo()
     await run_migrations(get_database())
-    # The card-of-the-day texts ship in the image (src/lib/cards/major_arcana_meanings.json)
-    # and are upserted on every start, so a deploy that regenerates them needs no migration
-    # and no manual step on the Pi; 22 replace_one calls cost nothing.
-    seeded = await load_meanings(get_database())
-    logger.info("card meanings seeded", count=seeded)
+    # The card texts ship in the image (src/lib/cards/major_arcana_meanings.json for the card
+    # of the day, spread_card_meanings.json for a card clicked in a spread) and are upserted
+    # on every start, so a deploy that regenerates them needs no migration and no manual
+    # step on the Pi; 100 replace_one calls cost nothing.
+    seeded = await load_all_meanings(get_database())
+    logger.info("card meanings seeded", **seeded)
 
     app.state.refresh_token_repo = RefreshTokenRepository(get_database())
     if settings.openai_api_key:

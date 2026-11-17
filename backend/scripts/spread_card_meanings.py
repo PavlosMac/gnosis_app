@@ -14,7 +14,9 @@ artifact) and mirrored to scripts/output/spread_card_meanings/<slug>.md (gitigno
 reading. Cards already in the JSON are skipped unless --force, so a run resumes. A
 regenerated card replaces its text; the model words a card differently every time.
 
-This script does not write to Mongo. Reads OPENAI_API_KEY from backend/.env through Settings.
+This script does not write to Mongo: `src.cards.loader` seeds the collection from the JSON
+at every API start, and on demand with `make card-meanings-load`. Reads OPENAI_API_KEY from
+backend/.env through Settings.
 
 Numbers and names follow the frontend deck (frontend/src/lib/cards.ts): majors 0..21, then
 Pentacles from 22, Wands from 36, Cups from 50, Swords from 64; each suit runs Ace..Ten, Page,
@@ -41,12 +43,13 @@ from scripts.major_arcana_meanings import (
     select_cards,
     slug,
 )
+from src.cards.loader import SPREAD_CARDS
 from src.core.config import ReasoningEffort, settings
 from src.llm.pricing import cost_usd
 from src.llm.prompt_builder import max_completion_tokens
 
 ROOT = Path(__file__).resolve().parent.parent
-MEANINGS_PATH = ROOT / "src" / "lib" / "cards" / "spread_card_meanings.json"
+MEANINGS_PATH = SPREAD_CARDS.path
 OUT_DIR = ROOT / "scripts" / "output" / "spread_card_meanings"  # gitignored scratch
 
 WORD_CAP = 300  # keep equal to the "max ... words" in SYSTEM_PROMPT

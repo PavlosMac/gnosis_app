@@ -13,3 +13,14 @@ class MajorArcanaMeaningResponse(AppSchema):
     name: str
     upright: str
     shadow: str
+
+
+class SpreadCardMeaningResponse(AppSchema):
+    """The general meaning of one card of the full deck, shown when a card in a spread is
+    clicked: one piece of plain prose, paragraphs separated by a blank line, the same text
+    whether the card fell upright or reversed. `number` is the frontend deck index
+    (0 = The Fool .. 77 = King of Swords). Generation metadata is not exposed."""
+
+    number: int
+    name: str
+    meaning: str

@@ -1,11 +1,12 @@
-"""Seed `major_arcana_meanings` from the committed JSON.
+"""Seed the card-meaning collections from the committed JSON files.
 
     uv run python -m src.cards.loader                 # or: make card-meanings-load
     .venv/bin/python -m src.cards.loader              # inside the production api container
 
-The JSON (`src/lib/cards/major_arcana_meanings.json`) is a committed artifact: it was
-generated once offline and is not regenerated at runtime. This module lives under `src/`
-because the production image copies only `src/`, so loading it needs no OpenAI key.
+Two sets, each a committed artifact generated once offline and never at runtime:
+`major_arcana_meanings.json` (the card of the day, 22 cards) and
+`spread_card_meanings.json` (a card clicked in a spread, 78 cards). This module lives under
+`src/` because the production image copies only `src/`, so loading needs no OpenAI key.
 Idempotent: every entry is upserted by `number`.
 """
 
@@ -13,6 +14,7 @@ import argparse
 import asyncio
 import json
 import sys
+from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -20,54 +22,95 @@ from typing import Any
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
 
 from src.core.config import settings
-from src.database.collections.constants import MAJOR_ARCANA_MEANINGS_COLLECTION
+from src.database.collections.constants import (
+    MAJOR_ARCANA_MEANINGS_COLLECTION,
+    SPREAD_CARD_MEANINGS_COLLECTION,
+)
 
-MEANINGS_PATH = Path(__file__).resolve().parents[1] / "lib" / "cards" / "major_arcana_meanings.json"
+_LIB = Path(__file__).resolve().parents[1] / "lib" / "cards"
 
 
-_REQUIRED_TEXT_FIELDS = ("name", "upright", "shadow")
-_CARD_COUNT = 22
+@dataclass(frozen=True)
+class MeaningSet:
+    """One JSON file and the collection it seeds."""
+
+    label: str  # used in error messages
+    path: Path
+    collection: str
+    card_count: int  # `number` runs 0 .. card_count - 1 (the frontend deck index)
+    text_fields: tuple[str, ...]  # must be present and non-empty on every entry
 
 
-def _validate(entries: list[dict[str, Any]]) -> None:
+MAJOR_ARCANA = MeaningSet(
+    label="major arcana meaning",
+    path=_LIB / "major_arcana_meanings.json",
+    collection=MAJOR_ARCANA_MEANINGS_COLLECTION,
+    card_count=22,
+    text_fields=("name", "upright", "shadow"),
+)
+SPREAD_CARDS = MeaningSet(
+    label="spread card meaning",
+    path=_LIB / "spread_card_meanings.json",
+    collection=SPREAD_CARD_MEANINGS_COLLECTION,
+    card_count=78,
+    text_fields=("name", "meaning"),
+)
+MEANING_SETS = (MAJOR_ARCANA, SPREAD_CARDS)
+
+MEANINGS_PATH = MAJOR_ARCANA.path
+
+
+def _validate(entries: list[dict[str, Any]], spec: MeaningSet) -> None:
     """Refuse a malformed file up front: a bad entry would otherwise load fine and
     only fail as a 500 when that card is requested."""
     seen: set[int] = set()
     for entry in entries:
         number = entry.get("number")
-        if not isinstance(number, int) or isinstance(number, bool) or not 0 <= number < _CARD_COUNT:
-            raise ValueError(f"major arcana meaning has a bad number: {number!r}")
+        if (
+            not isinstance(number, int)
+            or isinstance(number, bool)
+            or not 0 <= number < spec.card_count
+        ):
+            raise ValueError(f"{spec.label} has a bad number: {number!r}")
         if number in seen:
-            raise ValueError(f"major arcana meaning {number} appears twice")
+            raise ValueError(f"{spec.label} {number} appears twice")
         seen.add(number)
-        for field in _REQUIRED_TEXT_FIELDS:
+        for field in spec.text_fields:
             value = entry.get(field)
             if not isinstance(value, str) or not value.strip():
-                raise ValueError(f"major arcana meaning {number} has no {field}")
+                raise ValueError(f"{spec.label} {number} has no {field}")
 
 
-def read_meanings(path: Path = MEANINGS_PATH) -> list[dict[str, Any]]:
+def read_meanings(
+    path: Path | None = None, spec: MeaningSet = MAJOR_ARCANA
+) -> list[dict[str, Any]]:
+    path = path or spec.path
     if not path.exists():
-        raise FileNotFoundError(
-            f"{path} is missing — major_arcana_meanings.json ships with the source tree"
-        )
+        raise FileNotFoundError(f"{path} is missing — {spec.path.name} ships with the source tree")
     entries = json.loads(path.read_text(encoding="utf-8"))["cards"]
-    _validate(entries)
+    _validate(entries, spec)
     return entries
 
 
-async def upsert_meaning(db: AsyncIOMotorDatabase, entry: dict[str, Any]) -> None:
+async def upsert_meaning(
+    db: AsyncIOMotorDatabase, entry: dict[str, Any], spec: MeaningSet = MAJOR_ARCANA
+) -> None:
     document = {**entry, "updated_at": datetime.now(UTC)}
-    await db[MAJOR_ARCANA_MEANINGS_COLLECTION].replace_one(
-        {"number": entry["number"]}, document, upsert=True
-    )
+    await db[spec.collection].replace_one({"number": entry["number"]}, document, upsert=True)
 
 
-async def load_meanings(db: AsyncIOMotorDatabase, path: Path = MEANINGS_PATH) -> int:
-    entries = read_meanings(path)
+async def load_meanings(
+    db: AsyncIOMotorDatabase, path: Path | None = None, spec: MeaningSet = MAJOR_ARCANA
+) -> int:
+    entries = read_meanings(path, spec)
     for entry in entries:
-        await upsert_meaning(db, entry)
+        await upsert_meaning(db, entry, spec)
     return len(entries)
+
+
+async def load_all_meanings(db: AsyncIOMotorDatabase) -> dict[str, int]:
+    """Every set from its shipped file; returns {collection: entries upserted}."""
+    return {spec.collection: await load_meanings(db, spec=spec) for spec in MEANING_SETS}
 
 
 async def _main() -> None:
@@ -79,12 +122,17 @@ async def _main() -> None:
 
     client: AsyncIOMotorClient = AsyncIOMotorClient(args.mongo_uri, serverSelectionTimeoutMS=5000)
     try:
-        count = await load_meanings(client[settings.mongodb_database])
+        counts = await load_all_meanings(client[settings.mongodb_database])
     finally:
         client.close()
-    print(f"upserted {count} major arcana meanings into {settings.mongodb_database}")
-    if count < _CARD_COUNT:
-        print(f"WARNING: only {count} of {_CARD_COUNT} cards are in the file", file=sys.stderr)
+    for spec in MEANING_SETS:
+        count = counts[spec.collection]
+        print(f"upserted {count} {spec.label}s into {settings.mongodb_database}")
+        if count < spec.card_count:
+            print(
+                f"WARNING: only {count} of {spec.card_count} cards are in {spec.path.name}",
+                file=sys.stderr,
+            )
 
 
 if __name__ == "__main__":

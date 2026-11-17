@@ -467,3 +467,30 @@ Each decision should include:
 **Consequences:**
 - Supersedes ADR-019's "`reduce` keeps the master numbers" for the day only
 - The same account can see a different card of the day than it did before this change on days whose raw sum is 10 or 12..21; nothing is stored, so there is nothing to migrate
+
+### ADR-021: Spread Card Meanings Are a Second, Public, Pre-generated Set (2026-11-17)
+
+**Context:**
+- The card of the day has a stored write-up per major arcana card (`major_arcana_meanings`, login required, written in a "your day" voice with `upright` and `shadow` paragraphs)
+- Cards in a spread had no explanation beyond a few keywords, and a spread draws from all 78 cards, in either orientation
+- `/reading` is open to visitors (three free readings), so anything shown there cannot depend on a session
+
+**Decision:**
+- A **separate collection** `spread_card_meanings`, one document per card of the full deck (frontend deck index 0..77), seeded from a committed JSON by the same loader as the day card
+- **One free text per card** (`meaning`): plain prose in two or three paragraphs that includes the card's shadow side. The same text is shown for an upright and a reversed card
+- Generated **from the prompt and the card name alone**: no Tsarion source data is sent and the prompt does not name him. The text is told not to name Rider Waite or any other source
+- The endpoint `GET /api/v1/cards/spread/{number}` is **public**; the day-card endpoint stays behind a session
+- Significators cards do not open the dialog (they are computed, not drawn)
+
+**Alternatives Considered:**
+- Reuse `major_arcana_meanings` and extend it to 78 -> Rejected: its text is about the day and its fields (`upright`, `shadow`) do not fit one flowing text
+- Separate upright and reversed texts, showing the one that matches the draw -> Rejected by Pavlos after reading test output: one flowing piece without labels reads better
+- A text per card per spread position -> Rejected: thousands of calls for little gain; the position is shown in the dialog subtitle instead
+- Attach the Tsarion entries from `src/lib/cards/` or name him in the prompt -> Rejected: without the data the model produced one vague sentence attributed to him; Rider Waite knowledge alone was chosen
+- Require login, or prompt visitors to log in -> Rejected: the text is the same for everyone and holds no user data
+
+**Consequences:**
+- The endpoint has no rate limit; it is a single indexed read of static text
+- A regenerated card overwrites its text with no history other than git
+- Reference: `docs/reference/database/model-references.md` § `spread_card_meanings`; plan (until the frontend ships) `docs/plans/2026-11-17-spread-card-meanings.md`
+
