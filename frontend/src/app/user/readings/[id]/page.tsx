@@ -108,13 +108,17 @@ const ReadingDetailPage = async ({
   // Build cardVisuals map: position → { card, reversed }
   const cardVisuals: Record<
     string,
-    { card: TarotCardData; reversed: boolean } | null
+    { card: TarotCardData; reversed: boolean; description?: string } | null
   > = {};
   const visualKeys = uniquePositionKeys(reading.cards.map((c) => c.position));
   for (const [i, saved] of reading.cards.entries()) {
     const card = findCardByNameSafe(saved.name);
     cardVisuals[visualKeys[i]] = card
-      ? { card, reversed: saved.orientation === "reversed" }
+      ? {
+          card,
+          reversed: saved.orientation === "reversed",
+          description: saved.position_description,
+        }
       : null;
   }
 

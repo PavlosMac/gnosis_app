@@ -7,6 +7,7 @@ import FaceUpDeck from "@/components/FaceUpDeck";
 import ShuffleAnimation from "@/components/ShuffleAnimation";
 import InterpretationModal from "@/components/InterpretationModal";
 import LoginToInterpretModal from "@/components/LoginToInterpretModal";
+import SpreadCardMeaningModal from "@/components/SpreadCardMeaningModal";
 import { BookmarkPlus } from "lucide-react";
 import FreeLimitPanel from "@/components/FreeLimitPanel";
 import OrnateFrame from "@/components/OrnateFrame";
@@ -26,7 +27,7 @@ import { useGameReducer, getSelectedCards, getReading, isPostDeal, isPickingCard
 import { createReading } from "@/app/user/interpret/actions";
 import { buildReadingPayload } from "@/lib/reading-payload";
 import type { User } from "@/types/auth";
-import type { SelectedCard, ReadingConfig } from "@/types/reading";
+import type { SelectedCard, ReadingConfig, SpreadCardSelection } from "@/types/reading";
 import { resolvePositions, isBirthdateSpread } from "@/lib/reading-positions";
 import type { TarotCardData } from "@/types/models";
 
@@ -252,6 +253,19 @@ export default function TarotGame({ user, mode = 'draw' }: TarotGameProps) {
   }, []);
 
   const handleCloseModal = useCallback(() => setShowInterpretModal(false), []);
+
+  // A card clicked in the laid-out spread opens its stored meaning; open to visitors too
+  const [cardSelection, setCardSelection] = useState<SpreadCardSelection | null>(null);
+  const positionDescriptionsOfReading = completedReading?.positionDescriptions;
+  const handleCardSelect = useCallback(
+    (selection: SpreadCardSelection) =>
+      setCardSelection({
+        ...selection,
+        positionDescription: positionDescriptionsOfReading?.[selection.position ?? ""],
+      }),
+    [positionDescriptionsOfReading]
+  );
+  const handleCloseCardMeaning = useCallback(() => setCardSelection(null), []);
 
   const handleInterpretationComplete = useCallback(() => {
     // The interpretation is persisted the moment it is generated; the journal
@@ -695,6 +709,7 @@ export default function TarotGame({ user, mode = 'draw' }: TarotGameProps) {
                     question={selectedReading.showQuestion ? userQuestion : undefined}
                     isComplete={isReadingComplete}
                     significatorResult={completedReading?.significatorResult}
+                    onCardSelect={handleCardSelect}
                   />
 
                   {/* Saving needs an account — the control sits centred under the cards */}
@@ -866,6 +881,10 @@ export default function TarotGame({ user, mode = 'draw' }: TarotGameProps) {
         onComplete={handleInterpretationComplete}
         autoGenerate
       />
+    )}
+
+    {cardSelection && (
+      <SpreadCardMeaningModal selection={cardSelection} onClose={handleCloseCardMeaning} />
     )}
 
     {loginIntent && (

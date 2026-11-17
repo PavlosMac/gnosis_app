@@ -7,18 +7,11 @@ import {
   useCardMeaning,
 } from "@/components/CardMeaningDialog";
 import SanctumModal from "@/components/SanctumModal";
+import { displayPositionName } from "@/lib/relationship-spread";
 import { findCardByNameSafe } from "@/services/cardLookup";
 import type { SpreadCardMeaningResponse } from "@/types/auth";
 import type { TarotCardData } from "@/types/models";
-
-/** What a layout hands over when a card in a spread is clicked */
-export interface SpreadCardSelection {
-  card: TarotCardData;
-  reversed: boolean;
-  /** The position's name in the spread ("Past", "Kether", "Card 1") */
-  position?: string;
-  positionDescription?: string;
-}
+import type { SpreadCardSelection } from "@/types/reading";
 
 // The arrow keeps the action looked up at call time, not captured at import
 const spreadMeanings = createMeaningLoader<SpreadCardMeaningResponse>((idx) =>
@@ -48,7 +41,10 @@ export const spreadDialogSubtitle = ({
   position,
   positionDescription,
 }: SpreadCardSelection): string | undefined =>
-  [position, positionDescription].filter((part) => part && part.trim()).join(" · ") || undefined;
+  [position && displayPositionName(position), positionDescription]
+    .map((part) => part?.trim())
+    .filter(Boolean)
+    .join(" · ") || undefined;
 
 interface SpreadCardMeaningModalProps {
   selection: SpreadCardSelection;

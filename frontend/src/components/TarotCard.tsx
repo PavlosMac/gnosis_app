@@ -39,10 +39,12 @@ interface TarotCardProps {
   card: TarotCardData;
   showMeaning?: boolean;
   small?: boolean;
+  /** When given, the whole card is a button that opens the card's meaning dialog */
+  onSelect?: () => void;
 }
 
-const TarotCard: React.FC<TarotCardProps> = React.memo(({ card, showMeaning = true, small = false }) => {
-  return (
+const TarotCard: React.FC<TarotCardProps> = React.memo(({ card, showMeaning = true, small = false, onSelect }) => {
+  const face = (
     <div className={`tarot-card-container ${small ? 'scale-90' : ''} flex flex-col items-center`}>
       <div className="relative group flex flex-col items-center">
         {/* Card glow effect on hover */}
@@ -100,6 +102,20 @@ const TarotCard: React.FC<TarotCardProps> = React.memo(({ card, showMeaning = tr
         )}
       </div>
     </div>
+  );
+
+  if (!onSelect) return face;
+
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      aria-haspopup="dialog"
+      aria-label={`About ${card.name}`}
+      className="cursor-pointer rounded-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-[#d4af37]/60"
+    >
+      {face}
+    </button>
   );
 });
 

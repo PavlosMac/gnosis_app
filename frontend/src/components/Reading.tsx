@@ -8,7 +8,7 @@ import { isRelationship } from "@/lib/relationship-spread";
 import { isSignificators } from "@/lib/significator-positions";
 
 export { isRelationship };
-import type { SelectedCard } from "@/types/reading";
+import type { SelectedCard, SpreadCardSelectHandler } from "@/types/reading";
 import type { SignificatorResult } from "@/lib/significators";
 
 interface ReadingProps {
@@ -17,6 +17,8 @@ interface ReadingProps {
   question?: string;
   isComplete?: boolean;
   significatorResult?: SignificatorResult;
+  /** Makes each drawn card a button. Significators cards are computed, not drawn, and stay plain */
+  onCardSelect?: SpreadCardSelectHandler;
 }
 
 const TREE_OF_LIFE_POSITIONS = [
@@ -44,6 +46,7 @@ const Reading: React.FC<ReadingProps> = React.memo(({
   question,
   isComplete = false,
   significatorResult,
+  onCardSelect,
 }) => {
   const useKabbalahLayout = isTreeOfLife(positions);
   const useSignificatorsLayout = isSignificators(positions);
@@ -73,9 +76,9 @@ const Reading: React.FC<ReadingProps> = React.memo(({
       {useSignificatorsLayout ? (
         <SignificatorsLayout significatorResult={significatorResult} />
       ) : useKabbalahLayout ? (
-        <KabbalahLayout selectedCards={selectedCards} positions={positions} />
+        <KabbalahLayout selectedCards={selectedCards} positions={positions} onCardSelect={onCardSelect} />
       ) : useRelationshipLayout ? (
-        <RelationshipLayout selectedCards={selectedCards} positions={positions} />
+        <RelationshipLayout selectedCards={selectedCards} positions={positions} onCardSelect={onCardSelect} />
       ) : (
         <>
           {/* Cards display - Default layout */}
@@ -96,7 +99,15 @@ const Reading: React.FC<ReadingProps> = React.memo(({
                   </span>
                 </div>
 
-                <TarotCard card={card} small={false} showMeaning={isComplete} />
+                <TarotCard
+                  card={card}
+                  small={false}
+                  showMeaning={isComplete}
+                  onSelect={
+                    onCardSelect &&
+                    (() => onCardSelect({ card, reversed: card.reversed, position: positions[i] }))
+                  }
+                />
               </div>
             ))}
           </div>

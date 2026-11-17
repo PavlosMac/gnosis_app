@@ -7,6 +7,19 @@ export interface SelectedCard extends TarotCardData {
   reversed: boolean;
 }
 
+/** What a spread layout hands over when one of its cards is clicked. `card.idx` is NOT
+    reliable here (the draw flow and the saved-spread layouts overwrite it); the meaning
+    dialog resolves the card by name */
+export interface SpreadCardSelection {
+  card: TarotCardData;
+  reversed: boolean;
+  /** The position's key in the spread ("Past", "Kether", "Card 1") */
+  position?: string;
+  positionDescription?: string;
+}
+
+export type SpreadCardSelectHandler = (selection: SpreadCardSelection) => void;
+
 export interface ReadingResult {
   readingType: string;
   positions: Record<string, SelectedCard>;

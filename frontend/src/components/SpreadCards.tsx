@@ -4,7 +4,7 @@ import KabbalahLayout from "@/components/KabbalahLayout";
 import RelationshipLayout from "@/components/RelationshipLayout";
 import { isTreeOfLife, isRelationship } from "@/components/Reading";
 import type { TarotCardData } from "@/types/models";
-import type { SelectedCard } from "@/types/reading";
+import type { SelectedCard, SpreadCardSelectHandler } from "@/types/reading";
 import { basePosition, isSignificators } from "@/lib/significator-positions";
 
 // Saved significator charts: one banner per group, laid out in rows like the live chart.
@@ -24,10 +24,16 @@ const SIGNIFICATOR_ROWS = [
 const OTHER_GROUP = { base: "other", title: "Other" } as const;
 const KNOWN_BASES: string[] = SIGNIFICATOR_ROWS.flatMap((row) => row.map((g) => g.base));
 
-export type CardVisuals = Record<string, { card: TarotCardData; reversed: boolean } | null>;
+export type CardVisuals = Record<
+  string,
+  { card: TarotCardData; reversed: boolean; description?: string } | null
+>;
 
 interface SpreadCardsProps {
   cardVisuals: CardVisuals;
+  /** Makes each card a button that opens its meaning. Significator charts ignore it:
+      their cards are computed, not drawn */
+  onCardSelect?: SpreadCardSelectHandler;
 }
 
 const SignificatorGroups: React.FC<SpreadCardsProps> = ({ cardVisuals }) => {
@@ -94,7 +100,7 @@ const SignificatorGroups: React.FC<SpreadCardsProps> = ({ cardVisuals }) => {
 /** The saved spread, laid out as in the game: Tree of Life as a tree, Relationship as 3×3 pillars, everything else as a row. Card image + position label only, no text.
  * Positions come from `cardVisuals`' own keys — the single source of truth for
  * "which positions does this spread have", so callers can't derive a mismatched list. */
-const SpreadCards: React.FC<SpreadCardsProps> = ({ cardVisuals }) => {
+const SpreadCards: React.FC<SpreadCardsProps> = ({ cardVisuals, onCardSelect }) => {
   const positions = Object.keys(cardVisuals);
   const isTree = isTreeOfLife(positions);
   if (isSignificators(positions)) {
@@ -112,6 +118,14 @@ const SpreadCards: React.FC<SpreadCardsProps> = ({ cardVisuals }) => {
       <Layout
         selectedCards={known.map((k) => k.card)}
         positions={known.map((k) => k.position)}
+        onCardSelect={
+          onCardSelect &&
+          ((selection) =>
+            onCardSelect({
+              ...selection,
+              positionDescription: cardVisuals[selection.position ?? ""]?.description,
+            }))
+        }
       />
     );
   }
@@ -126,6 +140,16 @@ const SpreadCards: React.FC<SpreadCardsProps> = ({ cardVisuals }) => {
                 card={{ ...visual.card, reversed: visual.reversed }}
                 small={true}
                 showMeaning={false}
+                onSelect={
+                  onCardSelect &&
+                  (() =>
+                    onCardSelect({
+                      card: visual.card,
+                      reversed: visual.reversed,
+                      position,
+                      positionDescription: visual.description,
+                    }))
+                }
               />
             )}
             <span

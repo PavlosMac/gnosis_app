@@ -6,7 +6,9 @@ import InterpretationDisplay from "@/components/InterpretationDisplay";
 import InterpretationModal from "@/components/InterpretationModal";
 import SpreadCards from "@/components/SpreadCards";
 import type { CardVisuals } from "@/components/SpreadCards";
+import SpreadCardMeaningModal from "@/components/SpreadCardMeaningModal";
 import type { Interpretation } from "@/types/interpret";
+import type { SpreadCardSelection } from "@/types/reading";
 
 
 interface InterpretationSectionProps {
@@ -33,6 +35,10 @@ const InterpretationSection: React.FC<InterpretationSectionProps> = ({
 
   const openModal = useCallback(() => setModalOpen(true), []);
   const closeModal = useCallback(() => setModalOpen(false), []);
+  // The card whose stored meaning is open; the spread stays clickable before and after
+  // the interpretation exists
+  const [cardSelection, setCardSelection] = useState<SpreadCardSelection | null>(null);
+  const closeCardMeaning = useCallback(() => setCardSelection(null), []);
   const handleComplete = useCallback(() => {
     router.refresh();
   }, [router]);
@@ -46,12 +52,13 @@ const InterpretationSection: React.FC<InterpretationSectionProps> = ({
               question={question}
               narrative={interpretation.reading}
               cardVisuals={cardVisuals}
+              onCardSelect={setCardSelection}
             />
           </div>
         </>
       ) : (
         <div className="rounded-2xl border border-[#d4af37]/20 bg-gradient-to-b from-[#1a0033]/90 to-[#0a0015]/90 p-5 sm:p-8">
-          <SpreadCards cardVisuals={cardVisuals} />
+          <SpreadCards cardVisuals={cardVisuals} onCardSelect={setCardSelection} />
           <div className="mt-8 flex justify-center">
             <button
               onClick={openModal}
@@ -64,6 +71,10 @@ const InterpretationSection: React.FC<InterpretationSectionProps> = ({
             </button>
           </div>
         </div>
+      )}
+
+      {cardSelection && (
+        <SpreadCardMeaningModal selection={cardSelection} onClose={closeCardMeaning} />
       )}
 
       {modalOpen && (

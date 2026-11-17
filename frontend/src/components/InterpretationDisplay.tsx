@@ -2,17 +2,20 @@ import React from "react";
 import SpreadCards from "@/components/SpreadCards";
 import type { CardVisuals } from "@/components/SpreadCards";
 import { parseNarrative, splitBold } from "@/lib/narrative-blocks";
+import type { SpreadCardSelectHandler } from "@/types/reading";
 
 interface InterpretationDisplayProps {
   question?: string | null;
   narrative: string;
   cardVisuals: CardVisuals;
+  onCardSelect?: SpreadCardSelectHandler;
 }
 
 export default function InterpretationDisplay({
   question,
   narrative,
   cardVisuals,
+  onCardSelect,
 }: InterpretationDisplayProps) {
   return (
     <div className="flex flex-col gap-8">
@@ -38,7 +41,7 @@ export default function InterpretationDisplay({
       )}
 
       {/* The spread itself, laid out as in the game */}
-      <SpreadCards cardVisuals={cardVisuals} />
+      <SpreadCards cardVisuals={cardVisuals} onCardSelect={onCardSelect} />
 
       {/* Narrative */}
       <div

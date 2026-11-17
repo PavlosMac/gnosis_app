@@ -1,6 +1,6 @@
 import React from "react";
 import TarotCard from "./TarotCard";
-import type { SelectedCard } from "@/types/reading";
+import type { SelectedCard, SpreadCardSelectHandler } from "@/types/reading";
 import {
   RELATIONSHIP_PILLARS,
   CARDS_PER_PILLAR,
@@ -12,6 +12,7 @@ import {
 interface RelationshipLayoutProps {
   selectedCards: SelectedCard[];
   positions: string[];
+  onCardSelect?: SpreadCardSelectHandler;
 }
 
 /**
@@ -29,6 +30,7 @@ interface RelationshipLayoutProps {
 const RelationshipLayout: React.FC<RelationshipLayoutProps> = ({
   selectedCards,
   positions,
+  onCardSelect,
 }) => {
   const pillars = groupByPillar(positions);
   // Custom querent/other names travel inside the position strings (live game
@@ -66,7 +68,15 @@ const RelationshipLayout: React.FC<RelationshipLayoutProps> = ({
                   {positionCaption(positions[i], pillarLabels).toUpperCase()}
                 </span>
               </div>
-              <TarotCard card={card} small={true} showMeaning={false} />
+              <TarotCard
+                card={card}
+                small={true}
+                showMeaning={false}
+                onSelect={
+                  onCardSelect &&
+                  (() => onCardSelect({ card, reversed: card.reversed, position: positions[i] }))
+                }
+              />
             </div>
           );
         })

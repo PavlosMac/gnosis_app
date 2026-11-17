@@ -1,7 +1,7 @@
 # Spread card meanings (click a card in a spread to read its stored meaning)
 
-> **Status: Parts 1–2 done (2026-11-17); parts 3–4 (frontend) not started.** All 78 texts are
-> generated and served by the public endpoint. Texts are to be edited after the full build.
+> **Status: All four parts built (2026-11-17).** Still open before this plan is deleted: a
+> browser check of the dialog (see Verification) and Pavlos's edit pass over the 78 texts.
 
 ## Context
 
