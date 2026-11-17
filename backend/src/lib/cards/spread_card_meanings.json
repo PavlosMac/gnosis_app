@@ -5,6 +5,106 @@
  },
  "cards": [
   {
+   "number": 0,
+   "name": "The Fool",
+   "slug": "the-fool",
+   "meaning": "The Fool is the energy of beginnings: a leap into the unknown with an open heart, light baggage, and trust that life will meet you as you go. It points to freedom, curiosity, innocence, and the courage to say yes before every answer is in place. There is a freshness here, a willingness to explore without being trapped by old fears, and a reminder that growth often starts when you stop over-controlling the path.\n\nAt its best, this card encourages faith in yourself, spontaneity, originality, and the kind of risk that wakes you up to possibility. It can mark a new journey, a clean slate, or a moment of choosing adventure over hesitation. Yet its shadow lies close by: carelessness, naivety, poor timing, or rushing ahead without seeing where the edge is. The same openness that makes miracles possible can also leave you ungrounded, easily misled, or blind to practical consequences.\n\nTaken as guidance, The Fool asks for brave trust balanced with awareness. Step forward, but look where you are going. Let wonder lead, but do not abandon common sense.",
+   "word_count": 180,
+   "model": "gpt-5.4-2026-03-05",
+   "effort": "medium",
+   "generated_at": "2026-11-17T09:19:31Z"
+  },
+  {
+   "number": 1,
+   "name": "The Magician",
+   "slug": "the-magician",
+   "meaning": "The Magician centers on focused will, skill, and the power to turn an idea into something real. It points to initiative, confidence, and the ability to work with what is already in your hands, drawing thought, desire, feeling, and practical effort into alignment. This card often suggests a moment when your influence is strong: words carry weight, talents can be used effectively, and clear intention can open a path that seemed only possible in theory.\n\nIts shadow lies in misuse of that power. The same charm and cleverness that can create, heal, and persuade can also manipulate, exaggerate, or hide insecurity behind performance. The Magician can warn against scattered energy, empty promises, or relying on image rather than substance. At its best, it is mastery through discipline and conscious action; at its worst, it is control without conscience, or potential wasted through trickery, ego, or lack of follow-through.",
+   "word_count": 148,
+   "model": "gpt-5.4-2026-03-05",
+   "effort": "medium",
+   "generated_at": "2026-11-17T09:19:38Z"
+  },
+  {
+   "number": 2,
+   "name": "The High Priestess",
+   "slug": "the-high-priestess",
+   "meaning": "The High Priestess points to stillness, mystery, and the wisdom that rises when you stop forcing answers. She suggests intuition, inner knowing, and truths felt beneath the surface rather than explained outright. This card often appears when patience is needed: not every door should be pushed open, and not every answer belongs to the mind alone. There is quiet power here, along with sensitivity, spiritual depth, and the ability to sense what is hidden or unspoken.\n\nHer shadow side emerges when silence turns into distance or secrecy. She can indicate withdrawal, emotional coldness, passivity, or a refusal to engage with the practical world. Sometimes this card warns of ignored instincts, confusion caused by mixed signals, or knowledge being kept back—by others or by yourself. At her best, she is calm, perceptive, and deeply aligned with truth; at her most difficult, she becomes elusive, disconnected, or trapped behind walls of caution and reserve.",
+   "word_count": 152,
+   "model": "gpt-5.4-2026-03-05",
+   "effort": "medium",
+   "generated_at": "2026-11-17T09:19:45Z"
+  },
+  {
+   "number": 3,
+   "name": "The Empress",
+   "slug": "the-empress",
+   "meaning": "The Empress is the pulse of life made visible: warmth, beauty, fertility, and the quiet confidence that allows things to grow. She points to creativity that wants to take form, to love expressed through care, and to abundance that comes from being deeply connected to the body, the senses, and the natural rhythm of things. This card often suggests nourishment—of a person, a relationship, a home, a project, or even a new version of yourself—and carries the reminder that softness can be a real source of power.\n\nAt her best, she brings generosity, pleasure, patience, and the ability to create a safe, flourishing atmosphere. Yet her shadow side appears when comfort turns into stagnation, care becomes smothering, or desire for beauty and ease slips into indulgence, vanity, or possessiveness. She can warn against overgiving, losing yourself in others’ needs, or expecting growth without tending to what truly sustains it. The deeper lesson is to receive and create in balance: to let life bloom, but not at the cost of your boundaries, independence, or inner truth.",
+   "word_count": 175,
+   "model": "gpt-5.4-2026-03-05",
+   "effort": "medium",
+   "generated_at": "2026-11-17T09:19:55Z"
+  },
+  {
+   "number": 4,
+   "name": "The Emperor",
+   "slug": "the-emperor",
+   "meaning": "The Emperor stands for structure, authority, and the steady force that turns ideas into something solid and lasting. He represents leadership, discipline, protection, and the ability to create order out of chaos. This is the energy of taking responsibility, setting clear boundaries, making practical decisions, and building strong foundations that others can rely on. At its best, it brings confidence, stability, wisdom gained through experience, and the calm strength to guide a situation with fairness and purpose.\n\nIts shadow appears when control becomes more important than understanding. Then this card can point to rigidity, stubbornness, harsh judgment, or a need to dominate rather than lead. It may show a person or pattern that is overly strict, emotionally closed off, or unwilling to adapt. The lesson here is that true strength does not need to crush, and real authority is most powerful when it is balanced with patience, flexibility, and humanity.",
+   "word_count": 150,
+   "model": "gpt-5.4-2026-03-05",
+   "effort": "medium",
+   "generated_at": "2026-11-17T09:20:03Z"
+  },
+  {
+   "number": 5,
+   "name": "The Hierophant",
+   "slug": "the-hierophant",
+   "meaning": "The Hierophant points to tradition, shared values, and the wisdom passed down through teachers, elders, and established paths. It often appears when learning through structure is important: study, ritual, commitment, and the steady guidance that helps turn belief into practice. There is comfort here in belonging, in finding meaning through community, and in honoring what has stood the test of time.\n\nAt its best, this card encourages integrity, devotion, and a thoughtful respect for knowledge that is larger than the self. It can suggest mentorship, formal learning, spiritual guidance, or making a commitment that aligns with your principles. It reminds you that discipline and tradition can create a strong foundation for growth.\n\nIts shadow emerges when tradition hardens into obedience for its own sake. The Hierophant can warn of rigid thinking, moral superiority, empty ritual, or pressure to conform at the expense of truth and individuality. In those moments, it asks whether you are following a path because it is meaningful, or simply because it is familiar, approved, or expected.",
+   "word_count": 170,
+   "model": "gpt-5.4-2026-03-05",
+   "effort": "medium",
+   "generated_at": "2026-11-17T09:20:12Z"
+  },
+  {
+   "number": 6,
+   "name": "The Lovers",
+   "slug": "the-lovers",
+   "meaning": "The Lovers centers on union, choice, and wholehearted alignment. At its brightest, it points to deep connection: love that is honest, reciprocal, and grounded in shared values. It can mark a powerful bond between people, but also a moment of inner harmony, when mind, heart, and desire are no longer pulling in different directions. This card often suggests that what matters most now is not just attraction or pleasure, but truth, trust, and the courage to choose what truly fits your spirit.\n\nIts shadow appears when desire clouds judgment or when a choice is avoided out of fear, guilt, or temptation. Then connection can become projection, dependency, mixed signals, or a bond built on fantasy rather than reality. The Lovers asks for maturity as much as feeling: to know what you are saying yes to, what you must leave behind, and whether your commitments reflect your deeper values. In that sense, it is both tender and demanding, reminding you that love is not only found, but chosen.",
+   "word_count": 167,
+   "model": "gpt-5.4-2026-03-05",
+   "effort": "medium",
+   "generated_at": "2026-11-17T09:20:19Z"
+  },
+  {
+   "number": 7,
+   "name": "The Chariot",
+   "slug": "the-chariot",
+   "meaning": "The Chariot is the force of will gathering itself and moving with purpose. It points to momentum, determination, and the ability to steer your life through conflicting pressures without losing direction. This card often appears when focus, discipline, and self-belief can carry you forward, especially after uncertainty or challenge. It is about victory earned through control: not brute force alone, but the steady mastery of instinct, emotion, and circumstance.\n\nAt its best, it brings courage, ambition, and the confidence to commit fully to a chosen path. It can mark progress, travel, achievement, or the feeling of finally taking the reins. Yet its harder edge warns that drive can become aggression, stubbornness, or the need to dominate. If the inner forces pulling in different directions are not properly harnessed, momentum turns into strain, mixed signals, or a loss of control. The Chariot reminds you that success comes not just from pushing ahead, but from knowing what you are aiming at and keeping yourself aligned as you go.",
+   "word_count": 166,
+   "model": "gpt-5.4-2026-03-05",
+   "effort": "medium",
+   "generated_at": "2026-11-17T09:20:26Z"
+  },
+  {
+   "number": 8,
+   "name": "Strength",
+   "slug": "strength",
+   "meaning": "Strength is the quiet power that comes from meeting life with steadiness rather than force. It points to courage, patience, and the ability to hold strong feelings without being ruled by them. This card suggests inner confidence, compassion, and the kind of resilience that can calm fear, anger, or chaos through gentle self-command. It often appears when true victory lies in soft control, moral courage, and trust in your own heart.\n\nIts shadow side emerges when that balance is lost. You may be doubting your capacity, suppressing emotions until they become harder to manage, or trying to dominate a situation instead of working with it. At times it can show pride, stubbornness, or exhaustion from always having to “be strong.” The deeper lesson is that real strength is not harsh or brittle; it is the courage to stay present, act with grace under pressure, and know when tenderness is more powerful than force.",
+   "word_count": 153,
+   "model": "gpt-5.4-2026-03-05",
+   "effort": "medium",
+   "generated_at": "2026-11-17T09:20:33Z"
+  },
+  {
+   "number": 9,
+   "name": "The Hermit",
+   "slug": "the-hermit",
+   "meaning": "The Hermit points to a time of stepping back from noise, pressure, and distraction so you can hear your own deeper truth. It is the card of solitude with purpose: reflection, inner guidance, patience, and the quiet wisdom that comes from experience rather than impulse. Instead of rushing ahead, it asks you to slow down, simplify, and trust that clarity often arrives in stillness. There can also be a role here of teacher or guide, someone who lights the way not by force, but by calm example.\n\nIts more difficult side appears when healthy retreat turns into isolation, withholding, or fear of fully participating in life. The Hermit can show loneliness, emotional distance, overthinking, or a tendency to search endlessly for answers while avoiding action. It warns against becoming so self-contained that you cut yourself off from warmth, help, or connection. At its best, though, this card reminds you that time alone can restore perspective and help you return to the world with greater honesty, maturity, and a steadier inner light.",
+   "word_count": 171,
+   "model": "gpt-5.4-2026-03-05",
+   "effort": "medium",
+   "generated_at": "2026-11-17T09:20:41Z"
+  },
+  {
    "number": 10,
    "name": "Wheel of Fortune",
    "slug": "wheel-of-fortune",
@@ -95,6 +195,76 @@
    "generated_at": "2026-11-17T00:00:00Z"
   },
   {
+   "number": 19,
+   "name": "The Sun",
+   "slug": "the-sun",
+   "meaning": "The Sun brings warmth, clarity, and a feeling that life is opening up again. It points to joy that is simple and unmistakable: confidence, vitality, honesty, success, and the freedom to be fully seen as you are. There is childlike openness here, the kind that trusts life enough to celebrate it, and a sense that confusion is burning away so truth can stand plainly in the light. It often marks a time of renewed energy, good fortune, creative growth, and relationships strengthened by sincerity.\n\nIts shadow appears when brightness tips into excess. Confidence can become arrogance, optimism can ignore real problems, and the desire to shine can turn into a need for attention or approval. At times, The Sun can also reveal something uncomfortable by making it impossible to hide from what is true; what is illuminated is not always easy to face. In that way, this card asks for warmth without vanity, openness without naivety, and joy that is grounded enough to last.",
+   "word_count": 164,
+   "model": "gpt-5.4-2026-03-05",
+   "effort": "medium",
+   "generated_at": "2026-11-17T09:20:49Z"
+  },
+  {
+   "number": 20,
+   "name": "Judgement",
+   "slug": "judgement",
+   "meaning": "A great reckoning arrives with Judgement: a moment of awakening when the past calls for an honest response. This card points to clarity after confusion, the kind that asks you to rise, see your life as it truly is, and answer a deeper calling. It can mark renewal, forgiveness, release from old burdens, and the chance to begin again with more truth, purpose, and self-knowledge. What has been learned now wants to be lived.\n\nIts shadow appears when that reckoning becomes fear, denial, or harsh self-condemnation. You may be resisting a necessary change, trapped in old guilt, or judging yourself or others so severely that growth is blocked. Judgement reminds you that accountability is not the same as punishment: the point is not to stay buried in regret, but to learn, make amends where needed, and move forward.\n\nAt its best, this card brings liberation through honesty. It asks for a clear-eyed review of where you have been, what must be left behind, and what is ready to be claimed. When you answer that call, a new phase opens—one shaped less by old habits and more by conscious choice.",
+   "word_count": 189,
+   "model": "gpt-5.4-2026-03-05",
+   "effort": "medium",
+   "generated_at": "2026-11-17T09:20:58Z"
+  },
+  {
+   "number": 21,
+   "name": "The World",
+   "slug": "the-world",
+   "meaning": "The World carries the feeling of a cycle completing itself at last. It points to wholeness, integration, and the deep satisfaction that comes from seeing how far you have come. Effort begins to make sense, loose ends can be tied together, and there is often a sense of arrival: a goal reached, a lesson learned, a chapter fulfilled. It can also suggest confidence in your place within the larger pattern of life, where inner growth and outer achievement meet.\n\nIts more difficult side appears when completion is resisted or mistaken for finality. You may be close to fulfillment yet unable to recognize it, always moving the finish line or feeling that nothing is ever enough. At times this card can show the pressure to have everything perfectly resolved, or the emptiness that can arise after a long pursuit has ended. It asks you to honor endings, accept the success or truth that is here, and understand that every completion is also the threshold of a new beginning.",
+   "word_count": 167,
+   "model": "gpt-5.4-2026-03-05",
+   "effort": "medium",
+   "generated_at": "2026-11-17T09:21:06Z"
+  },
+  {
+   "number": 22,
+   "name": "Ace of Pentacles",
+   "slug": "ace-of-pentacles",
+   "meaning": "A quiet but powerful beginning is offered here: a real chance to build something solid, useful, and lasting. The Ace of Pentacles points to fresh opportunities in work, money, health, home, or any part of life where steady growth matters. It carries the energy of planting a seed in fertile ground, suggesting prosperity that comes not from luck alone, but from practical effort, patience, and a willingness to make something tangible out of possibility.\n\nAt its best, this card brings stability, confidence, and the promise of abundance that can be trusted because it is rooted in the material world. It favors wise investments, dependable relationships, and choices that support long-term security. Yet its shadow lies in letting the opportunity pass through hesitation, neglect, or a failure to recognize its value. It can also warn against becoming overly focused on money, comfort, or appearances, treating success as something to possess rather than cultivate. The gift is real, but it asks to be used well.",
+   "word_count": 163,
+   "model": "gpt-5.4-2026-03-05",
+   "effort": "medium",
+   "generated_at": "2026-11-17T09:21:14Z"
+  },
+  {
+   "number": 23,
+   "name": "Two of Pentacles",
+   "slug": "two-of-pentacles",
+   "meaning": "The Two of Pentacles is the art of keeping many moving parts in motion without losing your center. It points to balance, adaptability, and the ability to respond skillfully to changing demands, especially in practical areas like work, money, health, or daily responsibilities. There is a playful resilience in this card: it suggests that even if life feels busy or uneven, you can find a rhythm, make adjustments as you go, and stay flexible enough to handle what comes next.\n\nIts shadow appears when constant motion becomes strain. This card can show overcommitment, scattered focus, financial juggling, or the feeling of always managing one more thing without ever fully settling. It warns against treating everything as equally urgent, or hiding stress behind a brave, capable face. At its best, it encourages wise prioritizing and graceful balance; at its worst, it shows instability, distraction, and the risk of dropping something important because too much is being carried at once.",
+   "word_count": 158,
+   "model": "gpt-5.4-2026-03-05",
+   "effort": "medium",
+   "generated_at": "2026-11-17T09:21:22Z"
+  },
+  {
+   "number": 24,
+   "name": "Three of Pentacles",
+   "slug": "three-of-pentacles",
+   "meaning": "The Three of Pentacles points to skill taking shape through effort, cooperation, and a shared goal. It is the card of building something real: learning, refining your craft, and being recognized for the quality of your work. It often appears when collaboration is essential, reminding you that different talents can come together to create something stronger than any one person could manage alone. There is pride here, but it is earned through patience, discipline, and a willingness to listen as well as contribute.\n\nIts harder edge appears when teamwork breaks down or when ego, poor communication, or uneven effort weakens the foundation. You may be undervaluing your own abilities, depending too much on approval, or finding yourself in a situation where others do not respect your contribution. It can also warn against cutting corners, rushing the process, or mistaking potential for finished mastery. At its best, this card encourages steady improvement and mutual respect; at its worst, it shows the frustration of misalignment, amateur mistakes, or work that lacks true care and cohesion.",
+   "word_count": 173,
+   "model": "gpt-5.4-2026-03-05",
+   "effort": "medium",
+   "generated_at": "2026-11-17T09:21:30Z"
+  },
+  {
+   "number": 25,
+   "name": "Four of Pentacles",
+   "slug": "four-of-pentacles",
+   "meaning": "The Four of Pentacles centers on security, stability, and the instinct to protect what has been earned. It can point to careful stewardship, strong boundaries, and a practical desire to build something lasting rather than risk it carelessly. At its best, this card reflects self-control, discipline, and the ability to hold onto your resources, values, or position with steadiness and determination.\n\nIts shadow appears when protection hardens into fear. The need to keep hold of money, power, affection, or control can become possessive, rigid, and isolating, as if loosening your grip would mean losing everything. This card can suggest scarcity thinking, emotional guardedness, or an unwillingness to share, trust, or adapt. Its deeper lesson is that real security does not come only from clinging tightly, but from knowing what is worth preserving and where a little openness allows life to move again.",
+   "word_count": 142,
+   "model": "gpt-5.4-2026-03-05",
+   "effort": "medium",
+   "generated_at": "2026-11-17T09:21:36Z"
+  },
+  {
    "number": 26,
    "name": "Five of Pentacles",
    "slug": "five-of-pentacles",
@@ -103,6 +273,86 @@
    "model": "gpt-5.4-2026-03-05",
    "effort": "medium",
    "generated_at": "2026-11-17T00:00:00Z"
+  },
+  {
+   "number": 27,
+   "name": "Six of Pentacles",
+   "slug": "six-of-pentacles",
+   "meaning": "The Six of Pentacles centers on the flow of giving and receiving, and the balance that keeps life humane. It can point to generosity, practical help, shared resources, and the relief that comes when support arrives at the right moment. There is kindness here, but also fairness: a reminder that abundance is healthiest when it circulates, and that accepting help with grace can be as important as offering it.\n\nIts more difficult side appears when the exchange is uneven in spirit, even if it looks generous on the surface. Help can come with strings attached, create dependence, flatter the giver’s ego, or leave the receiver feeling small, indebted, or judged. This card asks whether power is being used wisely, whether generosity is sincere, and whether the scales are truly balanced. At its best, it shows mutual care, dignity, and material harmony; at its worst, it warns against charity that controls, giving that seeks praise, or taking without reciprocity.",
+   "word_count": 158,
+   "model": "gpt-5.4-2026-03-05",
+   "effort": "medium",
+   "generated_at": "2026-11-17T09:21:43Z"
+  },
+  {
+   "number": 28,
+   "name": "Seven of Pentacles",
+   "slug": "seven-of-pentacles",
+   "meaning": "The Seven of Pentacles centers on patience, assessment, and the slow rewards of steady effort. It often appears when you have already invested time, energy, or care into something important and must now pause to take stock. This card reminds you that worthwhile growth is rarely instant; progress may be quiet, gradual, and not yet fully visible. It encourages persistence, thoughtful tending, and trust in what is developing beneath the surface.\n\nAt its best, this is the wisdom to step back and evaluate what is working, what is not, and where your resources are best placed. It can point to long-term success, sustainable results, and the satisfaction that comes from disciplined cultivation. Yet its shadow side is frustration with delays, weariness, or doubt about whether all your effort will pay off. It can describe impatience, discouragement, or the temptation to abandon something just before it begins to bear fruit. The deeper lesson is to balance honest review with faith: refine the plan if needed, but do not mistake slow growth for failure.",
+   "word_count": 172,
+   "model": "gpt-5.4-2026-03-05",
+   "effort": "medium",
+   "generated_at": "2026-11-17T09:21:51Z"
+  },
+  {
+   "number": 29,
+   "name": "Eight of Pentacles",
+   "slug": "eight-of-pentacles",
+   "meaning": "The Eight of Pentacles centers on steady effort, learning, and the quiet pride that comes from improving through practice. It points to craftsmanship in the widest sense: showing up, paying attention to detail, and understanding that real skill is built one small step at a time. This card often appears when dedication is more important than flashes of inspiration, encouraging patience, discipline, and a willingness to refine your work until it truly reflects your standards.\n\nIts shadow lies in becoming so absorbed in the task that the heart goes out of it. Hard work can turn into drudgery, perfectionism, or a narrow focus on productivity at the expense of rest, joy, or the bigger picture. There can be anxiety about not doing enough, or a habit of endlessly fixing minor flaws while missing the deeper purpose of the work.\n\nAt its best, this card is a reminder that mastery is earned through care, humility, and repetition. It asks you to commit to what matters, trust the value of consistent effort, and let each small improvement become part of something solid and lasting.",
+   "word_count": 182,
+   "model": "gpt-5.4-2026-03-05",
+   "effort": "medium",
+   "generated_at": "2026-11-17T09:21:58Z"
+  },
+  {
+   "number": 30,
+   "name": "Nine of Pentacles",
+   "slug": "nine-of-pentacles",
+   "meaning": "The Nine of Pentacles carries the feeling of earned ease: the quiet satisfaction that comes from building something stable, beautiful, and truly your own. It points to self-reliance, maturity, and the ability to enjoy the results of steady effort without apology. There is confidence here, but it is refined rather than loud—comfort, good taste, personal standards, and the freedom to choose your own pace because you have cultivated security from the ground up.\n\nIts shadow lies in the distance that can grow around such independence. This card can hint at isolation, emotional reserve, or becoming so accustomed to self-sufficiency that receiving help, intimacy, or spontaneity feels uncomfortable. It can also warn against measuring worth through appearances, success, or control. At its best, it is graceful independence and well-deserved abundance; at its worst, a polished loneliness that has everything except true ease of heart.",
+   "word_count": 143,
+   "model": "gpt-5.4-2026-03-05",
+   "effort": "medium",
+   "generated_at": "2026-11-17T09:22:06Z"
+  },
+  {
+   "number": 31,
+   "name": "Ten of Pentacles",
+   "slug": "ten-of-pentacles",
+   "meaning": "The Ten of Pentacles points to lasting security, the kind built over time through work, loyalty, shared values, and careful stewardship of resources. It often suggests family, inheritance, tradition, and the sense of being supported by something larger than personal effort alone. This card can mark material comfort, long-term success, and the satisfaction of creating a stable home or legacy that benefits future generations. It carries a feeling of continuity: what has been planted is now strong enough to endure.\n\nIts shadow lies in becoming too attached to status, wealth, approval, or the expectations of family and society. Stability can harden into rigidity, and tradition can become a cage if it demands conformity at the expense of truth or emotional warmth. Sometimes this card warns of conflict around money, inheritance, control, or the pressure to maintain appearances. At its best, it is abundance with roots; at its most difficult, it is comfort that comes with strings attached.",
+   "word_count": 157,
+   "model": "gpt-5.4-2026-03-05",
+   "effort": "medium",
+   "generated_at": "2026-11-17T09:22:13Z"
+  },
+  {
+   "number": 32,
+   "name": "Page of Pentacles",
+   "slug": "page-of-pentacles",
+   "meaning": "There is a grounded freshness to the Page of Pentacles: the energy of a new beginning that wants to become something real. It points to study, skill-building, practical plans, and the quiet excitement of discovering what you are capable of. This card often appears when patience, focus, and a willingness to learn can lead to steady progress in work, money, health, or any long-term goal. It values consistency over drama, reminding you that small, well-chosen steps can grow into solid results.\n\nIts shadow side shows up when potential stays trapped at the level of intention. The Page of Pentacles can become overly cautious, perfectionistic, or so fixated on security and proof that it hesitates to act. At times it can suggest distraction dressed up as planning, or a narrow focus on material success that loses sight of joy, imagination, or the bigger picture. Even so, the core message is encouraging: treat what matters seriously, stay teachable, and give your effort a firm foundation, but do not let fear of mistakes stop you from beginning.",
+   "word_count": 174,
+   "model": "gpt-5.4-2026-03-05",
+   "effort": "medium",
+   "generated_at": "2026-11-17T09:22:21Z"
+  },
+  {
+   "number": 33,
+   "name": "Knight of Pentacles",
+   "slug": "knight-of-pentacles",
+   "meaning": "The Knight of Pentacles carries the energy of steady progress, patience, and quiet dedication. This is the part of life that succeeds not through flashes of brilliance, but through consistency, effort, and a willingness to do what needs to be done day after day. It can point to reliability, practical thinking, loyalty, and a grounded approach to work, money, health, or long-term goals. When this card appears, it often encourages commitment to the slow build, trusting that careful attention and discipline will create lasting results.\n\nIts shadow lies in becoming so focused on duty, routine, or security that life grows rigid and stagnant. What is dependable can harden into stubbornness, boredom, or resistance to change; what is responsible can become joyless overwork or perfectionism. This card reminds you that steadiness is a strength, but only when it still leaves room for adaptability, imagination, and movement. The lesson here is to keep going, but not to confuse persistence with simply standing still.",
+   "word_count": 161,
+   "model": "gpt-5.4-2026-03-05",
+   "effort": "medium",
+   "generated_at": "2026-11-17T09:22:29Z"
+  },
+  {
+   "number": 34,
+   "name": "Queen of Pentacles",
+   "slug": "queen-of-pentacles",
+   "meaning": "The Queen of Pentacles embodies warmth made practical: care that feeds, shelters, and steadies. She is generous, grounded, and deeply capable, with a gift for turning effort into comfort, beauty, and security. This card often points to someone who nurtures through tangible acts—managing resources well, creating a peaceful home, supporting others without losing sight of what is needed in the real world. It suggests abundance built through patience, common sense, and devotion to what truly matters.\n\nAt her best, she is confident in her own worth and knows how to balance responsibility with pleasure, work with rest, and giving with receiving. She reminds you to trust your skills, tend to your body, and value the small daily choices that create lasting stability.\n\nIn its more difficult expression, this energy can become overprotective, overly controlling, or too wrapped up in comfort, money, or appearances. There may be a tendency to smother, to measure love through duty alone, or to neglect oneself while caring for everyone else. This card asks for a kind of grounded generosity that includes you too: not depletion in the name of service, but a rooted, healthy abundance that can genuinely sustain.",
+   "word_count": 194,
+   "model": "gpt-5.4-2026-03-05",
+   "effort": "medium",
+   "generated_at": "2026-11-17T09:22:39Z"
   },
   {
    "number": 35,
@@ -115,6 +365,26 @@
    "generated_at": "2026-11-17T00:00:00Z"
   },
   {
+   "number": 36,
+   "name": "Ace of Wands",
+   "slug": "ace-of-wands",
+   "meaning": "A surge of life runs through the Ace of Wands: a spark, a calling, the first flash of desire that makes action feel possible. It points to beginnings charged with energy, courage, and creative fire, whether in work, love, art, or a new way of living. This card brings enthusiasm, confidence, and the sense that something wants to come into being through you if you are willing to seize the moment.\n\nIts shadow lies in force without direction. The same fire that inspires can also make you impulsive, restless, impatient, or quick to burn through your energy before anything takes root. It can show false starts, frustration, ego-driven action, or a powerful urge that remains only an idea because it is never grounded in steady effort. At its best, this card is bold initiative and fresh vitality; at its worst, it is heat without follow-through. The message is to honor the spark, but give it purpose, discipline, and room to grow.",
+   "word_count": 161,
+   "model": "gpt-5.4-2026-03-05",
+   "effort": "medium",
+   "generated_at": "2026-11-17T09:22:46Z"
+  },
+  {
+   "number": 37,
+   "name": "Two of Wands",
+   "slug": "two-of-wands",
+   "meaning": "The Two of Wands carries the feeling of standing at the edge of a wider world, aware that more is possible than what is already familiar. It points to vision, planning, and the moment when ambition begins to take shape. There is confidence here, but it is not yet full action; it is the pause in which you weigh options, consider the bigger picture, and sense your own power to choose a direction. This card often suggests growth through courage, foresight, and a willingness to step beyond old limits.\n\nIts more difficult side appears when planning becomes hesitation or control. You may see potential everywhere yet struggle to commit, staying safe with ideas instead of risking movement. It can also hint at restlessness, dissatisfaction with what you have, or the urge to dominate outcomes rather than trust the unfolding path. At its best, this card asks you to match vision with boldness; at its worst, it warns that fear of the unknown can leave you looking outward while never truly beginning.",
+   "word_count": 171,
+   "model": "gpt-5.4-2026-03-05",
+   "effort": "medium",
+   "generated_at": "2026-11-17T09:22:53Z"
+  },
+  {
    "number": 38,
    "name": "Three of Wands",
    "slug": "three-of-wands",
@@ -123,6 +393,76 @@
    "model": "gpt-5.4-2026-03-05",
    "effort": "medium",
    "generated_at": "2026-11-17T00:00:00Z"
+  },
+  {
+   "number": 39,
+   "name": "Four of Wands",
+   "slug": "four-of-wands",
+   "meaning": "The Four of Wands carries the feeling of a threshold joyfully crossed: a pause to celebrate what has been built, whether that is a home, a relationship, a friendship circle, or a hard-won personal milestone. It points to stability, welcome, and the kind of happiness that grows when people come together in trust and shared effort. There is warmth here, a sense of belonging, gratitude, and the freedom to enjoy the present without immediately rushing toward the next demand.\n\nIts more difficult side appears when comfort turns into complacency, or when the picture of happiness matters more than the real thing. It can suggest shallow celebration, social pressure to perform joy, or a community that feels supportive on the surface while quietly excluding someone. At times it warns of delays around home, commitment, or gatherings, or of a foundation that looks secure but still needs honest attention.\n\nAt its best, this card invites you to honor progress, let yourself receive support, and mark the moments that deserve to be remembered. At its hardest, it asks whether your stability is genuine, shared, and nourishing—or only decorative.",
+   "word_count": 185,
+   "model": "gpt-5.4-2026-03-05",
+   "effort": "medium",
+   "generated_at": "2026-11-17T09:23:02Z"
+  },
+  {
+   "number": 40,
+   "name": "Five of Wands",
+   "slug": "five-of-wands",
+   "meaning": "This card brings the heat of friction, competition, and clashing wills. It often appears when many voices, goals, or egos are trying to occupy the same space, creating confusion but also momentum. Not every struggle here is harmful; sometimes this is the lively push that sharpens skill, tests confidence, and forces growth. It can point to brainstorming, rivalry, creative tension, or the kind of challenge that helps you find your footing and prove what you can do.\n\nIts harder side emerges when conflict becomes scattered, petty, or exhausting. Energy may be wasted on drama, one-upmanship, or fighting simply for the sake of fighting, with no clear winner and little real progress. Miscommunication, impatience, and too many competing demands can leave everyone stirred up and no one truly heard. The lesson is to channel the fire rather than be consumed by it: choose your battles, stay focused, and let tension become fuel for clarity, resilience, and stronger direction.",
+   "word_count": 157,
+   "model": "gpt-5.4-2026-03-05",
+   "effort": "medium",
+   "generated_at": "2026-11-17T09:23:09Z"
+  },
+  {
+   "number": 41,
+   "name": "Six of Wands",
+   "slug": "six-of-wands",
+   "meaning": "The Six of Wands carries the energy of recognition, momentum, and a well-earned moment in the light. It points to victory after effort, public support, and the confidence that comes from seeing your work acknowledged by others. This card often suggests success that is visible rather than private: praise, promotion, approval, or simply the feeling that people are finally getting behind you. It can mark a time when belief in yourself helps draw others along, and when leadership feels natural rather than forced.\n\nIts shadow lies in how easily success can turn into performance. Praise may become something you depend on, or confidence may tip into pride, vanity, and the need to always be seen as winning. There can also be pressure hidden inside achievement: fear of falling from favor, comparison with others, or the uneasy sense that applause is temporary. At its best, this card encourages gracious confidence and shared celebration; at its worst, it warns against letting ego, image, or outside approval define your worth.",
+   "word_count": 167,
+   "model": "gpt-5.4-2026-03-05",
+   "effort": "medium",
+   "generated_at": "2026-11-17T09:23:17Z"
+  },
+  {
+   "number": 42,
+   "name": "Seven of Wands",
+   "slug": "seven-of-wands",
+   "meaning": "The Seven of Wands captures the moment after a victory, when holding your ground matters just as much as winning it. It points to courage under pressure, the determination to defend your position, your values, or the progress you have fought hard to achieve. There is confidence here, but it is active rather than easy: you may need to stay alert, trust your instincts, and meet challenges head-on even if you feel outnumbered. At its best, this card is resilience, healthy boundaries, and the refusal to back down from what you know is right.\n\nIts shadow side appears when defensiveness turns into constant combat. You may feel besieged, exhausted, or trapped in a mindset where every disagreement looks like a threat. Pride can make it hard to listen, and fear of losing ground can lead to stubbornness or isolation. This card reminds you that not every battle is worth your energy; stand firm where it truly counts, but do not let vigilance harden into tension that keeps you always on guard.",
+   "word_count": 171,
+   "model": "gpt-5.4-2026-03-05",
+   "effort": "medium",
+   "generated_at": "2026-11-17T09:23:24Z"
+  },
+  {
+   "number": 43,
+   "name": "Eight of Wands",
+   "slug": "eight-of-wands",
+   "meaning": "Momentum gathers quickly in the Eight of Wands. It points to movement, progress, and events falling into place with little delay, as if a situation has finally cleared and can now race ahead. Messages, travel, decisions, or sudden developments may arrive in a rush, bringing excitement, clarity, and a sense that things are aligning. There is often confidence here, the kind that comes from trusting instinct and acting at the right moment rather than hesitating until the opportunity has passed.\n\nIts shadow lies in speed without grounding. What moves fast can also feel overwhelming, scattering attention or pushing someone to act before thinking things through. News may come too quickly, plans can become chaotic, and eagerness can turn into impatience, pressure, or burnout. This card asks for swift action, but not reckless action: keep your aim clear, respond rather than react, and let momentum carry you forward without losing control of the direction.",
+   "word_count": 153,
+   "model": "gpt-5.4-2026-03-05",
+   "effort": "medium",
+   "generated_at": "2026-11-17T09:23:30Z"
+  },
+  {
+   "number": 44,
+   "name": "Nine of Wands",
+   "slug": "nine-of-wands",
+   "meaning": "The Nine of Wands carries the feeling of reaching the final stretch after a long, draining effort. It points to resilience, grit, and the instinct to keep going even when you are tired, wary, or carrying the marks of past struggles. This card honors experience hard-won: you know more now, your boundaries are stronger, and your endurance can carry you through one last push toward completion.\n\nIts shadow lies in defensiveness and exhaustion. Vigilance can become mistrust, and healthy caution can harden into expecting trouble everywhere. You may be protecting yourself so fiercely that you leave no room for help, rest, or renewed faith. The card advises persistence, but not blind strain; hold your ground, yet notice where fear is making you brace against life rather than simply stand steady within it.",
+   "word_count": 132,
+   "model": "gpt-5.4-2026-03-05",
+   "effort": "medium",
+   "generated_at": "2026-11-17T09:23:37Z"
+  },
+  {
+   "number": 45,
+   "name": "Ten of Wands",
+   "slug": "ten-of-wands",
+   "meaning": "The Ten of Wands shows the weight of responsibility coming to a peak. It often appears when you are carrying a heavy load, pushing toward completion, and trying to hold everything together through sheer effort. There is determination here, endurance, and the ability to keep going even when the road feels long. It can mark the final stretch of an important task, where hard work is real and the finish line is in sight.\n\nIts shadow lies in burden becoming imbalance. You may be taking on too much, refusing help, or believing every problem is yours to solve alone. Pressure, exhaustion, resentment, and burnout can grow when duty outweighs joy. This card asks whether your effort is still purposeful or whether it has turned into strain for its own sake. The lesson is not simply to work harder, but to work wiser: set something down, delegate, and carry only what truly belongs to you.",
+   "word_count": 154,
+   "model": "gpt-5.4-2026-03-05",
+   "effort": "medium",
+   "generated_at": "2026-11-17T09:23:44Z"
   },
   {
    "number": 46,
@@ -135,6 +475,36 @@
    "generated_at": "2026-11-17T00:00:00Z"
   },
   {
+   "number": 47,
+   "name": "Knight of Wands",
+   "slug": "knight-of-wands",
+   "meaning": "The Knight of Wands carries the heat of movement, ambition, and daring. This is the energy of charging ahead on instinct, driven by excitement, confidence, and a hunger for adventure. It often points to bold action, travel, creative fire, or the courage to pursue what feels alive and meaningful without waiting for perfect conditions. There is charisma here too: the ability to inspire others, take the lead, and turn passion into momentum.\n\nIts challenge lies in how quickly that same fire can burn out or get out of control. The Knight of Wands can become impulsive, reckless, impatient, or more in love with the chase than the follow-through. Promises may be made in a burst of enthusiasm and forgotten just as fast; strong attraction or ambition can tip into restlessness, ego, or drama. At its best, this card urges brave, wholehearted action. At its worst, it warns against rushing ahead without direction, discipline, or care for consequences.",
+   "word_count": 157,
+   "model": "gpt-5.4-2026-03-05",
+   "effort": "medium",
+   "generated_at": "2026-11-17T09:23:51Z"
+  },
+  {
+   "number": 48,
+   "name": "Queen of Wands",
+   "slug": "queen-of-wands",
+   "meaning": "The Queen of Wands carries warm, magnetic confidence. She is the energy of someone who knows who they are and does not need to force it: creative, passionate, socially radiant, and able to inspire others simply by being fully present. This card points to courage, independence, and the kind of charisma that comes from self-belief. It favors bold action, leadership, generosity, and trusting your instincts, especially when you are being called to step into visibility or take ownership of your gifts.\n\nHer shadow appears when confidence hardens into pride or control. Then this same fire can become impatience, jealousy, possessiveness, or a need to dominate the room and be admired. It can also show burnout from always being “on,” or a tendency to act from ego rather than genuine warmth. At its best, this card asks you to shine without apology and encourage others to do the same; at its worst, it warns against letting insecurity dress itself up as certainty. The deeper lesson is to balance passion with self-awareness, so your fire warms rather than scorches.",
+   "word_count": 177,
+   "model": "gpt-5.4-2026-03-05",
+   "effort": "medium",
+   "generated_at": "2026-11-17T09:24:00Z"
+  },
+  {
+   "number": 49,
+   "name": "King of Wands",
+   "slug": "king-of-wands",
+   "meaning": "The King of Wands carries the force of vision made confident and visible. This is the energy of a natural leader: bold, charismatic, creative, and unafraid to act on inspiration. He trusts his instincts, sees the larger picture, and has the courage to turn ideas into momentum. At his best, he inspires others not through control but through conviction, generosity, and the steady belief that something greater can be built.\n\nAt the same time, this card warns of fire that can burn too hot. Confidence can harden into arrogance, passion into impatience, and leadership into dominance. The King of Wands can become impulsive, stubborn, or so certain of his own direction that he ignores practical limits or the needs of others. There may be a tendency to demand loyalty, rush ahead, or confuse intensity with wisdom.\n\nTaken as a whole, this card asks for strong-hearted action guided by maturity. It favors courage, initiative, and bold self-expression, but reminds you that true authority does not need to overpower. The most powerful version of this energy is visionary and disciplined: warm rather than overbearing, daring without being reckless, and fully able to inspire while still listening.",
+   "word_count": 194,
+   "model": "gpt-5.4-2026-03-05",
+   "effort": "medium",
+   "generated_at": "2026-11-17T09:24:09Z"
+  },
+  {
    "number": 50,
    "name": "Ace of Cups",
    "slug": "ace-of-cups",
@@ -143,6 +513,226 @@
    "model": "gpt-5.4-2026-03-05",
    "effort": "medium",
    "generated_at": "2026-11-17T00:00:00Z"
+  },
+  {
+   "number": 51,
+   "name": "Two of Cups",
+   "slug": "two-of-cups",
+   "meaning": "The Two of Cups centers on connection: the spark of mutual recognition, emotional balance, and the feeling of meeting someone as an equal. It often points to partnership in its many forms—romantic, friendly, creative, or professional—where trust, attraction, and goodwill flow both ways. There is a sense of harmony here, of being seen and received, and of two people choosing to meet with openness rather than defensiveness. It can also describe reconciliation, heartfelt conversation, and the healing that comes when vulnerability is answered with care.\n\nIts shadow appears when the desire for union turns into overdependence, projection, or losing yourself in another person’s approval. What looks like perfect harmony can mask avoidance of conflict, unequal effort, or a bond built more on fantasy than truth. This card asks for closeness, but not at the cost of self-respect; intimacy works best when both people bring honesty, boundaries, and emotional maturity. At its best, it is a beautiful exchange of love and understanding. At its worst, it warns against attachment that feels intoxicating but asks you to abandon your own center.",
+   "word_count": 179,
+   "model": "gpt-5.4-2026-03-05",
+   "effort": "medium",
+   "generated_at": "2026-11-17T09:24:17Z"
+  },
+  {
+   "number": 52,
+   "name": "Three of Cups",
+   "slug": "three-of-cups",
+   "meaning": "The Three of Cups carries the warmth of shared joy: friendship, celebration, and the relief of not having to carry life alone. It often points to reunions, good news, creative collaboration, or simple happiness found in companionship. There is generosity here, emotional support, laughter, and the kind of connection that reminds you healing can happen in community as much as in solitude.\n\nAt its best, this card encourages gratitude, gathering, and letting yourself be seen in a circle that welcomes you. It can mark milestones, parties, teamwork, and the pleasure of mutual encouragement. The heart of it is abundance multiplied through connection.\n\nIts shadow appears when togetherness turns shallow or excessive. What should be support can become gossip, social drama, exclusion, or pressure to perform happiness. It can also point to overindulgence, blurred boundaries, or scattering your energy across too many people and too much noise. In that sense, the card asks whether your connections truly nourish you, or whether they are distracting you from deeper emotional truth.",
+   "word_count": 168,
+   "model": "gpt-5.4-2026-03-05",
+   "effort": "medium",
+   "generated_at": "2026-11-17T09:24:26Z"
+  },
+  {
+   "number": 53,
+   "name": "Four of Cups",
+   "slug": "four-of-cups",
+   "meaning": "A still, inward mood surrounds the Four of Cups. It often appears when emotions have gone flat, not because nothing is being offered, but because the heart is preoccupied, tired, or quietly dissatisfied. This card points to a pause in desire: a moment of reflection, reevaluation, and stepping back from outer distractions to ask what truly matters. At its best, it brings discernment. It helps you stop grasping at what does not nourish you and creates space to recognize a more meaningful opportunity when it appears.\n\nIts shadow lies in apathy, withdrawal, and missing the blessing in front of you. The Four of Cups can show boredom, emotional sulking, ingratitude, or a tendency to reject help, love, or possibility because it does not arrive in the expected form. It warns against becoming so absorbed in disappointment or inner brooding that you close the door on renewal. The lesson here is gentle but clear: rest and reflection have value, but eventually the heart must look up again and choose whether to remain stuck or receive what life is quietly offering.",
+   "word_count": 179,
+   "model": "gpt-5.4-2026-03-05",
+   "effort": "medium",
+   "generated_at": "2026-11-17T09:24:35Z"
+  },
+  {
+   "number": 54,
+   "name": "Five of Cups",
+   "slug": "five-of-cups",
+   "meaning": "The Five of Cups centers on loss, disappointment, and the heavy pull of grief. It often appears when something has not turned out as hoped, leaving regret, sadness, or a sense of emotional emptiness. Its shadow lies in becoming so absorbed in what is gone that you miss what still remains: support, possibility, and the chance to rebuild. It can point to dwelling on mistakes, clinging to guilt, or letting sorrow narrow your vision.\n\nYet this card is not without hope. Beneath the mourning is a quiet reminder that not everything has been lost, and that healing begins when you lift your eyes from the wound and notice what is still standing. It invites honest feeling rather than denial, but also asks for resilience, acceptance, and the willingness to move forward in time. The pain is real, but it is not the whole story.\n\nAt its best, this card marks the turning point between heartbreak and renewal: the moment when sorrow is honored, lessons are gathered, and the heart slowly opens to what can still be saved, restored, or newly found.",
+   "word_count": 181,
+   "model": "gpt-5.4-2026-03-05",
+   "effort": "medium",
+   "generated_at": "2026-11-17T09:24:42Z"
+  },
+  {
+   "number": 55,
+   "name": "Six of Cups",
+   "slug": "six-of-cups",
+   "meaning": "The Six of Cups carries the feeling of returning to something gentle and familiar: childhood memories, old friends, simple pleasures, or a part of yourself that once felt open and trusting. It often points to kindness freely given, emotional warmth, and the healing that can come from innocence, generosity, and heartfelt connection. There is sweetness here, a reminder that comfort and love do not always need to be earned through struggle.\n\nIts shadow lies in getting lost in the past. Nostalgia can soften reality until yesterday seems safer than today, and longing for what was can keep you from fully meeting what is. This card can also hint at emotional immaturity, idealizing people or memories, or seeking refuge in innocence when growth asks for something more honest and present. At its best, it invites you to let the past nourish you without allowing it to hold you back.",
+   "word_count": 148,
+   "model": "gpt-5.4-2026-03-05",
+   "effort": "medium",
+   "generated_at": "2026-11-17T09:24:50Z"
+  },
+  {
+   "number": 56,
+   "name": "Seven of Cups",
+   "slug": "seven-of-cups",
+   "meaning": "The Seven of Cups suggests a mind full of possibilities: dreams, temptations, visions of what could be. It can mark a fertile, imaginative moment when inspiration is plentiful and new options seem to appear everywhere. At its best, this card invites creative thinking, intuition, and the willingness to explore more than one path before choosing. It reminds you that desire and imagination are powerful forces, and that hope can open doors reality has not yet shown.\n\nAt the same time, this card warns that not every glittering option is real, wise, or healthy. Too many choices can blur judgment, and fantasy can become confusion, avoidance, or wishful thinking. There may be illusion, mixed signals, overidealizing, or the temptation to chase what looks magical rather than what is solid. The lesson here is to separate vision from delusion: dream boldly, but ground yourself in truth, discernment, and action so that possibility becomes something real instead of remaining a beautiful distraction.",
+   "word_count": 159,
+   "model": "gpt-5.4-2026-03-05",
+   "effort": "medium",
+   "generated_at": "2026-11-17T09:24:57Z"
+  },
+  {
+   "number": 57,
+   "name": "Eight of Cups",
+   "slug": "eight-of-cups",
+   "meaning": "A quiet turning point lives in the Eight of Cups: the moment when staying where you are is no longer enough, even if much has already been built. It often points to walking away from what is familiar in search of deeper meaning, emotional truth, or spiritual fulfillment. There can be courage here, a willingness to leave behind comfort, habit, or partial satisfaction in order to follow an inner calling. This card suggests maturity, honesty with yourself, and the strength to choose a path that feels more real, even when it is uncertain.\n\nIts shadow lies in loss, loneliness, and the ache of departure. It can show disappointment, restlessness, or the sense that something once valued now feels empty. Sometimes it reflects withdrawal, avoidance, or a tendency to abandon situations too soon rather than face what is difficult. At its best, this card is a necessary leaving that creates space for growth; at its hardest, it can feel like disillusionment, grief, or wandering without clear direction. Either way, it marks a threshold between what has been outgrown and what still waits to be found.",
+   "word_count": 184,
+   "model": "gpt-5.4-2026-03-05",
+   "effort": "medium",
+   "generated_at": "2026-11-17T09:25:04Z"
+  },
+  {
+   "number": 58,
+   "name": "Nine of Cups",
+   "slug": "nine-of-cups",
+   "meaning": "The Nine of Cups carries the warmth of satisfaction, pleasure, and emotional reward. It points to getting something you have hoped for, or realizing that much of what you need is already within reach. There is confidence here, a sense of being at ease in yourself, able to enjoy comfort, affection, and the sweeter parts of life without apology. It can mark a moment of gratitude, celebration, and quiet pride in how far you have come.\n\nIts shadow appears when fulfillment turns into excess or self-congratulation. The same comfort can become complacency, indulgence, or a habit of chasing pleasure while avoiding deeper needs. It may suggest smugness, emotional laziness, or discovering that having your wish granted does not automatically bring lasting peace. At its best, this card invites you to savor your blessings fully while staying humble, generous, and honest about what truly satisfies the heart.",
+   "word_count": 146,
+   "model": "gpt-5.4-2026-03-05",
+   "effort": "medium",
+   "generated_at": "2026-11-17T09:25:13Z"
+  },
+  {
+   "number": 59,
+   "name": "Ten of Cups",
+   "slug": "ten-of-cups",
+   "meaning": "The Ten of Cups carries the feeling of emotional fullness: love that is shared openly, harmony at home, and the deep relief of belonging. It points to happiness that goes beyond a passing mood, suggesting relationships built on trust, kindness, and shared values. This card often reflects family joy, lasting partnership, friendship, community, and the sense that the heart has found a place where it can rest.\n\nIts shadow lies in the pressure to make life look perfect, or in mistaking appearances of happiness for the real thing. It can hint at idealizing family, love, or togetherness so much that real tensions get ignored, buried, or denied. Sometimes it shows disappointment when a dream of emotional completion proves harder to sustain than imagined, or when personal needs are sacrificed to keep the peace.\n\nAt its best, this card is a reminder that true contentment grows from honesty, mutual care, and emotional generosity. It invites gratitude for the love that is present while asking for sincerity, so that harmony is not just performed, but genuinely lived.",
+   "word_count": 175,
+   "model": "gpt-5.4-2026-03-05",
+   "effort": "medium",
+   "generated_at": "2026-11-17T09:25:21Z"
+  },
+  {
+   "number": 60,
+   "name": "Page of Cups",
+   "slug": "page-of-cups",
+   "meaning": "A fresh, tender energy moves through the Page of Cups: curiosity, feeling, imagination, and the first stirrings of emotional insight. This card often points to a gentle opening of the heart, a message that touches you deeply, or a moment when intuition arrives in a quiet but unmistakable way. It can describe someone dreamy, kind, creative, and emotionally sincere, or a situation that invites softness, vulnerability, and wonder rather than control. There is innocence here, but also real potential for inspiration, healing, and unexpected joy.\n\nIts shadow side appears when sensitivity turns into fragility, avoidance, or fantasy. Emotions may be strong but not yet steady, leading to moodiness, immaturity, or a tendency to retreat into wishful thinking instead of facing reality. Promises can be sweet but vague, and intuition can get tangled with projection or escapism. At its best, this card encourages you to stay open without becoming ungrounded: to trust feeling, welcome creative and emotional beginnings, and let your heart learn without letting it drift too far from the truth.",
+   "word_count": 171,
+   "model": "gpt-5.4-2026-03-05",
+   "effort": "medium",
+   "generated_at": "2026-11-17T09:25:29Z"
+  },
+  {
+   "number": 61,
+   "name": "Knight of Cups",
+   "slug": "knight-of-cups",
+   "meaning": "The Knight of Cups carries the energy of a dream in motion: charm, romance, imagination, and the courage to follow the heart. This card often points to invitations, emotional messages, creative opportunities, or a person who is gentle, artistic, and guided more by feeling than by logic. There is grace here, and a willingness to approach life with tenderness, beauty, and sincerity. It can mark a time of pursuing what inspires you, trusting intuition, and letting emotion become a source of connection rather than something to hide.\n\nIts shadow lies in how easily feeling can drift into fantasy. The Knight of Cups can promise much but struggle to ground those promises in reality, showing moodiness, avoidance, idealization, or a tendency to chase longing itself rather than what is truly possible. Charm may become inconsistency, romance may become illusion, and sensitivity may turn into escapism. At its best, this card invites heartfelt action and inspired devotion; at its worst, it warns against being carried away by appearances, wishful thinking, or emotions that have not yet found steady direction.",
+   "word_count": 177,
+   "model": "gpt-5.4-2026-03-05",
+   "effort": "medium",
+   "generated_at": "2026-11-17T09:25:37Z"
+  },
+  {
+   "number": 62,
+   "name": "Queen of Cups",
+   "slug": "queen-of-cups",
+   "meaning": "The Queen of Cups embodies deep feeling guided by quiet wisdom. She is compassionate, intuitive, and emotionally perceptive, often sensing what lies beneath words and appearances. This card points to kindness, healing, and the ability to hold space for others without judgment. It can describe a person who is nurturing and imaginative, or an invitation to trust your inner knowing, listen to your heart, and respond with gentleness rather than force.\n\nHer shadow appears when sensitivity turns into overwhelm. Emotions may blur clear judgment, boundaries can become too soft, and caring for others may slip into self-sacrifice, dependency, or avoidance of hard truths. At its most difficult, this card can suggest moodiness, idealization, or being so caught in feelings and fantasy that practical reality is neglected. The deeper lesson is to honor emotion without drowning in it: to remain open-hearted, but also anchored, discerning, and true to yourself.",
+   "word_count": 148,
+   "model": "gpt-5.4-2026-03-05",
+   "effort": "medium",
+   "generated_at": "2026-11-17T09:25:44Z"
+  },
+  {
+   "number": 63,
+   "name": "King of Cups",
+   "slug": "king-of-cups",
+   "meaning": "The King of Cups embodies emotional mastery: calm, compassionate, and steady even when life grows choppy. He suggests a person or energy that can feel deeply without being ruled by feeling, offering wise counsel, patience, and quiet strength. There is kindness here, but not weakness—this is the heart tempered by experience, able to hold space for others, make fair decisions, and respond with maturity rather than impulse.\n\nAt his best, he brings healing, diplomacy, loyalty, and a soothing presence that helps restore balance. He can point to creative depth, spiritual insight, and the ability to lead with empathy. Yet his shadow side appears when emotions are controlled too tightly or used indirectly: moodiness hidden behind a calm face, manipulation through guilt or charm, emotional distance, or a tendency to avoid hard truths in order to keep the peace. In some moments, he can become passive, self-protective, or quietly overwhelmed beneath the surface.\n\nThis card asks for emotional honesty joined with self-command. It favors compassion that has boundaries, sensitivity guided by wisdom, and the courage to remain centered without shutting down.",
+   "word_count": 180,
+   "model": "gpt-5.4-2026-03-05",
+   "effort": "medium",
+   "generated_at": "2026-11-17T09:25:53Z"
+  },
+  {
+   "number": 64,
+   "name": "Ace of Swords",
+   "slug": "ace-of-swords",
+   "meaning": "A sudden flash of clarity cuts through confusion here. The Ace of Swords points to truth, insight, and the power of the mind to name what is real. It can mark a breakthrough, an important conversation, a decisive idea, or the moment when uncertainty gives way to firm understanding. There is courage in this card too: the willingness to think clearly, act honestly, and make a clean choice even when it is uncomfortable.\n\nIts edge, however, can be sharp. The same force that brings truth can become coldness, harsh words, rigid thinking, or the urge to “win” at the expense of compassion. This card may show mental pressure, conflict, or a truth that cannot be avoided any longer. At its best, it invites clear judgment, integrity, and a fresh start born from insight; in its shadow, it warns against cruelty, overthinking, and using intellect as a weapon rather than a guide.",
+   "word_count": 151,
+   "model": "gpt-5.4-2026-03-05",
+   "effort": "medium",
+   "generated_at": "2026-11-17T09:26:00Z"
+  },
+  {
+   "number": 65,
+   "name": "Two of Swords",
+   "slug": "two-of-swords",
+   "meaning": "The Two of Swords captures a moment of pause, where the mind tries to hold two opposing truths in balance. It often appears when a decision cannot be rushed, when stepping back, becoming still, and protecting your peace is wiser than reacting too soon. At its best, this card shows self-control, careful judgment, and the ability to remain calm in the middle of tension. It suggests a need to listen inwardly, gather facts, and create enough quiet to see clearly.\n\nIts shadow lies in avoidance. The balance here can become a stalemate, with crossed thoughts, guarded emotions, and an unwillingness to face what is already known deep down. Fear of conflict, fear of choosing wrongly, or emotional numbness can keep everything suspended long after the moment for reflection has passed. This card reminds you that peace is not always found by keeping everything at bay; sometimes clarity comes only when you lower your defenses, acknowledge what you feel, and make the choice you have been postponing.",
+   "word_count": 166,
+   "model": "gpt-5.4-2026-03-05",
+   "effort": "medium",
+   "generated_at": "2026-11-17T09:26:06Z"
+  },
+  {
+   "number": 66,
+   "name": "Three of Swords",
+   "slug": "three-of-swords",
+   "meaning": "The Three of Swords points to heartbreak, disappointment, and the sharp clarity that comes when something painful can no longer be ignored. It often appears when grief, separation, betrayal, or hard truths have pierced the heart, leaving sorrow out in the open. Its difficult side is plain: words can wound, conflict can cut deeply, and the mind can keep pain alive by replaying it again and again. This card does not soften what hurts; it shows the sting of loss and the loneliness that can come with it.\n\nYet there is also honesty and release here. What has been hidden is revealed, and however painful that may be, truth allows healing to begin. The Three of Swords can mark the moment of necessary sadness that clears away illusion, helping you face reality with courage and emotional maturity. It reminds you that pain is not the end of the story; by feeling it fully, learning from it, and letting it move through you, wisdom, compassion, and eventual renewal become possible.",
+   "word_count": 169,
+   "model": "gpt-5.4-2026-03-05",
+   "effort": "medium",
+   "generated_at": "2026-11-17T09:26:14Z"
+  },
+  {
+   "number": 67,
+   "name": "Four of Swords",
+   "slug": "four-of-swords",
+   "meaning": "The Four of Swords points to a necessary pause: a quiet space to rest, recover, and let the mind settle after strain, conflict, or overstimulation. It suggests healing through stillness, retreat, sleep, meditation, or simply stepping back long enough to regain perspective. Rather than urging action, this card often reminds you that clarity returns when you stop forcing answers and give yourself permission to be still.\n\nIts shadow lies in stagnation, withdrawal, or avoidance. Rest can become hiding; solitude can turn into isolation; reflection can harden into overthinking. If this card appears in a difficult moment, it may show exhaustion that has gone too far, emotional shutdown, or a reluctance to re-enter life after disappointment. The lesson is balance: restore yourself fully, but do not remain in suspension forever. This is a sacred interval, not a permanent retreat.",
+   "word_count": 138,
+   "model": "gpt-5.4-2026-03-05",
+   "effort": "medium",
+   "generated_at": "2026-11-17T09:26:20Z"
+  },
+  {
+   "number": 68,
+   "name": "Five of Swords",
+   "slug": "five-of-swords",
+   "meaning": "The Five of Swords points to conflict where the cost of “winning” may be too high. It can mark arguments, power struggles, ego clashes, or the sharp aftermath of betrayal, where someone walks away feeling humiliated, defensive, or alone. This card often shows the bitter edge of the mind: sarcasm, manipulation, hollow victories, and the temptation to prove a point rather than protect a relationship. It asks whether the battle in front of you is truly worth the damage it may leave behind.\n\nYet there is a useful truth here. The card can signal the moment you see unhealthy dynamics clearly and refuse to keep playing by cruel rules. It may mean choosing self-protection, setting a hard boundary, or recognizing that not every contest deserves your energy. At its best, it brings honesty about conflict, motives, and consequences, helping you learn when to stand your ground and when wisdom lies in stepping back. Its lesson is sharp but important: real strength is not just in defeating others, but in knowing what kind of victory you can live with afterward.",
+   "word_count": 179,
+   "model": "gpt-5.4-2026-03-05",
+   "effort": "medium",
+   "generated_at": "2026-11-17T09:26:27Z"
+  },
+  {
+   "number": 69,
+   "name": "Six of Swords",
+   "slug": "six-of-swords",
+   "meaning": "The Six of Swords points to a passage out of turmoil and into quieter waters. It often appears when the worst of a conflict, crisis, or mental strain is beginning to ease, even if relief is not yet complete. There is movement here: a journey, a necessary transition, or the choice to leave behind what has become too painful, chaotic, or limiting. Its gentler promise is healing through distance, clearer thinking, and the wisdom to accept that peace sometimes requires departure.\n\nYet this card is rarely carefree. The crossing can feel heavy, marked by sadness, uncertainty, or the knowledge that something must be left behind before something better can be reached. Its shadow side can show emotional withdrawal, avoidance, or a tendency to escape rather than truly resolve what hurts. Progress is possible, but it may come with grief, numbness, or the sense of carrying old wounds into a new place. Even so, it suggests that moving on, however imperfectly, is better than remaining trapped in what has already run its course.",
+   "word_count": 172,
+   "model": "gpt-5.4-2026-03-05",
+   "effort": "medium",
+   "generated_at": "2026-11-17T09:26:34Z"
+  },
+  {
+   "number": 70,
+   "name": "Seven of Swords",
+   "slug": "seven-of-swords",
+   "meaning": "The Seven of Swords points to strategy, independence, and acting with careful thought rather than blunt force. It often appears when success depends on subtlety: keeping plans private, thinking several moves ahead, or finding an unconventional way through a problem. At its best, this card shows cleverness, adaptability, and the ability to protect your interests in a situation where openness may not be safe or wise.\n\nIts more difficult side is mistrust, evasion, and the temptation to cut corners. It can reflect deception, hidden motives, avoidance of responsibility, or trying to “win” without integrity. Sometimes it shows someone being dishonest; other times it suggests self-deception, fear of confrontation, or slipping away instead of dealing directly with what is true. The deeper lesson is to use intelligence without losing honesty, and to ask whether secrecy is serving wisdom or simply feeding anxiety.",
+   "word_count": 141,
+   "model": "gpt-5.4-2026-03-05",
+   "effort": "medium",
+   "generated_at": "2026-11-17T09:26:40Z"
+  },
+  {
+   "number": 71,
+   "name": "Eight of Swords",
+   "slug": "eight-of-swords",
+   "meaning": "The Eight of Swords points to a feeling of being trapped, hemmed in by fear, doubt, or the belief that there are no good options. It often appears when the mind has tightened around a problem so much that every path looks blocked. Anxiety, overthinking, and harsh self-judgment can make limits seem absolute, even when they are only partly real. Its shadow side is paralysis: staying stuck because of old stories, outside pressure, or the habit of assuming powerlessness.\n\nYet this card also carries the beginning of release. The barriers around you are not as fixed as they seem, and a change in perspective can loosen what feels impossible. It asks for honesty about where you have given away your agency, and courage to take one small, clear step instead of waiting for total certainty. There may be constraints, but there is also more room to move than fear first allows.\n\nAt its best, the Eight of Swords is a turning point from mental imprisonment to self-awareness. It reminds you that clarity returns when you stop treating every thought as a fact. Help, truth, and freedom become available once you question the cage and recognize the part of you that can still choose.",
+   "word_count": 203,
+   "model": "gpt-5.4-2026-03-05",
+   "effort": "medium",
+   "generated_at": "2026-11-17T09:26:49Z"
+  },
+  {
+   "number": 72,
+   "name": "Nine of Swords",
+   "slug": "nine-of-swords",
+   "meaning": "The Nine of Swords points to a mind caught in the dark hours, where worry grows louder and fears seem more absolute than they are. It often appears when guilt, regret, anxiety, or sleeplessness are pressing hard, suggesting suffering that is intense but also deeply mental and emotional. This card can describe the weight of imagining worst-case outcomes, punishing yourself for the past, or feeling alone with thoughts you cannot switch off.\n\nYet within it is the chance to face what has been haunting you instead of letting it rule from the shadows. The pain here is real, but not always as fixed or hopeless as it appears, and this card can mark the moment when hidden distress must finally be acknowledged, named, and shared. Its harder side is anguish, despair, and mental torment; its wiser side is the beginning of release, when honesty, support, and perspective start to loosen fear’s grip and make room for healing.",
+   "word_count": 157,
+   "model": "gpt-5.4-2026-03-05",
+   "effort": "medium",
+   "generated_at": "2026-11-17T09:26:55Z"
   },
   {
    "number": 73,
@@ -155,6 +745,26 @@
    "generated_at": "2026-11-17T00:00:00Z"
   },
   {
+   "number": 74,
+   "name": "Page of Swords",
+   "slug": "page-of-swords",
+   "meaning": "The Page of Swords carries the energy of a quick mind waking up to the world. It points to curiosity, sharp observation, new ideas, and the urge to ask questions, challenge assumptions, and learn fast. There is alertness here, a readiness to notice what others miss, and the courage to say what needs saying. This card often appears when truth matters, when mental clarity is growing, or when someone is beginning to find their voice through honesty, study, strategy, or lively debate.\n\nIts edge, though, can cut both ways. The same brightness can become restlessness, suspicion, defensiveness, or a habit of reacting before understanding the full picture. It may show gossip, argument for its own sake, nervous energy, or intelligence used without tact. At its best, this card encourages clear thinking, vigilance, and brave communication; at its hardest, it warns against immaturity, sharp words, and mistaking cleverness for wisdom. The lesson is to stay curious without becoming combative, and to pair truth with patience.",
+   "word_count": 164,
+   "model": "gpt-5.4-2026-03-05",
+   "effort": "medium",
+   "generated_at": "2026-11-17T09:27:02Z"
+  },
+  {
+   "number": 75,
+   "name": "Knight of Swords",
+   "slug": "knight-of-swords",
+   "meaning": "The Knight of Swords carries the force of momentum, sharp thinking, and the urge to act without delay. This card points to ambition, courage, and a mind that cuts quickly to the heart of a problem. It can show someone driven by conviction, eager to defend what they believe, push through obstacles, and chase a goal with fierce determination. At its best, it brings honesty, decisiveness, and the kind of bold energy that gets things moving when hesitation would only waste time.\n\nIts shadow lies in speed without reflection. The same intensity that makes this knight brave can turn reckless, argumentative, or blind to consequences. There may be impatience, harsh words, a need to win, or a habit of charging ahead before emotions, facts, or other people have been fully considered. This card often asks for discipline: keep the clarity and courage, but temper them with restraint, so that intelligence becomes strategy rather than conflict for its own sake.",
+   "word_count": 159,
+   "model": "gpt-5.4-2026-03-05",
+   "effort": "medium",
+   "generated_at": "2026-11-17T09:27:08Z"
+  },
+  {
    "number": 76,
    "name": "Queen of Swords",
    "slug": "queen-of-swords",
@@ -163,6 +773,16 @@
    "model": "gpt-5.4-2026-03-05",
    "effort": "medium",
    "generated_at": "2026-11-17T00:00:00Z"
+  },
+  {
+   "number": 77,
+   "name": "King of Swords",
+   "slug": "king-of-swords",
+   "meaning": "The King of Swords embodies clear judgment, authority, and the power of a disciplined mind. This is the part of you, or a person around you, who can cut through confusion, set emotion aside long enough to see the truth, and make decisions based on principle rather than impulse. He values honesty, logic, fairness, and strong boundaries, and often points to wise counsel, strategic thinking, or leadership rooted in experience and self-control.\n\nAt his best, he brings integrity, sharp perception, and the courage to name things exactly as they are. He can represent mastery of communication, a talent for analysis, and the ability to act with calm objectivity in difficult situations. Yet his shadow side is coldness, rigidity, or using intellect as a weapon. He may become overly critical, distant, controlling, or so attached to being right that compassion gets pushed aside. This card asks for truth, but also reminds you that truth without humanity can become harsh, and authority without heart can isolate.",
+   "word_count": 164,
+   "model": "gpt-5.4-2026-03-05",
+   "effort": "medium",
+   "generated_at": "2026-11-17T09:27:14Z"
   }
  ]
 }
