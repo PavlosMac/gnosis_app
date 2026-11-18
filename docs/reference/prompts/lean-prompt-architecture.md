@@ -47,7 +47,11 @@ composed cleanly.
 
 ## 2. Pipeline
 
-One call per interpretation, same port (`LLMPort`), same error mapping:
+One call per interpretation, same port (`LLMPort`), same error mapping. The sketch
+below is the standard template for a spread that sends a question. The Oracle identity
+and question analysis are dropped for every spread whose frontend config sends no
+question (Tree of Life, Relationship Reading, Career Reading, Past/Present/Future,
+Fire/Water/Air/Earth); see the amendments in §3 and `bugs.md` (2026-11-18):
 
 ```
 system  = IDENTITY            master Rider–Waite reader, own knowledge + numerology/astrology
@@ -63,6 +67,9 @@ system  = IDENTITY            master Rider–Waite reader, own knowledge + numer
         + LENGTH(total_words) ceiling, not a target
 
 user    = "Question: …" | "No question was asked — let the spread itself set the agenda."
+          (only for spreads whose config sends a question — Significators, Tree of Life,
+          Relationship, Career, Past/Present/Future and Fire/Water/Air/Earth get no
+          question line at all)
         + "Spread: <name> (<n> cards)"
         + one line per card:  "<i>. <Name> (<orientation>) — <Position>: <position_description>"
 
@@ -213,8 +220,20 @@ past, Malkuth six months ahead) — but the POSITION handling is recast for the 
 all — the frontend owns its spread catalog and sends each card's zone and meaning as
 `position`/`position_description`, like any spread. The template keeps only the
 spread-level **three-pillar structure** (Mercy/Severity/Middle temporal currents),
-which no single card line can carry. The draft below predates that amendment; the
-current template is in [`prompt-reference.md`](prompt-reference.md).
+which no single card line can carry.
+*Amended 2026-11-18*: the Tree **no longer has a question axis**. The frontend never
+sends a question for this spread (`readings-config.json` has no `showQuestion` for it),
+so QUESTION_ANALYSIS plus the user line "No question was asked…" made the model open
+readings with "With no single question to narrow it, …". The template now drops
+ORACLE_IDENTITY and QUESTION_ANALYSIS, rewords the reversal guidance ("whichever the
+zone makes apt" — Daath sits on no pillar), ends on "what the whole Tree resolves to for
+the querent" and loses "no restating the question"; the user prompt carries no question
+line, and a question sent by a raw API caller is dropped. Career Reading,
+Past/Present/Future and Fire/Water/Air/Earth got the same treatment on the standard
+template. **Everything in the draft below that mentions a question — the first
+paragraph block, the reversal wording, "as the question demands" and "for the
+question" — predates these amendments**, as does the zone list; the current template is
+in [`prompt-reference.md`](prompt-reference.md).
 
 ```
 You are a master tarot reader working with the Rider–Waite deck, drawing on your own
@@ -503,7 +522,8 @@ prompt names are finally identical — no Thoth alias mismatch to guard against.
   $ budgets the reading length is the dominant cost lever, so the server holds it —
   `llm_words_per_card` (default 100) × cards, ×1.5 for significator charts.
 - **Reversed guidance in every situational spread**: the ORIENTATION block appears in
-  Standard, Tree of Life and Relationship Reading (the latter with adapted wording).
+  Standard, Tree of Life and Relationship Reading, each with wording that names only
+  what that spread has (`_reversal_guidance(basis)`).
   *(Amended: this originally read "significator charts included", but the shipped
   Significators template carries **no** reversal block — the portrait framing reads
   each card as a fixed facet of character. If reversed significator cards should get

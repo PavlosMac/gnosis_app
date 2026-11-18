@@ -406,9 +406,9 @@ Each decision should include:
 - The product calls the interpreter "the Oracle" ("Living Oracle", "LO"), and querents write that name into their questions. Without a rule the model read it as a third party and reported what "the Oracle" would say. A first wording ("anything named … Oracle", "an abbreviation such as LO") also caught real third parties: a job at Oracle, a friend called Lo, a loan officer.
 
 **Decision:**
-- One `_ORACLE_IDENTITY` block, first in `_SITUATIONAL_FRAME` (Standard and Tree of Life, the only variants that carry a question; Significators and Relationship get none)
+- One `_ORACLE_IDENTITY` block, first in `_QUESTION_FRAME` (used by the Standard template when the spread sends a question; every other variant gets none). *Amended 2026-11-18*: the block was first shared with Tree of Life, but the frontend never sends a question for the Tree, Career Reading, Past/Present/Future or Fire/Water/Air/Earth, so those templates lost the whole question frame (see `bugs.md`, same date)
 - It applies only when the question addresses or asks about the Oracle, gives a worked example, reads a same-named company, place or person as written, and has a question about the model answered briefly in its own voice before the reading
-- Static, not gated on the request having a question: the system prompt stays a stable prefix, at the cost of a few dozen tokens on question-less readings
+- Static, not gated on the request having a question: the system prompt stays a stable prefix, at the cost of a few dozen tokens on standard readings whose question is left blank
 
 **Alternatives Considered:**
 - Alias list (Oracle, LO, Living Oracle) -> Rejected: brittle against every phrasing a querent invents

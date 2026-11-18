@@ -41,7 +41,7 @@ DOC_PATH = (
 )
 
 SAMPLE_REQUEST = InterpretationRequest(
-    spread_name="Past-Present-Future",
+    spread_name="Three Card",
     question="Should I take the job offer in Lisbon?",
     cards=[
         CardInSpread(
@@ -79,7 +79,6 @@ _SIGNIFICATORS_REQUEST = InterpretationRequest(
 
 _TREE_REQUEST = InterpretationRequest(
     spread_name="Tree of Life",
-    question="How do I rebuild my life after the divorce?",
     cards=[
         CardInSpread(name="The Star", position="Kether", orientation=Orientation.upright),
         CardInSpread(name="The Magician", position="Chokmah", orientation=Orientation.upright),

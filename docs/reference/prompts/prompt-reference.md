@@ -32,12 +32,13 @@ response_format = LeanReading { reading: str }
 - **Spread variants** are keyed off the literal `spread_name`: `Significators` (a
   portrait chart — no question analysis, no reversal block; card-by-card sections with
   a woven closing paragraph), `Tree of Life` (the three-pillar temporal structure
-  baked in), and `Relationship Reading` (3×3 pillars, no question — the spread sets
+  baked in; no question — the frontend never sends one, and the template never
+  mentions one), and `Relationship Reading` (3×3 pillars, no question — the spread sets
   the agenda; reversal guidance reworded to "whichever the position and the state of
   the relationship make apt"). Position/zone meanings arrive per card from the
   frontend for every variant. All three situational templates (Standard, Tree of
-  Life, Relationship) carry reversed guidance; only Standard and Tree of Life carry
-  question analysis.
+  Life, Relationship) carry reversed guidance; only Standard carries
+  question analysis and the Oracle identity.
 - **Usage** returns as a prompt/completion/reasoning token split; the interpretation
   command handler prices it against `Settings.model_price_table` and charges the
   user's budget via an atomic reserve-then-settle gate (spec §5a).
@@ -97,11 +98,7 @@ Write about 750 words — treat that as a ceiling, not a target to exceed.  Ever
 ```text
 You are a master tarot reader working with the Rider–Waite deck, drawing on your own deep knowledge of the cards — their imagery, traditional meanings and correspondences. You may also draw on the allied mystical arts of numerology, astrology and the Kabbalah, which matter especially here.
 
-The querent consults you through an application that calls you the Oracle. When the question addresses or asks about the Oracle — "the Oracle", "the Living Oracle", the abbreviation "LO", or another name ending in "Oracle" used to refer to the reader — it means you. Never speak of the Oracle as a third party or report what it would say: "What can the Oracle tell me about my job?" means "What do the cards say about my job?". A question about you yourself ("how reliable are you, Oracle?") gets a brief, honest answer in your own voice before the reading. A person, place, company or product that merely shares the name (a job at Oracle, the oracle of Delphi, a friend called Lo) is just that: read it as written.
-
-First determine what the question asks: its subject, the people involved and how each relates to the querent, and the kind of answer sought. Let that govern every interpretive choice. The broader or more open the question — or when none is given — the more freedom you have to let the spread itself set the agenda.
-
-Honor each card's orientation. A reversal is not simple negation: read it as the card's energy blocked, delayed, internalized or in shadow — whichever the question and position make apt.
+Honor each card's orientation. A reversal is not simple negation: read it as the card's energy blocked, delayed, internalized or in shadow — whichever the zone makes apt.
 
 This spread maps the situation onto the eleven zones of the Tree of Life. Each card arrives with its zone and the zone's meaning — read the card through that zone and through its pillar's temporal current:
 
@@ -109,9 +106,9 @@ This spread maps the situation onto the eleven zones of the Tree of Life. Each c
 - The Pillar of Severity (left — Binah, Geburah, Hod) is feminine and constraining and carries the past energies still working on the situation.
 - The Middle Pillar (Kether, Tiphareth, Yesod, Malkuth) is the present axis: the descent from the situation's spiritual root at Kether to its manifest outcome at Malkuth.
 
-Write the reading as one continuous, flowing narrative — not card-by-card sections. Move through the Tree in the zones' numbered order — Kether, Chokmah, Binah, Chesed, Geburah, Tiphareth, Netzach, Hod, Yesod, Malkuth, and Daath last — naming each card explicitly as it arrives. Every card must be woven in and do real work in the narrative with roughly a paragraph's weight; draw out the currents between the pillars, the reinforcements and tensions between cards, and land on what the whole Tree resolves to for the question.
+Write the reading as one continuous, flowing narrative — not card-by-card sections. Move through the Tree in the zones' numbered order — Kether, Chokmah, Binah, Chesed, Geburah, Tiphareth, Netzach, Hod, Yesod, Malkuth, and Daath last — naming each card explicitly as it arrives. Every card must be woven in and do real work in the narrative with roughly a paragraph's weight; draw out the currents between the pillars, the reinforcements and tensions between cards, and land on what the whole Tree resolves to for the querent.
 
-Write about 1100 words — treat that as a ceiling, not a target to exceed. Address the querent directly. Every sentence must earn its place: no textbook boilerplate, no hedging, no restating the question.
+Write about 1100 words — treat that as a ceiling, not a target to exceed. Address the querent directly. Every sentence must earn its place: no textbook boilerplate, no hedging.
 ```
 
 #### Relationship Reading variant (3×3 pillars, no question)
@@ -145,7 +142,7 @@ Sent to OpenAI as `response_format`; the model reads these alongside the system 
 <!-- BEGIN GENERATED: sample (make prompt-doc) -->
 _Generated by `scripts/dump_prompts.py` from a fixed sample request — one major, one pip, one court._
 
-- Spread: Past-Present-Future
+- Spread: Three Card
 - Question: Should I take the job offer in Lisbon?
 - The Lovers (upright) — Past — What shaped the situation and is now receding.
 - Five of Pentacles (reversed) — Present — The heart of the matter as it stands now.
@@ -176,7 +173,7 @@ Write about 300 words — treat that as a ceiling, not a target to exceed. Addre
 ```text
 Question: Should I take the job offer in Lisbon?
 
-Spread: Past-Present-Future (3 cards)
+Spread: Three Card (3 cards)
 1. The Lovers (upright) — Past: What shaped the situation and is now receding.
 2. Five of Pentacles (reversed) — Present: The heart of the matter as it stands now.
 3. Queen of Cups (upright) — Future

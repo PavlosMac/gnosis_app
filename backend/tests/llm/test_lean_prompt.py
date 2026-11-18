@@ -6,6 +6,9 @@ here: no card data in any prompt, the Tree of Life variant, and the server-owned
 linear word budget. There is no intent axis: interpretations have no settings.
 """
 
+import json
+from pathlib import Path
+
 import pytest
 
 from src.core.config import settings
@@ -29,7 +32,7 @@ from src.llm.schemas import (
 def _make_request(
     cards: list[CardInSpread],
     question: str | None = "What lies ahead?",
-    spread_name: str = "Past-Present-Future",
+    spread_name: str = "Three Card",
 ) -> InterpretationRequest:
     return InterpretationRequest(
         spread_name=spread_name,
@@ -38,7 +41,7 @@ def _make_request(
     )
 
 
-def _make_system_request(spread_name: str = "Past-Present-Future") -> InterpretationRequest:
+def _make_system_request(spread_name: str = "Three Card") -> InterpretationRequest:
     return _make_request(
         [CardInSpread(name="The Fool", position="Past", orientation=Orientation.upright)],
         spread_name=spread_name,
@@ -111,7 +114,7 @@ def test_user_prompt_contains_spread_header_and_every_card():
         ]
     )
     prompt = build_user_prompt(req)
-    assert "Spread: Past-Present-Future (3 cards)" in prompt
+    assert "Spread: Three Card (3 cards)" in prompt
     for fragment in ("The Fool", "Ace of Cups", "The World", "Past", "Present", "Future"):
         assert fragment in prompt
 
@@ -169,49 +172,45 @@ def test_system_prompt_states_budget_as_ceiling():
 
 def test_system_prompt_tells_the_model_it_is_the_oracle():
     """The app calls the interpreter "the Oracle" and querents write that name into their
-    questions ("what can the oracle tell me about…", "LO"). Both situational templates
-    tell the model that name means itself, so it never reports what "the Oracle" would say
-    as if it were a third party."""
-    for spread_name in ("Past-Present-Future", "Tree of Life"):
-        prompt = build_system_prompt(_make_system_request(spread_name))
-        assert "calls you the Oracle" in prompt
-        assert "means you" in prompt
+    questions ("what can the oracle tell me about…", "LO"). The standard template — the
+    only one that carries a question — tells the model that name means itself, so it
+    never reports what "the Oracle" would say as if it were a third party."""
+    prompt = build_system_prompt(_make_system_request())
+    assert "calls you the Oracle" in prompt
+    assert "means you" in prompt
 
 
 def test_oracle_identity_is_scoped_to_addressing_the_reader():
-    """"Oracle" and "Lo" also name companies, places and people, so the rule is conditioned
+    """ "Oracle" and "Lo" also name companies, places and people, so the rule is conditioned
     on the querent addressing the reader, carries a worked example, and says what to do
     with a question about the model itself."""
-    for spread_name in ("Past-Present-Future", "Tree of Life"):
-        prompt = build_system_prompt(_make_system_request(spread_name))
-        assert "used to refer to the reader" in prompt
-        assert "a job at Oracle" in prompt
-        assert "a friend called Lo" in prompt
-        assert "is just that: read it as written" in prompt
-        assert '"What can the Oracle tell me about my job?" means' in prompt
-        assert "A question about you yourself" in prompt
+    prompt = build_system_prompt(_make_system_request())
+    assert "used to refer to the reader" in prompt
+    assert "a job at Oracle" in prompt
+    assert "a friend called Lo" in prompt
+    assert "is just that: read it as written" in prompt
+    assert '"What can the Oracle tell me about my job?" means' in prompt
+    assert "A question about you yourself" in prompt
 
 
 def test_oracle_identity_precedes_question_analysis_and_reversal_guidance():
     """Identity first, so the question is already read as addressed to the model when it
     is analysed; reversal guidance last, as before."""
-    for spread_name in ("Past-Present-Future", "Tree of Life"):
-        prompt = build_system_prompt(_make_system_request(spread_name))
-        identity = prompt.index("calls you the Oracle")
-        analysis = prompt.index("First determine what the question asks")
-        reversal = prompt.index("Honor each card's orientation")
-        assert identity < analysis < reversal
+    prompt = build_system_prompt(_make_system_request())
+    identity = prompt.index("calls you the Oracle")
+    analysis = prompt.index("First determine what the question asks")
+    reversal = prompt.index("Honor each card's orientation")
+    assert identity < analysis < reversal
 
 
 def test_question_analysis_flows_straight_into_reversal_guidance():
     """No intent axis exists: question analysis and reversal guidance sit exactly one
-    blank line apart in both situational templates — no paragraph gap, no placeholder."""
-    for spread_name in ("Past-Present-Future", "Tree of Life"):
-        prompt = build_system_prompt(_make_system_request(spread_name))
-        assert "This is a predictive reading" not in prompt
-        assert "This is a reflective reading" not in prompt
-        assert "set the agenda.\n\nHonor each card's orientation" in prompt
-        assert "\n\n\n" not in prompt
+    blank line apart in the standard template — no paragraph gap, no placeholder."""
+    prompt = build_system_prompt(_make_system_request())
+    assert "This is a predictive reading" not in prompt
+    assert "This is a reflective reading" not in prompt
+    assert "set the agenda.\n\nHonor each card's orientation" in prompt
+    assert "\n\n\n" not in prompt
 
 
 def test_system_prompt_unknown_spread_returns_default():
@@ -307,11 +306,124 @@ def test_tree_of_life_keeps_the_pillar_structure():
     assert "Middle Pillar" in prompt
 
 
-def test_tree_of_life_stays_situational():
-    """Unlike significators, the Tree keeps question analysis and reversals."""
+def test_tree_of_life_keeps_reversal_guidance():
+    """Unlike significators, the Tree is situational: reversals are read."""
     prompt = build_system_prompt(_make_system_request("Tree of Life"))
-    assert "what the question asks" in prompt
-    assert "reversal" in prompt.lower()
+    assert "Honor each card's orientation" in prompt
+    assert "whichever the zone makes apt" in prompt
+
+
+def test_tree_of_life_system_prompt_carries_no_question_wording():
+    """The frontend never sends a question for this spread. With the shared question
+    analysis in the prompt the model opened readings by remarking on the missing
+    question ("With no single question to narrow it, …"), so the Tree template carries
+    none of the question blocks — nor the Oracle identity, which only matters when a
+    question can address the reader."""
+    prompt = build_system_prompt(_make_system_request("Tree of Life"))
+    assert "First determine what the question asks" not in prompt
+    assert "calls you the Oracle" not in prompt
+    assert "the question and position" not in prompt
+    assert "for the question" not in prompt
+    assert "restating the question" not in prompt
+    assert "land on what the whole Tree resolves to for the querent." in prompt
+    assert "no textbook boilerplate, no hedging." in prompt
+    assert "\n\n\n" not in prompt
+
+
+def test_tree_of_life_reversal_basis_fits_daath():
+    """Daath sits on no pillar, so the reversal basis names only the zone."""
+    prompt = build_system_prompt(_make_system_request("Tree of Life"))
+    assert "whichever the zone makes apt." in prompt
+    assert "its pillar make apt" not in prompt
+
+
+def test_tree_of_life_user_prompt_has_no_question_line():
+    """No question line and no "No question was asked" line — a question sent anyway by
+    a raw API caller is dropped, matching Significators and Relationship."""
+    for question in (None, "Will it last?"):
+        req = _make_request(
+            [CardInSpread(name="The Star", position="Kether", orientation=Orientation.upright)],
+            question=question,
+            spread_name="Tree of Life",
+        )
+        prompt = build_user_prompt(req)
+        assert "question" not in prompt.lower()
+        assert "Will it last?" not in prompt
+        assert prompt.startswith("Spread: Tree of Life")
+
+
+# --- Standard spreads that send no question ---
+
+_NO_QUESTION_STANDARD_SPREADS = [
+    "Career Reading",
+    "Past, Present, Future",
+    "Fire, Water, Air, Earth",
+]
+
+
+@pytest.mark.parametrize("spread_name", _NO_QUESTION_STANDARD_SPREADS)
+def test_standard_spreads_without_a_question_carry_no_question_wording(spread_name):
+    """Same bug as the Tree of Life: the frontend sends no question for these spreads,
+    and the question analysis plus the "No question was asked" line made the model open
+    by remarking on it. They keep the standard reading minus every question mention."""
+    prompt = build_system_prompt(_make_system_request(spread_name))
+    assert "First determine what the question asks" not in prompt
+    assert "calls you the Oracle" not in prompt
+    assert "the question and position" not in prompt
+    assert "restating the question" not in prompt
+    assert "whichever the position makes apt." in prompt
+    assert "land on what it all resolves to for the querent." in prompt
+    assert "Read each card through its position" in prompt
+    assert "\n\n\n" not in prompt
+
+
+@pytest.mark.parametrize("spread_name", _NO_QUESTION_STANDARD_SPREADS)
+def test_standard_spreads_without_a_question_get_no_question_line(spread_name):
+    for question in (None, "Will it last?"):
+        req = _make_request(
+            [CardInSpread(name="The Star", position="Past", orientation=Orientation.upright)],
+            question=question,
+            spread_name=spread_name,
+        )
+        prompt = build_user_prompt(req)
+        assert "question" not in prompt.lower()
+        assert "Will it last?" not in prompt
+        assert prompt.startswith(f"Spread: {spread_name}")
+
+
+def test_spreads_without_show_question_have_no_question_variant():
+    """Drift guard against the frontend catalog: every spread whose config does not set
+    `showQuestion` never sends a question, so it must not get the question wording."""
+    config_path = (
+        Path(__file__).resolve().parents[3] / "frontend" / "src" / "lib" / "readings-config.json"
+    )
+    if not config_path.exists():
+        pytest.skip("frontend/ not present (backend-only checkout)")
+
+    spreads: list[dict] = []
+
+    def collect(node: object) -> None:
+        if isinstance(node, dict):
+            if "name" in node and ("showQuestion" in node or "positions" in node):
+                spreads.append(node)
+            for value in node.values():
+                collect(value)
+        elif isinstance(node, list):
+            for value in node:
+                collect(value)
+
+    collect(json.loads(config_path.read_text()))
+    assert spreads
+    for spread in spreads:
+        prompt = build_user_prompt(
+            _make_request(
+                [CardInSpread(name="The Fool", orientation=Orientation.upright)],
+                question=None,
+                spread_name=spread["name"],
+            )
+        )
+        has_line = "No question was asked" in prompt
+        assert has_line == bool(spread.get("showQuestion")), spread["name"]
 
 
 # --- Relationship Reading variant ---
@@ -427,12 +539,8 @@ def test_budget_reads_config_not_module_constants(monkeypatch):
 
 
 def _repeated_card_request(spread_name: str) -> InterpretationRequest:
-    card = CardInSpread(
-        name="The Empress", position="life number", orientation=Orientation.upright
-    )
-    same = CardInSpread(
-        name="The Empress", position="life number", orientation=Orientation.upright
-    )
+    card = CardInSpread(name="The Empress", position="life number", orientation=Orientation.upright)
+    same = CardInSpread(name="The Empress", position="life number", orientation=Orientation.upright)
     return _make_request([card, same], question=None, spread_name=spread_name)
 
 

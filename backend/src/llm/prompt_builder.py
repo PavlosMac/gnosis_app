@@ -10,12 +10,15 @@ phrased as "roughly N words" it overshot by ~20%.
 
 Spread variants are keyed off `spread_name`: `Significators` (a portrait chart, not a
 situational reading — no question axis, no reversal block: each card is a fixed facet
-of character), `Tree of Life` (the three-pillar temporal structure baked in) and
-`Relationship Reading` (3×3 pillar structure; no question axis — the template supplies
-the frame, and addressing is a prose conditional since any custom names arrive already
-substituted into the position strings). For every variant the position meanings arrive
-per card from the frontend. Reversed guidance appears in every situational variant, and the
-two variants that carry a question are told that "the Oracle" in it means the model itself.
+of character), `Tree of Life` (the three-pillar temporal structure baked in; no question
+axis — the frontend never sends one) and `Relationship Reading` (3×3 pillar structure; no
+question axis — the template supplies the frame, and addressing is a prose conditional
+since any custom names arrive already substituted into the position strings). For every
+variant the position meanings arrive per card from the frontend. Reversed guidance appears
+in every situational variant, and the standard variant with a question — the only one
+that carries one — is told that "the Oracle" in it means the model itself. Career Reading,
+Past/Present/Future and Fire/Water/Air/Earth send no question either, so they get the
+standard template without its question wording.
 """
 
 import math
@@ -24,6 +27,9 @@ from typing import get_args
 
 from src.core.config import ReasoningEffort, settings
 from src.llm.schemas import (
+    CAREER_SPREAD,
+    ELEMENTS_SPREAD,
+    PAST_PRESENT_FUTURE_SPREAD,
     RELATIONSHIP_SPREAD,
     SIGNIFICATORS_SPREAD,
     TREE_OF_LIFE_SPREAD,
@@ -54,16 +60,25 @@ if set(REASONING_HEADROOM) != set(get_args(ReasoningEffort)):
     raise RuntimeError("REASONING_HEADROOM out of sync with config.ReasoningEffort")
 
 
-# Shared by the Standard and Tree of Life variants. Not Significators, which has no
-# question axis and reads each card as a fixed facet of character rather than a passing
-# energy — and not Relationship Reading, whose template opens with its own framing.
+# Standard variant with a question only. Not Significators, which reads each card as a
+# fixed facet of character rather than a passing energy — and not any spread for which the
+# frontend never sends a question (see _SPREAD_VARIANTS).
 _QUESTION_ANALYSIS = """First determine what the question asks: its subject, the people involved and how each relates \
 to the querent, and the kind of answer sought. Let that govern every interpretive choice. The \
 broader or more open the question — or when none is given — the more freedom you have to let \
 the spread itself set the agenda."""
 
-_REVERSAL_GUIDANCE = """Honor each card's orientation. A reversal is not simple negation: read it as the card's energy \
-blocked, delayed, internalized or in shadow — whichever the question and position make apt."""
+
+def _reversal_guidance(basis: str) -> str:
+    """The shared reversal wording; `basis` is the clause naming what decides how the
+    reversal reads ("the question and position make apt", "the zone makes apt", …), so
+    each variant says only what it actually has."""
+    return (
+        "Honor each card's orientation. A reversal is not simple negation: read it as the "
+        "card's energy blocked, delayed, internalized or in shadow — whichever "
+        f"{basis}."
+    )
+
 
 # The product calls the interpreter "the Oracle", and querents write that name into
 # their questions ("what can the oracle tell me about…", "LO", "… oracle"). Without
@@ -80,28 +95,42 @@ in your own voice before the reading. A person, place, company or product that m
 the name (a job at Oracle, the oracle of Delphi, a friend called Lo) is just that: read it as \
 written."""
 
-# The situational frame shared by Standard and Tree of Life — the only two variants that
-# carry a question, so the only two that need the Oracle identity. It is static (not
-# gated on whether this request has a question) to keep the system prompt a stable,
-# cacheable prefix; the cost is a few dozen tokens on question-less readings.
-_SITUATIONAL_FRAME = (
-    _ORACLE_IDENTITY + "\n\n" + _QUESTION_ANALYSIS + "\n\n" + _REVERSAL_GUIDANCE
-)
+# The question frame of the Standard variant — the only one that carries a question, so
+# the only one that needs the Oracle identity. It is static (not gated on whether this
+# request has a question) to keep the system prompt a stable, cacheable prefix; the cost
+# is a few dozen tokens on blank-question readings.
+_QUESTION_FRAME = _ORACLE_IDENTITY + "\n\n" + _QUESTION_ANALYSIS
 
 _CLOSING_INSTRUCTIONS = """Write about {total_words} words — treat that as a ceiling, not a target to exceed. Address \
 the querent directly. Every sentence must earn its place: no textbook boilerplate, no \
 hedging, no restating the question."""
 
+# For every variant that has no question to restate.
+_CLOSING_NO_QUESTION = _CLOSING_INSTRUCTIONS.replace(
+    "no hedging, no restating the question.", "no hedging."
+)
 
-_STANDARD_TEMPLATE = (
-    """You are a master tarot reader working with the Rider–Waite deck, \
+
+def _standard_template(*, with_question: bool) -> str:
+    """The standard situational reading. Without a question the question frame, the
+    "for the question" ending and the question in the reversal basis are all dropped:
+    with that wording in place the model opened by remarking on the missing question
+    ("With no single question to narrow it, …"), so nothing there mentions one."""
+    frame = (
+        _QUESTION_FRAME + "\n\n" + _reversal_guidance("the question and position make apt")
+        if with_question
+        else _reversal_guidance("the position makes apt")
+    )
+    ending = "for the question" if with_question else "for the querent"
+    return (
+        """You are a master tarot reader working with the Rider–Waite deck, \
 drawing on your own deep knowledge of the cards — their imagery, traditional meanings and \
 correspondences. You may also draw on the allied mystical arts of numerology and astrology \
 where they aid the interpretation.
 
 """
-    + _SITUATIONAL_FRAME
-    + """
+        + frame
+        + """
 
 Read each card through its position. A stated position meaning governs the card's scope; where \
 only a position name is given, read the name; where neither, read the cards in the order dealt.
@@ -111,12 +140,17 @@ through the spread naturally, letting each card enter the story where it belongs
 order dealt), naming each card explicitly as it arrives. Every card must be woven in and do \
 real work in the narrative with roughly a paragraph's weight; draw out the arc across \
 positions and the reinforcements and tensions between cards, and land on what it all resolves \
-to for the question.
+to """
+        + ending
+        + """.
 
 """
-    + _CLOSING_INSTRUCTIONS
-)
+        + (_CLOSING_INSTRUCTIONS if with_question else _CLOSING_NO_QUESTION)
+    )
 
+
+_STANDARD_TEMPLATE = _standard_template(with_question=True)
+_STANDARD_NO_QUESTION_TEMPLATE = _standard_template(with_question=False)
 
 # A significator chart is calculated from birth data, not drawn: a portrait of the
 # querent's character and personality, not a situational reading — so no question
@@ -156,6 +190,10 @@ hedging."""
 # Situational like the standard reading, but position handling is recast for the Tree:
 # the frontend sends each card's zone and its meaning (like any spread); the template
 # keeps only the spread-level pillar structure no single card line can carry.
+#
+# No question axis: the frontend never sends one for this spread. With the shared
+# question analysis in place the model opened by remarking on the missing question
+# ("With no single question to narrow it, …"), so nothing here mentions a question.
 _TREE_OF_LIFE_TEMPLATE = (
     """You are a master tarot reader working with the Rider–Waite deck, \
 drawing on your own deep knowledge of the cards — their imagery, traditional meanings and \
@@ -163,7 +201,7 @@ correspondences. You may also draw on the allied mystical arts of numerology, as
 the Kabbalah, which matter especially here.
 
 """
-    + _SITUATIONAL_FRAME
+    + _reversal_guidance("the zone makes apt")
     + """
 
 This spread maps the situation onto the eleven zones of the Tree of Life. Each card arrives \
@@ -183,10 +221,10 @@ through the Tree in the zones' numbered order — Kether, Chokmah, Binah, Chesed
 Tiphareth, Netzach, Hod, Yesod, Malkuth, and Daath last — naming each card explicitly as it \
 arrives. Every card must be woven in and do real work in the narrative with roughly a \
 paragraph's weight; draw out the currents between the pillars, the reinforcements and \
-tensions between cards, and land on what the whole Tree resolves to for the question.
+tensions between cards, and land on what the whole Tree resolves to for the querent.
 
 """
-    + _CLOSING_INSTRUCTIONS
+    + _CLOSING_NO_QUESTION
 )
 
 
@@ -207,13 +245,7 @@ brings to and wants from it, and how each of them — and the bond itself — is
 proceed.
 
 """
-    # The shared guidance, minus its reference to "the question" — this spread never
-    # has one. The .replace is pinned by a test, so it can't silently no-op if the
-    # shared wording changes.
-    + _REVERSAL_GUIDANCE.replace(
-        "whichever the question and position make apt",
-        "whichever the position and the state of the relationship make apt",
-    )
+    + _reversal_guidance("the position and the state of the relationship make apt")
     + """
 
 The spread is three pillars of three cards, and each position is tagged with whose it is: \
@@ -257,11 +289,20 @@ _SPREAD_VARIANTS: dict[str, _SpreadVariant] = {
         budget_scale_setting="significator_budget_scale",
         has_question=False,
     ),
-    TREE_OF_LIFE_SPREAD: _SpreadVariant(template=_TREE_OF_LIFE_TEMPLATE),
+    TREE_OF_LIFE_SPREAD: _SpreadVariant(
+        template=_TREE_OF_LIFE_TEMPLATE,
+        has_question=False,  # the frontend never sends a question for this spread
+    ),
     RELATIONSHIP_SPREAD: _SpreadVariant(
         template=_RELATIONSHIP_TEMPLATE,
         has_question=False,  # the frontend never sends a question for this spread
     ),
+    # Standard reading, but the frontend sends no question for these either.
+    CAREER_SPREAD: _SpreadVariant(template=_STANDARD_NO_QUESTION_TEMPLATE, has_question=False),
+    PAST_PRESENT_FUTURE_SPREAD: _SpreadVariant(
+        template=_STANDARD_NO_QUESTION_TEMPLATE, has_question=False
+    ),
+    ELEMENTS_SPREAD: _SpreadVariant(template=_STANDARD_NO_QUESTION_TEMPLATE, has_question=False),
 }
 _DEFAULT_VARIANT = _SpreadVariant(template=_STANDARD_TEMPLATE)
 
@@ -322,8 +363,8 @@ def build_system_prompt(request: InterpretationRequest) -> str:
 def build_user_prompt(request: InterpretationRequest) -> str:
     lines: list[str] = []
     if _variant_for(request.spread_name).has_question:
-        # The chart is its own subject — a question line only applies to situational
-        # spreads.
+        # Only spreads whose frontend config sends a question get a question line (or
+        # the "No question was asked" line when it is left blank).
         if request.question:
             lines.append(f"Question: {request.question}")
         else:

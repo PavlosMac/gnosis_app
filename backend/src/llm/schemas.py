@@ -7,6 +7,11 @@ from pydantic import BaseModel, Field
 SIGNIFICATORS_SPREAD = "Significators"
 TREE_OF_LIFE_SPREAD = "Tree of Life"
 RELATIONSHIP_SPREAD = "Relationship Reading"
+# Spreads whose frontend config sends no question (no `showQuestion`): they read with the
+# standard template minus its question wording.
+CAREER_SPREAD = "Career Reading"
+PAST_PRESENT_FUTURE_SPREAD = "Past, Present, Future"
+ELEMENTS_SPREAD = "Fire, Water, Air, Earth"
 
 
 class Orientation(StrEnum):
