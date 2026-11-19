@@ -15,3 +15,9 @@ export const resolvePositions = (reading: ReadingConfig): PositionConfig[] =>
 /** Spreads computed from a birth date (Significators) are flagged `birthDate: true`, never inferred. */
 export const isBirthdateSpread = (reading: ReadingConfig): boolean =>
   reading.birthDate === true;
+
+/** The spreads offered in the /reading picker: visitors don't see those flagged `requiresLogin`. */
+export const pickableSpreads = (
+  spreads: ReadingConfig[],
+  isLoggedIn: boolean
+): ReadingConfig[] => (isLoggedIn ? spreads : spreads.filter((r) => !r.requiresLogin));

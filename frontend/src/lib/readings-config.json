@@ -59,6 +59,7 @@
         },
         {
             "name": "Relationship Reading",
+            "requiresLogin": true,
             "description": "A nine card spread — querent, the relationship, and the other",
             "cards": 9,
             "positions": [
@@ -76,6 +77,7 @@
         },
         {
             "name": "Career Reading",
+            "requiresLogin": true,
             "description": "A four card career spread",
             "cards": 4,
             "positions": [
@@ -88,6 +90,7 @@
         },
         {
             "name": "Tree of Life",
+            "requiresLogin": true,
             "description": "An 11 card Kabbalah card reading",
             "cards": 11,
             "positions": [
@@ -106,6 +109,7 @@
         },
         {
             "name": "Significators",
+            "requiresLogin": true,
             "birthDate": true,
             "description": "A reading based on the querant's personal significators. A personal Tarot Chart.",
             "positions": [{

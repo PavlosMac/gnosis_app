@@ -127,6 +127,8 @@ export interface AboutSpread {
   /** Cards drawn from the deck; null for the birth-date chart */
   cardCount: number | null;
   blurb?: string;
+  /** Offered in the oracle's picker only to a logged-in user */
+  requiresLogin?: boolean;
 }
 
 /**
@@ -164,6 +166,7 @@ export const aboutSpreads = (cfg: readonly ReadingConfig[] = defaultConfig): Abo
         description: r.description ?? "",
         cardCount: isBirthdateSpread(r) ? null : (r.cards ?? null),
         blurb,
+        requiresLogin: !!r.requiresLogin,
       };
     });
 

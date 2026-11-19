@@ -28,7 +28,7 @@ import { createReading } from "@/app/user/interpret/actions";
 import { buildReadingPayload } from "@/lib/reading-payload";
 import type { User } from "@/types/auth";
 import type { SelectedCard, ReadingConfig, SpreadCardSelection } from "@/types/reading";
-import { resolvePositions, isBirthdateSpread } from "@/lib/reading-positions";
+import { resolvePositions, isBirthdateSpread, pickableSpreads } from "@/lib/reading-positions";
 import type { TarotCardData } from "@/types/models";
 
 interface TarotGameProps {
@@ -58,9 +58,11 @@ export default function TarotGame({ user, mode = 'draw' }: TarotGameProps) {
   const router = useRouter();
   const isManual = mode === 'manual';
   const spreadOptions = isManual ? manualReadings : readings;
-  const [selectedReading, setSelectedReading] = useState<ReadingConfig>(
-    () => spreadOptions.find((r) => r.name === DEFAULT_READING_NAME) ?? spreadOptions[0]
-  );
+  // Chosen from what this viewer can pick, so the select never names a hidden spread
+  const [selectedReading, setSelectedReading] = useState<ReadingConfig>(() => {
+    const initial = pickableSpreads(spreadOptions, !!user);
+    return initial.find((r) => r.name === DEFAULT_READING_NAME) ?? initial[0];
+  });
   const [allowReversals, setAllowReversals] = useState(true);
   // Spread layout preview visibility; closed by default, persisted, read after mount to avoid a hydration mismatch
   const [showPreview, setShowPreview] = useState(false);
@@ -96,6 +98,12 @@ export default function TarotGame({ user, mode = 'draw' }: TarotGameProps) {
   const [loginIntent, setLoginIntent] = useState<'begin' | 'save' | null>(null);
   const [showFreeLimitPanel, setShowFreeLimitPanel] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(!!user);
+  // Visitors are offered only the spreads that don't require an account; a login on the
+  // page (free-limit panel, save, interpret) widens the list in place.
+  const pickable = useMemo(
+    () => pickableSpreads(spreadOptions, isLoggedIn),
+    [isLoggedIn, spreadOptions]
+  );
   const [savedReadingId, setSavedReadingId] = useState<string | null>(null);
   const [savingReading, setSavingReading] = useState(false);
   const [saveReadingError, setSaveReadingError] = useState<string | null>(null);
@@ -194,7 +202,7 @@ export default function TarotGame({ user, mode = 'draw' }: TarotGameProps) {
   };
 
   // Count each reading a visitor completes, once per reading object, the
-  // moment it reaches the screen (shuffled spreads and birth-date charts alike)
+  // moment it reaches the screen (a visitor can pick only the shuffled spreads)
   const countedReadingRef = useRef<unknown>(null);
   useEffect(() => {
     if (game.phase !== 'reading' || isManual || isLoggedIn) return;
@@ -447,7 +455,7 @@ export default function TarotGame({ user, mode = 'draw' }: TarotGameProps) {
                 style={{ fontFamily: "'Crimson Pro', serif" }}
                 value={selectedReading.name}
                 onChange={(e) => {
-                  const reading = spreadOptions.find(r => r.name === e.target.value);
+                  const reading = pickable.find(r => r.name === e.target.value);
                   if (reading) {
                     setSelectedReading(reading);
                     setUserQuestion("");
@@ -457,7 +465,7 @@ export default function TarotGame({ user, mode = 'draw' }: TarotGameProps) {
                   }
                 }}
               >
-                {spreadOptions.map((reading) => (
+                {pickable.map((reading) => (
                   <option key={reading.name} value={reading.name} className="bg-[#1a0033]">
                     {reading.name} ({isBirthdateSpread(reading) ? 'Birth Date' : `${reading.cards} ${reading.cards === 1 ? 'Card' : 'Cards'}`})
                   </option>

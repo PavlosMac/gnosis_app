@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import cfg from "@/lib/readings-config.json";
-import { isBirthdateSpread, resolvePositions } from "@/lib/reading-positions";
+import { isBirthdateSpread, pickableSpreads, resolvePositions } from "@/lib/reading-positions";
 import type { ReadingConfig } from "@/types/reading";
 
 const readings = cfg.readings as ReadingConfig[];
@@ -27,6 +27,33 @@ describe("isBirthdateSpread", () => {
     const sig = readings.find((r) => r.name === "Significators")!;
     expect(resolvePositions(sig).map((p) => p.name)).toEqual([
       "star sign", "life number", "day number", "decanate", "court royal",
+    ]);
+  });
+});
+
+describe("pickableSpreads", () => {
+  const names = (list: ReadingConfig[]) => list.map((r) => r.name);
+
+  it("hides the login-only spreads from a visitor and keeps the rest in config order", () => {
+    expect(names(pickableSpreads(readings, false))).toEqual([
+      "Single Card",
+      "Past, Present, Future",
+      "Fire, Water, Air, Earth",
+      "Two Card",
+      "Three Card",
+    ]);
+  });
+
+  it("offers every spread to a logged-in user", () => {
+    expect(names(pickableSpreads(readings, true))).toEqual(names(readings));
+  });
+
+  it("gates exactly Relationship, Career, Tree of Life and Significators", () => {
+    expect(names(readings.filter((r) => r.requiresLogin))).toEqual([
+      "Relationship Reading",
+      "Career Reading",
+      "Tree of Life",
+      "Significators",
     ]);
   });
 });

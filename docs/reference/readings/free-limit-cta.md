@@ -10,7 +10,7 @@ account.
 
 | Feature | Where | Free uses per browser | Counter key |
 |---|---|---|---|
-| Readings | `/reading` (shuffled spreads and the Significators birth-date spread) | 3 | `tarot:free-readings-used` |
+| Readings | `/reading` (the shuffled spreads a visitor can pick; see below) | 3 | `tarot:free-readings-used` |
 | Significator charts | `/significators` | 2 | `tarot:free-significators-used` |
 
 The constants live in `frontend/src/lib/free-trials.ts` (`FREE_READINGS_PER_BROWSER`,
@@ -31,8 +31,12 @@ not limited.
   `LoginToInterpretModal` (which now takes an optional `message`). When
   `useAuth().registrationEnabled` is false only the login button is shown.
 - **`components/TarotGame.tsx`** (draw mode only): a reading is counted once per reading
-  object the moment the game enters the `reading` phase while logged out, which covers both
-  the card flip and the birth-date spread. `startGame` shows the panel instead of dispatching
+  object the moment the game enters the `reading` phase while logged out. A visitor's
+  spread picker lists only spreads without `requiresLogin` in `readings-config.json`
+  (Relationship Reading, Career Reading, Tree of Life and Significators are login-only;
+  `pickableSpreads()` in `lib/reading-positions.ts`), and the list widens as soon as a
+  login on the page succeeds, so the Significators birth-date spread is never counted for
+  a visitor on `/reading`. `startGame` shows the panel instead of dispatching
   when the limit is reached; the panel appears at the setup screen, since a finished reading
   is only left through "New Reading". A login from the panel begins the reading. The save
   ribbon above a completed reading is rendered only for a logged-in user; a visitor sees a

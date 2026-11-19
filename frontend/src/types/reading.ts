@@ -87,6 +87,8 @@ export interface ReadingConfig {
   cards?: number;
   /** Explicit marker for spreads computed from a birth date — see isBirthdateSpread() */
   birthDate?: boolean;
+  /** Listed on /reading only for a logged-in user — see TarotGame's spread picker */
+  requiresLogin?: boolean;
   /** Omitted for spreads without named positions — see resolvePositions() */
   positions?: PositionConfig[];
   showQuestion?: boolean;

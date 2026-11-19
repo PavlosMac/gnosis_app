@@ -25,13 +25,24 @@ const AboutSpreadList: React.FC<AboutSpreadListProps> = ({ spreads }) => (
           >
             {spread.name}
           </h3>
-          <span
-            className="text-[10px] text-[#d4af37]/60 tracking-widest uppercase
-                       border border-[#d4af37]/20 px-2 py-1 rounded-full whitespace-nowrap"
-            style={{ fontFamily: "'Cinzel', serif" }}
-          >
-            {countLabel(spread.cardCount)}
-          </span>
+          <div className="flex items-center gap-2">
+            {spread.requiresLogin && (
+              <span
+                className="text-[10px] text-[#d4af37]/60 tracking-widest uppercase
+                           border border-[#d4af37]/20 px-2 py-1 rounded-full whitespace-nowrap"
+                style={{ fontFamily: "'Cinzel', serif" }}
+              >
+                Account
+              </span>
+            )}
+            <span
+              className="text-[10px] text-[#d4af37]/60 tracking-widest uppercase
+                         border border-[#d4af37]/20 px-2 py-1 rounded-full whitespace-nowrap"
+              style={{ fontFamily: "'Cinzel', serif" }}
+            >
+              {countLabel(spread.cardCount)}
+            </span>
+          </div>
         </div>
         <p
           className="text-[#e6d5b8]/60 italic text-base sm:text-lg leading-relaxed"
