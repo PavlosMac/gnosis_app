@@ -15,9 +15,9 @@ One call per interpretation through `LLMPort` (`src/llm/openai_adapter.py`):
 
 ```
 system  = one template chosen by spread_name
-          (standard | Significators | Tree of Life | Relationship Reading)
-          with the total word budget substituted in
-user    = question line (situational spreads only)
+          (standard | standard without a question | Significators | Tree of Life |
+           Relationship Reading) with the total word budget substituted in
+user    = question line (Single Card, Two Card and Three Card only)
         + "Spread: <name> (<n> cards)"
         + one line per card: "<i>. <Name> (<orientation>) — <Position>: <description>"
 response_format = LeanReading { reading: str }
@@ -35,10 +35,17 @@ response_format = LeanReading { reading: str }
   baked in; no question — the frontend never sends one, and the template never
   mentions one), and `Relationship Reading` (3×3 pillars, no question — the spread sets
   the agenda; reversal guidance reworded to "whichever the position and the state of
-  the relationship make apt"). Position/zone meanings arrive per card from the
-  frontend for every variant. All three situational templates (Standard, Tree of
-  Life, Relationship) carry reversed guidance; only Standard carries
-  question analysis and the Oracle identity.
+  the relationship make apt"). `Career Reading`, `Past, Present, Future` and
+  `Fire, Water, Air, Earth` use the standard template built without a question: no
+  Oracle identity, no question analysis, and the reading lands "for the querent". Any
+  other name (Single Card, Two Card, Three Card) gets the standard template with the
+  question frame, and a "No question was asked" user line when the question is blank.
+  The names mirror the spreads without `showQuestion` in the frontend's
+  `readings-config.json`; a test in `tests/llm/test_lean_prompt.py` fails when the two
+  drift. Position/zone meanings arrive per card from the frontend for every variant.
+  The situational templates (both standard builds, Tree of Life, Relationship) carry
+  reversed guidance; only the standard build with a question carries question analysis
+  and the Oracle identity.
 - **Usage** returns as a prompt/completion/reasoning token split; the interpretation
   command handler prices it against `Settings.model_price_table` and charges the
   user's budget via an atomic reserve-then-settle gate (spec §5a).
@@ -77,6 +84,20 @@ Write the reading as one continuous, flowing narrative — not card-by-card sect
 Write about 300 words — treat that as a ceiling, not a target to exceed. Address the querent directly. Every sentence must earn its place: no textbook boilerplate, no hedging, no restating the question.
 ```
 
+#### Standard system prompt, no question (Past/Present/Future, Fire/Water/Air/Earth, Career Reading)
+
+```text
+You are a master tarot reader working with the Rider–Waite deck, drawing on your own deep knowledge of the cards — their imagery, traditional meanings and correspondences. You may also draw on the allied mystical arts of numerology and astrology where they aid the interpretation.
+
+Honor each card's orientation. A reversal is not simple negation: read it as the card's energy blocked, delayed, internalized or in shadow — whichever the position makes apt.
+
+Read each card through its position. A stated position meaning governs the card's scope; where only a position name is given, read the name; where neither, read the cards in the order dealt.
+
+Write the reading as one continuous, flowing narrative — not card-by-card sections. Move through the spread naturally, letting each card enter the story where it belongs (usually the order dealt), naming each card explicitly as it arrives. Every card must be woven in and do real work in the narrative with roughly a paragraph's weight; draw out the arc across positions and the reinforcements and tensions between cards, and land on what it all resolves to for the querent.
+
+Write about 300 words — treat that as a ceiling, not a target to exceed. Address the querent directly. Every sentence must earn its place: no textbook boilerplate, no hedging.
+```
+
 #### Significators variant (portrait chart)
 
 ```text
@@ -104,9 +125,9 @@ This spread maps the situation onto the eleven zones of the Tree of Life. Each c
 
 - The Pillar of Mercy (right — Chokmah, Chesed, Netzach) is masculine and expansive and carries future energies and influences: Chokmah the near future, Chesed the future not so near.
 - The Pillar of Severity (left — Binah, Geburah, Hod) is feminine and constraining and carries the past energies still working on the situation.
-- The Middle Pillar (Kether, Tiphareth, Yesod, Malkuth) is the present axis: the descent from the situation's spiritual root at Kether to its manifest outcome at Malkuth.
+- The Middle Pillar (Kether, Tiphereth, Yesod, Malkuth) is the present axis: the descent from the situation's spiritual root at Kether to its manifest outcome at Malkuth.
 
-Write the reading as one continuous, flowing narrative — not card-by-card sections. Move through the Tree in the zones' numbered order — Kether, Chokmah, Binah, Chesed, Geburah, Tiphareth, Netzach, Hod, Yesod, Malkuth, and Daath last — naming each card explicitly as it arrives. Every card must be woven in and do real work in the narrative with roughly a paragraph's weight; draw out the currents between the pillars, the reinforcements and tensions between cards, and land on what the whole Tree resolves to for the querent.
+Write the reading as one continuous, flowing narrative — not card-by-card sections. Move through the Tree in the zones' numbered order — Kether, Chokmah, Binah, Chesed, Geburah, Tiphereth, Netzach, Hod, Yesod, Malkuth, and Daath last — naming each card explicitly as it arrives. Every card must be woven in and do real work in the narrative with roughly a paragraph's weight; draw out the currents between the pillars, the reinforcements and tensions between cards, and land on what the whole Tree resolves to for the querent.
 
 Write about 1100 words — treat that as a ceiling, not a target to exceed. Address the querent directly. Every sentence must earn its place: no textbook boilerplate, no hedging.
 ```

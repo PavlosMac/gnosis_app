@@ -60,6 +60,12 @@ SAMPLE_REQUEST = InterpretationRequest(
     ],
 )
 
+# Same cards under a spread whose frontend config sends no question: renders the
+# no-question build of the standard template.
+_NO_QUESTION_REQUEST = SAMPLE_REQUEST.model_copy(
+    update={"spread_name": "Past, Present, Future", "question": None}
+)
+
 # Realistic card counts so the rendered word budgets are representative: a 5-position
 # chart (5 × 100 × 1.5 = 750 words) and a full 11-zone Tree (11 × 100 = 1,100 words).
 # Position meanings arrive from the frontend as position/position_description — the
@@ -85,7 +91,7 @@ _TREE_REQUEST = InterpretationRequest(
         CardInSpread(name="The Empress", position="Binah", orientation=Orientation.reversed),
         CardInSpread(name="Ten of Cups", position="Chesed", orientation=Orientation.upright),
         CardInSpread(name="Five of Swords", position="Geburah", orientation=Orientation.upright),
-        CardInSpread(name="The Sun", position="Tiphareth", orientation=Orientation.upright),
+        CardInSpread(name="The Sun", position="Tiphereth", orientation=Orientation.upright),
         CardInSpread(name="Two of Cups", position="Netzach", orientation=Orientation.reversed),
         CardInSpread(name="Eight of Pentacles", position="Hod", orientation=Orientation.upright),
         CardInSpread(name="The Moon", position="Yesod", orientation=Orientation.reversed),
@@ -190,6 +196,11 @@ def render_blocks() -> str:
     ]
     variants = [
         ("Standard system prompt", SAMPLE_REQUEST),
+        (
+            "Standard system prompt, no question (Past/Present/Future, "
+            "Fire/Water/Air/Earth, Career Reading)",
+            _NO_QUESTION_REQUEST,
+        ),
         ("Significators variant (portrait chart)", _SIGNIFICATORS_REQUEST),
         ("Tree of Life variant (zones supplied by the client)", _TREE_REQUEST),
         ("Relationship Reading variant (3×3 pillars, no question)", _RELATIONSHIP_REQUEST),

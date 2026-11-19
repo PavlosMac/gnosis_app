@@ -48,7 +48,7 @@ SPREADS: dict[str, InterpretationRequest] = {
     # Mirrors the SAMPLE_REQUEST in docs/reference/prompts/prompt-reference.md for a direct
     # comparison on content and tokens.
     "lisbon": InterpretationRequest(
-        spread_name="Past, Present, Future",
+        spread_name="Three Card",
         question="Should I take the job offer in Lisbon?",
         cards=[
             CardInSpread(

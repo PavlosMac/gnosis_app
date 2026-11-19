@@ -213,12 +213,12 @@ carries future energies and influences: Chokmah the near future, Chesed the futu
 near.
 - The Pillar of Severity (left — Binah, Geburah, Hod) is feminine and constraining and \
 carries the past energies still working on the situation.
-- The Middle Pillar (Kether, Tiphareth, Yesod, Malkuth) is the present axis: the descent from \
+- The Middle Pillar (Kether, Tiphereth, Yesod, Malkuth) is the present axis: the descent from \
 the situation's spiritual root at Kether to its manifest outcome at Malkuth.
 
 Write the reading as one continuous, flowing narrative — not card-by-card sections. Move \
 through the Tree in the zones' numbered order — Kether, Chokmah, Binah, Chesed, Geburah, \
-Tiphareth, Netzach, Hod, Yesod, Malkuth, and Daath last — naming each card explicitly as it \
+Tiphereth, Netzach, Hod, Yesod, Malkuth, and Daath last — naming each card explicitly as it \
 arrives. Every card must be woven in and do real work in the narrative with roughly a \
 paragraph's weight; draw out the currents between the pillars, the reinforcements and \
 tensions between cards, and land on what the whole Tree resolves to for the querent.

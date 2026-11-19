@@ -292,7 +292,7 @@ def test_tree_of_life_narrative_moves_in_zone_number_order():
     'naturally' / model's choice, which wandered the Tree in whatever order it liked."""
     prompt = build_system_prompt(_make_system_request("Tree of Life"))
     assert (
-        "Kether, Chokmah, Binah, Chesed, Geburah, Tiphareth, Netzach, Hod, Yesod, "
+        "Kether, Chokmah, Binah, Chesed, Geburah, Tiphereth, Netzach, Hod, Yesod, "
         "Malkuth, and Daath last"
     ) in prompt
     assert "naturally" not in prompt
@@ -400,19 +400,8 @@ def test_spreads_without_show_question_have_no_question_variant():
     if not config_path.exists():
         pytest.skip("frontend/ not present (backend-only checkout)")
 
-    spreads: list[dict] = []
-
-    def collect(node: object) -> None:
-        if isinstance(node, dict):
-            if "name" in node and ("showQuestion" in node or "positions" in node):
-                spreads.append(node)
-            for value in node.values():
-                collect(value)
-        elif isinstance(node, list):
-            for value in node:
-                collect(value)
-
-    collect(json.loads(config_path.read_text()))
+    # Every entry of the catalog, so a new spread cannot slip past by lacking a key.
+    spreads: list[dict] = json.loads(config_path.read_text())["readings"]
     assert spreads
     for spread in spreads:
         prompt = build_user_prompt(
