@@ -54,6 +54,7 @@ or in the three `CLAUDE.md` files, and CI runs it.
 | [`2026-09-21-user-accounting-ledger.md`](plans/2026-09-21-user-accounting-ledger.md) | Agreed, not started. Admin-set model and prices, monthly budget period, per-spread cost table, superadmin ledger UI. |
 | [`2026-09-29-readings-sort-index.md`](plans/2026-09-29-readings-sort-index.md) | Deferred. Compound index for spread + tags + date sort; trigger inside. |
 | [`2026-11-17-spread-card-meanings.md`](plans/2026-11-17-spread-card-meanings.md) | Built 2026-11-17; browser check and text edits open. Stored meaning for each of the 78 cards, opened by clicking a card in a spread; prompt inside. |
+| [`2026-11-26-mongo-index-gaps.md`](plans/2026-11-26-mongo-index-gaps.md) | Agreed in outline, not started. Missing `user_tags.user_id` unique index (do first), plus small index and count trims from the 2026-11-25 audit. |
 
 ## Notes
 
