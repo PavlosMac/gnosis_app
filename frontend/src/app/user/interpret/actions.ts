@@ -15,16 +15,30 @@ import type {
 } from "@/types/interpret";
 
 const NOT_LOGGED_IN = "You must be logged in to request an interpretation.";
+const NOT_LOGGED_IN_TO_SAVE = "Log in to save this reading.";
+const SERVER_UNAVAILABLE = "Could not reach the server. Please try again.";
 
+/** The refusal of `requireConsentedUser()` as an action result. Only a missing
+    session is `unauthenticated` — a login round-trip fixes neither an
+    outstanding onboarding step nor a backend outage. */
+const refusal = async (
+  notLoggedIn: string
+): Promise<{ ok: false; error: string; unauthenticated?: boolean }> => {
+  switch (await consentRefusalReason()) {
+    case "onboarding":
+      return { ok: false, error: ONBOARDING_REQUIRED_MESSAGE };
+    case "unavailable":
+      return { ok: false, error: SERVER_UNAVAILABLE };
+    default:
+      return { ok: false, error: notLoggedIn, unauthenticated: true };
+  }
+};
 
 export const createReading = async (
   payload: InterpretRequest
 ): Promise<CreateReadingResult> => {
   const user = await requireConsentedUser();
-  if (!user) {
-    const onboarding = (await consentRefusalReason()) === "onboarding";
-    return { ok: false, error: onboarding ? ONBOARDING_REQUIRED_MESSAGE : NOT_LOGGED_IN };
-  }
+  if (!user) return refusal(NOT_LOGGED_IN_TO_SAVE);
 
   const parsed = interpretRequestSchema.safeParse(payload);
   if (!parsed.success) {
@@ -40,7 +54,11 @@ export const createReading = async (
   });
 
   if (!result.ok)
-    return { ok: false, error: result.message ?? "The reading could not be saved." };
+    return {
+      ok: false,
+      error: result.message ?? "The reading could not be saved.",
+      ...(result.unauthenticated && { unauthenticated: true }),
+    };
 
   return { ok: true, readingId: result.data._id };
 };
@@ -57,13 +75,7 @@ export const generateInterpretation = async (
   readingId: string
 ): Promise<GenerateInterpretationResult> => {
   const user = await requireConsentedUser();
-  if (!user) {
-    // Only a missing session is "unauthenticated" — a login round-trip cannot
-    // fix an outstanding onboarding step
-    return (await consentRefusalReason()) === "onboarding"
-      ? { ok: false, error: ONBOARDING_REQUIRED_MESSAGE }
-      : { ok: false, error: NOT_LOGGED_IN, unauthenticated: true };
-  }
+  if (!user) return refusal(NOT_LOGGED_IN);
 
   if (!readingIdSchema.safeParse(readingId).success)
     return { ok: false, error: "Invalid reading ID." };

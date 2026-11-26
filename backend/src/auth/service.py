@@ -326,7 +326,9 @@ class AuthService:
         doc = await self._refresh_repo.consume(jti)
         if doc is None:
             if await self._refresh_repo.was_just_consumed(jti, REFRESH_REPLAY_GRACE_SECONDS):
-                raise UnauthorizedError("Token has been rotated")
+                # A lost race, not a dead session: the frontend proxy keeps the
+                # cookies on this code (the winner's rotated pair is on its way)
+                raise UnauthorizedError("Token has been rotated", code="refresh_rotated")
             await self._refresh_repo.revoke_family(family_id)
             raise UnauthorizedError("Token has been revoked")
 

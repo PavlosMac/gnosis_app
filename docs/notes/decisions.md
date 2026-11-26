@@ -493,3 +493,31 @@ Each decision should include:
 - The endpoint has no rate limit; it is a single indexed read of static text
 - A regenerated card overwrites its text with no history other than git
 - Reference: `docs/reference/database/model-references.md` § `spread_card_meanings`, `docs/reference/readings/spread-card-meanings.md` (the frontend); plan (until the browser check and text edits are done) `docs/plans/2026-11-17-spread-card-meanings.md`
+
+### ADR-022: Session Refresh Happens Only in the Proxy; Every Page Is Behind It (2026-11-26)
+
+**Context:**
+- Refresh tokens are single-use and an access token dies with its family (ADR-013, ADR-016)
+- The proxy matcher covered only `/user/*`, `/superadmin/*` and `/accept-terms`. The root layout renders the signed-in menu from `getCurrentUser()` on every page, so on `/` and `/reading` an expired access cookie was refreshed inside the render by `authenticatedFetch`
+- A render cannot set cookies (Next 16 throws `ReadonlyRequestCookiesError`): the backend rotated the token, the browser kept the consumed one, the page said "logged in", and the Save server action replayed the dead token, revoking the family. The user saw a red error and no way to log in (`docs/notes/bugs.md`, 2026-11-23)
+
+**Decision:**
+- **The proxy runs on every page and server-action request** (matcher: everything but `_next/` and static files by extension). Guarded prefixes (`/user`, `/superadmin`, `/accept-terms`) keep their redirect to login; every other page passes visitors through. An expired access cookie is refreshed in the proxy on any request, and the rotated cookies go out on that response. Verified live: a server action posted with only the refresh cookie sees the new access cookie
+- **The proxy is the only refresher of a missing access cookie.** `authenticatedFetch` answers `unauthenticated` at once when the access cookie is absent and never spends the refresh token itself. Its one remaining refresh is the 401-with-cookie case (the token expired in the moments since the proxy saw it); in a render, where the cookies cannot be persisted, that refresh is reported as no session rather than as a token the browser will never receive
+- **Three refresh outcomes, not two.** `rotated` sets the cookies. `dead` (401/403 without the code below) clears them: a guarded page redirects to login, a public page renders for a visitor. `unsettled` keeps them and lets the page render: the backend is down or unreachable (an outage is not a logout), or the backend answered `401 {code: "refresh_rotated"}` because a parallel request rotated the same token within the 10 s grace of ADR-016. The login page follows the same rules, so a refresh-only visitor never loops between login and profile
+- **Server actions report a lost session as `unauthenticated: true`**, `createReading` now like `generateInterpretation`, and only for a 401: `consentRefusalReason()` tells `unauthenticated` from `unavailable` (a `/auth/me` outage) by the API result, not by a null user. `TarotGame` drops to visitor mode (`useAuth().clearUser()`) and opens the inline login with the save intent, so the login retries the save. A reading begun logged in is not counted as a free trial when the page drops to visitor mode
+
+**Alternatives Considered:**
+- Detect the render phase in `api-client.ts` and skip the refresh -> Rejected: Next exposes no public signal; a probe write or an internal import would tie the client to framework internals. Moot once the client stops refreshing a missing cookie
+- Skip the refresh on router prefetches so parallel requests never race -> Impossible: Next strips `next-router-prefetch` and `next-router-segment-prefetch` from the request before middleware runs (`server/web/adapter.js`, `FLIGHT_HEADERS`). The race is settled by `refresh_rotated` instead; its cost is one wasted backend call per losing request
+- Keep the matcher narrow and make the root layout stop reading the session -> Rejected: the menu, the free-limit nudge and the spread picker all depend on knowing the user on public pages
+- Only the UX fix (offer login after the failed save) -> Rejected on its own: it would still burn the user's session once an hour on a public page
+- Clear the cookies on any failed refresh (the old behaviour, now on every page) -> Rejected: a 502 or a timeout during a deploy would log everyone out
+
+**Consequences:**
+- One cookie read per request; a backend call only when the access cookie is missing or within 10 s of expiry
+- A request that loses the rotation race renders once without a session (a visitor view of that one response); the browser already holds the winner's cookies for the next request. Known and accepted
+- During a backend outage a logged-in user sees public pages as a visitor and guarded pages as whatever they render without a user; the cookies survive and the session resumes with the backend
+- The `[AUTH:PROXY]` log line now appears for every request in dev
+- Files with a static extension (`/cards/*.png`, `robots.txt`, `sitemap.xml`) and `_next/` never touch the proxy; a dynamic segment containing a dot still does
+- Reference: `docs/reference/auth/frontend-auth-flow.md` (§ 6b, Lessons Learned); tests `frontend/src/__tests__/proxy.test.ts`, `frontend/src/lib/__tests__/api-client.refresh.test.ts`, `frontend/src/lib/__tests__/session.test.ts`, `frontend/src/app/user/interpret/__tests__/createReading.test.ts`, `backend/tests/auth/test_session_revocation.py`

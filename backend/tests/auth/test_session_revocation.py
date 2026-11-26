@@ -99,6 +99,8 @@ async def test_racing_refresh_does_not_end_the_winners_session(client, mock_emai
     )
 
     assert loser.status_code == 401
+    # The frontend proxy tells a lost race apart from a dead session by this code
+    assert loser.json()["code"] == "refresh_rotated"
     assert await _me(client, winner.json()) == 200
     follow_up = await client.post(
         "/api/v1/auth/refresh", json={"refresh_token": winner.json()["refresh_token"]}

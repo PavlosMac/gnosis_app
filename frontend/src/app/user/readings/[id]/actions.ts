@@ -46,10 +46,15 @@ export const updateReadingTags = async (
 ): Promise<UpdateTagsResult> => {
   const user = await requireConsentedUser();
   if (!user) {
-    const onboarding = (await consentRefusalReason()) === "onboarding";
+    const reason = await consentRefusalReason();
     return {
       ok: false,
-      error: onboarding ? ONBOARDING_REQUIRED_MESSAGE : "You must be logged in.",
+      error:
+        reason === "onboarding"
+          ? ONBOARDING_REQUIRED_MESSAGE
+          : reason === "unavailable"
+            ? "Could not reach the server. Please try again."
+            : "You must be logged in.",
     };
   }
 

@@ -8,7 +8,7 @@ JWT authentication via an external FastAPI backend. Tokens are stored in httpOnl
 
 | File | Role |
 |------|------|
-| `src/proxy.ts` | Middleware — route guard, token refresh (proactive + expired). Guards `/user/*`, `/superadmin/*` and `/accept-terms`; the root pages (`/`, `/reading`, `/significators`, `/about`, `/guide`, `/legal`) are public |
+| `src/proxy.ts` | Middleware — runs on every page (matcher skips `_next/` and files with an extension). Token refresh (proactive + expired) happens here on every page, because only the proxy can persist the rotated cookies (ADR-022). Guarded prefixes `/user`, `/superadmin`, `/accept-terms` redirect a visitor to login; every other page (`/`, `/reading`, `/significators`, `/about`, `/guide`, `/legal`, `/verify-email`, …) renders for visitors, with a dead session's cookies cleared |
 | `src/lib/api-client.ts` | `authenticatedFetch()`, `publicFetch()` (forwards the browser IP, surfaces the backend error `code`), cookie wrappers |
 | `src/lib/auth-cookies.ts` | The only reader/writer of the three session cookies (edge-safe; used by the proxy and by server actions) |
 | `src/lib/session.ts` | `getCurrentUser()` — cached user fetch; `requireConsentedUser()` — the same, but null while onboarding is outstanding |
@@ -211,6 +211,46 @@ All three are written, read and cleared only through `src/lib/auth-cookies.ts`
     |<------------------------|
 ```
 
+### 6b. Public Page, Expired Access Token
+
+The same proxy runs on `/`, `/reading` and every other public page. The difference is
+what a dead session means there: a visitor, not a redirect.
+
+```
+  Browser                 Middleware (proxy.ts)                    FastAPI
+    |                         |                                      |
+    |  GET /reading           |                                      |
+    |------------------------>|                                      |
+    |                         |  access_token: MISSING (expired)     |
+    |                         |  refresh_token: present              |
+    |                         |  POST /api/v1/auth/refresh --------->|
+    |                         |                                      |
+    |                         |  200 { new tokens }                  |  -> Set-Cookie x3, page renders logged in
+    |                         |  401/403 (revoked, expired, blocked) |  -> cookies cleared, page renders as a visitor
+    |                         |                                      |     (menu shows Login); a guarded page redirects
+    |                         |  401 {code: "refresh_rotated"}       |  -> a parallel request won the rotation (ADR-016):
+    |                         |  5xx / network error                 |     cookies kept, this response renders without a
+    |                         |<-------------------------------------|     session; the next request has the new cookies
+    |  200 HTML (+ Set-Cookie)|                                      |
+    |<------------------------|                                      |
+```
+
+The same three outcomes apply to a server-action POST (it passes through the proxy too)
+and to the login page, where a successful refresh redirects to the profile and a dead
+session shows the form. Next strips the router's prefetch headers before the proxy runs,
+so prefetches cannot be told from navigations; a navigation and its prefetches may all
+present the same expired cookie, and `refresh_rotated` is what keeps the losers from
+logging the user out.
+
+Server actions reached from a public page (`createReading`, `generateInterpretation`)
+answer `unauthenticated: true` when the session is gone, and only then:
+`consentRefusalReason()` reads the `/auth/me` result, so a backend outage is
+"unavailable" (a plain error, no login prompt). `TarotGame` then drops to visitor mode
+(`useAuth().clearUser()`, the bookmark becomes "Log in to save", the reading is not
+counted as a free trial) and opens `LoginToInterpretModal` with the save intent, so the
+login retries the save. "New Reading" afterwards re-picks the spread if the current one
+needs an account.
+
 ### 7. Logout
 
 ```
@@ -233,9 +273,8 @@ All three are written, read and cleared only through `src/lib/auth-cookies.ts`
 
 ### 8. Forgot Password
 
-Public pages at root level (`/forgot-password`, `/reset-password`) — outside the
-proxy matcher (`/user/*`, `/superadmin/*`), so no guard changes and they work
-logged-in or logged-out. Also reachable one-click from the profile dashboard
+Public pages at root level (`/forgot-password`, `/reset-password`) — not under a
+guarded prefix, so the proxy never redirects and they work logged-in or logged-out. Also reachable one-click from the profile dashboard
 ("Renew the Seal"), where the email comes from the server-side session
 (`requestPasswordResetForCurrentUser` in `src/app/user/profile/actions.ts`).
 
@@ -432,3 +471,17 @@ The threshold must be well below the access token lifetime. With 60-minute token
 ### Refresh Tokens Are Single-Use
 
 The FastAPI backend rotates refresh tokens on each use. If a proactive refresh fires too eagerly and succeeds, the old refresh token is immediately revoked. Any subsequent request still carrying the old refresh token will fail.
+
+### Never Refresh Where Cookies Cannot Be Written
+
+A page render has read-only cookies: `cookies().set()` throws `ReadonlyRequestCookiesError`
+in Next 16. A refresh made during a render therefore rotates the token at the backend while
+the browser keeps the consumed one; the page shows the user as logged in, and the next
+server action replays the dead token, which revokes the whole family (bug of 2026-11-23,
+`docs/notes/bugs.md`). Two guards keep this from recurring: the proxy matcher covers every
+page and server action, so a missing access cookie is refreshed before the render and the
+cookies go out on the response, and `authenticatedFetch` never refreshes a missing cookie
+itself (no cookie = no session). Its one refresh, a 401 to a present cookie, reports no
+session in a render instead of continuing with a token the browser will never hold. A
+failed refresh clears the cookies only on a 401/403 that is not `refresh_rotated`; an
+outage keeps them (ADR-022).

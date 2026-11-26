@@ -100,11 +100,18 @@ const refreshAccessToken = async (): Promise<string | null> => {
 
     console.log("[AUTH:FETCH] Refresh succeeded");
 
-    // Persist new cookies — works in server actions; fails in render context (read-only)
+    // Persist the rotated cookies. Works in a server action; a render has
+    // read-only cookies and Next throws. The browser then still holds the
+    // consumed refresh token, so the new one must not be presented as a
+    // session: the page would show the user as logged in with a token the
+    // browser will never receive, and the next server action would fail.
+    // Pages are refreshed in the proxy before they render (see proxy.ts), so
+    // this is a backstop, not a path.
     try {
       await setAuthCookies(data);
     } catch {
-      console.log("[AUTH:FETCH] Could not persist cookies (render context)");
+      console.log("[AUTH:FETCH] Could not persist cookies (render context) — treating as no session");
+      return null;
     }
 
     return data.access_token;
@@ -120,16 +127,16 @@ export const authenticatedFetch = async <T>(
 ): Promise<ApiResult<T>> => {
   console.log("[AUTH:FETCH] authenticatedFetch →", endpoint, options.method ?? "GET");
 
-  let accessToken = await getValidAccessToken();
+  const accessToken = await getValidAccessToken();
 
-  // No access token — try refresh before giving up
+  // No access token means no session. Every page and server-action request
+  // passes through the proxy, which refreshes an expired access cookie before
+  // this code runs and is the only place the rotated cookies can be persisted;
+  // spending the single-use refresh token here would strand the browser with a
+  // consumed one (ADR-022).
   if (!accessToken) {
-    console.log("[AUTH:FETCH] No access token — attempting refresh");
-    accessToken = await refreshAccessToken();
-    if (!accessToken) {
-      console.log("[AUTH:FETCH] No valid token after refresh — returning 401");
-      return { ok: false, status: 401, message: "Not authenticated", unauthenticated: true };
-    }
+    console.log("[AUTH:FETCH] No access token — returning 401");
+    return { ok: false, status: 401, message: "Not authenticated", unauthenticated: true };
   }
 
   const makeRequest = async (token: string) =>
@@ -150,7 +157,9 @@ export const authenticatedFetch = async <T>(
     return { ok: false, status: 0, message: NETWORK_ERROR_MESSAGE };
   }
 
-  // 401 — token expired but cookie not yet deleted; try refresh once
+  // 401 with an access cookie present: it expired in the moments since the proxy
+  // saw it. One refresh, persisted in a server action; in a render the backstop
+  // below reports no session instead
   if (res.status === 401) {
     console.log("[AUTH:FETCH] Got 401 — attempting refresh");
     const newToken = await refreshAccessToken();

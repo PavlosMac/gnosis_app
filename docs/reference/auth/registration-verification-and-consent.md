@@ -48,6 +48,9 @@ side: [`frontend-auth-flow.md`](frontend-auth-flow.md). Email plumbing:
 
 `AppError` carries an optional `code`; the global handler adds `"code"` to the body only
 when it is set. The frontend branches on `code`, never on `detail` text.
+`POST /auth/refresh` answers `401 {detail, code: "refresh_rotated"}` when the token was
+rotated within the last 10 s by a parallel request (ADR-016); the frontend proxy keeps the
+cookies on that code and treats any other 401/403 as a dead session (ADR-022).
 
 **Wrong password on `DELETE /auth/me` is 403, not 401.** The caller is authenticated, and
 the frontend treats any 401 as an expired access token: it would silently refresh and

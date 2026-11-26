@@ -39,12 +39,12 @@ export interface Interpretation {
   updated_at: string;
 }
 
-export type CreateReadingResult =
-  | { ok: true; readingId: string }
-  | { ok: false; error: string };
-
 // unauthenticated: the session is gone (no cookie, or refresh failed) — the
 // client can offer a login round-trip instead of a retry that cannot succeed
+export type CreateReadingResult =
+  | { ok: true; readingId: string }
+  | { ok: false; error: string; unauthenticated?: boolean };
+
 export type GenerateInterpretationResult =
   | { ok: true; data: Interpretation; remainingBudgetUsd: number }
   | { ok: false; error: string; unauthenticated?: boolean };

@@ -25,6 +25,7 @@ import { FREE_TRIALS, recordVisitorUse, shouldShowFreeLimit } from "@/lib/free-t
 
 import { useGameReducer, getSelectedCards, getReading, isPostDeal, isPickingCards, hasDeckOnScreen } from "@/hooks/useGameReducer";
 import { createReading } from "@/app/user/interpret/actions";
+import { useAuth } from "@/app/providers/auth-provider";
 import { buildReadingPayload } from "@/lib/reading-payload";
 import type { User } from "@/types/auth";
 import type { SelectedCard, ReadingConfig, SpreadCardSelection } from "@/types/reading";
@@ -56,6 +57,7 @@ const READING_SCROLL_DELAY = 100;
 
 export default function TarotGame({ user, mode = 'draw' }: TarotGameProps) {
   const router = useRouter();
+  const { clearUser } = useAuth();
   const isManual = mode === 'manual';
   const spreadOptions = isManual ? manualReadings : readings;
   // Chosen from what this viewer can pick, so the select never names a hidden spread
@@ -204,8 +206,11 @@ export default function TarotGame({ user, mode = 'draw' }: TarotGameProps) {
   // Count each reading a visitor completes, once per reading object, the
   // moment it reaches the screen (a visitor can pick only the shuffled spreads)
   const countedReadingRef = useRef<unknown>(null);
+  // A reading begun logged in is not a free trial, even if the session ends
+  // before it is saved and the page drops to visitor mode (saveReading)
+  const visitorCountExemptRef = useRef(false);
   useEffect(() => {
-    if (game.phase !== 'reading' || isManual || isLoggedIn) return;
+    if (game.phase !== 'reading' || isManual || isLoggedIn || visitorCountExemptRef.current) return;
     if (countedReadingRef.current === game.reading) return;
     countedReadingRef.current = game.reading;
     recordVisitorUse(FREE_TRIALS.reading, isLoggedIn);
@@ -251,6 +256,7 @@ export default function TarotGame({ user, mode = 'draw' }: TarotGameProps) {
 
   const handleNewReading = useCallback(() => {
     saveGenerationRef.current += 1;
+    visitorCountExemptRef.current = false;
     dispatch({ type: 'RESET' });
     setShowInterpretModal(false);
     setLoginIntent(null);
@@ -258,7 +264,14 @@ export default function TarotGame({ user, mode = 'draw' }: TarotGameProps) {
     setSaveReadingError(null);
     setSavingReading(false);
     setPillarNames({ ...DEFAULT_PILLAR_NAMES });
-  }, []);
+    // The list may have shrunk since this spread was chosen (the session ended
+    // mid-reading): the picker must not name, nor start, a spread the viewer
+    // cannot pick
+    if (!pickable.some((r) => r.name === selectedReading.name)) {
+      setSelectedReading(pickable.find((r) => r.name === DEFAULT_READING_NAME) ?? pickable[0]);
+      setUserQuestion("");
+    }
+  }, [pickable, selectedReading.name]);
 
   const handleCloseModal = useCallback(() => setShowInterpretModal(false), []);
 
@@ -311,6 +324,15 @@ export default function TarotGame({ user, mode = 'draw' }: TarotGameProps) {
             });
           });
         }
+      } else if (result.unauthenticated) {
+        // The session ended while the page was open: the server rendered a
+        // logged-in page but the cookies are gone. Become a visitor (the menu
+        // offers Login, the bookmark becomes "Log in to save") and open the
+        // inline login; its success retries this save (handleLoginSuccess).
+        visitorCountExemptRef.current = true;
+        setIsLoggedIn(false);
+        clearUser();
+        setLoginIntent('save');
       } else {
         setSaveReadingError(result.error);
       }
@@ -320,7 +342,7 @@ export default function TarotGame({ user, mode = 'draw' }: TarotGameProps) {
     } finally {
       if (generation === saveGenerationRef.current) setSavingReading(false);
     }
-  }, [completedReading, savingReading, savedReadingId]);
+  }, [completedReading, savingReading, savedReadingId, clearUser]);
 
   const handleLoginSuccess = useCallback(() => {
     const intent = loginIntent;
@@ -762,8 +784,9 @@ export default function TarotGame({ user, mode = 'draw' }: TarotGameProps) {
                     </div>
                   )}
 
-                  {/* A visitor gets a login button under the cards instead */}
-                  {isReadingComplete && !isLoggedIn && !isManual && (
+                  {/* A visitor gets a login button under the cards instead. In manual
+                      mode the viewer is a visitor only once the session ended mid-reading */}
+                  {isReadingComplete && !isLoggedIn && (
                     <div className="flex justify-center mt-8">
                       <button
                         type="button"
